@@ -1,0 +1,29 @@
+project(dummy NONE)
+if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    set(CMAKE_CXX_COMPILER clang++)
+endif()
+project(myproject CXX)
+
+set(OpenCV_DIR "C:\\opencv\\mingw")
+cmake_minimum_required(VERSION 3.6.2)
+project(Encoder)
+
+find_package(OpenCV REQUIRED)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS "-O2 -Wall")
+
+find_package(OpenCV REQUIRED)
+
+find_package( OpenMP )
+if (OPENMP_FOUND)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+endif()
+
+set(SOURCE_FILES src/main.cpp)
+add_executable(Encoder src/main.cpp src/psnr.cpp includes/psnr.h src/main.cpp includes/config.h includes/Utils.h src/Utils.cpp src/ME.cpp includes/ME.hpp src/DelaunayTriangulation.cpp includes/DelaunayTriangulation.hpp src/Rectangle.cpp includes/Rectangle.hpp includes/Vector.hpp includes/Point.hpp includes/saturate.hpp src/GnuplotFileGenerator.cpp includes/GnuplotFileGenerator.hpp src/Golomb.cpp includes/Golomb.hpp)
+include_directories(${OpenCV_INCLUDE_DIRS})
+target_link_libraries(Encoder ${OpenCV_LIBS})
+
+add_definitions(-std=c++11)
