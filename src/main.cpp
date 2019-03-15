@@ -409,7 +409,7 @@ int main(int argc, char *argv[]) {
     std::vector<cv::Point2f> corners_R,corners_G,corners_B,corners_Y;
     // 特徴点抽出(GFTTDetector)
     cv::goodFeaturesToTrack(residual_ref, corners_org, POINT_MAX, GFTT_QUAULITY, 24,residual_ref, 3);
-    cv::goodFeaturesToTrack(targetx4_Y, corners_Y, POINT_MAX, GFTT_QUAULITY, 8,Maskx4, 3);
+    cv::goodFeaturesToTrack(targetx4_Y, corners_Y, POINT_MAX, GFTT_QUAULITY, 16,Maskx4, 3);//8
     cv::goodFeaturesToTrack(targetx4_R, corners_R, POINT_MAX, GFTT_QUAULITY, 8,targetx4_R, 3);
     cv::goodFeaturesToTrack(targetx4_G, corners_G, POINT_MAX, GFTT_QUAULITY, 8,targetx4_G, 3);
     cv::goodFeaturesToTrack(targetx4_B, corners_B, POINT_MAX, GFTT_QUAULITY, 8,targetx4_B, 3);
@@ -469,7 +469,7 @@ int main(int argc, char *argv[]) {
       }
     // 外周に点を打つ
     addSideCorners(target, corners_org);
-    add_corner_edge(corners_org,canny,16,100);
+    //add_corner_edge(corners_org,canny,16,100);
 
     // 頂点の量子化
     corners_org = cornersQuantization(corners_org, target);
@@ -605,7 +605,7 @@ int main(int argc, char *argv[]) {
           corners.emplace_back(cv::Point2f(1919,1023));
          */
         //頂点削除
-
+/*
         double erase_th_per = 0.6;
           md.Sort_Coners(corners);
           std::vector<double> sigma_tmp;
@@ -647,7 +647,8 @@ int main(int argc, char *argv[]) {
           erase_th_global = erase_th;
           std::cout << "erase_th = " << erase_th << std::endl;
           std::cout << "check2" << std::endl;
-            for (int q = 0; q < 2; q++) {
+            for (int q = 0; q < 4; q++) {
+*/
                 /*
                 md.insert(corners);
                 md.getTriangleList(triangles_mydelaunay);
@@ -693,6 +694,7 @@ int main(int argc, char *argv[]) {
                 erase_th_global = erase_th;
                 std::cout << "erase_th = " << erase_th << std::endl;
                  */
+/*
                 for (int idx = 0; idx < (int) corners.size(); idx++) {
                     bool erase_flag = false;
                     int erase_cout = 0;
@@ -807,7 +809,7 @@ int main(int argc, char *argv[]) {
                     }
                 }
             }
-
+*/
             /*
             for (int idx = 0; idx < (int) corners.size(); idx++) {
                 double min_distance = md.neighbor_distance(corners, idx);
@@ -887,12 +889,12 @@ int main(int argc, char *argv[]) {
                 }
             }
 */
-
+/*
         std::ofstream corner_list = std::ofstream("corner_list_" + corner_file_name + ".dat");
         for(const cv::Point2f point : corners){
             corner_list << point.x << " " << point.y << std::endl;
         }
-
+*/
         std::ifstream in_corner_list = std::ifstream("corner_list_" + corner_file_name + ".dat");
          // std::ifstream in_corner_list = std::ifstream("corner_list_car_38_5_34.dat");
           std::string str1;
@@ -1103,11 +1105,24 @@ int main(int argc, char *argv[]) {
 
 /*
           corners.clear();
-          corners.emplace_back(cv::Point2f(500,500));
+          corners.emplace_back(cv::Point2f(900,500));
           corners.emplace_back(cv::Point2f(0,0));
           corners.emplace_back(cv::Point2f(1919,0));
           corners.emplace_back(cv::Point2f(0,1023));
           corners.emplace_back(cv::Point2f(1919,1023));
+*/
+/*
+          int W_num = 12,H_num = 8;
+          int W_step = target.cols/W_num,H_step = target.rows/H_num;
+          corners.clear();
+          for(int j = 0;j <= H_num;j++){
+              for(int i = 0;i <= W_num;i++){
+                  int x = i*W_step,y = j*H_step;
+                  if(x >= target.cols)x = target.cols - 1;
+                  if(y >= target.rows)y = target.rows - 1;
+                  corners.emplace_back(cv::Point2f(x,y));
+              }
+          }
 */
           for(int i = 0;i < (int)corners.size();i++){
               std::cout << "corner[" << i <<"] =" << corners[i] << std::endl;
@@ -2203,12 +2218,27 @@ std::vector<cv::Point2f> cornersQuantization(std::vector<cv::Point2f> &corners, 
 }
 
 /**
- * @fn PredictedImageResult getPredictedImage(const cv::Mat& ref, const cv::Mat& target, const std::vector<Triangle>& triangles, const std::vector<cv::Point2f>& ref_corners, const std::vector<cv::Point2f>& corners)
+ * @fn PredictedImageResult getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4, const cv::Mat &refx8,const cv::Mat &target, const cv::Mat &targetx2, const cv::Mat &targetx4, const cv::Mat &targetx8,const cv::Mat &intra,  std::vector<Triangle> &triangles,
+                  const std::vector<cv::Point2f> &ref_corners, std::vector<cv::Point2f> &corners, DelaunayTriangulation md,std::vector<cv::Point2f> &add_corners,int *add_count,const cv::Mat& residual_ref,int &tmp_mv_x,int &tmp_mv_y ,bool add_flag)
  * @param ref リファレンス画像
+ * @param refx2 参照フレームを2倍縮小
+ * @param refx4 4倍縮小
+ * @param refx8 8倍縮小
  * @param target ターゲット画像
+ * @param targetx2 対象フレームを2倍縮小
+ * @param targetx4 4倍縮小
+ * @param targetx8 8倍縮小
+ * @param intra イントラ符号化した参照フレーム
  * @param triangles 三角形の集合
  * @param ref_corners リファレンス画像上の頂点
  * @param corners ターゲット画像上の頂点
+ * @param md 三角パッチ網
+ * @param add_corners 頂点追加のためのバッファ(使ってない)
+ * @param add_count 頂点を追加した数を格納(使ってない)
+ * @param residual_ref 対象フレームと参照フレームとの差分画像
+ * @param tmp_mv_x x軸上の動きベクトルの符号量を格納
+ * @param tmp_mv_y y軸上の動きベクトルの符号量を格納
+ * @param add_flag 頂点追加に制限をかけるためのフラグ(使ってない)
  * @return cv::Mat型の予測画像
  */
 PredictedImageResult
@@ -2226,11 +2256,11 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4
     cv::Mat predict_para = cv::Mat::zeros(target.size(), CV_8UC3);
     cv::Point2f mv_diff, mv_prev;
     std::vector<cv::Mat> predict_buf;
-    std::vector<std::vector<cv::Point2i>> buffer;
+    //std::vector<std::vector<cv::Point2i>> buffer;//前の差分符号化のバッファ(使ってない)
     std::vector<std::vector<std::pair<std::vector<std::pair<cv::Point2i, int>>, std::pair<bool, bool>>>> mv_basis(
             corners.size());
     std::vector<std::vector<std::tuple<std::vector<std::pair<cv::Point2i, int>>, bool, bool, cv::Point2f, int,cv::Point2f>>> mv_basis_tuple(
-            corners.size());
+            corners.size());//現在の差分符号化に用いるタプル
     std::vector<cv::Point2i> tmp;
     std::ofstream tri_list;
     std::ofstream mv_list = std::ofstream("mv_list.csv");
@@ -2251,11 +2281,12 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4
     predict_buf.emplace_back(predict_img2);
     predict_buf.emplace_back(predict_img3);
     std::vector<cv::Mat> predict_buf_dummy = predict_buf;
+    /*
     for (int i = 0; i < (int) corners.size(); i++) {
         buffer.emplace_back(tmp);
         buffer[i].emplace_back(corners[i]);
     }
-
+*/
     for (const auto &triangle : triangles) {
         drawPoint(mv_image, corners[triangle.p1_idx], RED, 5);
         drawPoint(mv_image, corners[triangle.p2_idx], RED, 5);
@@ -2584,10 +2615,11 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4
             std::cout << "y: " << p.y << " code-length: " << ozi::getGolombCode(7, p.y, ozi::REGION1, ozi::GOLOMB, 0) << std::endl;
         }
   */
+        /*
         buffer[triangle.p1_idx].emplace_back(mv[0]);
         buffer[triangle.p2_idx].emplace_back(mv[1]);
         buffer[triangle.p3_idx].emplace_back(mv[2]);
-
+*/
         //MSE += error_warp;
         //Point3Vec mv_corners = Point3Vec(mv[0],mv[1],mv[2]);
         //corners_warp = warping(ref, target, error_warp, triangleVec, prev_corners);
@@ -2725,7 +2757,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4
 
     }
     std::cout << "check1" << std::endl;
-
+/*
     for (int i = 0; i < corners_size; i++) {
         cv::Point2i prev = buffer[i][1];
         if (buffer[i].size() != 2) {
@@ -2737,6 +2769,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4
             }
         }
     }
+    */
     std::vector<std::vector<cv::Point2i>> corded_mv(corners.size());
     std::queue<int> Queue_neighbor;
     bool init_flag = false;

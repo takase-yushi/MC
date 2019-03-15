@@ -25376,3 +25376,1335 @@ BlockMatching's PSNR : nan
 Warping's PSNR : nan
 48m41sec
 
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\FungusZoom\Fungus_P27_11_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/03 Sun 17:29:27
+PSNR : 39.152002
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m31sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\FungusZoom\Fungus_P32_11_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/03 Sun 17:33:06
+PSNR : 36.216303
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m31sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\FungusZoom\Fungus_P37_11_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/03 Sun 17:35:26
+PSNR : 33.103521
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m31sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P27_16_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/03 Sun 17:40:45
+PSNR : 32.210346
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+4m16sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P32_16_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/03 Sun 17:46:28
+PSNR : 30.317457
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+4m11sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P37_16_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/03 Sun 17:53:11
+PSNR : 28.412635
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+4m10sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\car\car_P27_18_Q4_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/03 Sun 17:57:39
+PSNR : 37.334392
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m15sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\car\car_P32_18_Q4_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/03 Sun 18:00:02
+PSNR : 35.946426
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m14sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\car\car_P37_18_Q4_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/03 Sun 18:01:57
+PSNR : 34.110184
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m14sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\in_to_tree\in_to_tree_P27_9Q4_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/03 Sun 18:05:57
+PSNR : 33.310777
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+3m2sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\in_to_tree\in_to_tree_P32_9Q4_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/03 Sun 18:10:29
+PSNR : 32.807730
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+3m1sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\in_to_tree\in_to_tree_P37_9Q4_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/03 Sun 18:14:18
+PSNR : 31.491847
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+3m0sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P22_1_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/04 Mon 14:30:21
+PSNR : 36.688030
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+58m36sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P22_1_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/04 Mon 16:12:55
+PSNR : 36.707182
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+82m37sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P22_1_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/04 Mon 16:49:33
+PSNR : 37.270239
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+31m22sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P27_1_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/04 Mon 17:02:58
+PSNR : 37.052922
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m58sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P22_2_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/04 Mon 17:50:01
+PSNR : 37.140017
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+43m34sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P22_3_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/04 Mon 19:01:45
+PSNR : 37.516923
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+45m42sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P22_3_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/04 Mon 19:59:20
+PSNR : 35.629147
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+46m22sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P22_3_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/04 Mon 20:57:57
+PSNR : 35.957105
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+32m4sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P22_3_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/04 Mon 21:16:01
+PSNR : 35.957105
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m0sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P22_3_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/04 Mon 21:21:55
+PSNR : 36.173793
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m50sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P22_3_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/04 Mon 21:27:00
+PSNR : 37.270239
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m59sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P22_3_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/04 Mon 21:32:52
+PSNR : 37.270239
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m50sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P22_3_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/04 Mon 21:43:10
+PSNR : 35.856809
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m49sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P22_3_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/04 Mon 21:47:41
+PSNR : 37.344050
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m55sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P22_3_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/04 Mon 21:58:11
+PSNR : 37.696973
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m35sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P27_3_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/04 Mon 22:03:42
+PSNR : 37.233323
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m11sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P22_4_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/04 Mon 22:41:00
+PSNR : 37.560983
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+32m22sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P22_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/04 Mon 23:40:18
+PSNR : 28.972542
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+38m22sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\FungusZoom\Fungus_P22_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 00:04:11
+PSNR : 41.380792
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+23m52sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P22_4_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 00:35:38
+PSNR : 37.560983
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+31m25sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\car\car_P22_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 00:48:31
+PSNR : 35.652170
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+12m53sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\in_to_tree\in_to_tree_P22_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 01:11:33
+PSNR : 32.963562
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+23m1sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P27_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 14:20:33
+PSNR : 32.212494
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m23sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P29_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 14:33:03
+PSNR : 28.672151
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m19sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P31_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 14:36:22
+PSNR : 28.478723
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m19sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P33_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 14:41:14
+PSNR : 28.164188
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m19sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P35_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 14:43:55
+PSNR : 27.824110
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m23sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P37_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 14:46:01
+PSNR : 28.421010
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m19sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P37_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 14:54:33
+PSNR : 27.318129
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m19sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P27_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 14:59:31
+PSNR : 28.809153
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m18sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\FungusZoom\Fungus_P27_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 15:01:17
+PSNR : 39.144330
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m45sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\FungusZoom\Fungus_P29_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 15:17:39
+PSNR : 38.030345
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m43sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\FungusZoom\Fungus_P31_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 15:19:18
+PSNR : 36.894538
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m43sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\FungusZoom\Fungus_P33_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 15:20:32
+PSNR : 35.598685
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m43sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\FungusZoom\Fungus_P35_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 15:21:52
+PSNR : 34.325442
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m44sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\FungusZoom\Fungus_P37_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 15:23:33
+PSNR : 33.115736
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m43sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P27_4_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 15:27:43
+PSNR : 37.142392
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m43sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P29_4_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 15:31:16
+PSNR : 36.815209
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m43sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P31_4_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 15:33:51
+PSNR : 36.443083
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m44sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P33_4_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 15:36:12
+PSNR : 35.957648
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m43sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P35_4_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 15:39:49
+PSNR : 35.407998
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m44sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P37_4_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 15:42:04
+PSNR : 34.730387
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m43sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\car\car_P27_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 15:43:44
+PSNR : 35.169166
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m48sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\car\car_P29_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 15:48:08
+PSNR : 34.879410
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m48sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\car\car_P31_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 15:49:59
+PSNR : 34.540209
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m48sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\car\car_P33_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 15:51:23
+PSNR : 34.091263
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m48sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\car\car_P35_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 15:52:44
+PSNR : 33.622946
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m48sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\car\car_P37_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 15:53:59
+PSNR : 33.047148
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m48sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\in_to_tree\in_to_tree_P27_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 15:56:19
+PSNR : 32.898039
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m29sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\in_to_tree\in_to_tree_P29_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 15:59:48
+PSNR : 32.828577
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m22sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\in_to_tree\in_to_tree_P31_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 16:01:43
+PSNR : 32.687300
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m22sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\in_to_tree\in_to_tree_P33_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 16:03:44
+PSNR : 32.312515
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m22sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\in_to_tree\in_to_tree_P35_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 16:05:44
+PSNR : 31.870359
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m22sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\in_to_tree\in_to_tree_P37_20_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 16:07:41
+PSNR : 31.392317
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m22sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\car\car_P27_18_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 18:06:51
+PSNR : 37.334392
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m13sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\car\car_P29_18_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 18:08:43
+PSNR : 36.816646
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m14sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\car\car_P31_18_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 18:11:31
+PSNR : 36.284692
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m13sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\car\car_P33_18_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 18:13:35
+PSNR : 35.582789
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m13sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\car\car_P35_18_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 18:15:30
+PSNR : 34.877374
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m13sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\car\car_P37_18_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 18:17:49
+PSNR : 34.110184
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m13sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\FungusZoom\Fungus_P29_11_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 19:37:40
+PSNR : 37.974780
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m56sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\FungusZoom\Fungus_P31_11_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 19:39:25
+PSNR : 36.854867
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m53sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\FungusZoom\Fungus_P33_11_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 19:42:52
+PSNR : 35.572472
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m53sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\FungusZoom\Fungus_P35_11_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/05 Tue 19:48:21
+PSNR : 34.306858
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m53sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P29_16_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/06 Wed 14:07:36
+PSNR : 29.127643
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+3m50sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\FungusZoom\Fungus_P35_11_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/06 Wed 14:08:34
+PSNR : 34.306858
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m57sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P29_16_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/06 Wed 16:10:18
+PSNR : 29.127643
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+3m56sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P27_16_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/06 Wed 16:16:17
+PSNR : 29.299916
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+3m49sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P31_16_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/06 Wed 16:42:51
+PSNR : 28.907944
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+3m48sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P33_16_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/06 Wed 16:49:18
+PSNR : 28.590951
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+3m48sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P35_16_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/06 Wed 16:53:46
+PSNR : 28.137936
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+3m48sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P37_16_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/06 Wed 16:58:20
+PSNR : 27.564359
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+3m47sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\in_to_tree\in_to_tree_P29_9_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/06 Wed 17:04:20
+PSNR : 33.230214
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m49sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\in_to_tree\in_to_tree_P31_9_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/06 Wed 17:08:06
+PSNR : 33.020561
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m46sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\in_to_tree\in_to_tree_P22_21_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/06 Wed 17:49:27
+PSNR : 29.392382
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m40sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P22_21_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/06 Wed 17:52:43
+PSNR : 37.586075
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m44sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P22_21_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/06 Wed 17:55:45
+PSNR : 20.424502
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m54sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P22_22_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/06 Wed 18:35:59
+PSNR : 28.655516
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+4m14sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P22_22_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/06 Wed 18:50:47
+PSNR : 26.583184
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m40sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P22_22_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/06 Wed 18:56:04
+PSNR : 25.890560
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m44sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P22_22_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/06 Wed 19:08:30
+PSNR : 29.476117
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+3m46sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\minato\minato_P22_22_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/06 Wed 19:19:54
+PSNR : 28.482690
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+3m26sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\car\car_P22_22_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/06 Wed 19:43:58
+PSNR : 35.995891
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+3m3sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Cactus\Cactus_P22_22_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/06 Wed 20:01:20
+PSNR : 27.005082
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+3m13sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P22_22_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/06 Wed 20:16:21
+PSNR : 37.835334
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+3m15sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P22_22_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/08 Fri 13:02:14
+PSNR : 37.835334
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+3m37sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\FungusZoom\Fungus_test_11_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/11 Mon 14:38:14
+PSNR : 39.280998
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m55sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\FungusZoom\Fungus_test_11_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/11 Mon 14:58:00
+PSNR : 39.213789
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m56sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\car\car_P27_test_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/11 Mon 16:16:20
+PSNR : 38.179414
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m18sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\in_to_tree\in_to_tree_P29_9_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/14 Thu 06:21:35
+PSNR : 33.230214
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m46sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\in_to_tree\in_to_tree_P31_9_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/14 Thu 06:27:08
+PSNR : 33.020561
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m46sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\in_to_tree\in_to_tree_P33_9_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/14 Thu 06:38:49
+PSNR : 32.566640
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m45sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\in_to_tree\in_to_tree_P35_9_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/14 Thu 06:45:03
+PSNR : 32.065638
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m45sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P27_1_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/14 Thu 12:06:15
+PSNR : 37.052922
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m53sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P29_1_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/14 Thu 12:12:25
+PSNR : 36.639909
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m52sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P31_1_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/14 Thu 12:34:16
+PSNR : 36.420671
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m52sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P33_1_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/14 Thu 12:38:02
+PSNR : 35.953933
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m51sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P35_1_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/14 Thu 12:41:31
+PSNR : 35.305411
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m52sec
+
+C:\Users\takahiro\CLionProjects\Research-for-Motion-Compensation\img\Station2\Station2_P37_1_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/02/14 Thu 12:48:56
+PSNR : 34.735691
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m51sec
+
