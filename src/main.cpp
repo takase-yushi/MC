@@ -1111,7 +1111,7 @@ int main(int argc, char *argv[]) {
           corners.emplace_back(cv::Point2f(0,1023));
           corners.emplace_back(cv::Point2f(1919,1023));
 */
-/*
+
           int W_num = 12,H_num = 8;
           int W_step = target.cols/W_num,H_step = target.rows/H_num;
           corners.clear();
@@ -1123,7 +1123,7 @@ int main(int argc, char *argv[]) {
                   corners.emplace_back(cv::Point2f(x,y));
               }
           }
-*/
+
           for(int i = 0;i < (int)corners.size();i++){
               std::cout << "corner[" << i <<"] =" << corners[i] << std::endl;
           }
@@ -1858,7 +1858,7 @@ int main(int argc, char *argv[]) {
         cv::imwrite(file_path + img_path + "rect.png", out);
         std::cout << "check point 6" << std::endl;
         // ログ -------------------------------------------------------------------------------
-        fp = fopen("C:\\Users\\takahiro\\CLionProjects\\Research-for-Motion-Compensation\\log.txt", "a");
+        fp = fopen("C:\\Users\\kasph\\workspace\\MC\\log.txt", "a");
         time_t tt;
         time(&tt);
         char date[64];
