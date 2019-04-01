@@ -10,6 +10,7 @@
 #include "../includes/GnuplotFileGenerator.hpp"
 #include <unistd.h>
 #include <fstream>
+#include <tuple>
 #include <iostream>
 
 /**
