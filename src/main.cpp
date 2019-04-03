@@ -141,25 +141,19 @@ int main(int argc, char *argv[]) {
   // 全画像分ループ
   while (fgets(buf, sizeof(buf), img_list) != NULL) {
     if (buf[0] == '#') continue;
-    char t_file_name[256], r_file_name[256], o_file_name[256], i_file_path[256], csv_prefix[256],r_intra_file_name[256],rex2_file_name[256],rex4_file_name[256],tx2_file_name[256],r_r_file_name[256],target_color_file_name[256],c_file_name[256];
+    char t_file_name[256], r_file_name[256], o_file_name[256], i_file_path[256], csv_prefix[256],r_intra_file_name[256],r_r_file_name[256],target_color_file_name[256],c_file_name[256];
     sscanf(buf, "%s %s %s %s %s %s %s %s", i_file_path, r_file_name, t_file_name, o_file_name,r_intra_file_name,r_r_file_name,target_color_file_name,c_file_name);
 
     std::string img_path = std::string(i_file_path);
     std::string img_directory = file_path + img_path;
     std::string target_file_name = std::string(t_file_name);
-    std::string targetx2_file_name = std::string(tx2_file_name);
     std::string ref_r_file_name = std::string(r_r_file_name);
     std::string ref_file_name = std::string(r_file_name);
-    std::string refx2_file_name = std::string(rex2_file_name);
-    std::string refx4_file_name = std::string(rex4_file_name);
     std::string ref_intra_file_name = std::string(r_intra_file_name);
     std::string corner_file_name = std::string(c_file_name);
     std::string csv_file_prefix = std::string("aaa");
     std::string ref_file_path = file_path + img_path + ref_file_name;
     std::string target_file_path = file_path + img_path + target_file_name;
-    std::string refx2_file_path = file_path + img_path + refx2_file_name;
-    std::string targetx2_file_path = file_path + img_path + targetx2_file_name;
-    std::string refx4_file_path = file_path + img_path + refx4_file_name;
     std::string r_r_file_path = file_path + img_path + r_r_file_name;
     std::string ref_intra_file_path = file_path + img_path + ref_intra_file_name;
     std::string target_color_file_path = file_path + img_path + target_color_file_name;
