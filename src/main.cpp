@@ -20,55 +20,55 @@
 #include "../includes/Golomb.hpp"
 
 struct PredictedImageResult {
-  cv::Mat out, mv_image;
-  int freq_block, freq_warp, block_matching_pixel_nums, warping_pixel_nums, x_bits, y_bits;
-  double block_matching_pixel_errors, warping_pixel_errors;
+    cv::Mat out, mv_image;
+    int freq_block, freq_warp, block_matching_pixel_nums, warping_pixel_nums, x_bits, y_bits;
+    double block_matching_pixel_errors, warping_pixel_errors;
 
-  PredictedImageResult(cv::Mat out,
-                       cv::Mat mv_image,
-                       int freq_block,
-                       int freq_warp,
-                       int block_matching_pixel_nums,
-                       int warping_pixel_nums,
-                       int xbits,
-                       int ybits,
-                       double block_matching_pixel_errors,
-                       double warping_pixel_errors
-  ) :
-          out(std::move(out)),
-          mv_image(std::move(mv_image)),
-          freq_block(freq_block),
-          freq_warp(freq_warp),
-          block_matching_pixel_nums(block_matching_pixel_nums),
-          warping_pixel_nums(warping_pixel_nums),
-          x_bits(xbits),
-          y_bits(ybits),
-          block_matching_pixel_errors(block_matching_pixel_errors),
-          warping_pixel_errors(warping_pixel_errors){}
+    PredictedImageResult(cv::Mat out,
+                         cv::Mat mv_image,
+                         int freq_block,
+                         int freq_warp,
+                         int block_matching_pixel_nums,
+                         int warping_pixel_nums,
+                         int xbits,
+                         int ybits,
+                         double block_matching_pixel_errors,
+                         double warping_pixel_errors
+    ) :
+            out(std::move(out)),
+            mv_image(std::move(mv_image)),
+            freq_block(freq_block),
+            freq_warp(freq_warp),
+            block_matching_pixel_nums(block_matching_pixel_nums),
+            warping_pixel_nums(warping_pixel_nums),
+            x_bits(xbits),
+            y_bits(ybits),
+            block_matching_pixel_errors(block_matching_pixel_errors),
+            warping_pixel_errors(warping_pixel_errors){}
 
-  double getBlockMatchingFrequency() {
-    return (double) freq_block / (freq_block + freq_warp) * 100;
-  }
+    double getBlockMatchingFrequency() {
+        return (double) freq_block / (freq_block + freq_warp) * 100;
+    }
 
-  double getWarpingFrequency() {
-    return (double) freq_warp / (freq_block + freq_warp) * 100;
-  }
+    double getWarpingFrequency() {
+        return (double) freq_warp / (freq_block + freq_warp) * 100;
+    }
 
-  double getBlockMatchingPatchPSNR() {
-    return 10.0 * log10(255.0 * 255.0 / (block_matching_pixel_errors / (3.0 * block_matching_pixel_nums)));
-  }
+    double getBlockMatchingPatchPSNR() {
+        return 10.0 * log10(255.0 * 255.0 / (block_matching_pixel_errors / (3.0 * block_matching_pixel_nums)));
+    }
 
-  double getWarpingPatchPSNR() {
-    return 10.0 * log10(255.0 * 255.0 / (warping_pixel_errors / (3.0 * warping_pixel_nums)));
-  }
+    double getWarpingPatchPSNR() {
+        return 10.0 * log10(255.0 * 255.0 / (warping_pixel_errors / (3.0 * warping_pixel_nums)));
+    }
 
-  int getXbits() {
-    return x_bits;
-  }
+    int getXbits() {
+        return x_bits;
+    }
 
-  int getYbits() {
-    return y_bits;
-  }
+    int getYbits() {
+        return y_bits;
+    }
 
 };
 
@@ -102,548 +102,365 @@ cv::Mat triangle_error_img;
 #define LAMBDA 0.2
 #define INTER_DIV true
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "hicpp-signed-bitwise"
 int main(int argc, char *argv[]) {
-  std::cout << "OpenCV_version : " << getVersionOfOpenCV() << std::endl;
+    std::cout << "OpenCV_version : " << getVersionOfOpenCV() << std::endl;
 
-  const std::string file_path = getProjectDirectory();
+    const std::string file_path = getProjectDirectory();
 
-  FILE *img_list;
-  if ((img_list = fopen((file_path + "\\list.txt").c_str(), "r")) == NULL) {
-    std::cerr << "Error : Can not open file" << std::endl;
-    exit(1);
-  }
+    FILE *img_list;
+    if ((img_list = fopen((file_path + "\\list.txt").c_str(), "r")) == NULL) {
+        std::cerr << "Error : Can not open file" << std::endl;
+        exit(1);
+    }
 
-  char buf[512];
+    char buf[512];
 
-  // 頂点復号ベクトルのカウント
-  std::vector<int> count_all_x_coord(1001, 0);
-  std::vector<int> count_all_y_coord(1001, 0);
+    // 頂点復号ベクトルのカウント
+    std::vector<int> count_all_x_coord(1001, 0);
+    std::vector<int> count_all_y_coord(1001, 0);
 
-  // 動きベクトル復元のカウント
-  std::vector<int> count_all_x_mv(1001, 0);
-  std::vector<int> count_all_y_mv(1001, 0);
+    // 動きベクトル復元のカウント
+    std::vector<int> count_all_x_mv(1001, 0);
+    std::vector<int> count_all_y_mv(1001, 0);
 
-  // 引き返す点数のカウント
-  std::vector<int> count_all_prev_id(1001, 0);
+    // 引き返す点数のカウント
+    std::vector<int> count_all_prev_id(1001, 0);
 
-  // BMの差分ベクトルはグローバルにおいてある
+    // BMの差分ベクトルはグローバルにおいてある
 
-  double point_nums = 0.0;
+    double point_nums = 0.0;
 
-  std::string graph_file_path = file_path + "\\graph\\";
-  std::cout << "graph_file_path:" << graph_file_path << std::endl;
-
-
-  std::vector<cv::Point2f> corners, corners_org;
-  std::vector<cv::Point2f> ref_corners, ref_corners_org;
+    std::string graph_file_path = file_path + "\\graph\\";
+    std::cout << "graph_file_path:" << graph_file_path << std::endl;
 
 
-  // 全画像分ループ
-  while (fgets(buf, sizeof(buf), img_list) != NULL) {
-    if (buf[0] == '#') continue;
-    char t_file_name[256], r_file_name[256], o_file_name[256], i_file_path[256], csv_prefix[256],r_intra_file_name[256],r_r_file_name[256],target_color_file_name[256],c_file_name[256];
-    sscanf(buf, "%s %s %s %s %s %s %s %s", i_file_path, r_file_name, t_file_name, o_file_name,r_intra_file_name,r_r_file_name,target_color_file_name,c_file_name);
+    std::vector<cv::Point2f> corners, corners_org;
+    std::vector<cv::Point2f> ref_corners, ref_corners_org;
 
-    std::string img_path = std::string(i_file_path);
-    std::string img_directory = file_path + img_path;
-    std::string target_file_name = std::string(t_file_name);
-    std::string ref_r_file_name = std::string(r_r_file_name);
-    std::string ref_file_name = std::string(r_file_name);
-    std::string ref_intra_file_name = std::string(r_intra_file_name);
-    std::string corner_file_name = std::string(c_file_name);
-    std::string csv_file_prefix = std::string("aaa");
-    std::string ref_file_path = file_path + img_path + ref_file_name;
-    std::string target_file_path = file_path + img_path + target_file_name;
-    std::string r_r_file_path = file_path + img_path + r_r_file_name;
-    std::string ref_intra_file_path = file_path + img_path + ref_intra_file_name;
-    std::string target_color_file_path = file_path + img_path + target_color_file_name;
 
-    std::vector<std::string> out_file = splitString(std::string(o_file_name), '.');
+    // 全画像分ループ
+    while (fgets(buf, sizeof(buf), img_list) != nullptr) {
+        if (buf[0] == '#') continue;
+        char t_file_name[256], r_file_name[256], o_file_name[256], i_file_path[256], csv_prefix[256],r_intra_file_name[256],r_r_file_name[256],target_color_file_name[256],c_file_name[256];
+        sscanf(buf, "%s %s %s %s %s %s %s %s", i_file_path, r_file_name, t_file_name, o_file_name,r_intra_file_name,r_r_file_name,target_color_file_name,c_file_name);
 
-    std::cout << "img_path:" << img_path << std::endl;
-    std::cout << "target_file_name:" << target_file_name << std::endl;
-    std::cout << "ref_file_name:" << ref_file_name << std::endl;
-    std::cout << "ref file path:" << ref_file_path << std::endl;
-    std::cout << "target file path:" << target_file_path << std::endl;
+        std::string img_path = std::string(i_file_path);
+        std::string img_directory = file_path + img_path;
+        std::string target_file_name = std::string(t_file_name);
+        std::string ref_r_file_name = std::string(r_r_file_name);
+        std::string ref_file_name = std::string(r_file_name);
+        std::string ref_intra_file_name = std::string(r_intra_file_name);
+        std::string corner_file_name = std::string(c_file_name);
+        std::string csv_file_prefix = std::string("aaa");
+        std::string ref_file_path = file_path + img_path + ref_file_name;
+        std::string target_file_path = file_path + img_path + target_file_name;
+        std::string r_r_file_path = file_path + img_path + r_r_file_name;
+        std::string ref_intra_file_path = file_path + img_path + ref_intra_file_name;
+        std::string target_color_file_path = file_path + img_path + target_color_file_name;
 
-    // 符号量
-    std::ofstream code_amount;
-    if (HARRIS) code_amount = std::ofstream(img_directory + "code_amount_harris.txt");
-    else if (THRESHOLD) code_amount = std::ofstream(img_directory + "code_amount_THRESHOLD.txt");
+        std::vector<std::string> out_file = splitString(std::string(o_file_name), '.');
 
-    // PSNRとしきい値以下の点を取り除いたグラフ（頂点を1つずつ取り除いたやつ）
-    std::ofstream psnr_points_efficience;
-    if (HARRIS) psnr_points_efficience = std::ofstream(img_directory + "psnr_remove_corner_harris.txt");
-    if (THRESHOLD) psnr_points_efficience = std::ofstream(img_directory + "psnr_remove_corner_threshold.txt");
+        std::cout << "img_path:" << img_path << std::endl;
+        std::cout << "target_file_name:" << target_file_name << std::endl;
+        std::cout << "ref_file_name:" << ref_file_name << std::endl;
+        std::cout << "ref_gauss file path:" << ref_file_path << std::endl;
+        std::cout << "target file path:" << target_file_path << std::endl;
 
-    // 頂点数を制限して取った場合のPSNRとの関係
-    std::ofstream corner_psnr;
-    if (HARRIS) corner_psnr = std::ofstream(img_directory + "corner_psnr_harris.txt");
-    if (THRESHOLD) corner_psnr = std::ofstream(img_directory + "corner_psnr_threshold.txt");
+        // 符号量
+        std::ofstream code_amount;
+        if (HARRIS) code_amount = std::ofstream(img_directory + "code_amount_harris.txt");
+        else if (THRESHOLD) code_amount = std::ofstream(img_directory + "code_amount_THRESHOLD.txt");
 
-    std::ofstream corner_code_amount;
-    if (HARRIS) corner_code_amount = std::ofstream(img_directory + "corner_code_amount_harris.txt");
-    if (THRESHOLD) corner_code_amount = std::ofstream(img_directory + "corner_code_amount_threshold.txt");
+        // PSNRとしきい値以下の点を取り除いたグラフ（頂点を1つずつ取り除いたやつ）
+        std::ofstream psnr_points_efficience;
+        if (HARRIS) psnr_points_efficience = std::ofstream(img_directory + "psnr_remove_corner_harris.txt");
+        if (THRESHOLD) psnr_points_efficience = std::ofstream(img_directory + "psnr_remove_corner_threshold.txt");
 
-    // 頂点数とMSE
-    std::ofstream rate_mse;
-    if (HARRIS) rate_mse = std::ofstream(img_directory + "rate_mse_harris.txt");
-    else if (THRESHOLD) rate_mse = std::ofstream(img_directory + "rate_mse_threshold.txt");
+        // 頂点数を制限して取った場合のPSNRとの関係
+        std::ofstream corner_psnr;
+        if (HARRIS) corner_psnr = std::ofstream(img_directory + "corner_psnr_harris.txt");
+        if (THRESHOLD) corner_psnr = std::ofstream(img_directory + "corner_psnr_threshold.txt");
 
-    std::ofstream rate_psnr;
-    if (HARRIS) rate_psnr = std::ofstream(img_directory + "rate_psnr_harris.txt");
-    else if (THRESHOLD) rate_psnr = std::ofstream(img_directory + "rate_psnr_threshold.txt");
+        std::ofstream corner_code_amount;
+        if (HARRIS) corner_code_amount = std::ofstream(img_directory + "corner_code_amount_harris.txt");
+        if (THRESHOLD) corner_code_amount = std::ofstream(img_directory + "corner_code_amount_threshold.txt");
 
-    //RD性能グラフにしたい
-    std::ofstream rate_psnr_csv;
-    rate_psnr_csv = std::ofstream(img_directory + target_file_name + "rate_psnr_csv.csv");
+        // 頂点数とMSE
+        std::ofstream rate_mse;
+        if (HARRIS) rate_mse = std::ofstream(img_directory + "rate_mse_harris.txt");
+        else if (THRESHOLD) rate_mse = std::ofstream(img_directory + "rate_mse_threshold.txt");
 
-    // 時間計測
-    clock_t start = clock();
-    std::cout << "check1" << std::endl;
-    // 準備 --------------------------------------------------------------------------------
-    // 画像の読み込み
-    cv::Mat ref, ref_gray;          // 参照フレーム
-    cv::Mat ref_intra;
-    cv::Mat target, target_gray;    // 対象フレーム
-    cv::Mat refx2,refx4;
-    cv::Mat targetx2,targetx4,targetx2_sharp,target_sharp,target_sharp_gray;
-    cv::Mat refx8,targetx8;
-    cv::Mat targetx4_sharp,targetx8_gray;
-    cv::Mat ref_ref;
-    cv::Mat target_bi,ref_bi;
-    cv::Mat canny,canny_target;
-    cv::Mat target_color;
-    cv::Mat target_R,target_G,target_B,target_Y;
-    cv::Mat targetx2_R,targetx2_G,targetx2_B;
-    cv::Mat targetx4_R,targetx4_G,targetx4_B,targetx4_Y;
-      std::vector<cv::Point2f> later_corners = corners;
-      cv::Mat color = cv::Mat::zeros(target.size(),CV_8UC3);
-      std::vector<cv::Point2f> add_corner_dummy;
-//      int add_count_dummy = 0;
-      cv::Mat predict_img0 = cv::Mat::zeros(targetx8.size(), CV_8UC3);
-      cv::Mat predict_img1 = cv::Mat::zeros(targetx4.size(), CV_8UC3);
-      cv::Mat predict_img2 = cv::Mat::zeros(targetx2.size(), CV_8UC3);
-      cv::Mat predict_img3 = cv::Mat::zeros(target.size(), CV_8UC3);
-      cv::Mat predict_warp = cv::Mat::zeros(target.size(),CV_8UC3);
-      cv::Mat predict_para = cv::Mat::zeros(target.size(),CV_8UC3);
-      cv::Point2f mv_diff,mv_prev;
-      std::vector<cv::Mat> predict_buf;
-      std::vector<std::vector<cv::Point2i>> buffer;
-      std::vector<cv::Point2i> tmp;
-      std::ofstream tri_list;
-//      bool para_flag = false;
-//      int Quant = 4;
+        std::ofstream rate_psnr;
+        if (HARRIS) rate_psnr = std::ofstream(img_directory + "rate_psnr_harris.txt");
+        else if (THRESHOLD) rate_psnr = std::ofstream(img_directory + "rate_psnr_threshold.txt");
 
-      tri_list = std::ofstream("tri_list.csv");
-      predict_buf.emplace_back(predict_img0);
-      predict_buf.emplace_back(predict_img1);
-      predict_buf.emplace_back(predict_img2);
-      predict_buf.emplace_back(predict_img3);
-    //cv::Mat residual_ref = cv::Mat::zeros(target.size(),CV_8UC1);
-    /*
-    std::vector<cv::Mat> ref_buff,target_buff,ref_tmp_buff,target_tmp_buff;
-    cv::Mat refz = cv::imread(ref_file_path);
-    cv::Mat targetz = cv::imread(target_file_path);
-    ref_tmp_buff.emplace_back(refz);
-    target_tmp_buff.emplace_back(targetz);
-    const int level = 3;
-    for(int z = 0;z < level-1;z++){
-        cv::Mat ref_ = half(ref_tmp_buff[z]);
-        ref_tmp_buff.emplace_back(ref_);
-        cv::Mat target_ = half(target_tmp_buff[z]);
-        target_tmp_buff.emplace_back(target_);
-    }*/
-/*
-    refx8 = cv::imread(ref_file_path);
-    targetx8 = cv::imread(target_file_path);
-    refx4 = half(refx8);
-    targetx4 = half(targetx8);
-    refx2 = half(refx4);
-    targetx2 = half(targetx4);
-    ref = half(refx2);
-    target = half(targetx2);
-    targetx4_sharp = half_sharp(targetx8);
-    targetx2_sharp = half_sharp(targetx4_sharp);
-    target_sharp = half_sharp(targetx2_sharp);
-*/
-      std::cout << "check2" << std::endl;
-      ref = cv::imread(ref_file_path);
-      target = cv::imread(target_file_path);
-      std::cout << "check3" << std::endl;
-      ref_intra = cv::imread(ref_intra_file_path);
-      target_color = cv::imread(target_color_file_path);
-      refx2 = half_2(ref);
-      targetx2 = half_2(target);
-      refx4 = half_2(refx2);
-      targetx4 = half_2(targetx2);
-      refx8 = half_2(refx4);
-      targetx8 = half_2(targetx4);
-      targetx4_sharp = half_sharp(targetx8);
-      targetx2_sharp = half_sharp(targetx4_sharp);
-      target_sharp = half_sharp(targetx2_sharp);
-      ref_ref = cv::imread(r_r_file_path);
-      target_R = cv::Mat::zeros(target.size(),CV_8UC1);
-      target_G = cv::Mat::zeros(target.size(),CV_8UC1);
-      target_B = cv::Mat::zeros(target.size(),CV_8UC1);
-      for(int j = 0;j < target_color.rows;j++){
-          for(int i = 0;i < target_color.cols;i++){
-              target_R.at<unsigned char>(j,i) = (unsigned char)R(target_color,i,j);
-              target_G.at<unsigned char>(j,i) = (unsigned char)G(target_color,i,j);
-              target_B.at<unsigned char>(j,i) = (unsigned char)B(target_color,i,j);
-          }
-      }
-      targetx2_R = half_MONO(target_R,2);
-      targetx2_G = half_MONO(target_G,2);
-      targetx2_B = half_MONO(target_B,2);
-      targetx4_R = half_MONO(targetx2_R,2);
-      targetx4_G = half_MONO(targetx2_G,2);
-      targetx4_B = half_MONO(targetx2_B,2);
-      cv::Mat residual_ref = cv::Mat::zeros(target.size(),CV_8UC1);
-      cv::Mat Maskx4 = cv::Mat::zeros(targetx4.size(),CV_8UC1);
-      {
-          int crop_W = 8,crop_H = 8;
-          for (int j = crop_H;j < targetx4.rows - crop_H;j++){
-              for(int i = crop_W;i < targetx4.cols - crop_W;i++){
-                  Maskx4.at<unsigned char>(j,i) = 1;
-              }
-          }
-      }
-      cv::Mat residual_ref_bi;
-      std::cout << "check" << std::endl;
-      cvtColor(ref, ref_gray, cv::COLOR_BGR2GRAY);
-      std::cout << "check point 2" << std::endl;
-      cvtColor(target, target_gray, cv::COLOR_BGR2GRAY);
-      target_Y = target_gray;
-      cvtColor(targetx4, targetx4_Y, cv::COLOR_BGR2GRAY);
-      cv::bilateralFilter(ref_gray,ref_bi,5,150,150,CV_HAL_BORDER_REFLECT_101);
-      cv::bilateralFilter(target_gray,target_bi,5,150,150,CV_HAL_BORDER_REFLECT_101);
-      double **y_;
-      y_ = (double **)malloc(sizeof(double *)*target.rows);
-      for(int j = 0;j < target.rows;j++){
-          y_[j] = (double *)malloc(sizeof(double)*target.cols);
-      }
-      int y_max = 0,y_min = 255;
-      for(int j = 0;j < target.rows;j++) {
-          for (int i = 0; i < target.cols; i++) {
-              int y = abs(target_bi.at<unsigned char>(j, i) - ref_bi.at<unsigned char>(j, i));
-              if(y_max < y){
-                  y_max = y;
-              }
-              else if(y_min > y){
-                  y_min = y;
-              }
-          }
-      }
-      std::cout << "check2" << std::endl;
-      double y_scale = y_max - y_min;
-      for(int j = 0;j < target.rows;j++) {
-          for (int i = 0; i < target.cols; i++) {
-              int y = abs(target_bi.at<unsigned char>(j, i) - ref_bi.at<unsigned char>(j, i));
-              y_[j][i] = (y - y_min)/y_scale;
-              if(y < 0)
-                  y = 0;
-              else if(y > 255)
-                  y = 255;
+        //RD性能グラフにしたい
+        std::ofstream rate_psnr_csv;
+        rate_psnr_csv = std::ofstream(img_directory + target_file_name + "rate_psnr_csv.csv");
 
-              /*
-                int y = M(target,i,j) - M(ref_ref,i,j);
-              if(y < -128)
-                  y = -128;
-              else if(y > 127)
-                  y = 127;
-              y += 128;
-*/
-              //std::cout << "i = " << i << "j = "<< j << std::endl;
-              residual_ref.at<unsigned char>(j,i) = (unsigned char)y;
-          }
-      }
-      cv::bilateralFilter(residual_ref,residual_ref_bi,5,150,150,CV_HAL_BORDER_REFLECT_101);
-      cv::Mat residual_filter = mv_filter(residual_ref);
-      cv::imwrite(img_directory + "residual_ref.bmp",residual_ref);
-      cv::Mat residual_refx2 =   half_MONO(residual_ref,2);
-      cv::Mat residual_refx4 = half_MONO(residual_refx2,2);
-    std::cout << "check point 1" << std::endl;
-    // グレイスケールに変換
+        // 時間計測
+        clock_t start = clock();
+        std::cout << "check1" << std::endl;
+        // 準備 --------------------------------------------------------------------------------
+        // 画像の読み込み
+        cv::Mat ref_gauss, ref_gauss_gray;          // 参照フレーム
+        cv::Mat ref;
+        cv::Mat target, target_gray;    // 対象フレーム
+        cv::Mat refx2,refx4;
+        cv::Mat targetx2,targetx4,targetx2_sharp,target_sharp,target_sharp_gray;
+        cv::Mat refx8,targetx8;
+        cv::Mat targetx4_sharp,targetx8_gray;
+        cv::Mat ref_ref;
+        cv::Mat target_bi,ref_bi;
+        cv::Mat canny,canny_target;
 
-    cv::imwrite("ref_bi.bmp",ref_bi);
-    cv::imwrite("target_bi.bmp",target_bi);
-      std::cout << "smooth end" << std::endl;
-      for(int j = 0;j < target.rows;j++) {
-          for (int i = 0; i < target.cols; i++) {
-              target_gray.at<unsigned char>(j,i) = y_[j][i] * target_gray.at<unsigned char>(j,i);
-          }
-      }
-    //cvtColor(target_sharp, target_sharp_gray, cv::COLOR_BGR2GRAY);
-    cv::Mat sobel_target = cv::Mat::zeros(target.size(),CV_8UC1);
-    sobel_target = sobel_filter(target_gray);
-    cv::Mat sobel_target_x = sobel_filter_x(target_gray);
-    cv::Mat sobel_target_y = sobel_filter_y(target_gray);
-    cv::imwrite("sobel_target.bmp",sobel_target);
-    cv::imwrite("sobel_target_x.bmp",sobel_target_x);
-    cv::imwrite("sobel_target_y.bmp",sobel_target_y);
-    std::cout << "check point 2" << std::endl;
-    double high_th = 100;
-    double low_th = 0;
-    cv::Canny(residual_ref,canny,high_th,low_th);
-    high_th = 100;
-    low_th = 0;
-    cv::Canny(target_Y,canny_target,high_th,low_th);
-    cv::imwrite("canny.bmp", canny);
-    cv::imwrite("canny_target.bmp", canny_target);
-    cv::imwrite("reidal_ref_bi.bmp", residual_ref_bi);
-    cv::imwrite("target4_R.bmp", targetx4_R);
-      cv::imwrite("target4_G.bmp", targetx4_G);
-      cv::imwrite("target4_B.bmp", targetx4_B);
-    // ドロネー分割 -------------------------------------------------------------------------
+        std::vector<cv::Point2f> later_corners = corners;
+        cv::Mat color = cv::Mat::zeros(target.size(),CV_8UC3);
+        std::vector<cv::Point2f> add_corner_dummy;
+        cv::Mat predict_img0 = cv::Mat::zeros(targetx8.size(), CV_8UC3);
+        cv::Mat predict_img1 = cv::Mat::zeros(targetx4.size(), CV_8UC3);
+        cv::Mat predict_img2 = cv::Mat::zeros(targetx2.size(), CV_8UC3);
+        cv::Mat predict_img3 = cv::Mat::zeros(target.size(), CV_8UC3);
+        cv::Mat predict_warp = cv::Mat::zeros(target.size(),CV_8UC3);
+        cv::Mat predict_para = cv::Mat::zeros(target.size(),CV_8UC3);
+        std::vector<cv::Mat> predict_buf;
+        std::vector<std::vector<cv::Point2i>> buffer;
+        std::vector<cv::Point2i> tmp;
+        std::ofstream tri_list;
 
-    const int POINT_MAX = 250; // static_cast<int>(((ref.cols + ref.rows) * 4) / 5 * (corner_ratio / 10.0)); // 特徴点の最大個数
+        // デバッグ用に三角パッチごとの座標とPSNRを出していた
+        tri_list = std::ofstream("tri_list.csv");
+        predict_buf.emplace_back(predict_img0);
+        predict_buf.emplace_back(predict_img1);
+        predict_buf.emplace_back(predict_img2);
+        predict_buf.emplace_back(predict_img3);
 
-    corners.clear();
-    std::vector<cv::Point2f> corners_R,corners_G,corners_B,corners_Y;
-    // 特徴点抽出(GFTTDetector)
-    cv::goodFeaturesToTrack(residual_ref, corners_org, POINT_MAX, GFTT_QUAULITY, 24,residual_ref, 3);
-    cv::goodFeaturesToTrack(targetx4_Y, corners_Y, POINT_MAX, GFTT_QUAULITY, 16,Maskx4, 3);//8
-    cv::goodFeaturesToTrack(targetx4_R, corners_R, POINT_MAX, GFTT_QUAULITY, 8,targetx4_R, 3);
-    cv::goodFeaturesToTrack(targetx4_G, corners_G, POINT_MAX, GFTT_QUAULITY, 8,targetx4_G, 3);
-    cv::goodFeaturesToTrack(targetx4_B, corners_B, POINT_MAX, GFTT_QUAULITY, 8,targetx4_B, 3);
-     // image – 8ビットまたは浮動小数点型，シングルチャンネルの入力画像．
-     // corners – 検出されたコーナーが出力されるベクトル．
-     // maxCorners – 出力されるコーナーの最大数．これより多い数のコーナーが検出された場合，より強いコーナーが出力されます．
-     // qualityLevel – 許容される画像コーナーの最低品質を決定します．このパラメータ値を，最良のコーナーを示す測度（ cornerMinEigenVal() で述べた最小固有値や， cornerHarris() で述べた Harris 関数の応答）に乗じます．その掛け合わされた値よりも品質度が低いコーナーは，棄却されます．例えば，コーナーの最高品質度 = 1500， qualityLevel=0.01 である場合，品質度が15より小さいすべてのコーナーが棄却されます．
-     // minDistance – 出力されるコーナー間で許容される，最小ユークリッド距離．
-      corners_org.clear();
-      for(int i = 0;i < (int)corners_R.size();i++){
-          bool flag = true;
-          for(int j = 0;j < (int)corners_org.size();j++){
-              if(corners_R[i].x == corners_org[j].x && corners_R[i].y == corners_org[j].y)flag = false;
-          }
-          if(flag) {
-              //corners_org.emplace_back(corners_R[i]);
-          }
-      }
-      std::cout << "check2" << std::endl;
-      for(int i = 0;i < (int)corners_G.size();i++){
-          bool flag = true;
-          for(int j = 0;j < (int)corners_org.size();j++){
-              if(corners_G[i].x == corners_org[j].x && corners_G[i].y == corners_org[j].y)flag = false;
-          }
-          if(flag) {
-              //corners_org.emplace_back(corners_G[i]);
-          }
-      }
-      std::cout << "check3" << std::endl;
-      for(int i = 0;i < (int)corners_B.size();i++){
-          bool flag = true;
-          for(int j = 0;j < (int)corners_org.size();j++){
-              if(corners_B[i].x == corners_org[j].x && corners_B[i].y == corners_org[j].y)flag = false;
-          }
-          if(flag) {
-              //corners_org.emplace_back(corners_B[i]);
-          }
-      }
-      for(int i = 0;i < (int)corners_Y.size();i++){
-          bool flag = true;
-          for(int j = 0;j < (int)corners_org.size();j++){
-              if(corners_Y[i].x == corners_org[j].x && corners_Y[i].y == corners_org[j].y)flag = false;
-          }
-          if(flag) {
-              corners_org.emplace_back(corners_Y[i]);
-          }
-      }
-      std::cout << "check4" << std::endl;
-      for(int i = 0;i < (int)corners_org.size();i++){
-          if(residual_refx4.at<unsigned char>(corners_org[i].y,corners_org[i].x) <= 1){
-              corners_org.erase(corners_org.begin() + i);
-              i--;
-          }
-      }
-      for(int i = 0;i < (int)corners_org.size();i++){
-          corners_org[i] *= 4;
-      }
-    // 外周に点を打つ
-    addSideCorners(target, corners_org);
-    //add_corner_edge(corners_org,canny,16,100);
+        // QP変化させた参照画像はここで読む
+        ref = cv::imread(ref_intra_file_path);
+        target = cv::imread(target_file_path);
 
-    // 頂点の量子化
-    corners_org = cornersQuantization(corners_org, target);
-    puts("Quantized");
+        // ガウスニュートン法の階層化でのみ使用するきれいなiフレーム
+        ref_gauss = cv::imread(ref_file_path);
 
-    // 頂点の動きをブロックマッチングで求める -----------------------------------------------------------------------
-    cv::Mat points = target.clone();
-    std::pair<std::vector<cv::Point2f>, std::priority_queue<int>> ret_ref_corners = getReferenceImageCoordinates(
-            ref, target, corners_org, points);
-      ref_corners_org = ret_ref_corners.first;
+        // ガウスニュートン法で使用する縮小フレーム（移動平均）
+        refx2 = half(ref_gauss, 2);
+        targetx2 = half(target, 2);
+        refx4 = half(refx2, 2);
+        targetx4 = half(targetx2, 2);
+        refx8 = half(refx4, 2);
+        targetx8 = half(targetx4, 2);
 
-     // std::vector<cv::Point2f> ret_ref_corners(corners_org.size(), cv::Point2f(0.0, 0.0));
-     //ref_corners_org = ret_ref_corners;
+        // ガウスニュートン法で使用する縮小フレーム（間引き）
+        // TODO: デバッグ
+        targetx4_sharp = half_sharp(targetx8);
+        targetx2_sharp = half_sharp(targetx4_sharp);
+        target_sharp = half_sharp(targetx2_sharp);
+        ref_ref = cv::imread(r_r_file_path);
 
-    corners.clear();
-    for (int i = 0; i < (int) corners_org.size(); i++) corners.emplace_back(corners_org[i]);
-    ref_corners.clear();
-    for (int i = 0; i < (int) ref_corners_org.size(); i++) ref_corners.emplace_back(ref_corners_org[i]);
+        // 差分画像（？）
+        cv::Mat residual_ref = cv::Mat::zeros(target.size(),CV_8UC1);
+        cv::Mat Maskx4 = cv::Mat::zeros(targetx4.size(),CV_8UC1);
 
-    // for (int corner_ratio = 10; corner_ratio > 0; corner_ratio-=2) {
+        // GFTTで周りに特徴点をとってほしくないので、8px内側だけ取るように
+        int crop_W = 8,crop_H = 8;
+        for (int j = crop_H;j < targetx4.rows - crop_H;j++){
+            for(int i = crop_W;i < targetx4.cols - crop_W;i++){
+                Maskx4.at<unsigned char>(j,i) = 1;
+            }
+        }
+
+        cv::Mat residual_ref_bi, targetx4_Y;
+        cv::Mat target_Y = target_gray;
+
+        cvtColor(ref_gauss, ref_gauss_gray, cv::COLOR_BGR2GRAY);
+        cvtColor(target, target_gray, cv::COLOR_BGR2GRAY);
+        cvtColor(targetx4, targetx4_Y, cv::COLOR_BGR2GRAY);
+
+        // 平滑化フィルタでエッジを減らした
+        cv::bilateralFilter(ref_gauss_gray,ref_bi,5,150,150,CV_HAL_BORDER_REFLECT_101);
+        cv::bilateralFilter(target_gray,target_bi,5,150,150,CV_HAL_BORDER_REFLECT_101);
+
+        // 参照画像と対象画像の差分画像
+        for(int j = 0;j < target.rows;j++) {
+            for (int i = 0; i < target.cols; i++) {
+                int y = abs(target_bi.at<unsigned char>(j, i) - ref_bi.at<unsigned char>(j, i));
+                if(y < 0)
+                    y = 0;
+                else if(y > 255)
+                    y = 255;
+                residual_ref.at<unsigned char>(j,i) = (unsigned char)y;
+            }
+        }
+
+        // 平滑化フィルタ
+        cv::bilateralFilter(residual_ref,residual_ref_bi,5,150,150,CV_HAL_BORDER_REFLECT_101);
+        cv::imwrite(img_directory + "residual_ref.bmp",residual_ref);
+
+        cv::Mat residual_refx2 =   half_MONO(residual_ref,2);
+        cv::Mat residual_refx4 = half_MONO(residual_refx2,2);
+
+        double high_th = 100;
+        double low_th = 0;
+        cv::Canny(residual_ref,canny,high_th,low_th);
+        high_th = 100;
+        low_th = 0;
+        cv::Canny(target_Y,canny_target,high_th,low_th);
+        cv::imwrite("canny.bmp", canny);
+        cv::imwrite("canny_target.bmp", canny_target);
+        cv::imwrite("reidal_ref_bi.bmp", residual_ref_bi);
+
+        // ドロネー分割 -------------------------------------------------------------------------
+        const int POINT_MAX = 250; // 特徴点の最大個数
+        corners.clear();
+        std::vector<cv::Point2f> corners_R,corners_G,corners_B,corners_target_Y;
+        // 特徴点抽出(GFTTDetector) 差分画像と1/4縮小した対象画像でGFTT
+        // image – 8ビットまたは浮動小数点型，シングルチャンネルの入力画像．
+        // corners – 検出されたコーナーが出力されるベクトル．
+        // maxCorners – 出力されるコーナーの最大数．これより多い数のコーナーが検出された場合，より強いコーナーが出力されます．
+        // qualityLevel – 許容される画像コーナーの最低品質を決定します．このパラメータ値を，最良のコーナーを示す測度（ cornerMinEigenVal() で述べた最小固有値や， cornerHarris() で述べた Harris 関数の応答）に乗じます．その掛け合わされた値よりも品質度が低いコーナーは，棄却されます．例えば，コーナーの最高品質度 = 1500， qualityLevel=0.01 である場合，品質度が15より小さいすべてのコーナーが棄却されます．
+        // minDistance – 出力されるコーナー間で許容される，最小ユークリッド距離．
+        cv::goodFeaturesToTrack(residual_ref, corners_org, POINT_MAX, GFTT_QUAULITY, 24,residual_ref, 3);
+        cv::goodFeaturesToTrack(targetx4_Y, corners_target_Y, POINT_MAX, GFTT_QUAULITY, 16,Maskx4, 3);//8
+
+        for(cv::Point2f &corner : corners_target_Y) corner *= 4;
+
+        // 差分画像上での頂点と、
+        for(int i = 0;i < (int)corners_target_Y.size();i++){
+            bool flag = true;
+            for(int j = 0;j < (int)corners_org.size();j++){
+                if(corners_target_Y[i].x == corners_org[j].x && corners_target_Y[i].y == corners_org[j].y){
+                    flag = false;
+                }
+            }
+            if(flag) {
+                corners_org.emplace_back(corners_target_Y[i]);
+            }
+        }
+
+        // あまりにも輝度値の変化がなければ頂点を削除
+        for(int i = 0;i < (int)corners_org.size();i++){
+            if(residual_refx4.at<unsigned char>(corners_org[i].y,corners_org[i].x) <= 1){
+                corners_org.erase(corners_org.begin() + i);
+                i--;
+            }
+        }
+
+        // 外周に点を打つ
+        addSideCorners(target, corners_org);
+
+        // 頂点の量子化
+        corners_org = cornersQuantization(corners_org, target);
+        puts("Quantized");
+
+        // 頂点の動きをブロックマッチングで求める -----------------------------------------------------------------------
+        cv::Mat points = target.clone();
+        std::pair<std::vector<cv::Point2f>, std::priority_queue<int>> ret_ref_corners = getReferenceImageCoordinates(
+                ref_gauss, target, corners_org, points);
+        ref_corners_org = ret_ref_corners.first;
+
+        corners.clear();
+        for (int i = 0; i < (int) corners_org.size(); i++) corners.emplace_back(corners_org[i]);
+        ref_corners.clear();
+        for (int i = 0; i < (int) ref_corners_org.size(); i++) ref_corners.emplace_back(ref_corners_org[i]);
+
+        // for (int corner_ratio = 10; corner_ratio > 0; corner_ratio-=2) {
 //    for(int corner_ratio = 1 ; corner_ratio <= 10 ; corner_ratio++) {
 //    double corner_ratio = 10;
 //    while(corner_ratio > 0){
+        {
 
-    {
+            double threshold = 17;
 
-      double threshold = 17;
-      double max_threshold = 17;
-      double th = 0.05;
-      while (threshold <= max_threshold) {
+            std::string out_file_name;
 
-        std::string out_file_name;
-
-        if (HARRIS) {
-          out_file_name =
-                  img_directory + out_file[0] + "_corners_size_" + std::to_string(corners.size()) + "." + out_file[1];
-        } else if (THRESHOLD) {
-          out_file_name = img_directory + out_file[0] + "_threshold_" + std::to_string(threshold) + "_lambda_" +
-                          std::to_string(LAMBDA) + "." + out_file[1];
-        }
-        std::cout << "out_file_name:" << out_file_name << std::endl;
-
-        std::cout << "target.cols = " << target.cols << "target.rows = "<< target.rows << std::endl;
-        // Subdiv2Dの初期化
-        cv::Size size = target.size();
-        cv::Rect rect(0, 0, size.width, size.height);
-        std::cout << "size.width = " << size.width << "size.height = " << size.height << std::endl;
-        cv::Subdiv2D subdiv(rect);
-        puts("Init subdiv2d");
-
-        std::cout << "corners.size():" << corners.size() << std::endl;
-        std::cout << "ref_corners's size :" << ref_corners.size() << std::endl;
-        std::cout << "corners's size     :" << corners.size() << std::endl;
-
-        // 頂点の動きベクトルを描画
-        for (int i = 0; i < (int) corners.size(); i++) {
-          drawPoint(points, corners[i], RED, 4);
-          drawPoint(points, cv::Point2d(ref_corners[i].x / 2.0, ref_corners[i].y / 2.0), BLUE, 4);
-          cv::line(points, corners[i], cv::Point2d(ref_corners[i].x / 2.0, ref_corners[i].y / 2.0), GREEN);
-        }
-        cv::imwrite(file_path + img_path + "points.png", points);
-
-        puts("insert");
-        // 点を追加
-        subdiv.insert(corners);
-
-        puts("insert md");
-
-        DelaunayTriangulation md(Rectangle(0, 0, target.cols, target.rows));
-        md.insert(corners);
-
-        std::vector<cv::Vec6f> triangles_mydelaunay;
-        md.getTriangleList(triangles_mydelaunay);
-        std::cout << "check1" << std::endl;
-        int cnt_erased_elem = 0;
-        // 頂点を間引いています（11回ほどやる）
-        for (int i = 0; i < 0; i++) {
-          std::cout << "erase:" << i + 1 << std::endl;
-          md = DelaunayTriangulation(Rectangle(0, 0, target.cols, target.rows));
-          md.insert(corners);
-          md.getTriangleList(triangles_mydelaunay);
-
-          cv::Mat corner_reduction = target.clone();
-          for(const cv::Vec6f t : triangles_mydelaunay){
-            cv::Point2f p1(t[0], t[1]), p2(t[2], t[3]), p3(t[4], t[5]);
-            //drawTriangle(corner_reduction, p1, p2, p3, BLUE);
-              drawTriangle_residual(corner_reduction, p1, p2, p3, BLUE,sobel_target);
-          }
-          cv::imwrite(img_directory + "corner_reduction_" + std::to_string(i) + ".png", corner_reduction);
-
-          std::priority_queue<int> ret_unnecessary_pt = md.getUnnecessaryPoint(ref_corners, threshold, target);
-
-          std::cout << "threshold:" << threshold << std::endl;
-          std::cout << "erase elem size:" << ret_unnecessary_pt.size() << std::endl;
-
-          cnt_erased_elem += ret_unnecessary_pt.size();
-
-          while (!ret_unnecessary_pt.empty()) {
-            int idx = ret_unnecessary_pt.top();
-            ret_unnecessary_pt.pop();
-            corners.erase(corners.begin() + idx);
-            ref_corners.erase(ref_corners.begin() + idx);
-          }
-        }
-          cv::Mat corner_residual_ref = residual_ref.clone();
-        for(int j = 0;j < target.rows;j++){
-            for(int i = 0;i < target.cols;i++){
-                int y = 1*M(corner_residual_ref,i,j);
-                if(y < 0)y = 0;
-                else if(y > 255)y = 255;
-                R(corner_residual_ref,i,j) = y;
-                G(corner_residual_ref,i,j) = y;
-                B(corner_residual_ref,i,j) = y;
+            if (HARRIS) {
+                out_file_name =
+                        img_directory + out_file[0] + "_corners_size_" + std::to_string(corners.size()) + "." + out_file[1];
+            } else if (THRESHOLD) {
+                out_file_name = img_directory + out_file[0] + "_threshold_" + std::to_string(threshold) + "_lambda_" +
+                                std::to_string(LAMBDA) + "." + out_file[1];
             }
-        }
-          cv::Mat corner_ref = ref.clone();
+            std::cout << "out_file_name:" << out_file_name << std::endl;
 
-          for(const cv::Vec6f t : triangles_mydelaunay){
-              cv::Point2f p1(t[0], t[1]), p2(t[2], t[3]), p3(t[4], t[5]);
-              //drawTriangle(corner_reduction, p1, p2, p3, BLUE);
-              drawTriangle(corner_ref, p1, p2, p3, BLUE);
-              drawTriangle(corner_residual_ref, p1, p2, p3, BLUE);
-          }
-          cv::imwrite(img_directory + "corner_ref" + ".png", corner_ref);
-          cv::imwrite(img_directory + "corner_residual_ref" + ".png", corner_residual_ref);
-          cv::imwrite(img_directory + "target_gray" + ".png", target_gray);
-/*
-          corners.clear();
-          corners.emplace_back(cv::Point2f(500,500));
-          corners.emplace_back(cv::Point2f(0,0));
-          corners.emplace_back(cv::Point2f(1919,0));
-          corners.emplace_back(cv::Point2f(0,1023));
-          corners.emplace_back(cv::Point2f(1919,1023));
-         */
-        //頂点削除
-/*
-        double erase_th_per = 0.6;
-          md.Sort_Coners(corners);
-          std::vector<double> sigma_tmp;
-          std::vector<Triangle> triangles_t = md.Get_triangles(corners);
-          double MSE = 0;
-          double triangle_sum = 0;
-          int fx[51] = {0};
-          for (int t = 0; t < (int)triangles_t.size(); t++) {
-              int triangle_size;
-              double RMSE;
-              double MSE_tmp = 0;
-              cv::Point2f p1(corners[triangles_t[t].p1_idx]), p2(corners[triangles_t[t].p2_idx]), p3(
-                      corners[triangles_t[t].p3_idx]);
-              Point3Vec target_corers = Point3Vec(p1, p2, p3);
-              Point3Vec prev_corners = Point3Vec(p1, p2, p3);
-              MSE_tmp = Gauss_Newton(ref, target, ref_intra, target_corers, prev_corners, triangle_size);
-              MSE += MSE_tmp;
-              triangle_sum += triangle_size;
-              sigma_tmp.emplace_back(MSE_tmp);
-              RMSE = sqrt(MSE_tmp / triangle_size);
-              std::cout << "t = " << t << "/" << triangles_t.size()  << " RMSE = " << RMSE << std::endl;
-              if(RMSE < 50)fx[(int)RMSE]++;
-              else fx[50]++;
-          }
-          double myu = sqrt(MSE / triangle_sum);
-          double sigma = 0;
-          for(int i = 0;i < (int)sigma_tmp.size();i++){
-              sigma += (sqrt(sigma_tmp[i]) - myu) * (sqrt(sigma_tmp[i]) - myu);
-          }
-          sigma = sqrt(sigma/triangle_sum);
-          std::cout << "myu = "<< myu << "sigma = " << sigma << std::endl;
-          for(int i = 0;i < 51;i++) {
-              std::cout << "fx[" << i << "] = " << fx[i] << std::endl;
-          }
+            std::cout << "target.cols = " << target.cols << "target.rows = "<< target.rows << std::endl;
+            // Subdiv2Dの初期化
+            cv::Size size = target.size();
+            cv::Rect rect(0, 0, size.width, size.height);
+            std::cout << "size.width = " << size.width << "size.height = " << size.height << std::endl;
+            cv::Subdiv2D subdiv(rect);
+            puts("Init subdiv2d");
 
-          //double erase_th = (MSE / triangle_sum) * 10 / pow(2, q);
-          double erase_th = (myu + sigma) * (myu + sigma);
-          //double erase_th = 100;
-          erase_th_global = erase_th;
-          std::cout << "erase_th = " << erase_th << std::endl;
-          std::cout << "check2" << std::endl;
+            std::cout << "corners.size():" << corners.size() << std::endl;
+            std::cout << "ref_corners's size :" << ref_corners.size() << std::endl;
+            std::cout << "corners's size     :" << corners.size() << std::endl;
+
+            // 頂点の動きベクトルを描画
+            for (int i = 0; i < (int) corners.size(); i++) {
+                drawPoint(points, corners[i], RED, 4);
+                drawPoint(points, cv::Point2d(ref_corners[i].x / 2.0, ref_corners[i].y / 2.0), BLUE, 4);
+                cv::line(points, corners[i], cv::Point2d(ref_corners[i].x / 2.0, ref_corners[i].y / 2.0), GREEN);
+            }
+            cv::imwrite(file_path + img_path + "points.png", points);
+
+            puts("insert");
+            // 点を追加
+            subdiv.insert(corners);
+
+            DelaunayTriangulation md(Rectangle(0, 0, target.cols, target.rows));
+            md.insert(corners);
+
+            std::vector<cv::Vec6f> triangles_mydelaunay;
+            md.getTriangleList(triangles_mydelaunay);
+
+            cv::Mat corner_ref = ref_gauss.clone();
+            for(const cv::Vec6f t : triangles_mydelaunay){
+                cv::Point2f p1(t[0], t[1]), p2(t[2], t[3]), p3(t[4], t[5]);
+                drawTriangle(corner_ref, p1, p2, p3, BLUE);
+            }
+            cv::imwrite(img_directory + "corner_ref" + ".png", corner_ref);
+
+            //　頂点削除
+            double erase_th_per = 0.6;
+
+            // 密集しているところから消すために、距離でソート
+            md.Sort_Coners(corners);
+
+            std::vector<double> sigma_tmp;
+            std::vector<Triangle> triangles_t = md.Get_triangles(corners);
+            double MSE = 0;
+            double triangle_sum = 0;
+            for (int t = 0; t < (int)triangles_t.size(); t++) {
+                cv::Point2f p1(corners[triangles_t[t].p1_idx]), p2(corners[triangles_t[t].p2_idx]), p3(corners[triangles_t[t].p3_idx]);
+                // TODO: 要確認
+                Point3Vec target_corers = Point3Vec(p1, p2, p3);
+                Point3Vec prev_corners = Point3Vec(p1, p2, p3);
+
+                int triangle_size;
+                double MSE_tmp = Gauss_Newton(ref_gauss, target, ref, target_corers, prev_corners, triangle_size);
+                MSE += MSE_tmp;
+                triangle_sum += triangle_size;
+                sigma_tmp.emplace_back(MSE_tmp);
+
+                double RMSE = sqrt(MSE_tmp / triangle_size);
+                std::cout << "t = " << t << "/" << triangles_t.size()  << " RMSE = " << RMSE << std::endl;
+            }
+            double myu = sqrt(MSE / triangle_sum);
+            double sigma = 0;
+            for(const auto e : sigma_tmp){
+                sigma += (sqrt(e) - myu) * (sqrt(e) - myu);
+            }
+            sigma = sqrt(sigma/triangle_sum);
+            std::cout << "myu = "<< myu << "sigma = " << sigma << std::endl;
+
+            // ガウス分布と仮定すると、ここは変曲点（大嘘）
+            double erase_th = (myu + sigma) * (myu + sigma);
+            erase_th_global = erase_th;
+            std::cout << "erase_th = " << erase_th << std::endl;
+            std::cout << "check2" << std::endl;
+
             for (int q = 0; q < 4; q++) {
-*/
-                /*
                 md.insert(corners);
                 md.getTriangleList(triangles_mydelaunay);
                 md.Sort_Coners(corners);
@@ -662,7 +479,7 @@ int main(int argc, char *argv[]) {
                             corners[triangles_t[t].p3_idx]);
                     Point3Vec target_corers = Point3Vec(p1, p2, p3);
                     Point3Vec prev_corners = Point3Vec(p1, p2, p3);
-                    MSE_tmp = Gauss_Newton(ref, target, ref_intra, target_corers, prev_corners, triangle_size);
+                    MSE_tmp = Gauss_Newton(ref_gauss, target, ref, target_corers, prev_corners, triangle_size);
                     MSE += MSE_tmp;
                     triangle_sum += triangle_size;
                     sigma_tmp.emplace_back(MSE_tmp);
@@ -687,8 +504,8 @@ int main(int argc, char *argv[]) {
                 //double erase_th = 100;
                 erase_th_global = erase_th;
                 std::cout << "erase_th = " << erase_th << std::endl;
-                 */
-/*
+
+
                 for (int idx = 0; idx < (int) corners.size(); idx++) {
                     bool erase_flag = false;
                     int erase_cout = 0;
@@ -743,8 +560,8 @@ int main(int argc, char *argv[]) {
                         Point3Vec prev_corners = Point3Vec(corners[triangle.p1_idx], corners[triangle.p2_idx],
                                                            corners[triangle.p3_idx]);
                         //std::cout << "prev_Gauss" << std::endl;
-                        MSE_tmp = Gauss_Newton(ref, target, ref_intra, triangleVec, prev_corners, triangle_size);
-                        //Gauss_Newton2(ref,target,ref_intra, predict_buf,predict_warp,predict_para, color, error_warp, triangleVec, prev_corners, tri_list,&para_flag,add_corner_dummy,&add_count_dummy,t,residual_ref,triangle_size, false,erase_th_global);
+                        MSE_tmp = Gauss_Newton(ref_gauss, target, ref, triangleVec, prev_corners, triangle_size);
+                        //Gauss_Newton2(ref_gauss,target,ref, predict_buf,predict_warp,predict_para, color, error_warp, triangleVec, prev_corners, tri_list,&para_flag,add_corner_dummy,&add_count_dummy,t,residual_ref,triangle_size, false,erase_th_global);
                         std::cout << "triangle_size = " << triangle_size << "MSE_tmp = " << MSE_tmp << std::endl;
                         MSE_prev += MSE_tmp;
                         triangle_size_sum_prev += triangle_size;
@@ -757,7 +574,7 @@ int main(int argc, char *argv[]) {
                     MSE_prev /= triangle_size_sum_prev;
                     std::cout << "MSE_prev = " << MSE_prev << std::endl;
                     //for (const bool flag:flag_around) {
-                        //std::cout<< flag << std::endl;
+                    //std::cout<< flag << std::endl;
                     //}
                     corners_later.erase(corners_later.begin() + idx);
                     flag_around.erase(flag_around.begin() + idx);
@@ -776,7 +593,7 @@ int main(int argc, char *argv[]) {
                         Point3Vec prev_corners = Point3Vec(corners[triangle.p1_idx], corners[triangle.p2_idx],
                                                            corners[triangle.p3_idx]);
                         //std::cout << "later_Gauss" << std::endl;
-                        MSE_tmp= Gauss_Newton(ref, target, ref_intra, triangleVec, prev_corners, triangle_size);
+                        MSE_tmp= Gauss_Newton(ref_gauss, target, ref, triangleVec, prev_corners, triangle_size);
                         MSE_later += MSE_tmp;
                         triangle_size_sum_later += triangle_size;
                         std::cout << "triangle_size = " << triangle_size <<  "MSE_later = " << MSE_tmp << std::endl;
@@ -803,8 +620,8 @@ int main(int argc, char *argv[]) {
                     }
                 }
             }
-*/
-            /*
+
+
             for (int idx = 0; idx < (int) corners.size(); idx++) {
                 double min_distance = md.neighbor_distance(corners, idx);
                 int mv_distance = std::min(8, (int) pow(2, (int) std::log2(sqrt(min_distance) / 2)));
@@ -872,7 +689,7 @@ int main(int argc, char *argv[]) {
                                                                ref_corners[triangle.p2_idx],
                                                                ref_corners[triangle.p3_idx]);
                             //std::cout << "later_Gauss" << std::endl;
-                            MSE_later += Gauss_Newton(ref, target, ref_intra, triangleVec, prev_corners, triangle_size);
+                            MSE_later += Gauss_Newton(ref_gauss, target, ref, triangleVec, prev_corners, triangle_size);
                             triangle_size_sum_later += triangle_size;
                             //std::cout << "MSE_later = " << MSE_later << std::endl;
                         }
@@ -882,263 +699,260 @@ int main(int argc, char *argv[]) {
                     }
                 }
             }
-*/
-/*
-        std::ofstream corner_list = std::ofstream("corner_list_" + corner_file_name + ".dat");
-        for(const cv::Point2f point : corners){
-            corner_list << point.x << " " << point.y << std::endl;
-        }
-*/
-        std::ifstream in_corner_list = std::ifstream("corner_list_" + corner_file_name + ".dat");
-         // std::ifstream in_corner_list = std::ifstream("corner_list_car_38_5_34.dat");
-          std::string str1;
-          int point_x,point_y;
-          corners.clear();
-          while (getline(in_corner_list, str1)) {
-              sscanf(str1.data(), "%d %d", &point_x,&point_y);
-              corners.emplace_back(cv::Point2f(point_x,point_y));
-          }
-/*
-          cv::Mat color = cv::Mat::zeros(target.size(),CV_8UC3);
-          std::vector<cv::Point2f> add_corner_dummy;
-          int add_count_dummy = 0;
-          cv::Mat predict_img0 = cv::Mat::zeros(targetx8.size(), CV_8UC3);
-          cv::Mat predict_img1 = cv::Mat::zeros(targetx4.size(), CV_8UC3);
-          cv::Mat predict_img2 = cv::Mat::zeros(targetx2.size(), CV_8UC3);
-          cv::Mat predict_img3 = cv::Mat::zeros(target.size(), CV_8UC3);
-          cv::Mat predict_warp = cv::Mat::zeros(target.size(),CV_8UC3);
-          cv::Mat predict_para = cv::Mat::zeros(target.size(),CV_8UC3);
-          cv::Point2f mv_diff,mv_prev;
-          std::vector<cv::Mat> predict_buf;
-          std::vector<std::vector<cv::Point2i>> buffer;
-          std::vector<cv::Point2i> tmp;
-          std::ofstream tri_list;
-          bool para_flag = false;
-          int Quant = 4;
-          tri_list = std::ofstream("tri_list.csv");
-          predict_buf.emplace_back(predict_img0);
-          predict_buf.emplace_back(predict_img1);
-          predict_buf.emplace_back(predict_img2);
-          predict_buf.emplace_back(predict_img3);
-          std::vector<cv::Point2f> edge_corners = slide_corner_edge(corners,canny_target,8);
-          std::vector<cv::Point2f> later_corners = corners;
-          for(int idx = 0;idx < (int)corners.size();idx++) {
-              if (corners[idx].x == 0.0 || corners[idx].y == 0.0 ||
-                  corners[idx].x == target.cols - 1 || corners[idx].y == target.rows - 1) {
-                  continue;
-              }
-              std::vector<std::pair<cv::Point2f, double>> point_pairs;
-              std::pair<cv::Point2f, double> point_pair;
-              std::vector<bool> flag_around = std::vector<bool>(corners.size(), false);
-              for(int i = 0;i <= 1;i++) {
-                  if(i == 0)later_corners[idx] = corners[idx];
-                  else if(i == 1)later_corners[idx] = edge_corners[idx];
-                  for (int c_idx = 0; c_idx < (int) corners.size(); c_idx++) {
-                      if (later_corners[idx] == corners[c_idx]) {
-                          later_corners[idx] = corners[idx];
-                      }
-                  }
-                  point_pair.first = later_corners[idx];
-                  DelaunayTriangulation md_later(Rectangle(0, 0, target.cols, target.rows));
-                  md_later.insert(later_corners);
-                  std::vector<Triangle> triangles_later;
-                  int triangle_size_sum_later = 0;
-                  double MSE_later = 0;
-                  triangles_later = md_later.Get_triangles_around(idx, later_corners, flag_around);
+
+
+            std::ofstream corner_list = std::ofstream("corner_list_" + corner_file_name + ".dat");
+            for(const cv::Point2f point : corners){
+                corner_list << point.x << " " << point.y << std::endl;
+            }
+
+            std::ifstream in_corner_list = std::ifstream("corner_list_" + corner_file_name + ".dat");
+            // std::ifstream in_corner_list = std::ifstream("corner_list_car_38_5_34.dat");
+            std::string str1;
+            int point_x,point_y;
+            corners.clear();
+            while (getline(in_corner_list, str1)) {
+                sscanf(str1.data(), "%d %d", &point_x,&point_y);
+                corners.emplace_back(cv::Point2f(point_x,point_y));
+            }
+
+            cv::Mat color = cv::Mat::zeros(target.size(),CV_8UC3);
+            std::vector<cv::Point2f> add_corner_dummy;
+            int add_count_dummy = 0;
+            cv::Mat predict_img0 = cv::Mat::zeros(targetx8.size(), CV_8UC3);
+            cv::Mat predict_img1 = cv::Mat::zeros(targetx4.size(), CV_8UC3);
+            cv::Mat predict_img2 = cv::Mat::zeros(targetx2.size(), CV_8UC3);
+            cv::Mat predict_img3 = cv::Mat::zeros(target.size(), CV_8UC3);
+            cv::Mat predict_warp = cv::Mat::zeros(target.size(),CV_8UC3);
+            cv::Mat predict_para = cv::Mat::zeros(target.size(),CV_8UC3);
+            cv::Point2f mv_diff,mv_prev;
+            std::vector<cv::Mat> predict_buf;
+            std::vector<std::vector<cv::Point2i>> buffer;
+            std::vector<cv::Point2i> tmp;
+            std::ofstream tri_list;
+            bool para_flag = false;
+            int Quant = 4;
+            tri_list = std::ofstream("tri_list.csv");
+            predict_buf.emplace_back(predict_img0);
+            predict_buf.emplace_back(predict_img1);
+            predict_buf.emplace_back(predict_img2);
+            predict_buf.emplace_back(predict_img3);
+            std::vector<cv::Point2f> edge_corners = slide_corner_edge(corners,canny_target,8);
+            std::vector<cv::Point2f> later_corners = corners;
+            for(int idx = 0;idx < (int)corners.size();idx++) {
+                if (corners[idx].x == 0.0 || corners[idx].y == 0.0 ||
+                    corners[idx].x == target.cols - 1 || corners[idx].y == target.rows - 1) {
+                    continue;
+                }
+                std::vector<std::pair<cv::Point2f, double>> point_pairs;
+                std::pair<cv::Point2f, double> point_pair;
+                std::vector<bool> flag_around = std::vector<bool>(corners.size(), false);
+                for(int i = 0;i <= 1;i++) {
+                    if(i == 0)later_corners[idx] = corners[idx];
+                    else if(i == 1)later_corners[idx] = edge_corners[idx];
+                    for (int c_idx = 0; c_idx < (int) corners.size(); c_idx++) {
+                        if (later_corners[idx] == corners[c_idx]) {
+                            later_corners[idx] = corners[idx];
+                        }
+                    }
+                    point_pair.first = later_corners[idx];
+                    DelaunayTriangulation md_later(Rectangle(0, 0, target.cols, target.rows));
+                    md_later.insert(later_corners);
+                    std::vector<Triangle> triangles_later;
+                    int triangle_size_sum_later = 0;
+                    double MSE_later = 0;
+                    triangles_later = md_later.Get_triangles_around(idx, later_corners, flag_around);
 #pragma omp parallel for
-                  for (int t = 0; t < (int) triangles_later.size(); t++) {
-                      //std::cout << "t = " << t << " / " << triangles_later.size() << std::endl;
-                      int triangle_size;
-                      double error_warp;
-                      Triangle triangle = triangles_later[t];
-                      Point3Vec triangleVec(later_corners[triangle.p1_idx], later_corners[triangle.p2_idx],
-                                            later_corners[triangle.p3_idx]);
-                      Point3Vec prev_corners = Point3Vec(ref_corners[triangle.p1_idx], ref_corners[triangle.p2_idx],
-                                                         ref_corners[triangle.p3_idx]);
+                    for (int t = 0; t < (int) triangles_later.size(); t++) {
+                        //std::cout << "t = " << t << " / " << triangles_later.size() << std::endl;
+                        int triangle_size;
+                        double error_warp;
+                        Triangle triangle = triangles_later[t];
+                        Point3Vec triangleVec(later_corners[triangle.p1_idx], later_corners[triangle.p2_idx],
+                                              later_corners[triangle.p3_idx]);
+                        Point3Vec prev_corners = Point3Vec(ref_corners[triangle.p1_idx], ref_corners[triangle.p2_idx],
+                                                           ref_corners[triangle.p3_idx]);
 
-                      //MSE_later += Gauss_Newton(ref, target, ref_intra, triangleVec, prev_corners, triangle_size);
-                      Gauss_Newton2(ref, target, ref_intra, predict_buf, predict_warp, predict_para, color, error_warp,
-                                    triangleVec, prev_corners, tri_list, &para_flag, add_corner_dummy, &add_count_dummy,
-                                    t, residual_ref, triangle_size, false);
-                      MSE_later += error_warp;
-                      triangle_size_sum_later += triangle_size;
-                  }
-                  MSE_later /= triangle_size_sum_later;
+                        //MSE_later += Gauss_Newton(ref_gauss, target, ref, triangleVec, prev_corners, triangle_size);
+                        Gauss_Newton2(ref_gauss, target, ref, predict_buf, predict_warp, predict_para, color, error_warp,
+                                      triangleVec, prev_corners, tri_list, &para_flag, add_corner_dummy, &add_count_dummy,
+                                      t, residual_ref, triangle_size, false);
+                        MSE_later += error_warp;
+                        triangle_size_sum_later += triangle_size;
+                    }
+                    MSE_later /= triangle_size_sum_later;
 
-                  point_pair.second = MSE_later;
-                  if(i == 0)point_pair.second -= 0.5;
-                  point_pairs.emplace_back(point_pair);
-                  std::cout << "idx = " << idx << " / " << corners.size() << "i = " << i << "corners = "
-                            << corners[idx] << "later_corners = " << later_corners[idx] << MSE_later << std::endl;
-              }
-              bubbleSort(point_pairs, point_pairs.size());
-              corners[idx] = point_pairs[0].first;
-          }
-          */
-/*
-          std::vector<cv::Point2f> later_corners = corners;
-          cv::Mat color = cv::Mat::zeros(target.size(),CV_8UC3);
-          std::vector<cv::Point2f> add_corner_dummy;
-          int add_count_dummy = 0;
-          cv::Mat predict_img0 = cv::Mat::zeros(targetx8.size(), CV_8UC3);
-          cv::Mat predict_img1 = cv::Mat::zeros(targetx4.size(), CV_8UC3);
-          cv::Mat predict_img2 = cv::Mat::zeros(targetx2.size(), CV_8UC3);
-          cv::Mat predict_img3 = cv::Mat::zeros(target.size(), CV_8UC3);
-          cv::Mat predict_warp = cv::Mat::zeros(target.size(),CV_8UC3);
-          cv::Mat predict_para = cv::Mat::zeros(target.size(),CV_8UC3);
-          cv::Point2f mv_diff,mv_prev;
-          std::vector<cv::Mat> predict_buf;
-          std::vector<std::vector<cv::Point2i>> buffer;
-          std::vector<cv::Point2i> tmp;
-          std::ofstream tri_list;
-          bool para_flag = false;
-          int Quant = 4;
+                    point_pair.second = MSE_later;
+                    if(i == 0)point_pair.second -= 0.5;
+                    point_pairs.emplace_back(point_pair);
+                    std::cout << "idx = " << idx << " / " << corners.size() << "i = " << i << "corners = "
+                              << corners[idx] << "later_corners = " << later_corners[idx] << MSE_later << std::endl;
+                }
+                bubbleSort(point_pairs, point_pairs.size());
+                corners[idx] = point_pairs[0].first;
+            }
 
-          tri_list = std::ofstream("tri_list.csv");
-          predict_buf.emplace_back(predict_img0);
-          predict_buf.emplace_back(predict_img1);
-          predict_buf.emplace_back(predict_img2);
-          predict_buf.emplace_back(predict_img3);
-          for(int idx = 0;idx < (int)corners.size();idx++){
-              if (corners[idx].x == 0.0 || corners[idx].y == 0.0 ||
-                  corners[idx].x == target.cols - 1 || corners[idx].y == target.rows - 1) {
-                  continue;
-              }
-              double min_distance = md.neighbor_distance(corners,idx);
-              int mv_distance = std::min(4,(int)pow(2,(int)std::log2((min_distance/2))));
-              std::cout << "min_distance = " << sqrt(min_distance) << std::endl;
-              std::cout << "mv_distance = " << mv_distance << std::endl;
-              std::vector<std::pair<cv::Point2f,double>> point_pairs;
-              std::pair<cv::Point2f,double> point_pair;
-              std::vector<bool> flag_around = std::vector<bool>(corners.size(), false);
-              while(mv_distance >= 1) {
-                  int triangle_size_sum_prev;
-                  for (int direct = 0; direct < 9; direct++) {
-                      if(direct == 0){
-                          later_corners[idx].x = corners[idx].x;
-                          later_corners[idx].y = corners[idx].y;
-                      }
-                      else if (direct == 1) {
-                          later_corners[idx].x = corners[idx].x + mv_distance;
-                          later_corners[idx].y = corners[idx].y;
-                      } else if (direct == 2) {
-                          later_corners[idx].x = corners[idx].x;
-                          later_corners[idx].y = corners[idx].y + mv_distance;
-                      } else if (direct == 3) {
-                          later_corners[idx].x = corners[idx].x - mv_distance;
-                          later_corners[idx].y = corners[idx].y;
-                      } else if (direct == 4) {
-                          later_corners[idx].x = corners[idx].x;
-                          later_corners[idx].y = corners[idx].y - mv_distance;
-                      } else if (direct == 5) {
-                          later_corners[idx].x = corners[idx].x + mv_distance;
-                          later_corners[idx].y = corners[idx].y + mv_distance;
-                      } else if (direct == 6) {
-                          later_corners[idx].x = corners[idx].x - mv_distance;
-                          later_corners[idx].y = corners[idx].y + mv_distance;
-                      } else if (direct == 7) {
-                          later_corners[idx].x = corners[idx].x - mv_distance;
-                          later_corners[idx].y = corners[idx].y - mv_distance;
-                      } else if (direct == 8) {
-                          later_corners[idx].x = corners[idx].x + mv_distance;
-                          later_corners[idx].y = corners[idx].y - mv_distance;
-                      }
-                      for(int c_idx = 0;c_idx < (int)corners.size();c_idx++){
-                          if(later_corners[idx] == corners[c_idx]){
-                              later_corners[idx] = corners[idx];
-                          }
-                      }
-                      if (later_corners[idx].x < 0)later_corners[idx].x = 0;
-                      else if (later_corners[idx].x > target.cols - 1)later_corners[idx].x = target.cols - 1;
-                      if (later_corners[idx].y < 0)later_corners[idx].y = 0;
-                      else if (later_corners[idx].y > target.rows - 1)later_corners[idx].y = target.rows - 1;
+            std::vector<cv::Point2f> later_corners = corners;
+            cv::Mat color = cv::Mat::zeros(target.size(),CV_8UC3);
+            std::vector<cv::Point2f> add_corner_dummy;
+            int add_count_dummy = 0;
+            cv::Mat predict_img0 = cv::Mat::zeros(targetx8.size(), CV_8UC3);
+            cv::Mat predict_img1 = cv::Mat::zeros(targetx4.size(), CV_8UC3);
+            cv::Mat predict_img2 = cv::Mat::zeros(targetx2.size(), CV_8UC3);
+            cv::Mat predict_img3 = cv::Mat::zeros(target.size(), CV_8UC3);
+            cv::Mat predict_warp = cv::Mat::zeros(target.size(),CV_8UC3);
+            cv::Mat predict_para = cv::Mat::zeros(target.size(),CV_8UC3);
+            cv::Point2f mv_diff,mv_prev;
+            std::vector<cv::Mat> predict_buf;
+            std::vector<std::vector<cv::Point2i>> buffer;
+            std::vector<cv::Point2i> tmp;
+            std::ofstream tri_list;
+            bool para_flag = false;
+            int Quant = 4;
 
-                      point_pair.first = later_corners[idx];
-                      DelaunayTriangulation md_later(Rectangle(0, 0, target.cols, target.rows));
-                      md_later.insert(later_corners);
-                      std::vector<Triangle> triangles_later;
-                      int triangle_size_sum_later = 0;
-                      double MSE_later = 0;
-                      triangles_later = md_later.Get_triangles_around(idx, later_corners, flag_around);
+            tri_list = std::ofstream("tri_list.csv");
+            predict_buf.emplace_back(predict_img0);
+            predict_buf.emplace_back(predict_img1);
+            predict_buf.emplace_back(predict_img2);
+            predict_buf.emplace_back(predict_img3);
+            for(int idx = 0;idx < (int)corners.size();idx++){
+                if (corners[idx].x == 0.0 || corners[idx].y == 0.0 ||
+                    corners[idx].x == target.cols - 1 || corners[idx].y == target.rows - 1) {
+                    continue;
+                }
+                double min_distance = md.neighbor_distance(corners,idx);
+                int mv_distance = std::min(4,(int)pow(2,(int)std::log2((min_distance/2))));
+                std::cout << "min_distance = " << sqrt(min_distance) << std::endl;
+                std::cout << "mv_distance = " << mv_distance << std::endl;
+                std::vector<std::pair<cv::Point2f,double>> point_pairs;
+                std::pair<cv::Point2f,double> point_pair;
+                std::vector<bool> flag_around = std::vector<bool>(corners.size(), false);
+                while(mv_distance >= 1) {
+                    int triangle_size_sum_prev;
+                    for (int direct = 0; direct < 9; direct++) {
+                        if(direct == 0){
+                            later_corners[idx].x = corners[idx].x;
+                            later_corners[idx].y = corners[idx].y;
+                        }
+                        else if (direct == 1) {
+                            later_corners[idx].x = corners[idx].x + mv_distance;
+                            later_corners[idx].y = corners[idx].y;
+                        } else if (direct == 2) {
+                            later_corners[idx].x = corners[idx].x;
+                            later_corners[idx].y = corners[idx].y + mv_distance;
+                        } else if (direct == 3) {
+                            later_corners[idx].x = corners[idx].x - mv_distance;
+                            later_corners[idx].y = corners[idx].y;
+                        } else if (direct == 4) {
+                            later_corners[idx].x = corners[idx].x;
+                            later_corners[idx].y = corners[idx].y - mv_distance;
+                        } else if (direct == 5) {
+                            later_corners[idx].x = corners[idx].x + mv_distance;
+                            later_corners[idx].y = corners[idx].y + mv_distance;
+                        } else if (direct == 6) {
+                            later_corners[idx].x = corners[idx].x - mv_distance;
+                            later_corners[idx].y = corners[idx].y + mv_distance;
+                        } else if (direct == 7) {
+                            later_corners[idx].x = corners[idx].x - mv_distance;
+                            later_corners[idx].y = corners[idx].y - mv_distance;
+                        } else if (direct == 8) {
+                            later_corners[idx].x = corners[idx].x + mv_distance;
+                            later_corners[idx].y = corners[idx].y - mv_distance;
+                        }
+                        for(int c_idx = 0;c_idx < (int)corners.size();c_idx++){
+                            if(later_corners[idx] == corners[c_idx]){
+                                later_corners[idx] = corners[idx];
+                            }
+                        }
+                        if (later_corners[idx].x < 0)later_corners[idx].x = 0;
+                        else if (later_corners[idx].x > target.cols - 1)later_corners[idx].x = target.cols - 1;
+                        if (later_corners[idx].y < 0)later_corners[idx].y = 0;
+                        else if (later_corners[idx].y > target.rows - 1)later_corners[idx].y = target.rows - 1;
+
+                        point_pair.first = later_corners[idx];
+                        DelaunayTriangulation md_later(Rectangle(0, 0, target.cols, target.rows));
+                        md_later.insert(later_corners);
+                        std::vector<Triangle> triangles_later;
+                        int triangle_size_sum_later = 0;
+                        double MSE_later = 0;
+                        triangles_later = md_later.Get_triangles_around(idx, later_corners, flag_around);
 #pragma omp parallel for
-                      for (int t = 0; t < (int) triangles_later.size(); t++) {
-                          //std::cout << "t = " << t << " / " << triangles_later.size() << std::endl;
-                          int triangle_size;
-                          double error_warp;
-                          Triangle triangle = triangles_later[t];
-                          Point3Vec triangleVec(later_corners[triangle.p1_idx], later_corners[triangle.p2_idx],
-                                                later_corners[triangle.p3_idx]);
-                          Point3Vec prev_corners = Point3Vec(ref_corners[triangle.p1_idx], ref_corners[triangle.p2_idx],
-                                                             ref_corners[triangle.p3_idx]);
+                        for (int t = 0; t < (int) triangles_later.size(); t++) {
+                            //std::cout << "t = " << t << " / " << triangles_later.size() << std::endl;
+                            int triangle_size;
+                            double error_warp;
+                            Triangle triangle = triangles_later[t];
+                            Point3Vec triangleVec(later_corners[triangle.p1_idx], later_corners[triangle.p2_idx],
+                                                  later_corners[triangle.p3_idx]);
+                            Point3Vec prev_corners = Point3Vec(ref_corners[triangle.p1_idx], ref_corners[triangle.p2_idx],
+                                                               ref_corners[triangle.p3_idx]);
 
-                          //MSE_later += Gauss_Newton(ref, target, ref_intra, triangleVec, prev_corners, triangle_size);
-                          Gauss_Newton2(ref,target,ref_intra, predict_buf,predict_warp,predict_para, color, error_warp, triangleVec, prev_corners, tri_list,&para_flag,add_corner_dummy,&add_count_dummy,t,residual_ref,triangle_size, false);
-                          MSE_later += error_warp;
-                          triangle_size_sum_later += triangle_size;
-                      }
-                      if(direct == 0)triangle_size_sum_prev = triangle_size_sum_later;
-                      double S_per = (double)triangle_size_sum_later/(double)triangle_size_sum_prev;
-                      MSE_later /= triangle_size_sum_later;
+                            //MSE_later += Gauss_Newton(ref_gauss, target, ref, triangleVec, prev_corners, triangle_size);
+                            Gauss_Newton2(ref_gauss,target,ref, predict_buf,predict_warp,predict_para, color, error_warp, triangleVec, prev_corners, tri_list,&para_flag,add_corner_dummy,&add_count_dummy,t,residual_ref,triangle_size, false);
+                            MSE_later += error_warp;
+                            triangle_size_sum_later += triangle_size;
+                        }
+                        if(direct == 0)triangle_size_sum_prev = triangle_size_sum_later;
+                        double S_per = (double)triangle_size_sum_later/(double)triangle_size_sum_prev;
+                        MSE_later /= triangle_size_sum_later;
 
-                      point_pair.second = MSE_later;
-                      if(direct == 0)point_pair.second -= 1;
-                      point_pairs.emplace_back(point_pair);
-                      std::cout << "idx = " << idx << " / " << corners.size() << "direct = " << direct << "corners = "
-                                << corners[idx] << "later_corners = " << later_corners[idx] << MSE_later << std::endl;
-                  }
-                  bubbleSort(point_pairs, point_pairs.size());
-                  corners[idx] = point_pairs[0].first;
-                  mv_distance /= 2;
-              }
-          }
-*/
-          std::ofstream corner_list_later = std::ofstream("corner_list_" + corner_file_name + "_later.dat");
-          for(const cv::Point2f point : corners){
-              corner_list_later << point.x << " " << point.y << std::endl;
-          }
+                        point_pair.second = MSE_later;
+                        if(direct == 0)point_pair.second -= 1;
+                        point_pairs.emplace_back(point_pair);
+                        std::cout << "idx = " << idx << " / " << corners.size() << "direct = " << direct << "corners = "
+                                  << corners[idx] << "later_corners = " << later_corners[idx] << MSE_later << std::endl;
+                    }
+                    bubbleSort(point_pairs, point_pairs.size());
+                    corners[idx] = point_pairs[0].first;
+                    mv_distance /= 2;
+                }
+            }
 
-/*
-          corners.clear();
-          corners.emplace_back(cv::Point2f(900,500));
-          corners.emplace_back(cv::Point2f(0,0));
-          corners.emplace_back(cv::Point2f(1919,0));
-          corners.emplace_back(cv::Point2f(0,1023));
-          corners.emplace_back(cv::Point2f(1919,1023));
-*/
+            std::ofstream corner_list_later = std::ofstream("corner_list_" + corner_file_name + "_later.dat");
+            for(const cv::Point2f point : corners){
+                corner_list_later << point.x << " " << point.y << std::endl;
+            }
 
-          int W_num = 12,H_num = 8;
-          int W_step = target.cols/W_num,H_step = target.rows/H_num;
-          corners.clear();
-          for(int j = 0;j <= H_num;j++){
-              for(int i = 0;i <= W_num;i++){
-                  int x = i*W_step,y = j*H_step;
-                  if(x >= target.cols)x = target.cols - 1;
-                  if(y >= target.rows)y = target.rows - 1;
-                  corners.emplace_back(cv::Point2f(x,y));
-              }
-          }
+            corners.clear();
+            corners.emplace_back(cv::Point2f(900,500));
+            corners.emplace_back(cv::Point2f(0,0));
+            corners.emplace_back(cv::Point2f(1919,0));
+            corners.emplace_back(cv::Point2f(0,1023));
+            corners.emplace_back(cv::Point2f(1919,1023));
 
-          for(int i = 0;i < (int)corners.size();i++){
-              std::cout << "corner[" << i <<"] =" << corners[i] << std::endl;
-          }
-          std::cout << "corners's size :" << corners.size() << std::endl;
-          std::cout << "ref_corners's size :" << ref_corners.size() << std::endl;
-          ret_ref_corners = getReferenceImageCoordinates(ref, target, corners, points);
+            int W_num = 12,H_num = 8;
+            int W_step = target.cols/W_num,H_step = target.rows/H_num;
+            corners.clear();
+            for(int j = 0;j <= H_num;j++){
+                for(int i = 0;i <= W_num;i++){
+                    int x = i*W_step,y = j*H_step;
+                    if(x >= target.cols)x = target.cols - 1;
+                    if(y >= target.rows)y = target.rows - 1;
+                    corners.emplace_back(cv::Point2f(x,y));
+                }
+            }
 
-          ref_corners_org = ret_ref_corners.first;
-          ref_corners.clear();
-          for (int i = 0; i < (int) ref_corners_org.size(); i++) ref_corners.emplace_back(ref_corners_org[i]);
-          std::cout << "corners's size :" << corners.size() << std::endl;
-          std::cout << "ref_corners's size :" << ref_corners.size() << std::endl;
-        /*
-          md = DelaunayTriangulation(Rectangle(0, 0, target.cols, target.rows));
-          md.insert(corners);
-          md.getTriangleList(triangles_mydelaunay);
-          corners = md.repair_around(corners,target);
-          md = DelaunayTriangulation(Rectangle(0, 0, target.cols, target.rows));
-          md.insert(corners);
-          md.getTriangleList(triangles_mydelaunay);
-          */
+            for(int i = 0;i < (int)corners.size();i++){
+                std::cout << "corner[" << i <<"] =" << corners[i] << std::endl;
+            }
+            std::cout << "corners's size :" << corners.size() << std::endl;
+            std::cout << "ref_corners's size :" << ref_corners.size() << std::endl;
+            ret_ref_corners = getReferenceImageCoordinates(ref_gauss, target, corners, points);
+
+            ref_corners_org = ret_ref_corners.first;
+            ref_corners.clear();
+            for (int i = 0; i < (int) ref_corners_org.size(); i++) ref_corners.emplace_back(ref_corners_org[i]);
+            std::cout << "corners's size :" << corners.size() << std::endl;
+            std::cout << "ref_corners's size :" << ref_corners.size() << std::endl;
+            /*
+              md = DelaunayTriangulation(Rectangle(0, 0, target.cols, target.rows));
+              md.insert(corners);
+              md.getTriangleList(triangles_mydelaunay);
+              corners = md.repair_around(corners,target);
+              md = DelaunayTriangulation(Rectangle(0, 0, target.cols, target.rows));
+              md.insert(corners);
+              md.getTriangleList(triangles_mydelaunay);
+              */
 /*
         corners.clear();
           corners.emplace_back(cv::Point2f(0,0));
@@ -1201,776 +1015,767 @@ int main(int argc, char *argv[]) {
           //corners.emplace_back(cv::Point2f(156,100));
 */
 
-        std::cout << "corner size(erased):" << corners.size() << std::endl;
+            std::cout << "corner size(erased):" << corners.size() << std::endl;
 
-        // 減らした点で細分割
-        subdiv = cv::Subdiv2D(rect);
-        subdiv.insert(corners);
+            // 減らした点で細分割
+            subdiv = cv::Subdiv2D(rect);
+            subdiv.insert(corners);
 
-        md = DelaunayTriangulation(Rectangle(0, 0, target.cols, target.rows));
-        md.insert(corners);
-        // 現状これやらないとneighbor_vtxがとれないので許して
-        md.getTriangleList(triangles_mydelaunay);
+            md = DelaunayTriangulation(Rectangle(0, 0, target.cols, target.rows));
+            md.insert(corners);
+            // 現状これやらないとneighbor_vtxがとれないので許して
+            md.getTriangleList(triangles_mydelaunay);
 
-        puts("insert done");
+            puts("insert done");
 
-        // 三角網を描画します
-        cv::Mat my_triangle = target.clone();
-        triangle_error_img = target.clone();
-        for (auto t:triangles_mydelaunay) {
-          cv::Point2f p1(t[0], t[1]), p2(t[2], t[3]), p3(t[4], t[5]);
-          drawTriangle(my_triangle, p1, p2, p3, BLUE);
-          drawTriangle(triangle_error_img, p1, p2, p3, BLUE);
-        }
+            // 三角網を描画します
+            cv::Mat my_triangle = target.clone();
+            triangle_error_img = target.clone();
+            for (auto t:triangles_mydelaunay) {
+                cv::Point2f p1(t[0], t[1]), p2(t[2], t[3]), p3(t[4], t[5]);
+                drawTriangle(my_triangle, p1, p2, p3, BLUE);
+                drawTriangle(triangle_error_img, p1, p2, p3, BLUE);
+            }
 
-        if (HARRIS) {
-          cv::imwrite(file_path + img_path + "my_triangle" + "_corner_" + std::to_string(corners.size()) + ".png",
-                      my_triangle);
-        } else if (THRESHOLD) {
-          cv::imwrite(file_path + img_path + "my_triangle" + "_threshold_" + std::to_string(threshold) + "_lambda_" +
-                      std::to_string(LAMBDA) + ".png",
-                      my_triangle);
-        }
+            if (HARRIS) {
+                cv::imwrite(file_path + img_path + "my_triangle" + "_corner_" + std::to_string(corners.size()) + ".png",
+                            my_triangle);
+            } else if (THRESHOLD) {
+                cv::imwrite(file_path + img_path + "my_triangle" + "_threshold_" + std::to_string(threshold) + "_lambda_" +
+                            std::to_string(LAMBDA) + ".png",
+                            my_triangle);
+            }
 
-        // 頂点の符号化の類
-        std::vector<DelaunayTriangulation::PointCode> coded_coordinate = md.getPointCoordinateCode(corners, QUEUE);
+            // 頂点の符号化の類
+            std::vector<DelaunayTriangulation::PointCode> coded_coordinate = md.getPointCoordinateCode(corners, QUEUE);
 
-        // 分布
-        // たまに8の倍数からずれる事あるんだけど, それ多分右側と下側の座標が1919と1079なのでだとおもわれ
-        // 1画素程度のズレを許容する気持ちで行く
-        int min_coord_x = std::numeric_limits<int>::max(), min_coord_y = std::numeric_limits<int>::max();
-        int max_coord_x = std::numeric_limits<int>::min(), max_coord_y = std::numeric_limits<int>::min();
-        std::vector<int> prev_id_count(1001, 0);
-        for (const auto &p : coded_coordinate) {
-          prev_id_count[p.prev_id + 500]++;
-          max_coord_x = std::max(max_coord_x, (int) p.coord.x);
-          min_coord_x = std::min(min_coord_x, (int) p.coord.x);
-          max_coord_y = std::max(max_coord_y, (int) p.coord.y);
-          min_coord_y = std::min(min_coord_y, (int) p.coord.y);
-        }
+            // 分布
+            // たまに8の倍数からずれる事あるんだけど, それ多分右側と下側の座標が1919と1079なのでだとおもわれ
+            // 1画素程度のズレを許容する気持ちで行く
+            int min_coord_x = std::numeric_limits<int>::max(), min_coord_y = std::numeric_limits<int>::max();
+            int max_coord_x = std::numeric_limits<int>::min(), max_coord_y = std::numeric_limits<int>::min();
+            std::vector<int> prev_id_count(1001, 0);
+            for (const auto &p : coded_coordinate) {
+                prev_id_count[p.prev_id + 500]++;
+                max_coord_x = std::max(max_coord_x, (int) p.coord.x);
+                min_coord_x = std::min(min_coord_x, (int) p.coord.x);
+                max_coord_y = std::max(max_coord_y, (int) p.coord.y);
+                min_coord_y = std::min(min_coord_y, (int) p.coord.y);
+            }
 
-        int offset = QUANTIZE - (std::abs(min_coord_x) % QUANTIZE);
+            int offset = QUANTIZE - (std::abs(min_coord_x) % QUANTIZE);
 
-        // 8の倍数でない場合は適当にずらす
-        if (min_coord_x % QUANTIZE != 0) {
-          min_coord_x = min_coord_x < 0 ? min_coord_x - offset : min_coord_x + offset;
-          std::cout << "offset:" << offset << std::endl;
-        }
-        if (max_coord_x % QUANTIZE != 0) {
-          max_coord_x = max_coord_x < 0 ? max_coord_x - offset : max_coord_x + offset;
-          std::cout << "offset:" << offset << std::endl;
-        }
-        if (min_coord_y % QUANTIZE != 0) {
-          min_coord_y = min_coord_y < 0 ? min_coord_y - offset : min_coord_y + offset;
-          std::cout << "offset:" << offset << std::endl;
-        }
-        if (max_coord_y % QUANTIZE != 0) {
-          max_coord_y = max_coord_y < 0 ? max_coord_y - offset : max_coord_y + offset;
-          std::cout << "offset:" << offset << std::endl;
-        }
+            // 8の倍数でない場合は適当にずらす
+            if (min_coord_x % QUANTIZE != 0) {
+                min_coord_x = min_coord_x < 0 ? min_coord_x - offset : min_coord_x + offset;
+                std::cout << "offset:" << offset << std::endl;
+            }
+            if (max_coord_x % QUANTIZE != 0) {
+                max_coord_x = max_coord_x < 0 ? max_coord_x - offset : max_coord_x + offset;
+                std::cout << "offset:" << offset << std::endl;
+            }
+            if (min_coord_y % QUANTIZE != 0) {
+                min_coord_y = min_coord_y < 0 ? min_coord_y - offset : min_coord_y + offset;
+                std::cout << "offset:" << offset << std::endl;
+            }
+            if (max_coord_y % QUANTIZE != 0) {
+                max_coord_y = max_coord_y < 0 ? max_coord_y - offset : max_coord_y + offset;
+                std::cout << "offset:" << offset << std::endl;
+            }
 
-        min_coord_x = (abs(min_coord_x) / QUANTIZE);
-        min_coord_y = (abs(min_coord_y) / QUANTIZE);
-        max_coord_x = (abs(max_coord_x) / QUANTIZE);
-        max_coord_y = (abs(max_coord_y) / QUANTIZE);
-        std::vector<int> freq_coord_x(max_coord_x + min_coord_x + 1, 0);
-        std::vector<int> freq_coord_y(max_coord_y + min_coord_y + 1, 0);
-        std::cout << "freq_coord_x.size = " << freq_coord_x.size() << std::endl;
-        std::cout << "freq_coord_y.size = " << freq_coord_y.size() << std::endl;
-        // 頻度を求める奴
-        for (const auto &p : coded_coordinate) {
-          point_nums += 1.0;
-          if (static_cast<int>(p.coord.x) % QUANTIZE != 0) {
-            offset = QUANTIZE - (std::abs((int) p.coord.x) % QUANTIZE);
-            if (p.coord.x < 0) offset *= -1;
-            freq_coord_x[(p.coord.x + offset) / QUANTIZE + min_coord_x]++;
-          } else {
-            freq_coord_x[(p.coord.x) / QUANTIZE + min_coord_x]++;
-          }
+            min_coord_x = (abs(min_coord_x) / QUANTIZE);
+            min_coord_y = (abs(min_coord_y) / QUANTIZE);
+            max_coord_x = (abs(max_coord_x) / QUANTIZE);
+            max_coord_y = (abs(max_coord_y) / QUANTIZE);
+            std::vector<int> freq_coord_x(max_coord_x + min_coord_x + 1, 0);
+            std::vector<int> freq_coord_y(max_coord_y + min_coord_y + 1, 0);
+            std::cout << "freq_coord_x.size = " << freq_coord_x.size() << std::endl;
+            std::cout << "freq_coord_y.size = " << freq_coord_y.size() << std::endl;
+            // 頻度を求める奴
+            for (const auto &p : coded_coordinate) {
+                point_nums += 1.0;
+                if (static_cast<int>(p.coord.x) % QUANTIZE != 0) {
+                    offset = QUANTIZE - (std::abs((int) p.coord.x) % QUANTIZE);
+                    if (p.coord.x < 0) offset *= -1;
+                    freq_coord_x[(p.coord.x + offset) / QUANTIZE + min_coord_x]++;
+                } else {
+                    freq_coord_x[(p.coord.x) / QUANTIZE + min_coord_x]++;
+                }
 
-          if (static_cast<int>(p.coord.y) % QUANTIZE != 0) {
-            offset = QUANTIZE - (std::abs((int) p.coord.y) % QUANTIZE);
-            if (p.coord.y < 0) offset *= -1;
-            freq_coord_y[(p.coord.y + offset) / QUANTIZE + min_coord_y]++;
-          } else {
-            freq_coord_y[(p.coord.y) / QUANTIZE + min_coord_y]++;
-          }
-        }
-        int max_freq_x = 0;
-        for (int i = 0; i < static_cast<int>(freq_coord_x.size()); i++) {
-          if (freq_coord_x[max_freq_x] < freq_coord_x[i]) {
-            max_freq_x = i;
-          }
-        }
-        max_freq_x -= min_coord_x;
+                if (static_cast<int>(p.coord.y) % QUANTIZE != 0) {
+                    offset = QUANTIZE - (std::abs((int) p.coord.y) % QUANTIZE);
+                    if (p.coord.y < 0) offset *= -1;
+                    freq_coord_y[(p.coord.y + offset) / QUANTIZE + min_coord_y]++;
+                } else {
+                    freq_coord_y[(p.coord.y) / QUANTIZE + min_coord_y]++;
+                }
+            }
+            int max_freq_x = 0;
+            for (int i = 0; i < static_cast<int>(freq_coord_x.size()); i++) {
+                if (freq_coord_x[max_freq_x] < freq_coord_x[i]) {
+                    max_freq_x = i;
+                }
+            }
+            max_freq_x -= min_coord_x;
 
-        int max_freq_y = 0;
-        for (int i = 0; i < static_cast<int>(freq_coord_y.size()); ++i) {
-          if (freq_coord_y[max_freq_y] < freq_coord_y[i]) {
-            max_freq_y = i;
-          }
-        }
-        max_freq_y -= min_coord_y;
-        int golomb_x = 0, golomb_y = 0;
-          std::cout << "cehck1" << std::endl;
-        //
-        // 頂点復号ベクトルのx成分の頻度
-        //
-        FILE *fp = fopen((file_path + img_path + csv_file_prefix + "corner_decode_vector_x_freq.csv").c_str(), "w");
-        std::ofstream os(file_path + img_path + "gp\\corner_decode_vector_x_freq.txt");
-        storeGnuplotFile(file_path + img_path + "gp\\decode_x.gp", "length of x coordinate.", "Frequency",
-                         "corner_decode_vector_x_freq.txt");
-          std::cout << "cehck2" << std::endl;
-        double mean = 0.0;
-        std::cout << csv_file_prefix << std::endl;
-        for (int i = 0; i < (int) freq_coord_x.size(); i++) {
-          std::cout << i << " " << freq_coord_x[i] << std::endl;
-          fprintf(fp, "%d,%d\n", i - min_coord_x, freq_coord_x[i]);
-          std::cout << "check1" << std::endl;
-          os << i - min_coord_x << " " << freq_coord_x[i] << std::endl;
-          std::cout << "check2" << std::endl;
-          mean += (i - min_coord_x) * freq_coord_x[i];
-        }
+            int max_freq_y = 0;
+            for (int i = 0; i < static_cast<int>(freq_coord_y.size()); ++i) {
+                if (freq_coord_y[max_freq_y] < freq_coord_y[i]) {
+                    max_freq_y = i;
+                }
+            }
+            max_freq_y -= min_coord_y;
+            int golomb_x = 0, golomb_y = 0;
+            std::cout << "cehck1" << std::endl;
+            //
+            // 頂点復号ベクトルのx成分の頻度
+            //
+            FILE *fp = fopen((file_path + img_path + csv_file_prefix + "corner_decode_vector_x_freq.csv").c_str(), "w");
+            std::ofstream os(file_path + img_path + "gp\\corner_decode_vector_x_freq.txt");
+            storeGnuplotFile(file_path + img_path + "gp\\decode_x.gp", "length of x coordinate.", "Frequency",
+                             "corner_decode_vector_x_freq.txt");
+            std::cout << "cehck2" << std::endl;
+            double mean = 0.0;
+            std::cout << csv_file_prefix << std::endl;
+            for (int i = 0; i < (int) freq_coord_x.size(); i++) {
+                std::cout << i << " " << freq_coord_x[i] << std::endl;
+                fprintf(fp, "%d,%d\n", i - min_coord_x, freq_coord_x[i]);
+                std::cout << "check1" << std::endl;
+                os << i - min_coord_x << " " << freq_coord_x[i] << std::endl;
+                std::cout << "check2" << std::endl;
+                mean += (i - min_coord_x) * freq_coord_x[i];
+            }
 
-        fclose(fp);
-        os.close();
-          std::cout << "cehck3" << std::endl;
-        // 平均引いたやつをシフトするもの
-        os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_x_freq_mean.txt");
-        storeGnuplotFile(file_path + img_path + "gp\\decode_x_mean.gp", "length of x coordinate", "Frequency",
-                         "corner_decode_vector_x_freq_mean.txt");
-        mean /= corners.size();
-        for (int i = 0; i < (int) freq_coord_x.size(); i++) {
-          os << i - min_coord_x - mean << " " << freq_coord_x[i] << std::endl;
-        }
-        os.close();
-          std::cout << "cehck4" << std::endl;
-        // max分ずらすグラフ
-        os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_x_freq_max.txt");
-        storeGnuplotFile(file_path + img_path + "gp\\decode_x_max.gp", "length of x coordinate", "Frequency",
-                         "corner_decode_vector_x_freq_max.txt");
-        mean /= corners.size();
-        for (int i = 0; i < (int) freq_coord_x.size(); i++) {
-          os << i - min_coord_x - max_freq_x << " " << freq_coord_x[i] << std::endl;
-          golomb_x += (ozi::getGolombCode(ozi::getGolombParam(0.6), (i - min_coord_x - max_freq_x), ozi::REGION1,
-                                          ozi::KTH_GOLOMB,9)) * freq_coord_x[i];
-        }
-        os.close();
-          std::cout << "cehck5" << std::endl;
-        //
-        // 頂点復号ベクトルのy成分の頻度
-        //
-        fp = fopen((file_path + img_path + csv_file_prefix + "corner_decode_vector_y_freq.csv").c_str(), "w");
-        os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_y_freq.txt");
-        storeGnuplotFile(file_path + img_path + "gp\\decode_y.gp", "length of y coordinate.", "Frequency",
-                         "corner_decode_vector_y_freq.txt");
-        mean = 0.0;
+            fclose(fp);
+            os.close();
+            std::cout << "cehck3" << std::endl;
+            // 平均引いたやつをシフトするもの
+            os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_x_freq_mean.txt");
+            storeGnuplotFile(file_path + img_path + "gp\\decode_x_mean.gp", "length of x coordinate", "Frequency",
+                             "corner_decode_vector_x_freq_mean.txt");
+            mean /= corners.size();
+            for (int i = 0; i < (int) freq_coord_x.size(); i++) {
+                os << i - min_coord_x - mean << " " << freq_coord_x[i] << std::endl;
+            }
+            os.close();
+            std::cout << "cehck4" << std::endl;
+            // max分ずらすグラフ
+            os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_x_freq_max.txt");
+            storeGnuplotFile(file_path + img_path + "gp\\decode_x_max.gp", "length of x coordinate", "Frequency",
+                             "corner_decode_vector_x_freq_max.txt");
+            mean /= corners.size();
+            for (int i = 0; i < (int) freq_coord_x.size(); i++) {
+                os << i - min_coord_x - max_freq_x << " " << freq_coord_x[i] << std::endl;
+                golomb_x += (ozi::getGolombCode(ozi::getGolombParam(0.6), (i - min_coord_x - max_freq_x), ozi::REGION1,
+                                                ozi::KTH_GOLOMB,9)) * freq_coord_x[i];
+            }
+            os.close();
+            std::cout << "cehck5" << std::endl;
+            //
+            // 頂点復号ベクトルのy成分の頻度
+            //
+            fp = fopen((file_path + img_path + csv_file_prefix + "corner_decode_vector_y_freq.csv").c_str(), "w");
+            os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_y_freq.txt");
+            storeGnuplotFile(file_path + img_path + "gp\\decode_y.gp", "length of y coordinate.", "Frequency",
+                             "corner_decode_vector_y_freq.txt");
+            mean = 0.0;
 
-        for (int i = 0; i < (int) freq_coord_y.size(); i++) {
-          fprintf(fp, "%d,%d\n", i - min_coord_y, freq_coord_y[i]);
-          os << i - min_coord_y << " " << freq_coord_y[i] << std::endl;
-          mean += (i - min_coord_y) * freq_coord_y[i];
-        }
-        fclose(fp);
-        os.close();
+            for (int i = 0; i < (int) freq_coord_y.size(); i++) {
+                fprintf(fp, "%d,%d\n", i - min_coord_y, freq_coord_y[i]);
+                os << i - min_coord_y << " " << freq_coord_y[i] << std::endl;
+                mean += (i - min_coord_y) * freq_coord_y[i];
+            }
+            fclose(fp);
+            os.close();
 
-        // 平均分ずらすやつ
-        os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_y_freq_mean.txt");
-        storeGnuplotFile(file_path + img_path + "gp\\decode_y_mean.gp", "length of y coordinate", "Frequency",
-                         "corner_decode_vector_y_freq_mean.txt");
-        mean /= corners.size();
-        for (int i = 0; i < (int) freq_coord_y.size(); i++) {
-          os << i - min_coord_y - mean << " " << freq_coord_y[i] << std::endl;
-        }
-        os.close();
+            // 平均分ずらすやつ
+            os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_y_freq_mean.txt");
+            storeGnuplotFile(file_path + img_path + "gp\\decode_y_mean.gp", "length of y coordinate", "Frequency",
+                             "corner_decode_vector_y_freq_mean.txt");
+            mean /= corners.size();
+            for (int i = 0; i < (int) freq_coord_y.size(); i++) {
+                os << i - min_coord_y - mean << " " << freq_coord_y[i] << std::endl;
+            }
+            os.close();
 
-        // 最大値ずらすやつ
-        os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_y_freq_max.txt");
-        storeGnuplotFile(file_path + img_path + "gp\\decode_y_max.gp", "length of y coordinate", "Frequency",
-                         "corner_decode_vector_y_freq_max.txt");
-        mean /= corners.size();
-        for (int i = 0; i < (int) freq_coord_y.size(); i++) {
-          os << i - min_coord_y - max_freq_y << " " << freq_coord_y[i] << std::endl;
-          golomb_y += (ozi::getGolombCode(ozi::getGolombParam(0.6), (i - min_coord_y - max_freq_y), ozi::REGION1,
-                                          ozi::KTH_GOLOMB,9)) * freq_coord_y[i];
-        }
-        os.close();
+            // 最大値ずらすやつ
+            os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_y_freq_max.txt");
+            storeGnuplotFile(file_path + img_path + "gp\\decode_y_max.gp", "length of y coordinate", "Frequency",
+                             "corner_decode_vector_y_freq_max.txt");
+            mean /= corners.size();
+            for (int i = 0; i < (int) freq_coord_y.size(); i++) {
+                os << i - min_coord_y - max_freq_y << " " << freq_coord_y[i] << std::endl;
+                golomb_y += (ozi::getGolombCode(ozi::getGolombParam(0.6), (i - min_coord_y - max_freq_y), ozi::REGION1,
+                                                ozi::KTH_GOLOMB,9)) * freq_coord_y[i];
+            }
+            os.close();
 
-        cv::Mat decoded_corner = md.getDecodedCornerImage(coded_coordinate, target, RASTER_SCAN);
-        for (const auto &corner : corners) drawPoint(decoded_corner, corner, RED, 3);
+            cv::Mat decoded_corner = md.getDecodedCornerImage(coded_coordinate, target, RASTER_SCAN);
+            for (const auto &corner : corners) drawPoint(decoded_corner, corner, RED, 3);
 
-        if (HARRIS) {
-          cv::imwrite(
-                  file_path + img_path + "decoded_corner" + "_cornersize_" + std::to_string(corners.size()) + ".png",
-                  decoded_corner);
-        } else if (THRESHOLD) {
-          cv::imwrite(file_path + img_path + "decoded_corner_threshold_" + std::to_string(threshold) + "_lambda_" +
-                      std::to_string(LAMBDA) + ".png", decoded_corner);
-        }
+            if (HARRIS) {
+                cv::imwrite(
+                        file_path + img_path + "decoded_corner" + "_cornersize_" + std::to_string(corners.size()) + ".png",
+                        decoded_corner);
+            } else if (THRESHOLD) {
+                cv::imwrite(file_path + img_path + "decoded_corner_threshold_" + std::to_string(threshold) + "_lambda_" +
+                            std::to_string(LAMBDA) + ".png", decoded_corner);
+            }
 
 
-        //
-        // MVの要素について集計
-        //
-        std::vector<cv::Point2f> code = md.getPointMotionVectorCode(corners, ref_corners);
-        std::cout << "code.size() : " << code.size() << std::endl;
+            //
+            // MVの要素について集計
+            //
+            std::vector<cv::Point2f> code = md.getPointMotionVectorCode(corners, ref_corners);
+            std::cout << "code.size() : " << code.size() << std::endl;
 
-        cv::Mat decoded_mv = md.getDecodedMotionVectorImage(code, corners, target);
+            cv::Mat decoded_mv = md.getDecodedMotionVectorImage(code, corners, target);
 
 //        int golomb_mv_x = 0, golomb_mv_y = 0;
 
-        int min_mv_x = std::numeric_limits<int>::max(), min_mv_y = std::numeric_limits<int>::max();
-        int max_mv_x = std::numeric_limits<int>::min(), max_mv_y = std::numeric_limits<int>::min();
-        for (const auto &p : code) {
-          max_mv_x = std::max(max_mv_x, (int) p.x);
-          min_mv_x = std::min(min_mv_x, (int) p.x);
-          max_mv_y = std::max(max_mv_y, (int) p.y);
-          min_mv_y = std::min(min_mv_y, (int) p.y);
-        }
-        min_mv_x = abs(min_mv_x);
-        min_mv_y = abs(min_mv_y);
+            int min_mv_x = std::numeric_limits<int>::max(), min_mv_y = std::numeric_limits<int>::max();
+            int max_mv_x = std::numeric_limits<int>::min(), max_mv_y = std::numeric_limits<int>::min();
+            for (const auto &p : code) {
+                max_mv_x = std::max(max_mv_x, (int) p.x);
+                min_mv_x = std::min(min_mv_x, (int) p.x);
+                max_mv_y = std::max(max_mv_y, (int) p.y);
+                min_mv_y = std::min(min_mv_y, (int) p.y);
+            }
+            min_mv_x = abs(min_mv_x);
+            min_mv_y = abs(min_mv_y);
 
-        std::vector<int> freq_x(max_mv_x + min_mv_x + 1, 0);
-        std::vector<int> freq_y(max_mv_y + min_mv_y + 1, 0);
-        for (const auto &p : code) {
-          freq_x[p.x + min_mv_x]++;
-          freq_y[p.y + min_mv_y]++;
-        }
+            std::vector<int> freq_x(max_mv_x + min_mv_x + 1, 0);
+            std::vector<int> freq_y(max_mv_y + min_mv_y + 1, 0);
+            for (const auto &p : code) {
+                freq_x[p.x + min_mv_x]++;
+                freq_y[p.y + min_mv_y]++;
+            }
 
-        // mvのxについて集計
-        fp = fopen((file_path + img_path + csv_file_prefix + "corner_mv_x_freq.csv").c_str(), "w");
-        os = std::ofstream(file_path + img_path + "gp\\corner_mv_x_freq.txt");
-        storeGnuplotFile(file_path + img_path + "gp\\corner_mv_x.gp", "length of x coordinate.", "Frequency",
-                         "corner_mv_x_freq.txt");
-        for (int i = 0; i < (int) freq_x.size(); i++) {
-          fprintf(fp, "%d,%d\n", i - min_mv_x, freq_x[i]);
-          os << i - min_mv_x << " " << freq_x[i] << std::endl;
-          //  golomb_mv_x += ozi::getGolombCode(2, (i - min_mv_x), ozi::REGION1, ozi::GOLOMB, 0);
-          /*
-          golomb_mv_x +=
-                  (ozi::getGolombCode(ozi::getGolombParam(0.24), (i - min_mv_x), 0, ozi::KTH_GOLOMB)) * freq_x[i];
-                  */
-        }
-        fclose(fp);
-        os.close();
+            // mvのxについて集計
+            fp = fopen((file_path + img_path + csv_file_prefix + "corner_mv_x_freq.csv").c_str(), "w");
+            os = std::ofstream(file_path + img_path + "gp\\corner_mv_x_freq.txt");
+            storeGnuplotFile(file_path + img_path + "gp\\corner_mv_x.gp", "length of x coordinate.", "Frequency",
+                             "corner_mv_x_freq.txt");
+            for (int i = 0; i < (int) freq_x.size(); i++) {
+                fprintf(fp, "%d,%d\n", i - min_mv_x, freq_x[i]);
+                os << i - min_mv_x << " " << freq_x[i] << std::endl;
+                //  golomb_mv_x += ozi::getGolombCode(2, (i - min_mv_x), ozi::REGION1, ozi::GOLOMB, 0);
+                /*
+                golomb_mv_x +=
+                        (ozi::getGolombCode(ozi::getGolombParam(0.24), (i - min_mv_x), 0, ozi::KTH_GOLOMB)) * freq_x[i];
+                        */
+            }
+            fclose(fp);
+            os.close();
 
-        // mvのyについて集計
-        fp = fopen((file_path + img_path + csv_file_prefix + "corner_mv_y_freq.csv").c_str(), "w");
-        os = std::ofstream(file_path + img_path + "gp\\corner_mv_y_freq.txt");
-        storeGnuplotFile(file_path + img_path + "gp\\corner_mv_y.gp", "length of y coordinate.", "Frequency",
-                         "corner_mv_y_freq.txt");
-        for (int i = 0; i < (int) freq_y.size(); i++) {
-          fprintf(fp, "%d,%d\n", i - min_mv_y, freq_y[i]);
-          os << i - min_mv_y << " " << freq_y[i] << std::endl;
-         //   golomb_mv_y += ozi::getGolombCode(2, (i - min_mv_y), ozi::REGION1, ozi::GOLOMB, 0);
-          /*
-          golomb_mv_y +=
-                  (ozi::getGolombCode(ozi::getGolombParam(0.24), (i - min_mv_y), 0, ozi::KTH_GOLOMB)) * freq_y[i];
-                  */
-        }
-        fclose(fp);
-        os.close();
+            // mvのyについて集計
+            fp = fopen((file_path + img_path + csv_file_prefix + "corner_mv_y_freq.csv").c_str(), "w");
+            os = std::ofstream(file_path + img_path + "gp\\corner_mv_y_freq.txt");
+            storeGnuplotFile(file_path + img_path + "gp\\corner_mv_y.gp", "length of y coordinate.", "Frequency",
+                             "corner_mv_y_freq.txt");
+            for (int i = 0; i < (int) freq_y.size(); i++) {
+                fprintf(fp, "%d,%d\n", i - min_mv_y, freq_y[i]);
+                os << i - min_mv_y << " " << freq_y[i] << std::endl;
+                //   golomb_mv_y += ozi::getGolombCode(2, (i - min_mv_y), ozi::REGION1, ozi::GOLOMB, 0);
+                /*
+                golomb_mv_y +=
+                        (ozi::getGolombCode(ozi::getGolombParam(0.24), (i - min_mv_y), 0, ozi::KTH_GOLOMB)) * freq_y[i];
+                        */
+            }
+            fclose(fp);
+            os.close();
 
-        if (HARRIS) {
-          cv::imwrite(file_path + img_path + "decoded_mv_corner_size_" + std::to_string(corners.size()) + ".png",
-                      decoded_mv);
-        } else if (THRESHOLD) {
-          cv::imwrite(file_path + img_path + "decoded_mv_threshold_" + std::to_string(threshold) + "_lambda_" +
-                      std::to_string(LAMBDA) + ".png", decoded_mv);
-        }
+            if (HARRIS) {
+                cv::imwrite(file_path + img_path + "decoded_mv_corner_size_" + std::to_string(corners.size()) + ".png",
+                            decoded_mv);
+            } else if (THRESHOLD) {
+                cv::imwrite(file_path + img_path + "decoded_mv_threshold_" + std::to_string(threshold) + "_lambda_" +
+                            std::to_string(LAMBDA) + ".png", decoded_mv);
+            }
 
-        // 三角形の取得
-        std::vector<cv::Vec6f> triangles_as_vec6f;
-        std::vector<int> leading_edge_list;
-        std::vector<cv::Vec4f> edge_list;
-        subdiv.getTriangleList(triangles_as_vec6f);
+            // 三角形の取得
+            std::vector<cv::Vec6f> triangles_as_vec6f;
+            std::vector<int> leading_edge_list;
+            std::vector<cv::Vec4f> edge_list;
+            subdiv.getTriangleList(triangles_as_vec6f);
 
-        cv::Mat triangle_target = target.clone();
-        cv::Mat triangle_add_target = target.clone();
+            cv::Mat triangle_target = target.clone();
 
-        std::vector<Triangle> triangles;
-        cv::Mat mv_image = target.clone();
+            std::vector<Triangle> triangles;
+            cv::Mat mv_image = target.clone();
 
-        // 頂点とindexを結びつけ
-        for (auto t:triangles_as_vec6f) {
-          cv::Point2f p1(t[0], t[1]), p2(t[2], t[3]), p3(t[4], t[5]);
+            // 頂点とindexを結びつけ
+            for (auto t:triangles_as_vec6f) {
+                cv::Point2f p1(t[0], t[1]), p2(t[2], t[3]), p3(t[4], t[5]);
 
-          // 三角形を描画
-          drawTriangle(triangle_target, p1, p2, p3, cv::Scalar(255, 255, 255));
-          drawTriangle(mv_image, p1, p2, p3, cv::Scalar(255, 255, 255));
-          drawTriangle(triangle_add_target, p1, p2, p3, cv::Scalar(255, 255, 255));
+                // 三角形を描画
+                drawTriangle(triangle_target, p1, p2, p3, cv::Scalar(255, 255, 255));
+                drawTriangle(mv_image, p1, p2, p3, cv::Scalar(255, 255, 255));
 
-          int i1 = -1, i2 = -1, i3 = -1;
-          for (int i = 0; i < (int) corners.size(); i++) {
-            if (corners[i] == p1) i1 = i;
-            else if (corners[i] == p2) i2 = i;
-            else if (corners[i] == p3) i3 = i;
-          }
+                int i1 = -1, i2 = -1, i3 = -1;
+                for (int i = 0; i < (int) corners.size(); i++) {
+                    if (corners[i] == p1) i1 = i;
+                    else if (corners[i] == p2) i2 = i;
+                    else if (corners[i] == p3) i3 = i;
+                }
 
-          if (0 <= i1 && 0 <= i2 && 0 <= i3) {
-            triangles.emplace_back(i1, i2, i3);
-          }
-        }
+                if (0 <= i1 && 0 <= i2 && 0 <= i3) {
+                    triangles.emplace_back(i1, i2, i3);
+                }
+            }
 
 
-        if (HARRIS) {
-          cv::imwrite(file_path + img_path + "triangle_" + out_file[0] + "_corner_size_" +
-                      std::to_string(corners.size()) + "_lambda_" + std::to_string(LAMBDA) + ".png", triangle_target);
-        } else if (THRESHOLD) {
-          cv::imwrite(file_path + img_path + "triangle_" + out_file[0] + "_threshold_" + std::to_string(threshold) +
-                      "_lambda_" + std::to_string(LAMBDA) + ".png", triangle_target);
-        }
+            if (HARRIS) {
+                cv::imwrite(file_path + img_path + "triangle_" + out_file[0] + "_corner_size_" +
+                            std::to_string(corners.size()) + "_lambda_" + std::to_string(LAMBDA) + ".png", triangle_target);
+            } else if (THRESHOLD) {
+                cv::imwrite(file_path + img_path + "triangle_" + out_file[0] + "_threshold_" + std::to_string(threshold) +
+                            "_lambda_" + std::to_string(LAMBDA) + ".png", triangle_target);
+            }
 
-        puts("");
+            puts("");
 
-        cv::Mat target_point = target.clone();
-        cv::Mat out = cv::Mat::zeros(target.size(), CV_8UC3);
+            cv::Mat target_point = target.clone();
+            cv::Mat out = cv::Mat::zeros(target.size(), CV_8UC3);
 
-        std::cout << "corners.size():" << corners.size() << std::endl;
-        std::cout << "intra col = " << ref_intra.cols << "row = " << ref_intra.rows << std::endl;
-        std::vector<cv::Point2f> add_corners;
-        int add_count = 0;
-        int tmp_mv_x = 0;
-        int tmp_mv_y = 0;
-        add_corners.clear();
-          std::cout << "check point 3" << std::endl;
-          PredictedImageResult result = getPredictedImage(ref, refx2, refx4, refx8, target, targetx2, targetx4,
-                                                          targetx8, ref_intra, triangles, ref_corners, corners, md,
-                                                          add_corners,&add_count, residual_ref,tmp_mv_x,tmp_mv_y,true);
-        // 予測画像を得る
+            std::cout << "corners.size():" << corners.size() << std::endl;
+            std::cout << "intra col = " << ref.cols << "row = " << ref.rows << std::endl;
+            std::vector<cv::Point2f> add_corners;
+            int add_count = 0;
+            int tmp_mv_x = 0;
+            int tmp_mv_y = 0;
+            add_corners.clear();
+            std::cout << "check point 3" << std::endl;
+            PredictedImageResult result = getPredictedImage(ref_gauss, refx2, refx4, refx8, target, targetx2, targetx4,
+                                                            targetx8, ref, triangles, ref_corners, corners, md,
+                                                            add_corners,&add_count, residual_ref,tmp_mv_x,tmp_mv_y,true);
+            // 予測画像を得る
             int count = 0;
 
-         // while(add_corners.size() != 0) {
-              for(const cv::Point2f p:add_corners) {
-                  drawPoint(triangle_add_target, p, GREEN, 4);
-              }
+            // while(add_corners.size() != 0) {
 
-              //std::copy(add_corners.begin(),add_corners.end(),std::back_inserter(corners));
-              std::copy(add_corners.begin(),add_corners.end(),std::back_inserter(ref_corners));
-              for(int i = 0;i < (int)corners.size();i++){
-                  std::cout << "corner[" << i <<"] =" << corners[i] << std::endl;
-              }
-              add_corners.clear();
-              if(!INTER_DIV) {
+            //std::copy(add_corners.begin(),add_corners.end(),std::back_inserter(corners));
+            std::copy(add_corners.begin(),add_corners.end(),std::back_inserter(ref_corners));
+            for(int i = 0;i < (int)corners.size();i++){
+                std::cout << "corner[" << i <<"] =" << corners[i] << std::endl;
+            }
+            add_corners.clear();
+            if(!INTER_DIV) {
                 md = DelaunayTriangulation(Rectangle(0, 0, target.cols, target.rows));
                 md.insert(corners);
                 md.getTriangleList(triangles_mydelaunay);
                 triangles.clear();
                 for (auto t:triangles_mydelaunay) {
-                  cv::Point2f p1(t[0], t[1]), p2(t[2], t[3]), p3(t[4], t[5]);
-                  int i1 = -1, i2 = -1, i3 = -1;
-                  for (int i = 0; i < (int) corners.size(); i++) {
-                    if (corners[i] == p1) i1 = i;
-                    else if (corners[i] == p2) i2 = i;
-                    else if (corners[i] == p3) i3 = i;
-                  }
+                    cv::Point2f p1(t[0], t[1]), p2(t[2], t[3]), p3(t[4], t[5]);
+                    int i1 = -1, i2 = -1, i3 = -1;
+                    for (int i = 0; i < (int) corners.size(); i++) {
+                        if (corners[i] == p1) i1 = i;
+                        else if (corners[i] == p2) i2 = i;
+                        else if (corners[i] == p3) i3 = i;
+                    }
 
-                  if (0 <= i1 && 0 <= i2 && 0 <= i3) {
-                    triangles.emplace_back(i1, i2, i3);
-                  }
-                  drawTriangle_residual(triangle_add_target, p1, p2, p3, BLUE, sobel_target);
+                    if (0 <= i1 && 0 <= i2 && 0 <= i3) {
+                        triangles.emplace_back(i1, i2, i3);
+                    }
                 }
-              }
-              else{
+            }
+            else{
                 for(int t = 0;t < (int)triangles.size();t++){
-                  Point3Vec triangleVec(corners[triangles[t].p1_idx], corners[triangles[t].p2_idx], corners[triangles[t].p3_idx]);
-                  cv::Point2f p1 = triangleVec.p1;
-                  cv::Point2f p2 = triangleVec.p2;
-                  cv::Point2f p3 = triangleVec.p3;
-                  drawTriangle_residual(triangle_add_target, p1, p2, p3, BLUE, sobel_target);
+                    Point3Vec triangleVec(corners[triangles[t].p1_idx], corners[triangles[t].p2_idx], corners[triangles[t].p3_idx]);
+                    cv::Point2f p1 = triangleVec.p1;
+                    cv::Point2f p2 = triangleVec.p2;
+                    cv::Point2f p3 = triangleVec.p3;
                 }
-              }
-                cv::imwrite(file_path + img_path + "triangle_add_" + out_file[0] + "_count_" + std::to_string(count) +
-                            "_lambda_" + std::to_string(LAMBDA) + ".png", triangle_add_target);
+            }
+
 
 /*
-              result = getPredictedImage(ref, refx2, refx4, refx8, target, targetx2, targetx4,
-                                         targetx8, ref_intra, triangles, ref_corners, corners, md,
+              result = getPredictedImage(ref_gauss, refx2, refx4, refx8, target, targetx2, targetx4,
+                                         targetx8, ref, triangles, ref_corners, corners, md,
                                          add_corners,&add_count, residual_ref,tmp_mv_x,tmp_mv_y,false);
 */
-              count++;
-         // }
+            count++;
+            // }
 
-          std::vector<DelaunayTriangulation::PointCode> coded_coordinate_later = md.getPointCoordinateCode(corners, QUEUE);
+            std::vector<DelaunayTriangulation::PointCode> coded_coordinate_later = md.getPointCoordinateCode(corners, QUEUE);
 
-          // 分布
-          // たまに8の倍数からずれる事あるんだけど, それ多分右側と下側の座標が1919と1079なのでだとおもわれ
-          // 1画素程度のズレを許容する気持ちで行く
-          int min_coord_x_later = std::numeric_limits<int>::max(), min_coord_y_later = std::numeric_limits<int>::max();
-          int max_coord_x_later = std::numeric_limits<int>::min(), max_coord_y_later = std::numeric_limits<int>::min();
-          std::vector<int> prev_id_count_later(1001, 0);
-          for (const auto &p : coded_coordinate_later) {
-              prev_id_count_later[p.prev_id + 500]++;
-              max_coord_x_later = std::max(max_coord_x_later, (int) p.coord.x);
-              min_coord_x_later = std::min(min_coord_x_later, (int) p.coord.x);
-              max_coord_y_later = std::max(max_coord_y_later, (int) p.coord.y);
-              min_coord_y_later = std::min(min_coord_y_later, (int) p.coord.y);
-          }
-
-          int offset_later = QUANTIZE - (std::abs(min_coord_x_later) % QUANTIZE);
-
-          // 8の倍数でない場合は適当にずらす
-          if (min_coord_x_later % QUANTIZE != 0) {
-              min_coord_x_later = min_coord_x_later < 0 ? min_coord_x_later - offset_later : min_coord_x_later + offset_later;
-              std::cout << "offset_later:" << offset_later << std::endl;
-          }
-          if (max_coord_x_later % QUANTIZE != 0) {
-              max_coord_x_later = max_coord_x_later < 0 ? max_coord_x_later - offset_later : max_coord_x_later + offset_later;
-              std::cout << "offset_later:" << offset_later << std::endl;
-          }
-          if (min_coord_y_later % QUANTIZE != 0) {
-              min_coord_y_later = min_coord_y_later < 0 ? min_coord_y_later - offset_later : min_coord_y_later + offset_later;
-              std::cout << "offset_later:" << offset_later << std::endl;
-          }
-          if (max_coord_y_later % QUANTIZE != 0) {
-              max_coord_y_later = max_coord_y_later < 0 ? max_coord_y_later - offset_later : max_coord_y_later + offset_later;
-              std::cout << "offset_later:" << offset_later << std::endl;
-          }
-
-          min_coord_x_later = (abs(min_coord_x_later) / QUANTIZE);
-          min_coord_y_later = (abs(min_coord_y_later) / QUANTIZE);
-          max_coord_x_later = (abs(max_coord_x_later) / QUANTIZE);
-          max_coord_y_later = (abs(max_coord_y_later) / QUANTIZE);
-          std::vector<int> freq_coord_x_later(max_coord_x_later + min_coord_x_later + 1, 0);
-          std::vector<int> freq_coord_y_later(max_coord_y_later + min_coord_y_later + 1, 0);
-          std::cout << "freq_coord_x_later.size = " << freq_coord_x_later.size() << std::endl;
-          std::cout << "freq_coord_y_later.size = " << freq_coord_y_later.size() << std::endl;
-          // 頻度を求める奴
-          for (const auto &p : coded_coordinate_later) {
-              point_nums += 1.0;
-              if (static_cast<int>(p.coord.x) % QUANTIZE != 0) {
-                  offset_later = QUANTIZE - (std::abs((int) p.coord.x) % QUANTIZE);
-                  if (p.coord.x < 0) offset *= -1;
-                  freq_coord_x_later[(p.coord.x + offset_later) / QUANTIZE + min_coord_x_later]++;
-              } else {
-                  freq_coord_x_later[(p.coord.x) / QUANTIZE + min_coord_x_later]++;
-              }
-
-              if (static_cast<int>(p.coord.y) % QUANTIZE != 0) {
-                  offset_later = QUANTIZE - (std::abs((int) p.coord.y) % QUANTIZE);
-                  if (p.coord.y < 0) offset_later *= -1;
-                  freq_coord_y_later[(p.coord.y + offset_later) / QUANTIZE + min_coord_y_later]++;
-              } else {
-                  freq_coord_y_later[(p.coord.y) / QUANTIZE + min_coord_y_later]++;
-              }
-          }
-          int max_freq_x_later = 0;
-          for (int i = 0; i < static_cast<int>(freq_coord_x_later.size()); i++) {
-              if (freq_coord_x_later[max_freq_x_later] < freq_coord_x_later[i]) {
-                  max_freq_x_later = i;
-              }
-          }
-          max_freq_x_later -= min_coord_x_later;
-
-          int max_freq_y_later = 0;
-          for (int i = 0; i < static_cast<int>(freq_coord_y_later.size()); ++i) {
-              if (freq_coord_y_later[max_freq_y_later] < freq_coord_y_later[i]) {
-                  max_freq_y_later = i;
-              }
-          }
-          max_freq_y_later -= min_coord_y_later;
-          golomb_x = 0, golomb_y = 0;
-          std::cout << "cehck1" << std::endl;
-          //
-          // 頂点復号ベクトルのx成分の頻度
-          //
-          storeGnuplotFile(file_path + img_path + "gp\\decode_x.gp", "length of x coordinate.", "Frequency",
-                           "corner_decode_vector_x_freq.txt");
-          std::cout << "cehck2" << std::endl;
-          mean = 0.0;
-          fp = fopen((file_path + img_path + csv_file_prefix + "corner_mv_x_freq.csv").c_str(), "w");
-          os = std::ofstream(file_path + img_path + "gp\\corner_mv_x_freq.txt");
-          storeGnuplotFile(file_path + img_path + "gp\\corner_mv_x.gp", "length of x coordinate.", "Frequency",
-                           "corner_mv_x_freq.txt");
-          for (int i = 0; i < (int) freq_coord_x_later.size(); i++) {
-              std::cout << i << " " << freq_coord_x_later[i] << std::endl;
-              fprintf(fp, "%d,%d\n", i - min_coord_x_later, freq_coord_x_later[i]);
-              std::cout << "check1" << std::endl;
-              os << i - min_coord_x_later << " " << freq_coord_x_later[i] << std::endl;
-              std::cout << "check2" << std::endl;
-              mean += (i - min_coord_x_later) * freq_coord_x_later[i];
-          }
-
-          fclose(fp);
-          os.close();
-          std::cout << "cehck3" << std::endl;
-          // 平均引いたやつをシフトするもの
-          os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_x_freq_mean.txt");
-          storeGnuplotFile(file_path + img_path + "gp\\decode_x_mean.gp", "length of x coordinate", "Frequency",
-                           "corner_decode_vector_x_freq_mean.txt");
-          mean /= corners.size();
-          for (int i = 0; i < (int) freq_coord_x_later.size(); i++) {
-              os << i - min_coord_x_later - mean << " " << freq_coord_x_later[i] << std::endl;
-          }
-          os.close();
-          std::cout << "cehck4" << std::endl;
-          // max分ずらすグラフ
-          os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_x_freq_max.txt");
-          storeGnuplotFile(file_path + img_path + "gp\\decode_x_max.gp", "length of x coordinate", "Frequency",
-                           "corner_decode_vector_x_freq_max.txt");
-          mean /= corners.size();
-          for (int i = 0; i < (int) freq_coord_x_later.size(); i++) {
-              os << i - min_coord_x_later - max_freq_x_later << " " << freq_coord_x_later[i] << std::endl;
-              golomb_x += (ozi::getGolombCode(ozi::getGolombParam(0.6), (i - min_coord_x_later - max_freq_x_later), ozi::REGION1,
-                                              ozi::KTH_GOLOMB,9)) * freq_coord_x_later[i];
-          }
-          os.close();
-          std::cout << "cehck5" << std::endl;
-          //
-          // 頂点復号ベクトルのy成分の頻度
-          //
-          fp = fopen((file_path + img_path + csv_file_prefix + "corner_decode_vector_y_freq.csv").c_str(), "w");
-          os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_y_freq.txt");
-          storeGnuplotFile(file_path + img_path + "gp\\decode_y.gp", "length of y coordinate.", "Frequency",
-                           "corner_decode_vector_y_freq.txt");
-          mean = 0.0;
-
-          for (int i = 0; i < (int) freq_coord_y_later.size(); i++) {
-              fprintf(fp, "%d,%d\n", i - min_coord_y_later, freq_coord_y_later[i]);
-              os << i - min_coord_y_later << " " << freq_coord_y_later[i] << std::endl;
-              mean += (i - min_coord_y_later) * freq_coord_y_later[i];
-          }
-          fclose(fp);
-          os.close();
-
-          // 平均分ずらすやつ
-          os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_y_freq_mean.txt");
-          storeGnuplotFile(file_path + img_path + "gp\\decode_y_mean.gp", "length of y coordinate", "Frequency",
-                           "corner_decode_vector_y_freq_mean.txt");
-          mean /= corners.size();
-          for (int i = 0; i < (int) freq_coord_y_later.size(); i++) {
-              os << i - min_coord_y_later - mean << " " << freq_coord_y_later[i] << std::endl;
-          }
-          os.close();
-
-          // 最大値ずらすやつ
-          os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_y_freq_max.txt");
-          storeGnuplotFile(file_path + img_path + "gp\\decode_y_max.gp", "length of y coordinate", "Frequency",
-                           "corner_decode_vector_y_freq_max.txt");
-          mean /= corners.size();
-          for (int i = 0; i < (int) freq_coord_y_later.size(); i++) {
-              os << i - min_coord_y_later - max_freq_y_later << " " << freq_coord_y_later[i] << std::endl;
-              golomb_y += (ozi::getGolombCode(ozi::getGolombParam(0.6), (i - min_coord_y_later - max_freq_y_later), ozi::REGION1,
-                                              ozi::KTH_GOLOMB,9)) * freq_coord_y_later[i];
-          }
-          os.close();
-
-          golomb_mv_x += tmp_mv_x;
-          golomb_mv_y += tmp_mv_y;
-
-          for (auto t:triangles_mydelaunay) {
-              cv::Point2f p1(t[0], t[1]), p2(t[2], t[3]), p3(t[4], t[5]);
-              //drawTriangle_residual(triangle_add_target, p1, p2, p3, BLUE,sobel_target);
-          }
-          cv::imwrite(file_path + img_path + "triangle_add_" + out_file[0] + "_threshold_" + std::to_string(threshold) +
-                      "_lambda_" + std::to_string(LAMBDA) + ".png", triangle_add_target);
-              std::cout << "check point 3" << std::endl;
-        out = result.out;
-        std::cout << "check point 4" << std::endl;
-        std::cout << "corners.size():" << corners.size() << std::endl;
-
-        // ===========================================================
-        // ログ出力
-        // ===========================================================
-        puts("======================================================");
-          int H = target.rows;
-          int W = target.cols;
-          for(int crop_W = 8, crop_H = 8;crop_W <= 32;crop_H += 8,crop_W += 8) {
-
-              std::cout << "inner PSNR : "
-                        << getPSNR(target, out, cv::Rect(crop_W, crop_H, W - crop_W * 2, H - crop_H * 2)) << " crop " << crop_H
-                        << std::endl;
-          }
-          //int crop_W = 128;
-          //int crop_H = 128;
-        clock_t end = clock();
-        int t = (int) ((double) (end - start) / CLOCKS_PER_SEC);
-        std::cout << std::to_string(t / 60) + "m" + std::to_string(t % 60) + "sec" << std::endl;
-        std::cout << "freq_block:" << result.freq_block << "(" << result.getBlockMatchingFrequency() << "%)"
-                  << std::endl;
-        std::cout << "freq_warp:" << result.freq_warp << "(" << result.getWarpingFrequency() << "%)" << std::endl;
-        std::cout << "corners.size():" << corners.size() << std::endl;
-
-        // 生成したターゲット画像
-        cv::imwrite(out_file_name, out);
-        std::cout << "check point 1" << std::endl;
-        /*
-        // 原画像をクロップしたもの
-        if (HARRIS)
-          cv::imwrite(file_path + img_path + "crop1_corner_size_" + std::to_string(corners.size()) + ".bmp",
-                      target(cv::Rect(crop_H, crop_W,  H- crop_H, W - crop_W)));
-        else if (THRESHOLD)
-          cv::imwrite(file_path + img_path + "crop1_threshold_" + std::to_string(threshold) + "_lambda_" +
-                      std::to_string(LAMBDA) + ".bmp", target(cv::Rect(crop_W, crop_H, W - crop_W * 2, H - crop_H * 2)));
-        std::cout << "check point 2" << std::endl;
-        // 生成したものをクロップしたもの
-        if (HARRIS)
-          cv::imwrite(file_path + img_path + "crop2_corner_size_" + std::to_string(corners.size()) + ".bmp",
-                      out(cv::Rect(crop_W, crop_H, W - crop_W * 2, H - crop_H * 2)));
-        else if (THRESHOLD)
-          cv::imwrite(file_path + img_path + "crop2_threshold_" + std::to_string(threshold) + "_lambda_" +
-                      std::to_string(LAMBDA) + ".bmp", out(cv::Rect(crop_W, crop_H, W - crop_W * 2, H - crop_H * 2)));
-        std::cout << "check point 3" << std::endl;
-        // 動きベクトルを出したもの
-        if (HARRIS)
-          cv::imwrite(file_path + img_path + "mv_image_corner_size_" + std::to_string(corners.size()) + ".png",
-                      result.mv_image);
-        else if (THRESHOLD)
-          cv::imwrite(file_path + img_path + "mv_image_threshold_" + std::to_string(threshold) + "_lambda_" +
-                      std::to_string(LAMBDA) + ".png", result.mv_image);
-                      */
-        cv::Mat residual = cv::Mat::zeros(target.size(), CV_8UC3);
-        //out = cv::imread(file_path + img_path + "prediction_HEVC_27.bmp");
-
-        for(int j = 0;j < target.rows;j++){
-         for(int i = 0;i < target.cols;i++){
-            int y = 4 * abs(R(target,i,j) - R(out,i,j));
-            if(y < 0)y = 0;
-         else if(y > 255)y = 255;
-           R(residual,i,j) = (unsigned char)y;
-            G(residual,i,j) = (unsigned char)y;
-            B(residual,i,j) = (unsigned char)y;
+            // 分布
+            // たまに8の倍数からずれる事あるんだけど, それ多分右側と下側の座標が1919と1079なのでだとおもわれ
+            // 1画素程度のズレを許容する気持ちで行く
+            int min_coord_x_later = std::numeric_limits<int>::max(), min_coord_y_later = std::numeric_limits<int>::max();
+            int max_coord_x_later = std::numeric_limits<int>::min(), max_coord_y_later = std::numeric_limits<int>::min();
+            std::vector<int> prev_id_count_later(1001, 0);
+            for (const auto &p : coded_coordinate_later) {
+                prev_id_count_later[p.prev_id + 500]++;
+                max_coord_x_later = std::max(max_coord_x_later, (int) p.coord.x);
+                min_coord_x_later = std::min(min_coord_x_later, (int) p.coord.x);
+                max_coord_y_later = std::max(max_coord_y_later, (int) p.coord.y);
+                min_coord_y_later = std::min(min_coord_y_later, (int) p.coord.y);
             }
-        }
-        md.getTriangleList(triangles_mydelaunay);
-          for(const cv::Vec6f t : triangles_mydelaunay){
-              cv::Point2f p1(t[0], t[1]), p2(t[2], t[3]), p3(t[4], t[5]);
-              //drawTriangle(corner_reduction, p1, p2, p3, BLUE);
-              drawTriangle(residual, p1, p2, p3, RED);
-          }
-        cv::imwrite(file_path + img_path + "residual.png",residual);
-          std::cout << "check point 4" << std::endl;
-        double psnr_1;
-        printf("%s's PSNR:%f\n", out_file_name.c_str(), (psnr_1 = getPSNR(target, out)));
-        std::cout << "check point 5" << std::endl;
-        // 四角形を描画した画像を出力
-        cv::Point2f p1 = cv::Point2f(150, 100);
-        cv::Point2f p2 = cv::Point2f(target.cols - 151, 100);
-        cv::Point2f p3 = cv::Point2f(target.cols - 151, target.rows - 101);
-        cv::Point2f p4 = cv::Point2f(150, target.rows - 101);
-        drawRectangle(out, p1, p2, p3, p4);
-        cv::imwrite(file_path + img_path + "rect.png", out);
-        std::cout << "check point 6" << std::endl;
-        // ログ -------------------------------------------------------------------------------
-        fp = fopen("C:\\Users\\kasph\\workspace\\MC\\log.txt", "a");
-        time_t tt;
-        time(&tt);
-        char date[64];
-        strftime(date, sizeof(date), "%Y/%m/%d %a %H:%M:%S", localtime(&tt));
 
-        fprintf(fp, (out_file_name + "\n").c_str());
-        if (WARP_AVAILABLE) fprintf(fp, "WARPING ON\n");
-        if (BM_AVAILABLE) fprintf(fp, "BlockMatching ON\n");
-        if (HARRIS) fprintf(fp, "HARRIS CORNER LIMIT MODE\n");
-        if (THRESHOLD) fprintf(fp, "THRESHOLD MODE");
-        fprintf(fp, ("lambda:" + std::to_string(LAMBDA)).c_str());
-        fprintf(fp, "QUANTIZE_STEP:%d\n", QUANTIZE);
-        fprintf(fp, "%s\n", date);
-        fprintf(fp, "PSNR : %f\n", psnr_1);
-        fprintf(fp, "freq_block:%d(%f%%)\n", result.freq_block, result.getBlockMatchingFrequency());
-        fprintf(fp, "freq_warp:%d(%f%%)\n", result.freq_warp, result.getWarpingFrequency());
-        fprintf(fp, "BlockMatching's PSNR : %f\n", result.getBlockMatchingPatchPSNR());
-        fprintf(fp, "Warping's PSNR : %f\n", result.getWarpingPatchPSNR());
+            int offset_later = QUANTIZE - (std::abs(min_coord_x_later) % QUANTIZE);
+
+            // 8の倍数でない場合は適当にずらす
+            if (min_coord_x_later % QUANTIZE != 0) {
+                min_coord_x_later = min_coord_x_later < 0 ? min_coord_x_later - offset_later : min_coord_x_later + offset_later;
+                std::cout << "offset_later:" << offset_later << std::endl;
+            }
+            if (max_coord_x_later % QUANTIZE != 0) {
+                max_coord_x_later = max_coord_x_later < 0 ? max_coord_x_later - offset_later : max_coord_x_later + offset_later;
+                std::cout << "offset_later:" << offset_later << std::endl;
+            }
+            if (min_coord_y_later % QUANTIZE != 0) {
+                min_coord_y_later = min_coord_y_later < 0 ? min_coord_y_later - offset_later : min_coord_y_later + offset_later;
+                std::cout << "offset_later:" << offset_later << std::endl;
+            }
+            if (max_coord_y_later % QUANTIZE != 0) {
+                max_coord_y_later = max_coord_y_later < 0 ? max_coord_y_later - offset_later : max_coord_y_later + offset_later;
+                std::cout << "offset_later:" << offset_later << std::endl;
+            }
+
+            min_coord_x_later = (abs(min_coord_x_later) / QUANTIZE);
+            min_coord_y_later = (abs(min_coord_y_later) / QUANTIZE);
+            max_coord_x_later = (abs(max_coord_x_later) / QUANTIZE);
+            max_coord_y_later = (abs(max_coord_y_later) / QUANTIZE);
+            std::vector<int> freq_coord_x_later(max_coord_x_later + min_coord_x_later + 1, 0);
+            std::vector<int> freq_coord_y_later(max_coord_y_later + min_coord_y_later + 1, 0);
+            std::cout << "freq_coord_x_later.size = " << freq_coord_x_later.size() << std::endl;
+            std::cout << "freq_coord_y_later.size = " << freq_coord_y_later.size() << std::endl;
+            // 頻度を求める奴
+            for (const auto &p : coded_coordinate_later) {
+                point_nums += 1.0;
+                if (static_cast<int>(p.coord.x) % QUANTIZE != 0) {
+                    offset_later = QUANTIZE - (std::abs((int) p.coord.x) % QUANTIZE);
+                    if (p.coord.x < 0) offset *= -1;
+                    freq_coord_x_later[(p.coord.x + offset_later) / QUANTIZE + min_coord_x_later]++;
+                } else {
+                    freq_coord_x_later[(p.coord.x) / QUANTIZE + min_coord_x_later]++;
+                }
+
+                if (static_cast<int>(p.coord.y) % QUANTIZE != 0) {
+                    offset_later = QUANTIZE - (std::abs((int) p.coord.y) % QUANTIZE);
+                    if (p.coord.y < 0) offset_later *= -1;
+                    freq_coord_y_later[(p.coord.y + offset_later) / QUANTIZE + min_coord_y_later]++;
+                } else {
+                    freq_coord_y_later[(p.coord.y) / QUANTIZE + min_coord_y_later]++;
+                }
+            }
+            int max_freq_x_later = 0;
+            for (int i = 0; i < static_cast<int>(freq_coord_x_later.size()); i++) {
+                if (freq_coord_x_later[max_freq_x_later] < freq_coord_x_later[i]) {
+                    max_freq_x_later = i;
+                }
+            }
+            max_freq_x_later -= min_coord_x_later;
+
+            int max_freq_y_later = 0;
+            for (int i = 0; i < static_cast<int>(freq_coord_y_later.size()); ++i) {
+                if (freq_coord_y_later[max_freq_y_later] < freq_coord_y_later[i]) {
+                    max_freq_y_later = i;
+                }
+            }
+            max_freq_y_later -= min_coord_y_later;
+            golomb_x = 0, golomb_y = 0;
+            std::cout << "cehck1" << std::endl;
+            //
+            // 頂点復号ベクトルのx成分の頻度
+            //
+            storeGnuplotFile(file_path + img_path + "gp\\decode_x.gp", "length of x coordinate.", "Frequency",
+                             "corner_decode_vector_x_freq.txt");
+            std::cout << "cehck2" << std::endl;
+            mean = 0.0;
+            fp = fopen((file_path + img_path + csv_file_prefix + "corner_mv_x_freq.csv").c_str(), "w");
+            os = std::ofstream(file_path + img_path + "gp\\corner_mv_x_freq.txt");
+            storeGnuplotFile(file_path + img_path + "gp\\corner_mv_x.gp", "length of x coordinate.", "Frequency",
+                             "corner_mv_x_freq.txt");
+            for (int i = 0; i < (int) freq_coord_x_later.size(); i++) {
+                std::cout << i << " " << freq_coord_x_later[i] << std::endl;
+                fprintf(fp, "%d,%d\n", i - min_coord_x_later, freq_coord_x_later[i]);
+                std::cout << "check1" << std::endl;
+                os << i - min_coord_x_later << " " << freq_coord_x_later[i] << std::endl;
+                std::cout << "check2" << std::endl;
+                mean += (i - min_coord_x_later) * freq_coord_x_later[i];
+            }
+
+            fclose(fp);
+            os.close();
+            std::cout << "cehck3" << std::endl;
+            // 平均引いたやつをシフトするもの
+            os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_x_freq_mean.txt");
+            storeGnuplotFile(file_path + img_path + "gp\\decode_x_mean.gp", "length of x coordinate", "Frequency",
+                             "corner_decode_vector_x_freq_mean.txt");
+            mean /= corners.size();
+            for (int i = 0; i < (int) freq_coord_x_later.size(); i++) {
+                os << i - min_coord_x_later - mean << " " << freq_coord_x_later[i] << std::endl;
+            }
+            os.close();
+            std::cout << "cehck4" << std::endl;
+            // max分ずらすグラフ
+            os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_x_freq_max.txt");
+            storeGnuplotFile(file_path + img_path + "gp\\decode_x_max.gp", "length of x coordinate", "Frequency",
+                             "corner_decode_vector_x_freq_max.txt");
+            mean /= corners.size();
+            for (int i = 0; i < (int) freq_coord_x_later.size(); i++) {
+                os << i - min_coord_x_later - max_freq_x_later << " " << freq_coord_x_later[i] << std::endl;
+                golomb_x += (ozi::getGolombCode(ozi::getGolombParam(0.6), (i - min_coord_x_later - max_freq_x_later), ozi::REGION1,
+                                                ozi::KTH_GOLOMB,9)) * freq_coord_x_later[i];
+            }
+            os.close();
+            std::cout << "cehck5" << std::endl;
+            //
+            // 頂点復号ベクトルのy成分の頻度
+            //
+            fp = fopen((file_path + img_path + csv_file_prefix + "corner_decode_vector_y_freq.csv").c_str(), "w");
+            os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_y_freq.txt");
+            storeGnuplotFile(file_path + img_path + "gp\\decode_y.gp", "length of y coordinate.", "Frequency",
+                             "corner_decode_vector_y_freq.txt");
+            mean = 0.0;
+
+            for (int i = 0; i < (int) freq_coord_y_later.size(); i++) {
+                fprintf(fp, "%d,%d\n", i - min_coord_y_later, freq_coord_y_later[i]);
+                os << i - min_coord_y_later << " " << freq_coord_y_later[i] << std::endl;
+                mean += (i - min_coord_y_later) * freq_coord_y_later[i];
+            }
+            fclose(fp);
+            os.close();
+
+            // 平均分ずらすやつ
+            os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_y_freq_mean.txt");
+            storeGnuplotFile(file_path + img_path + "gp\\decode_y_mean.gp", "length of y coordinate", "Frequency",
+                             "corner_decode_vector_y_freq_mean.txt");
+            mean /= corners.size();
+            for (int i = 0; i < (int) freq_coord_y_later.size(); i++) {
+                os << i - min_coord_y_later - mean << " " << freq_coord_y_later[i] << std::endl;
+            }
+            os.close();
+
+            // 最大値ずらすやつ
+            os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_y_freq_max.txt");
+            storeGnuplotFile(file_path + img_path + "gp\\decode_y_max.gp", "length of y coordinate", "Frequency",
+                             "corner_decode_vector_y_freq_max.txt");
+            mean /= corners.size();
+            for (int i = 0; i < (int) freq_coord_y_later.size(); i++) {
+                os << i - min_coord_y_later - max_freq_y_later << " " << freq_coord_y_later[i] << std::endl;
+                golomb_y += (ozi::getGolombCode(ozi::getGolombParam(0.6), (i - min_coord_y_later - max_freq_y_later), ozi::REGION1,
+                                                ozi::KTH_GOLOMB,9)) * freq_coord_y_later[i];
+            }
+            os.close();
+
+            golomb_mv_x += tmp_mv_x;
+            golomb_mv_y += tmp_mv_y;
+
+            for (auto t:triangles_mydelaunay) {
+                cv::Point2f p1(t[0], t[1]), p2(t[2], t[3]), p3(t[4], t[5]);
+            }
+
+            std::cout << "check point 3" << std::endl;
+            out = result.out;
+            std::cout << "check point 4" << std::endl;
+            std::cout << "corners.size():" << corners.size() << std::endl;
+
+            // ===========================================================
+            // ログ出力
+            // ===========================================================
+            puts("======================================================");
+            int H = target.rows;
+            int W = target.cols;
+            for(int crop_W = 8, crop_H = 8;crop_W <= 32;crop_H += 8,crop_W += 8) {
+
+                std::cout << "inner PSNR : "
+                          << getPSNR(target, out, cv::Rect(crop_W, crop_H, W - crop_W * 2, H - crop_H * 2)) << " crop " << crop_H
+                          << std::endl;
+            }
+            //int crop_W = 128;
+            //int crop_H = 128;
+            clock_t end = clock();
+            int t = (int) ((double) (end - start) / CLOCKS_PER_SEC);
+            std::cout << std::to_string(t / 60) + "m" + std::to_string(t % 60) + "sec" << std::endl;
+            std::cout << "freq_block:" << result.freq_block << "(" << result.getBlockMatchingFrequency() << "%)"
+                      << std::endl;
+            std::cout << "freq_warp:" << result.freq_warp << "(" << result.getWarpingFrequency() << "%)" << std::endl;
+            std::cout << "corners.size():" << corners.size() << std::endl;
+
+            // 生成したターゲット画像
+            cv::imwrite(out_file_name, out);
+            std::cout << "check point 1" << std::endl;
+            /*
+            // 原画像をクロップしたもの
+            if (HARRIS)
+              cv::imwrite(file_path + img_path + "crop1_corner_size_" + std::to_string(corners.size()) + ".bmp",
+                          target(cv::Rect(crop_H, crop_W,  H- crop_H, W - crop_W)));
+            else if (THRESHOLD)
+              cv::imwrite(file_path + img_path + "crop1_threshold_" + std::to_string(threshold) + "_lambda_" +
+                          std::to_string(LAMBDA) + ".bmp", target(cv::Rect(crop_W, crop_H, W - crop_W * 2, H - crop_H * 2)));
+            std::cout << "check point 2" << std::endl;
+            // 生成したものをクロップしたもの
+            if (HARRIS)
+              cv::imwrite(file_path + img_path + "crop2_corner_size_" + std::to_string(corners.size()) + ".bmp",
+                          out(cv::Rect(crop_W, crop_H, W - crop_W * 2, H - crop_H * 2)));
+            else if (THRESHOLD)
+              cv::imwrite(file_path + img_path + "crop2_threshold_" + std::to_string(threshold) + "_lambda_" +
+                          std::to_string(LAMBDA) + ".bmp", out(cv::Rect(crop_W, crop_H, W - crop_W * 2, H - crop_H * 2)));
+            std::cout << "check point 3" << std::endl;
+            // 動きベクトルを出したもの
+            if (HARRIS)
+              cv::imwrite(file_path + img_path + "mv_image_corner_size_" + std::to_string(corners.size()) + ".png",
+                          result.mv_image);
+            else if (THRESHOLD)
+              cv::imwrite(file_path + img_path + "mv_image_threshold_" + std::to_string(threshold) + "_lambda_" +
+                          std::to_string(LAMBDA) + ".png", result.mv_image);
+                          */
+            cv::Mat residual = cv::Mat::zeros(target.size(), CV_8UC3);
+            //out = cv::imread(file_path + img_path + "prediction_HEVC_27.bmp");
+
+            for(int j = 0;j < target.rows;j++){
+                for(int i = 0;i < target.cols;i++){
+                    int y = 4 * abs(R(target,i,j) - R(out,i,j));
+                    if(y < 0)y = 0;
+                    else if(y > 255)y = 255;
+                    R(residual,i,j) = (unsigned char)y;
+                    G(residual,i,j) = (unsigned char)y;
+                    B(residual,i,j) = (unsigned char)y;
+                }
+            }
+            md.getTriangleList(triangles_mydelaunay);
+            for(const cv::Vec6f t : triangles_mydelaunay){
+                cv::Point2f p1(t[0], t[1]), p2(t[2], t[3]), p3(t[4], t[5]);
+                //drawTriangle(corner_reduction, p1, p2, p3, BLUE);
+                drawTriangle(residual, p1, p2, p3, RED);
+            }
+            cv::imwrite(file_path + img_path + "residual.png",residual);
+            std::cout << "check point 4" << std::endl;
+            double psnr_1;
+            printf("%s's PSNR:%f\n", out_file_name.c_str(), (psnr_1 = getPSNR(target, out)));
+            std::cout << "check point 5" << std::endl;
+            // 四角形を描画した画像を出力
+            cv::Point2f p1 = cv::Point2f(150, 100);
+            cv::Point2f p2 = cv::Point2f(target.cols - 151, 100);
+            cv::Point2f p3 = cv::Point2f(target.cols - 151, target.rows - 101);
+            cv::Point2f p4 = cv::Point2f(150, target.rows - 101);
+            drawRectangle(out, p1, p2, p3, p4);
+            cv::imwrite(file_path + img_path + "rect.png", out);
+            std::cout << "check point 6" << std::endl;
+            // ログ -------------------------------------------------------------------------------
+            fp = fopen("C:\\Users\\kasph\\workspace\\MC\\log.txt", "a");
+            time_t tt;
+            time(&tt);
+            char date[64];
+            strftime(date, sizeof(date), "%Y/%m/%d %a %H:%M:%S", localtime(&tt));
+
+            fprintf(fp, (out_file_name + "\n").c_str());
+            if (WARP_AVAILABLE) fprintf(fp, "WARPING ON\n");
+            if (BM_AVAILABLE) fprintf(fp, "BlockMatching ON\n");
+            if (HARRIS) fprintf(fp, "HARRIS CORNER LIMIT MODE\n");
+            if (THRESHOLD) fprintf(fp, "THRESHOLD MODE");
+            fprintf(fp, ("lambda:" + std::to_string(LAMBDA)).c_str());
+            fprintf(fp, "QUANTIZE_STEP:%d\n", QUANTIZE);
+            fprintf(fp, "%s\n", date);
+            fprintf(fp, "PSNR : %f\n", psnr_1);
+            fprintf(fp, "freq_block:%d(%f%%)\n", result.freq_block, result.getBlockMatchingFrequency());
+            fprintf(fp, "freq_warp:%d(%f%%)\n", result.freq_warp, result.getWarpingFrequency());
+            fprintf(fp, "BlockMatching's PSNR : %f\n", result.getBlockMatchingPatchPSNR());
+            fprintf(fp, "Warping's PSNR : %f\n", result.getWarpingPatchPSNR());
 //        fprintf(fp, "erase elem size : %d\b", cnt_erased_elem);
-        fprintf(fp, (std::to_string(t / 60) + "m" + std::to_string(t % 60) + "sec\n\n").c_str());
-        fclose(fp);
-        std::cout << "log writed" << std::endl;
-        // 符号量たち
-        int prev_id_code_amount = 0;
-        for (int i = 0; i <= 1000; i++) {
-          if (prev_id_count[i] != 0) {
-            prev_id_code_amount +=
-                    ozi::getGolombCode(ozi::getGolombParam(0.5), i - 500, ozi::REGION1, ozi::KTH_GOLOMB, 3) *
-                    prev_id_count[i];
-          }
-        }
-        code_amount << "reference  :" << ref_file_name << std::endl;
-        code_amount << "target     :" << target_file_name << std::endl;
-        code_amount << "threshold  :" << threshold << std::endl;
-        code_amount << "corner size:" << corners.size() << std::endl;
-        code_amount << "mode       :" << (THRESHOLD ? "threshold" : "harris") << std::endl;
-        code_amount << "coordinate vector ---------------------" << std::endl;
-        code_amount << "golomb code(x) : " << golomb_x << std::endl;
-        code_amount << "golomb code(y) : " << golomb_y << std::endl;
-        code_amount << "motion vector ---------------------" << std::endl;
-        code_amount << "golomb code(x) : " << golomb_mv_x << std::endl;
-        code_amount << "golomb code(y) : " << golomb_mv_y << std::endl;
-        code_amount << "diff vector ---------------------" << std::endl;
-        code_amount << "golomb code(x) : " << result.getXbits() << std::endl;
-        code_amount << "golomb code(y) : " << result.getYbits() << std::endl;
-        code_amount << "technic flag ---------------------" << std::endl;
-        code_amount << triangles.size() << std::endl;
-        code_amount << "prev_id flag ---------------------" << std::endl;
-        code_amount << "golomb code : " << prev_id_code_amount << std::endl << std::endl;
-        code_amount << "golomb code full : " << golomb_x + golomb_y + prev_id_code_amount << std::endl << std::endl;
-
-
-        int cnt = 0;
-        for(int j = 0 ; j < target.rows ; j++){
-          for(int i = 0 ; i < target.cols ; i++){
-            if(R(out, i, j) == 255 && G(out, i, j) == 0 && B(out, i, j) == 0){
-              cnt++;
-              //std::cout << "(" << i << ", " << j << ")" << std::endl;
+            fprintf(fp, (std::to_string(t / 60) + "m" + std::to_string(t % 60) + "sec\n\n").c_str());
+            fclose(fp);
+            std::cout << "log writed" << std::endl;
+            // 符号量たち
+            int prev_id_code_amount = 0;
+            for (int i = 0; i <= 1000; i++) {
+                if (prev_id_count[i] != 0) {
+                    prev_id_code_amount +=
+                            ozi::getGolombCode(ozi::getGolombParam(0.5), i - 500, ozi::REGION1, ozi::KTH_GOLOMB, 3) *
+                            prev_id_count[i];
+                }
             }
-          }
-        }
+            code_amount << "reference  :" << ref_file_name << std::endl;
+            code_amount << "target     :" << target_file_name << std::endl;
+            code_amount << "threshold  :" << threshold << std::endl;
+            code_amount << "corner size:" << corners.size() << std::endl;
+            code_amount << "mode       :" << (THRESHOLD ? "threshold" : "harris") << std::endl;
+            code_amount << "coordinate vector ---------------------" << std::endl;
+            code_amount << "golomb code(x) : " << golomb_x << std::endl;
+            code_amount << "golomb code(y) : " << golomb_y << std::endl;
+            code_amount << "motion vector ---------------------" << std::endl;
+            code_amount << "golomb code(x) : " << golomb_mv_x << std::endl;
+            code_amount << "golomb code(y) : " << golomb_mv_y << std::endl;
+            code_amount << "diff vector ---------------------" << std::endl;
+            code_amount << "golomb code(x) : " << result.getXbits() << std::endl;
+            code_amount << "golomb code(y) : " << result.getYbits() << std::endl;
+            code_amount << "technic flag ---------------------" << std::endl;
+            code_amount << triangles.size() << std::endl;
+            code_amount << "prev_id flag ---------------------" << std::endl;
+            code_amount << "golomb code : " << prev_id_code_amount << std::endl << std::endl;
+            code_amount << "golomb code full : " << golomb_x + golomb_y + prev_id_code_amount << std::endl << std::endl;
 
-        psnr_points_efficience << threshold << " " << psnr_1 << std::endl;
 
-        corner_psnr << corners.size() << " " << psnr_1 << std::endl;
-        corner_code_amount << corners.size() << " "
-                           << golomb_x + golomb_y + golomb_mv_x + golomb_mv_y + result.getXbits() +
-                              result.getYbits() +
-                              triangles.size() << std::endl;
-        rate_mse << golomb_x + golomb_y + golomb_mv_x + golomb_mv_y + result.getXbits() + result.getYbits() +
-                    triangles.size() << " " << getMSE(target, out, cv::Rect(0, 0, target.cols, target.rows))
-                 << std::endl;
-        rate_psnr << golomb_x + golomb_y + golomb_mv_x + golomb_mv_y + result.getXbits() + result.getYbits() +
-                     triangles.size() << " " << psnr_1 << " " << "corner:" << corners.size() << " triangle:"
-                  << triangles.size() << " BM:" << result.getBlockMatchingFrequency() << "% Warp:"
-                  << result.getWarpingFrequency() << "%" << std::endl;
-        rate_psnr_csv << golomb_x + golomb_y + golomb_mv_x + golomb_mv_y + result.getXbits() + result.getYbits() +
-                         triangles.size() << "," << psnr_1 << std::endl;
+            int cnt = 0;
+            for(int j = 0 ; j < target.rows ; j++){
+                for(int i = 0 ; i < target.cols ; i++){
+                    if(R(out, i, j) == 255 && G(out, i, j) == 0 && B(out, i, j) == 0){
+                        cnt++;
+                        //std::cout << "(" << i << ", " << j << ")" << std::endl;
+                    }
+                }
+            }
 
-        std::cout << "zahyou = " << golomb_x + golomb_y + prev_id_code_amount<< "ugoki = " << golomb_mv_x + golomb_mv_y << std::endl;
-        std::cout << golomb_x + golomb_y + golomb_mv_x + golomb_mv_y + result.getXbits() + result.getYbits() +
+            psnr_points_efficience << threshold << " " << psnr_1 << std::endl;
+
+            corner_psnr << corners.size() << " " << psnr_1 << std::endl;
+            corner_code_amount << corners.size() << " "
+                               << golomb_x + golomb_y + golomb_mv_x + golomb_mv_y + result.getXbits() +
+                                  result.getYbits() +
+                                  triangles.size() << std::endl;
+            rate_mse << golomb_x + golomb_y + golomb_mv_x + golomb_mv_y + result.getXbits() + result.getYbits() +
+                        triangles.size() << " " << getMSE(target, out, cv::Rect(0, 0, target.cols, target.rows))
+                     << std::endl;
+            rate_psnr << golomb_x + golomb_y + golomb_mv_x + golomb_mv_y + result.getXbits() + result.getYbits() +
                          triangles.size() << " " << psnr_1 << " " << "corner:" << corners.size() << " triangle:"
-                         << triangles.size() << " BM:" << result.getBlockMatchingFrequency() << "% Warp:"
-                         << result.getWarpingFrequency() << "%" << std::endl;
-        threshold += 2.0;
+                      << triangles.size() << " BM:" << result.getBlockMatchingFrequency() << "% Warp:"
+                      << result.getWarpingFrequency() << "%" << std::endl;
+            rate_psnr_csv << golomb_x + golomb_y + golomb_mv_x + golomb_mv_y + result.getXbits() + result.getYbits() +
+                             triangles.size() << "," << psnr_1 << std::endl;
 
-        if (THRESHOLD)
-          cv::imwrite(file_path + img_path + "triangle_error_threshold_" + std::to_string(threshold) + ".png",
-                      triangle_error_img);
-        else if (HARRIS)
-          cv::imwrite(file_path + img_path + "triangle_error_corners_" + std::to_string(corners.size()) + ".png",
-                      triangle_error_img);
-      }
+            std::cout << "zahyou = " << golomb_x + golomb_y + prev_id_code_amount<< "ugoki = " << golomb_mv_x + golomb_mv_y << std::endl;
+            std::cout << golomb_x + golomb_y + golomb_mv_x + golomb_mv_y + result.getXbits() + result.getYbits() +
+                         triangles.size() << " " << psnr_1 << " " << "corner:" << corners.size() << " triangle:"
+                      << triangles.size() << " BM:" << result.getBlockMatchingFrequency() << "% Warp:"
+                      << result.getWarpingFrequency() << "%" << std::endl;
+            threshold += 2.0;
+
+            if (THRESHOLD)
+                cv::imwrite(file_path + img_path + "triangle_error_threshold_" + std::to_string(threshold) + ".png",
+                            triangle_error_img);
+            else if (HARRIS)
+                cv::imwrite(file_path + img_path + "triangle_error_corners_" + std::to_string(corners.size()) + ".png",
+                            triangle_error_img);
+
+        }
     }
-  }
 
-  // 頂点情報をstoreする
-  std::vector<int> all(1002, 0);
-  for (int i = 0; i <= 1000; i++) all[i] = (count_all_x_coord[i] + count_all_y_coord[i]);
+    // 頂点情報をstoreする
+    std::vector<int> all(1002, 0);
+    for (int i = 0; i <= 1000; i++) all[i] = (count_all_x_coord[i] + count_all_y_coord[i]);
 
-  storeFrequency(graph_file_path + "coord_all.txt", all, 500);
+    storeFrequency(graph_file_path + "coord_all.txt", all, 500);
 
-  for (int i = 0; i < (int) all.size(); i++) all[i] = 0;
+    for (int i = 0; i < (int) all.size(); i++) all[i] = 0;
 
-  // 動きベクトルの統計をstore
-  for (int i = 0; i <= 1000; i++) all[i] = (count_all_x_mv[i] + count_all_y_mv[i]);
-  storeFrequency(graph_file_path + "mv_all.txt", all, 500);
+    // 動きベクトルの統計をstore
+    for (int i = 0; i <= 1000; i++) all[i] = (count_all_x_mv[i] + count_all_y_mv[i]);
+    storeFrequency(graph_file_path + "mv_all.txt", all, 500);
 
-  for (int i = 0; i < (int) all.size(); i++) all[i] = 0;
+    for (int i = 0; i < (int) all.size(); i++) all[i] = 0;
 
-  // 平行移動ベクトルの統計をstore
-  for (int i = 0; i <= 1000; i++) all[i] = (count_all_diff_x_mv[i] + count_all_diff_y_mv[i]);
-  storeFrequency(graph_file_path + "diff_mv.txt", all, 500);
+    // 平行移動ベクトルの統計をstore
+    for (int i = 0; i <= 1000; i++) all[i] = (count_all_diff_x_mv[i] + count_all_diff_y_mv[i]);
+    storeFrequency(graph_file_path + "diff_mv.txt", all, 500);
 
-  // prev_idの統計をstore
-  for (int i = 0; i <= 1000; i++) all[i] = (count_all_prev_id[i]);
-  storeFrequency(graph_file_path + "prev_id.txt", all, 500);
+    // prev_idの統計をstore
+    for (int i = 0; i <= 1000; i++) all[i] = (count_all_prev_id[i]);
+    storeFrequency(graph_file_path + "prev_id.txt", all, 500);
 }
+#pragma clang diagnostic pop
 
 /**
  * @fn int addSideCorners(cv::Mat img, std::vector<cv::Point2f> &corners)
@@ -1979,194 +1784,194 @@ int main(int argc, char *argv[]) {
  * @param[out] corners 点の座標を格納するvector
  */
 int addSideCorners(cv::Mat img, std::vector<cv::Point2f> &corners) {
-  int point_nums = 0;
-  int width = img.cols;
-  int height = img.rows;
-  int width_points = static_cast<int>(std::sqrt(width / (double)height) * std::sqrt(corners.size()) + 0.5);
-  int height_points = static_cast<int>(std::sqrt(height / (double)width) * std::sqrt(corners.size()) + 0.5);
+    int point_nums = 0;
+    int width = img.cols;
+    int height = img.rows;
+    int width_points = static_cast<int>(std::sqrt(width / (double)height) * std::sqrt(corners.size()) + 0.5);
+    int height_points = static_cast<int>(std::sqrt(height / (double)width) * std::sqrt(corners.size()) + 0.5);
 
-  // 上辺の両端に点を配置する
-  corners.emplace_back(0.0, 0.0);
-  corners.emplace_back(img.cols - 1, 0.0);
-  point_nums += 2;
+    // 上辺の両端に点を配置する
+    corners.emplace_back(0.0, 0.0);
+    corners.emplace_back(img.cols - 1, 0.0);
+    point_nums += 2;
 
-  // 上辺への点追加 -----------------------------------------------------------------------------------
-  std::vector<std::pair<double, cv::Point2f> > pt;
+    // 上辺への点追加 -----------------------------------------------------------------------------------
+    std::vector<std::pair<double, cv::Point2f> > pt;
 
-  // 隣り合う画素との誤差を計算し, 降順にソートする
-  // 誤差順に座標がほしいので, pair<double, cv::Point2f>にした.
-  for (int i = 0, j = 0; i < img.cols - 1; i++) {
-    pt.emplace_back(std::make_pair(fabs(MM(img, i, j) - MM(img, i + 1, j)), cv::Point2f(i, j)));
-  }
-  sort(pt.begin(), pt.end(), [](const pdp &a1, const pdp &a2) { return a1.first < a2.first; });
-
-  std::vector<bool> flag_width((unsigned int) img.cols, 0);
-  const int DXX = 500;       // 外周の点の最小許容距離（おそらくX座標）
-  const int DYY = 400;       // 外周の点の最小許容距離
-  int DX = img.cols / DXX;  // 外周の点の最大取得数（上下）
-  int DY = img.rows / DYY;  // 外周の点の最大取得数（左右）
-
-  // 始点と終点からDXX画素にフラグを建てる
-  for (int i = 0; i < img.cols; i++) flag_width[i] = (i < DXX || (img.cols - DXX) <= i);
-
-  int cnt = 0;
-  int flag = false;
-  for (int i = 0; i < DX && !flag; i++) {
-    for (int k = 0; k < (int) pt.size(); k++) {
-      std::pair<double, cv::Point2f> p = pt[k];
-      if (!flag_width[p.second.x]) {
-        corners.emplace_back(p.second.x, p.second.y);
-        point_nums++;
-        cnt++;
-        if(width_points == cnt){
-          flag = true;
-          break;
-        }
-        for (int j = (int) (p.second.x - DXX); j < (p.second.x + DXX); j++) {
-          if (0 <= j && j < img.cols) {
-            flag_width[j] = true;
-          }
-        }
-        break;
-      }
+    // 隣り合う画素との誤差を計算し, 降順にソートする
+    // 誤差順に座標がほしいので, pair<double, cv::Point2f>にした.
+    for (int i = 0, j = 0; i < img.cols - 1; i++) {
+        pt.emplace_back(std::make_pair(fabs(MM(img, i, j) - MM(img, i + 1, j)), cv::Point2f(i, j)));
     }
-  }
+    sort(pt.begin(), pt.end(), [](const pdp &a1, const pdp &a2) { return a1.first < a2.first; });
 
-  for(int i = SIDE_X_MIN ; i < img.cols; i += SIDE_X_MIN){
-    corners.emplace_back(i, 0);
-  }
+    std::vector<bool> flag_width((unsigned int) img.cols, 0);
+    const int DXX = 500;       // 外周の点の最小許容距離（おそらくX座標）
+    const int DYY = 400;       // 外周の点の最小許容距離
+    int DX = img.cols / DXX;  // 外周の点の最大取得数（上下）
+    int DY = img.rows / DYY;  // 外周の点の最大取得数（左右）
 
-  // 下辺に点を追加 -----------------------------------------------------------------------------
-  pt.clear();
-  // 下辺の両端に点を打つ
-  corners.emplace_back(img.cols - 1, img.rows - 1);
-  corners.emplace_back(0.0, img.rows - 1);
-  point_nums += 2;
-  // 隣り合う画素との誤差を計算し, 降順にソートする
-  // 誤差順に座標がほしいので, pair<double, cv::Point2f>にした.
-  for (int i = img.cols - 2, j = img.rows - 1; i > 0; i--) {
-    pt.emplace_back(std::make_pair(fabs(MM(img, i, j) - MM(img, i - 1, j)), cv::Point2f(i, j)));
-  }
-  sort(pt.begin(), pt.end(), [](const pdp &a1, const pdp &a2) { return a1.first < a2.first; });
+    // 始点と終点からDXX画素にフラグを建てる
+    for (int i = 0; i < img.cols; i++) flag_width[i] = (i < DXX || (img.cols - DXX) <= i);
 
-  for (int i = 0; i < img.cols; i++) flag_width[i] = i < DXX || (img.cols - DXX) <= i;
-
-  cnt = 0;
-  flag = false;
-  for (int i = 0; i < DX && !flag; i++) {
-    for (int k = 0; k < (int) pt.size(); k++) {
-      std::pair<double, cv::Point2f> p = pt[k];
-      if (!flag_width[p.second.x]) {
-        corners.emplace_back(p.second.x, p.second.y);
-        point_nums++;
-        cnt++;
-        if(cnt == width_points){
-          flag = true;
-          break;
+    int cnt = 0;
+    int flag = false;
+    for (int i = 0; i < DX && !flag; i++) {
+        for (int k = 0; k < (int) pt.size(); k++) {
+            std::pair<double, cv::Point2f> p = pt[k];
+            if (!flag_width[p.second.x]) {
+                corners.emplace_back(p.second.x, p.second.y);
+                point_nums++;
+                cnt++;
+                if(width_points == cnt){
+                    flag = true;
+                    break;
+                }
+                for (int j = (int) (p.second.x - DXX); j < (p.second.x + DXX); j++) {
+                    if (0 <= j && j < img.cols) {
+                        flag_width[j] = true;
+                    }
+                }
+                break;
+            }
         }
-        for (int j = (int) (p.second.x - DXX); j < (p.second.x + DXX); j++) {
-          if (0 <= j && j < img.cols) {
-            flag_width[j] = true; // NOLINT
-          }
-        }
-        break;
-      }
     }
-  }
 
-  for(int i = SIDE_X_MIN ; i < img.cols; i += SIDE_X_MIN){
-    corners.emplace_back(i, img.rows - 1);
-  }
-
-  // 右辺に点を追加 -----------------------------------------------------------------------------
-  pt.clear();
-
-  // 隣り合う画素との誤差を計算し, 降順にソートする
-  // 誤差順に座標がほしいので, pair<double, cv::Point2f>にした.
-  for (int i = img.cols - 1, j = 1; j < (img.rows - 1); j++) {
-    pt.emplace_back(std::make_pair(fabs(MM(img, i, j) - MM(img, i, j + 1)), cv::Point2f(i, j)));
-  }
-  sort(pt.begin(), pt.end(), [](const pdp &a1, const pdp &a2) { return a1.first < a2.first; });
-
-  std::vector<bool> flag_height((unsigned int) img.rows, 0);
-
-  for (int i = 0; i < img.rows; i++) {
-    flag_height[i] = i < DYY || (img.rows - DYY) <= i;
-  }
-
-  cnt = 0;
-  flag = false;
-  for (int i = 0; i < DY && !flag; i++) {
-    for (int k = 0; k < (int) pt.size(); k++) {
-      std::pair<double, cv::Point2f> p = pt[k];
-      if (flag_height[p.second.y] == 0) {
-        corners.emplace_back(p.second.x, p.second.y);
-        point_nums++;
-        cnt++;
-        if(cnt == height_points){
-          flag = true;
-          break;
-        }
-        for (int j = (int) (p.second.y - DYY); j < (int) p.second.y + DYY; j++) {
-          if (0 <= j && j < img.rows) {
-            flag_height[j] = true;
-          }
-        }
-        break; // NOLINT
-      }
+    for(int i = SIDE_X_MIN ; i < img.cols; i += SIDE_X_MIN){
+        corners.emplace_back(i, 0);
     }
-  }
 
-  for(int i = SIDE_Y_MIN ; i < img.rows ; i += SIDE_Y_MIN){
-    corners.emplace_back(img.cols - 1, i);
-  }
-
-  // 左辺に点を追加 -----------------------------------------------------------------------------
-  pt.clear();
-
-  // 隣り合う画素との誤差を計算し, 降順にソートする
-  // 誤差順に座標がほしいので, pair<double, cv::Point2f>にした.
-  for (int i = 0, j = img.rows - 2; j > 0; j--) {
-    pt.emplace_back(std::make_pair(fabs(MM(img, i, j) - MM(img, i, j - 1)), cv::Point2f(i, j)));
-  }
-  sort(pt.begin(), pt.end(), [](const pdp &a1, const pdp &a2) { return a1.first < a2.first; });
-
-  for (int i = 0; i < img.rows; i++) {
-    flag_height[i] = i < DYY || (img.rows - DYY) <= i;
-  }
-
-  flag = false;
-  cnt = 0;
-  for (int i = 0; i < DY && !flag; i++) {
-    for (int k = 0; k < (int) pt.size(); k++) {
-      std::pair<double, cv::Point2f> p = pt[k];
-      if (flag_height[p.second.y] == 0) {
-        corners.emplace_back(p.second.x, p.second.y);
-        point_nums++;
-        cnt++;
-        if(cnt == width_points){
-          flag = true;
-          break;
-        }
-        for (int j = (int) (p.second.y - DYY); j < p.second.y + DYY; j++) {
-          if (0 <= j && j < img.rows) {
-            flag_height[j] = true;
-          }
-        }
-        break;
-      }
+    // 下辺に点を追加 -----------------------------------------------------------------------------
+    pt.clear();
+    // 下辺の両端に点を打つ
+    corners.emplace_back(img.cols - 1, img.rows - 1);
+    corners.emplace_back(0.0, img.rows - 1);
+    point_nums += 2;
+    // 隣り合う画素との誤差を計算し, 降順にソートする
+    // 誤差順に座標がほしいので, pair<double, cv::Point2f>にした.
+    for (int i = img.cols - 2, j = img.rows - 1; i > 0; i--) {
+        pt.emplace_back(std::make_pair(fabs(MM(img, i, j) - MM(img, i - 1, j)), cv::Point2f(i, j)));
     }
-  }
+    sort(pt.begin(), pt.end(), [](const pdp &a1, const pdp &a2) { return a1.first < a2.first; });
 
-  for(int i = SIDE_Y_MIN ; i < img.rows ; i += SIDE_Y_MIN){
-    corners.emplace_back(0, i);
-  }
+    for (int i = 0; i < img.cols; i++) flag_width[i] = i < DXX || (img.cols - DXX) <= i;
 
- // for(int i = 0; i < 4; i +=1){
- //   std::cout << "x = " << corners[i].x << " y = " << corners[i].y << std::endl;
- // }
+    cnt = 0;
+    flag = false;
+    for (int i = 0; i < DX && !flag; i++) {
+        for (int k = 0; k < (int) pt.size(); k++) {
+            std::pair<double, cv::Point2f> p = pt[k];
+            if (!flag_width[p.second.x]) {
+                corners.emplace_back(p.second.x, p.second.y);
+                point_nums++;
+                cnt++;
+                if(cnt == width_points){
+                    flag = true;
+                    break;
+                }
+                for (int j = (int) (p.second.x - DXX); j < (p.second.x + DXX); j++) {
+                    if (0 <= j && j < img.cols) {
+                        flag_width[j] = true; // NOLINT
+                    }
+                }
+                break;
+            }
+        }
+    }
 
-  return point_nums;
+    for(int i = SIDE_X_MIN ; i < img.cols; i += SIDE_X_MIN){
+        corners.emplace_back(i, img.rows - 1);
+    }
+
+    // 右辺に点を追加 -----------------------------------------------------------------------------
+    pt.clear();
+
+    // 隣り合う画素との誤差を計算し, 降順にソートする
+    // 誤差順に座標がほしいので, pair<double, cv::Point2f>にした.
+    for (int i = img.cols - 1, j = 1; j < (img.rows - 1); j++) {
+        pt.emplace_back(std::make_pair(fabs(MM(img, i, j) - MM(img, i, j + 1)), cv::Point2f(i, j)));
+    }
+    sort(pt.begin(), pt.end(), [](const pdp &a1, const pdp &a2) { return a1.first < a2.first; });
+
+    std::vector<bool> flag_height((unsigned int) img.rows, 0);
+
+    for (int i = 0; i < img.rows; i++) {
+        flag_height[i] = i < DYY || (img.rows - DYY) <= i;
+    }
+
+    cnt = 0;
+    flag = false;
+    for (int i = 0; i < DY && !flag; i++) {
+        for (int k = 0; k < (int) pt.size(); k++) {
+            std::pair<double, cv::Point2f> p = pt[k];
+            if (flag_height[p.second.y] == 0) {
+                corners.emplace_back(p.second.x, p.second.y);
+                point_nums++;
+                cnt++;
+                if(cnt == height_points){
+                    flag = true;
+                    break;
+                }
+                for (int j = (int) (p.second.y - DYY); j < (int) p.second.y + DYY; j++) {
+                    if (0 <= j && j < img.rows) {
+                        flag_height[j] = true;
+                    }
+                }
+                break; // NOLINT
+            }
+        }
+    }
+
+    for(int i = SIDE_Y_MIN ; i < img.rows ; i += SIDE_Y_MIN){
+        corners.emplace_back(img.cols - 1, i);
+    }
+
+    // 左辺に点を追加 -----------------------------------------------------------------------------
+    pt.clear();
+
+    // 隣り合う画素との誤差を計算し, 降順にソートする
+    // 誤差順に座標がほしいので, pair<double, cv::Point2f>にした.
+    for (int i = 0, j = img.rows - 2; j > 0; j--) {
+        pt.emplace_back(std::make_pair(fabs(MM(img, i, j) - MM(img, i, j - 1)), cv::Point2f(i, j)));
+    }
+    sort(pt.begin(), pt.end(), [](const pdp &a1, const pdp &a2) { return a1.first < a2.first; });
+
+    for (int i = 0; i < img.rows; i++) {
+        flag_height[i] = i < DYY || (img.rows - DYY) <= i;
+    }
+
+    flag = false;
+    cnt = 0;
+    for (int i = 0; i < DY && !flag; i++) {
+        for (int k = 0; k < (int) pt.size(); k++) {
+            std::pair<double, cv::Point2f> p = pt[k];
+            if (flag_height[p.second.y] == 0) {
+                corners.emplace_back(p.second.x, p.second.y);
+                point_nums++;
+                cnt++;
+                if(cnt == width_points){
+                    flag = true;
+                    break;
+                }
+                for (int j = (int) (p.second.y - DYY); j < p.second.y + DYY; j++) {
+                    if (0 <= j && j < img.rows) {
+                        flag_height[j] = true;
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    for(int i = SIDE_Y_MIN ; i < img.rows ; i += SIDE_Y_MIN){
+        corners.emplace_back(0, i);
+    }
+
+    // for(int i = 0; i < 4; i +=1){
+    //   std::cout << "x = " << corners[i].x << " y = " << corners[i].y << std::endl;
+    // }
+
+    return point_nums;
 }
 
 
@@ -2181,34 +1986,34 @@ int addSideCorners(cv::Mat img, std::vector<cv::Point2f> &corners) {
 
 
 std::vector<cv::Point2f> cornersQuantization(std::vector<cv::Point2f> &corners, const cv::Mat &target) {
-  cv::Point2f tmp_corner;
-  for (auto &corner : corners) {
-    if (corner.x < target.cols - 1) {
-      tmp_corner.x = (int) ((corner.x + QUANTIZE / 2.0) / QUANTIZE) * QUANTIZE;
-      corner.x = target.cols <= tmp_corner.x ? tmp_corner.x - 1 : tmp_corner.x;
+    cv::Point2f tmp_corner;
+    for (auto &corner : corners) {
+        if (corner.x < target.cols - 1) {
+            tmp_corner.x = (int) ((corner.x + QUANTIZE / 2.0) / QUANTIZE) * QUANTIZE;
+            corner.x = target.cols <= tmp_corner.x ? tmp_corner.x - 1 : tmp_corner.x;
+        }
+
+        if (corner.y < target.rows - 1) {
+            tmp_corner.y = (int) ((corner.y + QUANTIZE / 2.0) / QUANTIZE) * QUANTIZE;
+            corner.y = target.rows <= tmp_corner.y ? tmp_corner.y - 1 : tmp_corner.y;
+        } else {
+
+        }
     }
 
-    if (corner.y < target.rows - 1) {
-      tmp_corner.y = (int) ((corner.y + QUANTIZE / 2.0) / QUANTIZE) * QUANTIZE;
-      corner.y = target.rows <= tmp_corner.y ? tmp_corner.y - 1 : tmp_corner.y;
-    } else {
-
-    }
-  }
-
-  // ラスタスキャン順にソート
-  sort(corners.begin(), corners.end(), [](const cv::Point2f &a1, const cv::Point2f &a2) {
-    if (a1.y != a2.y) {
-      return a1.y < a2.y;
-    } else {
-      return a1.x < a2.x;
-    }
-  });
+    // ラスタスキャン順にソート
+    sort(corners.begin(), corners.end(), [](const cv::Point2f &a1, const cv::Point2f &a2) {
+        if (a1.y != a2.y) {
+            return a1.y < a2.y;
+        } else {
+            return a1.x < a2.x;
+        }
+    });
 
 //  for(int i = 0 ; i < (int)corners.size() ; i++){
 //    std::cout << "corners[" << i << "]:" << corners[i] << std::endl;
 //  }
-  return uniqCoordinate(corners);
+    return uniqCoordinate(corners);
 }
 
 /**
@@ -2463,11 +2268,11 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4
                                                                                           std::pair<bool, bool>(false,
                                                                                                                 para_flag));
         std::tuple<std::vector<std::pair<cv::Point2i, int>>, bool, bool, cv::Point2f, int,cv::Point2f> add_mv_tuple(add_mv_tmp,
-                                                                                                        false,
-                                                                                                        para_flag,
-                                                                                                        cv::Point2f(0,
-                                                                                                                    0),
-                                                                                                        0,cv::Point2f(0,0));
+                                                                                                                    false,
+                                                                                                                    para_flag,
+                                                                                                                    cv::Point2f(0,
+                                                                                                                                0),
+                                                                                                                    0,cv::Point2f(0,0));
         mv_basis[triangle.p1_idx].emplace_back(add_mv);
         mv_basis_tuple[triangle.p1_idx].emplace_back(add_mv_tuple);
 /*
@@ -2846,7 +2651,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4
                             std::get<0>(mv_basis_tuple[current_idx][j])[2].first);
                     //std::cout << "check6" << std::endl;
                 } else {
-                   // std::cout << "check7" << std::endl;
+                    // std::cout << "check7" << std::endl;
                     double init_Distance = 10E05;
                     double min_Distance = init_Distance;
                     int min_num = 0;
@@ -2859,7 +2664,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4
                     for (int k = 0; k < (int) neighbor.size(); k++) {
                         //std::cout << "check9" << std::endl;
                         if (!corded_mv[neighbor[k] - 4].empty()) {
-                           // std::cout << "check10" << std::endl;
+                            // std::cout << "check10" << std::endl;
                             flag_arround = true;
                             double Distance = md.getDistance(
                                     corners[std::get<0>(mv_basis_tuple[current_idx][j])[0].second], neighbor_cood[k]);
@@ -2913,41 +2718,41 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4
                         corded_mv[std::get<0>(mv_basis_tuple[current_idx][j])[2].second].emplace_back(
                                 std::get<0>(mv_basis_tuple[current_idx][j])[2].first);
                     }
-                   // std::cout << "check14" << std::endl;
+                    // std::cout << "check14" << std::endl;
                 }
             }
         }
     }
     int worth = 0;
-for(int i = 0;i < (int)mv_basis_tuple.size();i++) {
-    for (int j = 0; j < (int) mv_basis_tuple[i].size(); j++) {
-        int golomb_para = 16;
-        cv::Point2f mv_diff = std::get<3>(mv_basis_tuple[i][j]);
-        cv::Point2f basis = std::get<0>(mv_basis_tuple[i][j])[0].first;
-        cv::Point2f prev = std::get<5>(mv_basis_tuple[i][j]);
-        tmp_mv_x += 1;
-        basis_mv_tmp_x += ozi::getGolombCode(golomb_para, prev.x, ozi::REGION1, ozi::GOLOMB, 0);
-        basis_mv_tmp_x += 1;
-        basis_mv_tmp_y += ozi::getGolombCode(golomb_para, prev.y, ozi::REGION1, ozi::GOLOMB, 0);
-        basis_mv_tmp_y += 1;
+    for(int i = 0;i < (int)mv_basis_tuple.size();i++) {
+        for (int j = 0; j < (int) mv_basis_tuple[i].size(); j++) {
+            int golomb_para = 16;
+            cv::Point2f mv_diff = std::get<3>(mv_basis_tuple[i][j]);
+            cv::Point2f basis = std::get<0>(mv_basis_tuple[i][j])[0].first;
+            cv::Point2f prev = std::get<5>(mv_basis_tuple[i][j]);
+            tmp_mv_x += 1;
+            basis_mv_tmp_x += ozi::getGolombCode(golomb_para, prev.x, ozi::REGION1, ozi::GOLOMB, 0);
+            basis_mv_tmp_x += 1;
+            basis_mv_tmp_y += ozi::getGolombCode(golomb_para, prev.y, ozi::REGION1, ozi::GOLOMB, 0);
+            basis_mv_tmp_y += 1;
 
-        std::cout << "diff x: " << mv_diff.x << " code-length: "
-                  << ozi::getGolombCode(golomb_para, mv_diff.x, ozi::REGION1, ozi::GOLOMB, 0) << " basis x: " << basis.x << " code-length: "
-                                                                                           << ozi::getGolombCode(golomb_para, basis.x, ozi::REGION1, ozi::GOLOMB, 0) << " prev x: " << prev.x << " code-length: "
-                                                                                                                                                                     << ozi::getGolombCode(golomb_para, prev.x, ozi::REGION1, ozi::GOLOMB, 0) << std::endl;
-        std::cout << "diff y: " << mv_diff.y << " code-length: "
-                  << ozi::getGolombCode(golomb_para, mv_diff.y, ozi::REGION1, ozi::GOLOMB, 0) << " basis y: " << basis.y << " code-length: "
-                                                                                                  << ozi::getGolombCode(golomb_para, basis.y, ozi::REGION1, ozi::GOLOMB, 0)<< " prev y: " << prev.y << " code-length: "
-                                                                                                  << ozi::getGolombCode(golomb_para, prev.y, ozi::REGION1, ozi::GOLOMB, 0) << std::endl;
-       worth += ozi::getGolombCode(golomb_para, prev.x, ozi::REGION1, ozi::GOLOMB, 0) - ozi::getGolombCode(golomb_para, basis.x, ozi::REGION1, ozi::GOLOMB, 0);
-       worth += ozi::getGolombCode(golomb_para, prev.y, ozi::REGION1, ozi::GOLOMB, 0) - ozi::getGolombCode(golomb_para, basis.y, ozi::REGION1, ozi::GOLOMB, 0);
+            std::cout << "diff x: " << mv_diff.x << " code-length: "
+                      << ozi::getGolombCode(golomb_para, mv_diff.x, ozi::REGION1, ozi::GOLOMB, 0) << " basis x: " << basis.x << " code-length: "
+                      << ozi::getGolombCode(golomb_para, basis.x, ozi::REGION1, ozi::GOLOMB, 0) << " prev x: " << prev.x << " code-length: "
+                      << ozi::getGolombCode(golomb_para, prev.x, ozi::REGION1, ozi::GOLOMB, 0) << std::endl;
+            std::cout << "diff y: " << mv_diff.y << " code-length: "
+                      << ozi::getGolombCode(golomb_para, mv_diff.y, ozi::REGION1, ozi::GOLOMB, 0) << " basis y: " << basis.y << " code-length: "
+                      << ozi::getGolombCode(golomb_para, basis.y, ozi::REGION1, ozi::GOLOMB, 0)<< " prev y: " << prev.y << " code-length: "
+                      << ozi::getGolombCode(golomb_para, prev.y, ozi::REGION1, ozi::GOLOMB, 0) << std::endl;
+            worth += ozi::getGolombCode(golomb_para, prev.x, ozi::REGION1, ozi::GOLOMB, 0) - ozi::getGolombCode(golomb_para, basis.x, ozi::REGION1, ozi::GOLOMB, 0);
+            worth += ozi::getGolombCode(golomb_para, prev.y, ozi::REGION1, ozi::GOLOMB, 0) - ozi::getGolombCode(golomb_para, basis.y, ozi::REGION1, ozi::GOLOMB, 0);
+        }
     }
-}
-tmp_mv_x += sabun_mv_tmp_x + basis_mv_tmp_x;
-tmp_mv_y += sabun_mv_tmp_y + basis_mv_tmp_y;
-std::cout << "worth = " << worth << std::endl;
-std::cout << "sabun_mv_tmp = " << sabun_mv_tmp_x + sabun_mv_tmp_y << std::endl;
-std::cout << "basis_mv_tmp = " << basis_mv_tmp_x + basis_mv_tmp_y << std::endl;
+    tmp_mv_x += sabun_mv_tmp_x + basis_mv_tmp_x;
+    tmp_mv_y += sabun_mv_tmp_y + basis_mv_tmp_y;
+    std::cout << "worth = " << worth << std::endl;
+    std::cout << "sabun_mv_tmp = " << sabun_mv_tmp_x + sabun_mv_tmp_y << std::endl;
+    std::cout << "basis_mv_tmp = " << basis_mv_tmp_x + basis_mv_tmp_y << std::endl;
 
 /*
     for(int i = 0;i < (int)buffer.size();i++){
@@ -2964,7 +2769,7 @@ std::cout << "basis_mv_tmp = " << basis_mv_tmp_x + basis_mv_tmp_y << std::endl;
 */
     //std::cout << "check point 1" << std::endl;
     for(int k = 0;k < (int)ev.size();k++){
-      //std::cout << "ev = (" << ev[k].x <<"," << ev[k].y << std::endl;
+        //std::cout << "ev = (" << ev[k].x <<"," << ev[k].y << std::endl;
     }
     for(int k = 0;k < (int)mv_basis.size();k++){
         for(int l = 0;l < (int)mv_basis[k].size();l++) {
@@ -2981,49 +2786,49 @@ std::cout << "basis_mv_tmp = " << basis_mv_tmp_x + basis_mv_tmp_y << std::endl;
     cv::imwrite("predict_warp.bmp",predict_warp);
     cv::imwrite("predict_para.bmp",predict_para);
     std::cout << "check point 2" << std::endl;
-  //double PSNR = 10*log10(255*255/MSE);
-  //std::cout << "PSNR = " << PSNR <<std::endl;
+    //double PSNR = 10*log10(255*255/MSE);
+    //std::cout << "PSNR = " << PSNR <<std::endl;
 
-  std::vector<int> freq_x(1001, 0), freq_y(1001, 0);
-  for (const cv::Point2f &v : diff_vector) {
-    freq_x[v.x + 500]++;
-    freq_y[v.y + 500]++;
+    std::vector<int> freq_x(1001, 0), freq_y(1001, 0);
+    for (const cv::Point2f &v : diff_vector) {
+        freq_x[v.x + 500]++;
+        freq_y[v.y + 500]++;
 
-    // これはごロムの符号を出すためのやつ
-    count_all_diff_x_mv[v.x + 500]++;
-    count_all_diff_y_mv[v.y + 500]++;
-  }
+        // これはごロムの符号を出すためのやつ
+        count_all_diff_x_mv[v.x + 500]++;
+        count_all_diff_y_mv[v.y + 500]++;
+    }
     std::cout << "check point 3" << std::endl;
-  // これはこの画像の符号料を出すやつ
-  int left_x = 0, right_x = 1000;
-  int left_y = 0, right_y = 1000;
-  while (freq_x[left_x] == 0) left_x++;
-  while (freq_x[right_x] == 0) right_x--;
-  while (freq_y[left_y] == 0) left_y++;
-  while (freq_y[right_y] == 0) right_y--;
+    // これはこの画像の符号料を出すやつ
+    int left_x = 0, right_x = 1000;
+    int left_y = 0, right_y = 1000;
+    while (freq_x[left_x] == 0) left_x++;
+    while (freq_x[right_x] == 0) right_x--;
+    while (freq_y[left_y] == 0) left_y++;
+    while (freq_y[right_y] == 0) right_y--;
     std::cout << "check point 4" << std::endl;
-  int x_bits = 0, y_bits = 0;
+    int x_bits = 0, y_bits = 0;
 
-  for (int i = 0; i <= 1000; i++) {
-    if (freq_x[i] != 0) {
-      x_bits += ozi::getGolombCode(ozi::getGolombParam(0.5), (i - 500), ozi::REGION1, ozi::KTH_GOLOMB, 1) * freq_x[i];
-      std::cout << i - 500 << " " << freq_x[i] << " "
-                << ozi::getGolombCode(ozi::getGolombParam(0.5), (i - 500), ozi::REGION1, ozi::KTH_GOLOMB, 1) << " "
-                << x_bits << std::endl;
-    }
+    for (int i = 0; i <= 1000; i++) {
+        if (freq_x[i] != 0) {
+            x_bits += ozi::getGolombCode(ozi::getGolombParam(0.5), (i - 500), ozi::REGION1, ozi::KTH_GOLOMB, 1) * freq_x[i];
+            std::cout << i - 500 << " " << freq_x[i] << " "
+                      << ozi::getGolombCode(ozi::getGolombParam(0.5), (i - 500), ozi::REGION1, ozi::KTH_GOLOMB, 1) << " "
+                      << x_bits << std::endl;
+        }
 
-    if (freq_y[i] != 0) {
-      y_bits += ozi::getGolombCode(ozi::getGolombParam(0.5), (i - 500), ozi::REGION1, ozi::KTH_GOLOMB, 1) * freq_y[i];
+        if (freq_y[i] != 0) {
+            y_bits += ozi::getGolombCode(ozi::getGolombParam(0.5), (i - 500), ozi::REGION1, ozi::KTH_GOLOMB, 1) * freq_y[i];
+        }
     }
-  }
 
 /*
   return PredictedImageResult(out, mv_image, freq_block, freq_warp, block_matching_pixel_nums, warping_pixel_nums,
                                 x_bits, y_bits, block_matching_pixel_errors, warping_pixel_errors);
 */
     std::cout << "check point 5" << std::endl;
-  return PredictedImageResult(predict_buf[3], mv_image, freq_block, freq_warp, block_matching_pixel_nums, warping_pixel_nums,
-                              x_bits, y_bits, block_matching_pixel_errors, warping_pixel_errors);
+    return PredictedImageResult(predict_buf[3], mv_image, freq_block, freq_warp, block_matching_pixel_nums, warping_pixel_nums,
+                                x_bits, y_bits, block_matching_pixel_errors, warping_pixel_errors);
 
 }
 
@@ -3034,20 +2839,20 @@ std::cout << "basis_mv_tmp = " << basis_mv_tmp_x + basis_mv_tmp_y << std::endl;
  * @return cornersに含まれるをユニークにした配列
  */
 std::vector<cv::Point2f> uniqCoordinate(const std::vector<cv::Point2f> &corners) {
-  cv::Point2f prev;
-  std::vector<cv::Point2f> ret;
+    cv::Point2f prev;
+    std::vector<cv::Point2f> ret;
 
-  prev = corners[0];
-  ret.emplace_back(prev);
+    prev = corners[0];
+    ret.emplace_back(prev);
 
-  for (int i = 1; i < static_cast<int>(corners.size()); i++) {
-    if (prev != corners[i]) {
-      ret.emplace_back(corners[i]);
+    for (int i = 1; i < static_cast<int>(corners.size()); i++) {
+        if (prev != corners[i]) {
+            ret.emplace_back(corners[i]);
+        }
+        prev = corners[i];
     }
-    prev = corners[i];
-  }
 
-  return ret;
+    return ret;
 }
 
 /**
@@ -3058,37 +2863,37 @@ std::vector<cv::Point2f> uniqCoordinate(const std::vector<cv::Point2f> &corners)
  * @param mid
  */
 void storeFrequency(const std::string &file_path, const std::vector<int> freq, int mid) {
-  int left_x, right_x;
-  int left_y, right_y;
-  int idx = 0;
-  while (freq[idx] == 0) idx++;
-  left_x = idx;
+    int left_x, right_x;
+    int left_y, right_y;
+    int idx = 0;
+    while (freq[idx] == 0) idx++;
+    left_x = idx;
 
-  idx = 999;
-  while (freq[idx] == 0) idx--;
-  right_x = idx;
+    idx = 999;
+    while (freq[idx] == 0) idx--;
+    right_x = idx;
 
-  idx = 0;
-  while (freq[idx] == 0) idx++;
-  left_y = idx;
+    idx = 0;
+    while (freq[idx] == 0) idx++;
+    left_y = idx;
 
-  idx = 999;
-  while (freq[idx] == 0) idx--;
-  right_y = idx;
+    idx = 999;
+    while (freq[idx] == 0) idx--;
+    right_y = idx;
 
-  std::ofstream os(file_path);
-  std::array<double, 1002> all{};
-  int left = std::min(left_x, left_y);
-  int right = std::max(right_x, right_y);
-  double total_point_nums = std::accumulate(freq.begin(), freq.end(), 0);
+    std::ofstream os(file_path);
+    std::array<double, 1002> all{};
+    int left = std::min(left_x, left_y);
+    int right = std::max(right_x, right_y);
+    double total_point_nums = std::accumulate(freq.begin(), freq.end(), 0);
 
-  for (int i = left; i <= right; i++) {
-    all[i] = freq[i] / total_point_nums;
-  }
-  for (int i = left; i <= right; i++) {
-    os << i - 500 << " " << (all[i]) << std::endl;
-  }
-  os.close();
+    for (int i = left; i <= right; i++) {
+        all[i] = freq[i] / total_point_nums;
+    }
+    for (int i = left; i <= right; i++) {
+        os << i - 500 << " " << (all[i]) << std::endl;
+    }
+    os.close();
 }
 
 /**
@@ -3105,20 +2910,20 @@ void storeFrequency(const std::string &file_path, const std::vector<int> freq, i
  */
 cv::Point2f getDifferenceVector(const Triangle &triangle, const std::vector<cv::Point2f> &corners,
                                 const std::vector<cv::Point2f> &corners_mv, const cv::Point2f &mv) {
-  cv::Point2f diff;
-  int p1, p2, p3;
-  p1 = triangle.p1_idx;
-  p2 = triangle.p2_idx;
-  p3 = triangle.p3_idx;
+    cv::Point2f diff;
+    int p1, p2, p3;
+    p1 = triangle.p1_idx;
+    p2 = triangle.p2_idx;
+    p3 = triangle.p3_idx;
 
-  cv::Point2f p1_mv = corners_mv[p1] - 2 * corners[p1];
-  cv::Point2f p2_mv = corners_mv[p2] - 2 * corners[p2];
-  cv::Point2f p3_mv = corners_mv[p3] - 2 * corners[p3];
+    cv::Point2f p1_mv = corners_mv[p1] - 2 * corners[p1];
+    cv::Point2f p2_mv = corners_mv[p2] - 2 * corners[p2];
+    cv::Point2f p3_mv = corners_mv[p3] - 2 * corners[p3];
 
-  // TODO: これ実数じゃね…？
-  cv::Point2f ave_mv = (p1_mv + p2_mv + p3_mv) / 3.0;
+    // TODO: これ実数じゃね…？
+    cv::Point2f ave_mv = (p1_mv + p2_mv + p3_mv) / 3.0;
 
-  diff = ave_mv - mv;
+    diff = ave_mv - mv;
 /*
   if (diff.x > 100 || diff.y > 80) {
     std::cout << "p1_mv:" << p1_mv << std::endl;
@@ -3127,8 +2932,8 @@ cv::Point2f getDifferenceVector(const Triangle &triangle, const std::vector<cv::
     std::cout << "mv:" << mv << std::endl;
   }
 */
-  diff.x = myRound(diff.x, 1);
-  diff.y = myRound(diff.y, 1);
-  return diff;
+    diff.x = myRound(diff.x, 1);
+    diff.y = myRound(diff.y, 1);
+    return diff;
 }
 
