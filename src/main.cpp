@@ -457,162 +457,156 @@ int main(int argc, char *argv[]) {
             // ガウス分布と仮定すると、ここは変曲点（大嘘）
             double erase_th = (myu + sigma) * (myu + sigma);
             erase_th_global = erase_th;
-            std::cout << "erase_th = " << erase_th << std::endl;
-            std::cout << "check2" << std::endl;
 
             for (int q = 0; q < 4; q++) {
                 md.insert(corners);
                 md.getTriangleList(triangles_mydelaunay);
                 md.Sort_Coners(corners);
-                md.insert(corners);
-                md.getTriangleList(triangles_mydelaunay);
-                std::vector<double> sigma_tmp;
-                std::vector<Triangle> triangles_t = md.Get_triangles(corners);
-                double MSE = 0;
-                double triangle_sum = 0;
-                int fx[51] = {0};
-                for (int t = 0; t < (int)triangles_t.size(); t++) {
+                triangles_t = md.Get_triangles(corners);
+                MSE = 0;
+                triangle_sum = 0;
+
+                // 頂点の数が変化するたびに、変曲点を求めていたが計算量がそれなりに掛かる(全三角パッチに対してやると5分ぐらい)
+                // TODO: 並列化できそうでは？
+                sigma_tmp.clear();
+                for (auto & t : triangles_t) {
                     int triangle_size;
-                    double RMSE;
-                    double MSE_tmp = 0;
-                    cv::Point2f p1(corners[triangles_t[t].p1_idx]), p2(corners[triangles_t[t].p2_idx]), p3(
-                            corners[triangles_t[t].p3_idx]);
+                    cv::Point2f p1(corners[t.p1_idx]), p2(corners[t.p2_idx]), p3(
+                            corners[t.p3_idx]);
                     Point3Vec target_corers = Point3Vec(p1, p2, p3);
                     Point3Vec prev_corners = Point3Vec(p1, p2, p3);
-                    MSE_tmp = Gauss_Newton(ref_gauss, target, ref, target_corers, prev_corners, triangle_size);
+                    double MSE_tmp = Gauss_Newton(ref_gauss, target, ref, target_corers, prev_corners, triangle_size);
                     MSE += MSE_tmp;
                     triangle_sum += triangle_size;
                     sigma_tmp.emplace_back(MSE_tmp);
-                    RMSE = sqrt(MSE_tmp / triangle_size);
-                    std::cout << "t = " << t << "/" << triangles_t.size()  << " RMSE = " << RMSE << std::endl;
-                    if(RMSE < 50)fx[(int)RMSE]++;
-                    else fx[50]++;
                 }
-                double myu = sqrt(MSE / triangle_sum);
-                double sigma = 0;
-                for(int i = 0;i < (int)sigma_tmp.size();i++){
-                    sigma += (sqrt(sigma_tmp[i]) - myu) * (sqrt(sigma_tmp[i]) - myu);
+                myu = sqrt(MSE / triangle_sum);
+                sigma = 0;
+                for(double i : sigma_tmp){
+                    sigma += (sqrt(i) - myu) * (sqrt(i) - myu);
                 }
                 sigma = sqrt(sigma/triangle_sum);
                 std::cout << "myu = "<< myu << "sigma = " << sigma << std::endl;
-                for(int i = 0;i < 51;i++) {
-                    std::cout << "fx[" << i << "] = " << fx[i] << std::endl;
-                }
 
-                //double erase_th = (MSE / triangle_sum) * 10 / pow(2, q);
-                double erase_th = (myu + sigma) * (myu + sigma);
-                //double erase_th = 100;
+                erase_th = (myu + sigma) * (myu + sigma);
                 erase_th_global = erase_th;
                 std::cout << "erase_th = " << erase_th << std::endl;
 
 
                 for (int idx = 0; idx < (int) corners.size(); idx++) {
                     bool erase_flag = false;
-                    int erase_cout = 0;
+                    int erase_count = 0;
+
+                    // 復元できるように、頂点を削除する前の分割形状を保存
                     DelaunayTriangulation md_prev(Rectangle(0, 0, target.cols, target.rows));
                     md_prev.insert(corners);
-                    std::vector<cv::Vec6f> triangles_mydelaunay;
-                    md_prev.getTriangleList(triangles_mydelaunay);
+                    std::vector<cv::Vec6f> triangles_prev;
+                    md_prev.getTriangleList(triangles_prev);
+
+                    // 頂点が減る様子を出力
                     cv::Mat corner_reduction = target.clone();
-                    for (const cv::Vec6f t : triangles_mydelaunay) {
+                    for (const cv::Vec6f t : triangles_prev) {
                         cv::Point2f p1(t[0], t[1]), p2(t[2], t[3]), p3(t[4], t[5]);
-                        //drawTriangle(corner_reduction, p1, p2, p3, BLUE);
-                        drawTriangle_residual(corner_reduction, p1, p2, p3, BLUE, sobel_target);
+                        drawTriangle(corner_reduction, p1, p2, p3, BLUE);
                     }
                     cv::imwrite(img_directory + "corner_reduction_" + std::to_string(idx) + ".png", corner_reduction);
+
+                    // 外周上に乗っている頂点を抜いたとき、黒い三角形ができる場合は抜かない
                     if (corners[idx].x <= 0.0 || corners[idx].y <= 0.0 || corners[idx].x >= target.cols - 1 ||
                         corners[idx].y >= target.rows - 1) {
-                        bool skip_flag = false;
+                        // 頂点を抜いた状態で、ドロネー分割をし直す
                         std::vector<cv::Point2f> corners_later(corners);
                         corners_later.erase(corners_later.begin() + idx);
                         DelaunayTriangulation md_later(Rectangle(0, 0, target.cols, target.rows));
                         md_later.insert(corners_later);
                         std::vector<cv::Vec6f> triangles_tmp;
                         md_later.getTriangleList(triangles_tmp);
+
+                        bool skip_flag = false;
                         md_later.serch_wrong(corners_later, target, &skip_flag);
-                        if (skip_flag == true) {
-                            continue;
-                        }
+                        if (skip_flag) continue;
                     }
-                    std::vector<bool> flag_around = std::vector<bool>(corners.size(), false);
+
                     std::vector<cv::Point2f> corners_later(corners);
+
+                    // 四隅はそもそも抜かない
                     if ((corners[idx].x == 0.0 && corners[idx].y == 0.0) ||
                         (corners[idx].x == target.cols - 1 && corners[idx].y == 0.0)
                         || (corners[idx].x == target.cols - 1 && corners[idx].y == target.rows - 1) ||
                         (corners[idx].x == 0.0 && corners[idx].y == target.rows - 1)) {
                         continue;
                     }
+
                     std::cout << "idx = " << idx << "/ " << corners.size() << " q = " << q << "/ " << 4 << corners[idx]
                               << std::endl;
-                    std::vector<Triangle> triangles_around;
-                    triangles_around = md_prev.Get_triangles_around(idx, corners, flag_around);
+
+                    // idx番目の頂点に隣接している頂点がtrueになった配列が返るアレ
+                    std::vector<bool> flag_around = std::vector<bool>(corners.size(), false);
+                    std::vector<Triangle> triangles_around = md_prev.Get_triangles_around(idx, corners, flag_around);
+
                     double MSE_prev = 0, MSE_later = 0;
                     int triangle_size_sum_prev = 0, triangle_size_sum_later = 0;
-//#pragma omp parallel for
-                    for (int t = 0; t < (int) triangles_around.size(); t++) {
-                        int triangle_size;
-                        //double error_warp;
-                        double MSE_tmp = 0;
-                        Triangle triangle = triangles_around[t];
-                        Point3Vec triangleVec(corners[triangle.p1_idx], corners[triangle.p2_idx],
-                                              corners[triangle.p3_idx]);
 
-                        Point3Vec prev_corners = Point3Vec(corners[triangle.p1_idx], corners[triangle.p2_idx],
-                                                           corners[triangle.p3_idx]);
-                        //std::cout << "prev_Gauss" << std::endl;
-                        MSE_tmp = Gauss_Newton(ref_gauss, target, ref, triangleVec, prev_corners, triangle_size);
-                        //Gauss_Newton2(ref_gauss,target,ref, predict_buf,predict_warp,predict_para, color, error_warp, triangleVec, prev_corners, tri_list,&para_flag,add_corner_dummy,&add_count_dummy,t,residual_ref,triangle_size, false,erase_th_global);
+                    // 周りの頂点だけガウスニュートン法をやる（削除前のMSEを見る）
+                    for (auto triangle : triangles_around) {
+                        Point3Vec triangleVec(corners[triangle.p1_idx], corners[triangle.p2_idx], corners[triangle.p3_idx]);
+                        Point3Vec prev_corners = Point3Vec(corners[triangle.p1_idx], corners[triangle.p2_idx], corners[triangle.p3_idx]);
+
+                        int triangle_size;
+                        double MSE_tmp = Gauss_Newton(ref_gauss, target, ref, triangleVec, prev_corners, triangle_size);
                         std::cout << "triangle_size = " << triangle_size << "MSE_tmp = " << MSE_tmp << std::endl;
                         MSE_prev += MSE_tmp;
                         triangle_size_sum_prev += triangle_size;
                         if (MSE_tmp / (double) triangle_size >= erase_th) {
-                            erase_cout++;
+                            erase_count++; // 変曲点より後ろにいるやつ(3.40, 3.41式あたりを参照)
                         }
                     }
-                    //if(erase_cout/triangles_around.size() >= erase_th_per)erase_flag = true;
-                    //double MSE_prev_sum = MSE_prev;
+
                     MSE_prev /= triangle_size_sum_prev;
                     std::cout << "MSE_prev = " << MSE_prev << std::endl;
-                    //for (const bool flag:flag_around) {
-                    //std::cout<< flag << std::endl;
-                    //}
+
                     corners_later.erase(corners_later.begin() + idx);
                     flag_around.erase(flag_around.begin() + idx);
 
+                    // 削除後のMSEを測る
                     DelaunayTriangulation md_later(Rectangle(0, 0, target.cols, target.rows));
                     md_later.insert(corners_later);
                     std::vector<Triangle> triangles_later;
                     triangles_later = md_later.Get_triangles_later(md_later, idx, corners_later, flag_around);
-//#pragma omp parallel for
-                    for (int t = 0; t < (int) triangles_later.size(); t++) {
+
+                    for (auto triangle : triangles_later) {
                         double MSE_tmp = 0;
                         int triangle_size;
-                        Triangle triangle = triangles_later[t];
-                        Point3Vec triangleVec(corners_later[triangle.p1_idx], corners_later[triangle.p2_idx],
-                                              corners_later[triangle.p3_idx]);
-                        Point3Vec prev_corners = Point3Vec(corners[triangle.p1_idx], corners[triangle.p2_idx],
-                                                           corners[triangle.p3_idx]);
-                        //std::cout << "later_Gauss" << std::endl;
+                        Point3Vec triangleVec(corners_later[triangle.p1_idx], corners_later[triangle.p2_idx], corners_later[triangle.p3_idx]);
+                        Point3Vec prev_corners = Point3Vec(corners[triangle.p1_idx], corners[triangle.p2_idx], corners[triangle.p3_idx]);
+
                         MSE_tmp= Gauss_Newton(ref_gauss, target, ref, triangleVec, prev_corners, triangle_size);
                         MSE_later += MSE_tmp;
                         triangle_size_sum_later += triangle_size;
                         std::cout << "triangle_size = " << triangle_size <<  "MSE_later = " << MSE_tmp << std::endl;
                     }
-                    //double MSE_later_sum = MSE_later;
+
                     MSE_later /= (double)triangle_size_sum_later;
                     std::cout << "MSE_later = " << MSE_later << std::endl;
+
+                    // 削除前と削除後のRMSEを計算し比較
                     double RMSE_prev = sqrt(MSE_prev);
                     double RMSE_later = sqrt(MSE_later);
+
+                    // サイズ比
                     double S_per = (double) triangle_size_sum_later / (double) triangle_size_sum_prev;
                     std::cout << "RMSE_prev = " << RMSE_prev << " RMSE_later = " << RMSE_later << " RMSE_per = "
                               << (MSE_later - MSE_prev) / MSE_prev << " S_per = "
                               << S_per
-                              << " erase_count = " << erase_cout << " / " << triangles_around.size()
+                              << " erase_count = " << erase_count << " / " << triangles_around.size()
                               << " erase_per = " << RMSE_later/RMSE_prev << std::endl;
                     std::cout << "MSE x S = " << (RMSE_later - RMSE_prev)*triangle_size_sum_later << std::endl;
-                    if (erase_cout / triangles_around.size() >= erase_th_per && RMSE_later/RMSE_prev < 1.5)
+                    // 式3.41の条件 & 抜いてもあまり劣化しないところは抜く
+                    if ((double)erase_count / triangles_around.size() >= erase_th_per && RMSE_later/RMSE_prev < 1.5)
                         erase_flag = true;
-                    if ((fabs(MSE_prev - MSE_later)/MSE_prev < th ) || MSE_prev > MSE_later ||
+
+                    // 式3.39(抜いてもあまり劣化しないとき), 式3.42(影響のある三角形の面積の総和をかけて、小さいパッチを抜く）
+                    if ((fabs(MSE_prev - MSE_later)/MSE_prev < 0.05 ) || MSE_prev > MSE_later ||
                         erase_flag || (RMSE_later - RMSE_prev)*triangle_size_sum_later < 1000) {//6 10000
                         std::cout << "erased" << std::endl;
                         corners.erase(corners.begin() + idx);
@@ -621,7 +615,8 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-
+            // 移動させて変化を見るやつ
+            /*
             for (int idx = 0; idx < (int) corners.size(); idx++) {
                 double min_distance = md.neighbor_distance(corners, idx);
                 int mv_distance = std::min(8, (int) pow(2, (int) std::log2(sqrt(min_distance) / 2)));
@@ -699,22 +694,7 @@ int main(int argc, char *argv[]) {
                     }
                 }
             }
-
-
-            std::ofstream corner_list = std::ofstream("corner_list_" + corner_file_name + ".dat");
-            for(const cv::Point2f point : corners){
-                corner_list << point.x << " " << point.y << std::endl;
-            }
-
-            std::ifstream in_corner_list = std::ifstream("corner_list_" + corner_file_name + ".dat");
-            // std::ifstream in_corner_list = std::ifstream("corner_list_car_38_5_34.dat");
-            std::string str1;
-            int point_x,point_y;
-            corners.clear();
-            while (getline(in_corner_list, str1)) {
-                sscanf(str1.data(), "%d %d", &point_x,&point_y);
-                corners.emplace_back(cv::Point2f(point_x,point_y));
-            }
+            */
 
             cv::Mat color = cv::Mat::zeros(target.size(),CV_8UC3);
             std::vector<cv::Point2f> add_corner_dummy;
