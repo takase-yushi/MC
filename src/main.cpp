@@ -100,7 +100,7 @@ cv::Mat triangle_error_img;
 #define HARRIS false
 #define THRESHOLD true
 #define LAMBDA 0.2
-#define INTER_DIV true
+#define INTER_DIV true // 頂点追加するかしないか
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
@@ -880,7 +880,7 @@ int main(int argc, char *argv[]) {
 
             ref_corners_org = ret_ref_corners.first;
             ref_corners.clear();
-            for (int i = 0; i < (int) ref_corners_org.size(); i++) ref_corners.emplace_back(ref_corners_org[i]);
+            for (auto & i : ref_corners_org) ref_corners.emplace_back(i);
 
             std::cout << "corners's size :" << corners.size() << std::endl;
             std::cout << "ref_corners's size :" << ref_corners.size() << std::endl;
@@ -1201,7 +1201,7 @@ int main(int argc, char *argv[]) {
             std::cout << "check point 3" << std::endl;
             PredictedImageResult result = getPredictedImage(ref_gauss, refx2, refx4, refx8, target, targetx2, targetx4,
                                                             targetx8, ref, triangles, ref_corners, corners, md,
-                                                            add_corners,&add_count, residual_ref,tmp_mv_x,tmp_mv_y,true);
+                                                            add_corners, &add_count, residual_ref,tmp_mv_x,tmp_mv_y,true);
             // 予測画像を得る
             int count = 0;
 
@@ -1801,6 +1801,8 @@ std::vector<cv::Point2f> cornersQuantization(std::vector<cv::Point2f> &corners, 
     return uniqCoordinate(corners);
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "hicpp-signed-bitwise"
 /**
  * @fn PredictedImageResult getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4, const cv::Mat &refx8,const cv::Mat &target, const cv::Mat &targetx2, const cv::Mat &targetx4, const cv::Mat &targetx8,const cv::Mat &intra,  std::vector<Triangle> &triangles,
                   const std::vector<cv::Point2f> &ref_corners, std::vector<cv::Point2f> &corners, DelaunayTriangulation md,std::vector<cv::Point2f> &add_corners,int *add_count,const cv::Mat& residual_ref,int &tmp_mv_x,int &tmp_mv_y ,bool add_flag)
@@ -1831,7 +1833,6 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4
     cv::Mat out = cv::Mat::zeros(target.size(), CV_8UC3);
     cv::Mat color = cv::Mat::zeros(target.size(), CV_8UC3);
     cv::Mat expansion_ref = bilinearInterpolation(ref);
-    cv::Mat mv_image = target.clone();
     cv::Mat predict_img0 = cv::Mat::zeros(targetx8.size(), CV_8UC3);
     cv::Mat predict_img1 = cv::Mat::zeros(targetx4.size(), CV_8UC3);
     cv::Mat predict_img2 = cv::Mat::zeros(targetx2.size(), CV_8UC3);
@@ -1839,8 +1840,6 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4
     cv::Mat predict_warp = cv::Mat::zeros(target.size(), CV_8UC3);
     cv::Mat predict_para = cv::Mat::zeros(target.size(), CV_8UC3);
     cv::Point2f mv_diff, mv_prev;
-    std::vector<cv::Mat> predict_buf;
-    //std::vector<std::vector<cv::Point2i>> buffer;//前の差分符号化のバッファ(使ってない)
     std::vector<std::vector<std::pair<std::vector<std::pair<cv::Point2i, int>>, std::pair<bool, bool>>>> mv_basis(
             corners.size());
     std::vector<std::vector<std::tuple<std::vector<std::pair<cv::Point2i, int>>, bool, bool, cv::Point2f, int,cv::Point2f>>> mv_basis_tuple(
@@ -1850,27 +1849,22 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4
     std::ofstream mv_list = std::ofstream("mv_list.csv");
     int hist_org[201] = {0}, hist_org_x[201] = {0}, hist_org_y[201] = {0};
     int *hist, *hist_x, *hist_y;
-    int max_mv_x = 0, min_mv_x = 256, max_mv_y = 0, min_mv_y = 256;
     int basis_mv_tmp_x = 0,basis_mv_tmp_y = 0,sabun_mv_tmp_x = 0,sabun_mv_tmp_y = 0;
     bool para_flag = false;
-    int Quant = 4;
-    //int count_diff = 0;
 
     hist = &hist_org[100];
     hist_x = &hist_org_x[100];
     hist_y = &hist_org_y[100];
     tri_list = std::ofstream("tri_list.csv");
+
+    std::vector<cv::Mat> predict_buf;
     predict_buf.emplace_back(predict_img0);
     predict_buf.emplace_back(predict_img1);
     predict_buf.emplace_back(predict_img2);
     predict_buf.emplace_back(predict_img3);
     std::vector<cv::Mat> predict_buf_dummy = predict_buf;
-    /*
-    for (int i = 0; i < (int) corners.size(); i++) {
-        buffer.emplace_back(tmp);
-        buffer[i].emplace_back(corners[i]);
-    }
-*/
+
+    cv::Mat mv_image = target.clone();
     for (const auto &triangle : triangles) {
         drawPoint(mv_image, corners[triangle.p1_idx], RED, 5);
         drawPoint(mv_image, corners[triangle.p2_idx], RED, 5);
@@ -1880,16 +1874,13 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4
 
     int numerator = 1;
     int denominator = static_cast<int>(triangles.size());
-    int corners_size = corners.size();
     int freq_block = 0;
     int freq_warp = 0;
-    int block_matching_pixel_nums = 0;   // ブロックマッチングをおこなった画素の数
+    int block_matching_pixel_nums = 0;      // ブロックマッチングをおこなった画素の数
     double block_matching_pixel_errors = 0; // ブロックマッチングをおこなった画素の二乗誤差
-    int warping_pixel_nums = 0;          // ワーピングをおこなった画素の数
+    int warping_pixel_nums = 0;             // ワーピングをおこなった画素の数
     double warping_pixel_errors = 0;        // ワーピングをおこなった画素の二乗誤差
-    //double MSE = 0;
     std::vector<cv::Point2f> diff_vector;
-    //bool flag[corners.size()] = {false};
     std::vector<cv::Point2i> ev;
     ev.clear();
     for (int i = 0; i < (int) corners.size(); i++) {
@@ -1918,78 +1909,75 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4
         cv::Point2f mv_block;
         Point3Vec triangleVec(corners[triangle.p1_idx], corners[triangle.p2_idx], corners[triangle.p3_idx]);
 
-        // ブロックマッチング
-        // block_matching(ref, target, error_block, mv_block, triangleVec, expansion_ref);
-
-        // ワーピング
-        std::vector<cv::Point2f> corners_warp;
+        // ガウスニュートン法による変形
         Point3Vec prev_corners = Point3Vec(ref_corners[triangle.p1_idx], ref_corners[triangle.p2_idx],
                                            ref_corners[triangle.p3_idx]);
         std::vector<cv::Point2f> add_corner;
         std::vector<cv::Point2f> add_corner_tmp;
         std::vector<Triangle> triangles_tmp;
-        add_corner.clear();
         int in_triangle_size;
+
+        // para_flag == trueなら平行移動
+        // add_corner: 追加候補の頂点
         std::vector<cv::Point2i> mv = Gauss_Newton2(ref, target, intra, predict_buf, predict_warp, predict_para, color,
                                                     error_warp, triangleVec, prev_corners, tri_list, &para_flag,
-                                                    add_corner, add_count, t, residual_ref, in_triangle_size, false,erase_th_global);
+                                                    add_corner, add_count, t, residual_ref, in_triangle_size, false, erase_th_global);
         double MSE_prev = error_warp / (double) in_triangle_size;
+
+        // <頂点座標, 残差>
         std::vector<std::pair<cv::Point2f, double>> add_corner_pair(add_corner.size());
+        // <座標, 残差, 三角パッチ>
         std::vector<std::tuple<cv::Point2f, double, std::vector<Triangle>>> add_corner_tuple(add_corner.size());
-        for (int idx = 0; idx < (int)triangles.size(); idx++) {
-            //std::cout << "triangles[" << idx << "] = " << triangles[idx].p1_idx << ", " << triangles[idx].p2_idx << ", " << triangles[idx].p3_idx << std::endl;
-        }
+
+        // 追加候補の頂点を入れることで予測精度が向上するかどうかを検証
         for (int c_idx = 0; c_idx < (int) add_corner.size(); c_idx++) {
-            std::cout << "c_idx = " << c_idx << "/ " << add_corner.size() << std::endl;
-            int triangle_size_sum_later = 0;
-            double MSE_later = 0;
             add_corner_tmp = corners;
             triangles_tmp = triangles;
             add_corner_tmp.emplace_back(add_corner[c_idx]);
-            std::vector<bool> dummy(add_corner_tmp.size());
+
             DelaunayTriangulation md_later(Rectangle(0, 0, target.cols, target.rows));
             std::vector<Triangle> triangles_around;
+
+            std::vector<cv::Vec6f> triangles_mydelaunay;
+            std::vector<bool> dummy(add_corner_tmp.size());
+
             if (INTER_DIV) {
                 triangles_around = inter_div(triangles_tmp, add_corner_tmp, add_corner[c_idx], t);
             } else {
                 md_later.insert(add_corner_tmp);
-            }
-
-            std::vector<cv::Vec6f> triangles_mydelaunay;
-            md_later.getTriangleList(triangles_mydelaunay);
-            //std::cout << "triangle_later_size = " << triangles_mydelaunay.size() << std::endl;
-
-            if (!INTER_DIV) {
+                md_later.getTriangleList(triangles_mydelaunay);
                 triangles_around = md_later.Get_triangles_around((int) add_corner_tmp.size() - 1, add_corner_tmp,
                                                                  dummy);
             }
-            std::cout << "triangles_tmp_size = " << triangles_tmp.size() << std::endl;
+
+            double MSE_later = 0.0;
+            int triangle_size_sum_later = 0;
             for (int t_idx = 0; t_idx < (int) triangles_around.size(); t_idx++) {
                 std::cout << "t_idx = " << t_idx << "/ " << triangles_around.size() << std::endl;
-                int triangle_later_size;
                 Triangle triangle_later = triangles_around[t_idx];
                 Point3Vec triangleVec_later(add_corner_tmp[triangle_later.p1_idx],
                                             add_corner_tmp[triangle_later.p2_idx],
                                             add_corner_tmp[triangle_later.p3_idx]);
-                //std::cout <<"triangleVec_later = " << triangleVec_later.p1 << ", " << triangleVec_later.p2 << ", "<< triangleVec_later.p3 << std::endl;
+
+                int triangle_later_size;
+                // add_countは足した頂点の数らしい(ループで共有)
                 Gauss_Newton2(ref, target, intra, predict_buf_dummy, predict_warp, predict_para, color, error_warp,
-                              triangleVec_later, prev_corners, tri_list, &para_flag, add_corner, add_count, t,
+                         triangleVec_later, prev_corners, tri_list, &para_flag, add_corner, add_count, t,
                               residual_ref, triangle_later_size, false,erase_th_global);
                 MSE_later += error_warp;
-                //Gauss_Newton2(ref,target,intra, predict_buf,predict_warp,predict_para, color, error_warp, triangleVec_later, prev_corners, tri_list,&para_flag,add_corner,add_count,t,residual_ref,triangle_later_size);
-                // MSE_later += error_warp;
                 triangle_size_sum_later += triangle_later_size;
             }
+            // 加える可能性のある頂点の座標
             add_corner_pair[c_idx].first = add_corner[c_idx];
+            // 単位面積当たりの残差
             add_corner_pair[c_idx].second = MSE_later / (double) triangle_size_sum_later;
+
             std::get<0>(add_corner_tuple[c_idx]) = add_corner[c_idx];
             std::get<1>(add_corner_tuple[c_idx]) = MSE_later / (double) triangle_size_sum_later;
             std::get<2>(add_corner_tuple[c_idx]) = triangles_tmp;
-            //add_corner_pair[c_idx].second = MSE_later / (double)triangle_size_sum_later;
-            //std::cout << "in_triangle_size = " << in_triangle_size << std::endl;
-            //std::cout << "in_triangle_size_sum_later = " << triangle_size_sum_later << std::endl;
         }
-        if (add_corner.size() != 0) {
+
+        if (!add_corner.empty()) {
             bubbleSort(add_corner_pair, add_corner_pair.size());
             bubbleSort(add_corner_tuple, add_corner_tuple.size());
             if ((MSE_prev - std::get<1>(add_corner_tuple[0])) / MSE_prev >= 0) {
@@ -2005,23 +1993,19 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4
         std::cout << "MSE_prev = " << MSE_prev << std::endl;
 
         for (int i = 0; i < (int) add_corner_pair.size(); i++) {
-            // add_corners.emplace_back(add_corner_pair[i].first);
             std::cout << "add_corner_pair [" << i << "] = " << add_corner_pair[i].first << " MSE = "
                       << add_corner_pair[i].second << std::endl;
         }
 
-        //mv = Gauss_Golomb(triangle, flag, ev, corners, md, mv,target,targetx8,para_flag);
-        //double DC = 0;
         double tmp_x[3], tmp_y[3];
+        int max_mv_x = 0, min_mv_x = 256, max_mv_y = 0, min_mv_y = 256;
         for (int q = 0; q <= 2; q++) {
             if (max_mv_x < mv[q].x)max_mv_x = mv[q].x;
             if (min_mv_x > mv[q].x)min_mv_x = mv[q].x;
             if (max_mv_y < mv[q].y)max_mv_y = mv[q].y;
             if (min_mv_y > mv[q].y)min_mv_y = mv[q].y;
-            tmp_x[q] = mv[q].x;
-            tmp_y[q] = mv[q].y;
-            tmp_x[q] = (int) (tmp_x[q] * 4);
-            tmp_y[q] = (int) (tmp_y[q] * 4);
+            tmp_x[q] = (int) (mv[q].x * 4);
+            tmp_y[q] = (int) (mv[q].y * 4);
         }
         for (int q = 1; q <= 2; q++) {
             mv[q].x -= mv[0].x;
@@ -2031,15 +2015,9 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4
             if (abs(mv[q].x) <= 100) hist_x[mv[q].x]++;
             if (abs(mv[q].y) <= 100) hist_y[mv[q].y]++;
         }
-        cv::Point2f mv_diff;
         cv::Point2f mv_diff_tmp;
         tmp_mv_x++;//warp_flagの1bit
-/*
-      mv_diff.x = mv[0].x + mv[3].x * Quant;
-      mv_diff.y = mv[0].y + mv[3].y * Quant;
-      mv_diff_tmp = mv_diff - mv_prev;
-      mv_prev = mv_diff;
-*/
+
         std::vector<std::pair<cv::Point2i, int>> add_mv_tmp;
         add_mv_tmp.emplace_back(mv[0], triangle.p1_idx);
         if (!para_flag) {
@@ -2616,6 +2594,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4
                                 x_bits, y_bits, block_matching_pixel_errors, warping_pixel_errors);
 
 }
+#pragma clang diagnostic pop
 
 /**
  * @fn std::vector<cv::Point2f> uniqCoordinate(const std::vector<cv::Point2f>& corners)
