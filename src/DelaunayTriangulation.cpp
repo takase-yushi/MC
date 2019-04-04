@@ -1132,6 +1132,11 @@ void bubbleSort(std::vector<std::pair<cv::Point2f,double>> &sort_cornes, int arr
   }
 }*/
 
+/***
+ * @fn void DelaunayTriangulation::Sort_Coners(std::vector<cv::Point2f> &corners)
+ * @brief 周囲の点との平均距離が短い頂点順にソート
+ * @param[in,out] corners ソートされた頂点
+ */
 void DelaunayTriangulation::Sort_Coners(std::vector<cv::Point2f> &corners){
     std::vector<std::pair<cv::Point2f,double>> sort_coners(corners.size());
     for(int idx = 0;idx < (int)corners.size();idx++) {
@@ -1228,6 +1233,12 @@ double DelaunayTriangulation::neighbor_distance(std::vector<cv::Point2f>&corners
     return  min_distance;
 }
 
+/**
+ * @fn std::vector<Triangle> DelaunayTriangulation::Get_triangles(std::vector<cv::Point2f> corners)
+ * @brief 三角形の情報を、インデックスの組で取得する
+ * @param corners[in]
+ * @return cornersのインデックスで構成された三角パッチの頂点群
+ */
 std::vector<Triangle> DelaunayTriangulation::Get_triangles(std::vector<cv::Point2f> corners){
     std::vector<Triangle> triangles_later;
     triangles_later.clear();

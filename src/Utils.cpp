@@ -63,6 +63,16 @@ void drawTriangle(cv::Mat &img, const cv::Point2f p1, const cv::Point2f p2, cons
   cv::line(img, p3, p1, color, 2);
 
 }
+
+/***
+ * @fn void drawTriangle_residual(cv::Mat &img, const cv::Point2f p1, const cv::Point2f p2, const cv::Point2f p3, const cv::Scalar color,cv::Mat &residual)
+ * @param img
+ * @param p1
+ * @param p2
+ * @param p3
+ * @param color
+ * @param residual
+ */
 void drawTriangle_residual(cv::Mat &img, const cv::Point2f p1, const cv::Point2f p2, const cv::Point2f p3, const cv::Scalar color,cv::Mat &residual){
     if(p1.x < 0 || p1.x > img.cols-1||p1.y < 0 || p1.y > img.rows-1||
             p2.x < 0 || p2.x > img.cols-1||p2.y < 0 || p2.y > img.rows-1||
@@ -89,6 +99,7 @@ void drawTriangle_residual(cv::Mat &img, const cv::Point2f p1, const cv::Point2f
     cv::line(img, p2, p3, color, 1);
     cv::line(img, p3, p1, color, 1);
 }
+
 /**
  * @fn void drawRectangle(cv::Mat &img, const cv::Point2f p1, const cv::Point2f p2, const cv::Point2f p3, const cv::Point2f p4)
  * @brief p1, p2, p3, p4で形成される四角形を描画する
@@ -360,6 +371,14 @@ cv::Mat half(cv::Mat &in) {
     free(g);
     return out;
 }
+
+/**
+ * @fn cv::Mat half(cv::Mat &in,int k)
+ * @brief 移動平均フィルタを使用して、パラメタkで画像を縮小する
+ * @param in cv::Mat 縮小したい画像
+ * @param k  int パラメタ
+ * @return cv::Mat
+ */
 cv::Mat half(cv::Mat &in,int k) {
     cv::Mat out = cv::Mat::zeros((int) (in.rows/2), (int) (in.cols/2), CV_8UC3);
     double **g;
@@ -409,6 +428,14 @@ cv::Mat half(cv::Mat &in,int k) {
     free(g);
     return out;
 }
+
+/**
+ * @fn cv::Mat half_MONO(cv::Mat &in,int k)
+ * @brief モノクロ画像を移動平均フィルタを用いて縮小する
+ * @param in cv::Mat 縮小画像
+ * @param k int 移動平均のパラメータ
+ * @return 縮小画像
+ */
 cv::Mat half_MONO(cv::Mat &in,int k) {
     cv::Mat out = cv::Mat::zeros((int) (in.rows/2), (int) (in.cols/2), CV_8UC1);
     double **g;
@@ -604,6 +631,13 @@ cv::Mat half_2(cv::Mat &in) {
     free(g);
     return out;
 }
+
+/**
+ * @fn cv::Mat half_sharp(cv::Mat &in)
+ * @brief 間引くことで画像を縮小する
+ * @param in cv::Mat 縮小したい画像
+ * @return cv::Mat 縮小された画像
+ */
 cv::Mat half_sharp(cv::Mat &in) {
 
     cv::Mat out = cv::Mat::zeros((int) (in.rows / 2), (int) (in.cols / 2), CV_8UC3);
@@ -645,55 +679,12 @@ cv::Mat half_sharp(cv::Mat &in) {
     return out;
 }
 
-cv::Mat mv_filter(cv::Mat &in){
-    cv::Mat out = cv::Mat::zeros((int) (in.rows), (int) (in.cols), CV_8UC1);
-    double **g;
-    int k = 3;
-    g = (double **) malloc(sizeof(double *) * (in.cols + k*2));
-    g += k;
-    for (int i = -k; i < in.cols + k; i++) {
-        g[i] = (double *) malloc(sizeof(double) * (in.rows + k*2));
-        g[i] += k;
-    }
-    for (int j = 0; j < in.rows; j++) {
-        for (int i = 0; i < in.cols; i++) {
-            g[i][j] = in.at<unsigned char>(j,i);
-        }
-    }
-    for (int j = 0; j < in.rows; j++) {
-        for(int i = 1;i <= k;i++) {
-            g[-i][j] = g[i][j];
-            g[in.cols-1+i][j] = g[in.cols -1 -i][j];
-        }
-    }
-    for (int i = -k; i < in.cols + k; i++) {
-        for(int j = 1;j <= k;j++) {
-            g[i][-j] = g[i][j];
-            g[i][in.rows - 1+j] = g[i][in.rows  -1-j];
-        }
-    }
-    for (int j = 0; j < in.rows; j++) {
-        for (int i = 0; i < in.cols; i++) {
-            double sum = 0;
-            for (int l = -k; l <= k; l++) {
-                for (int m = -k; m <= k; m++) {
-//std::cout << "j+l = " << j+l << "i+k = " << i+k << std::endl;
-                    sum += g[i + m][j + l];
-                }
-            }
-            sum /= (2*k+1)*(2*k+1);
-
-            out.at<unsigned char>(j,i) = (unsigned char)( sum + 0.5);
-        }
-    }
-    for(int i = -k;i < in.cols + k;i++){
-        g[i] -= k;
-        free(g[i]);
-    }
-    g -= k;
-    free(g);
-    return out;
-}
+/***
+ * @fn cv::Mat mv_filter(cv::Mat &in, int k)
+ * @brief
+ * @param in
+ * @return
+ */
 cv::Mat mv_filter(cv::Mat &in,int k){
     cv::Mat out = cv::Mat::zeros((int) (in.rows), (int) (in.cols), CV_8UC3);
     double **g;
