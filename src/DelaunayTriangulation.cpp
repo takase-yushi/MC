@@ -1065,27 +1065,30 @@ std::cout << "diff = " << diff << std::endl;
 /*std::priority_queue<int> Erase_UnnecessaryPoint(DelaunayTriangulation md, const cv::Mat &ref,const cv::Mat &target){
 
 }*/
-std::vector<Triangle> DelaunayTriangulation::Get_triangles_around(int idx,std::vector<cv::Point2f> corners,std::vector<bool> &flag_around ){
+
+/**
+ * @fn std::vector<Triangle> DelaunayTriangulation::Get_triangles_around(int idx,std::vector<cv::Point2f> corners,std::vector<bool> &flag_around )
+ * @brief idx番目の頂点の周りの三角形を返す
+ * @param[in] idx 頂点番号
+ * @param[in] corners 頂点群
+ * @param[out] flag_around
+ * @return idx番目の頂点を含む三角形
+ */
+std::vector<Triangle> DelaunayTriangulation::Get_triangles_around(int idx, std::vector<cv::Point2f> corners, std::vector<bool> &flag_around ){
     std::vector<Triangle> triangles_around;
-    std::vector<cv::Vec6f> triangles_mydelaunay;
-    this->getTriangleList(triangles_mydelaunay);
-    //std::cout << "triangle_list_prev_size = " << triangles_mydelaunay.size() << std::endl;
-    for (auto t:triangles_mydelaunay) {
+    std::vector<cv::Vec6f> triangleList;
+    this->getTriangleList(triangleList);
+    for (auto t:triangleList) {
         cv::Point2f p1(t[0], t[1]), p2(t[2], t[3]), p3(t[4], t[5]);
-        //std::cout << "p1 =" << p1 << "p2 =" << p2 << "p3 =" << p3<<std::endl;
         int i1 = -1, i2 = -1, i3 = -1;
         for (int i = 0; i < (int) corners.size(); i++) {
-            //std::cout << "corners[" << i << "] = " <<corners[i] << std::endl;
             if (corners[i] == p1) i1 = i;
             else if (corners[i] == p2) i2 = i;
             else if (corners[i] == p3) i3 = i;
         }
         if ((0 <= i1 && 0 <= i2 && 0 <= i3)&&(i1 == idx||i2 == idx || i3 == idx)) {
-            //std::cout << "add_prev_list" << std::endl;
             triangles_around.emplace_back(i1, i2, i3);
-            //std::cout << "neighbor_vtx[" << idx << "]_size =" << neighbor_vtx[idx + 4].size() << std::endl;
             for(const int v : neighbor_vtx[idx + 4]){
-                //std::cout << "neighbor_vtx[" << idx << "] = " << v-4 << std::endl;
                 if(v < 4) continue;
                 flag_around[v-4] = true;
             }
@@ -1185,6 +1188,14 @@ std::vector<cv::Point2f> DelaunayTriangulation::repair_around(std::vector<cv::Po
     return ret;
 }
 
+/***
+ * @fn void DelaunayTriangulation::serch_wrong(std::vector<cv::Point2f>corners,cv::Mat target,bool *skip_flag)
+ * @brief 画像外の頂点を含む三角形があるかどうか判定
+ * @details いわゆる黒い三角形があるかどうか判定
+ * @param[in] corners
+ * @param[in] target
+ * @param[out] skip_flag
+ */
 void DelaunayTriangulation::serch_wrong(std::vector<cv::Point2f>corners,cv::Mat target,bool *skip_flag) {
   for (int idx = 0; idx < (int) corners.size(); idx++) {
     if (corners[idx].x <= 0 || corners[idx].x >= target.cols - 1 || corners[idx].y <= 0 ||
@@ -1192,7 +1203,6 @@ void DelaunayTriangulation::serch_wrong(std::vector<cv::Point2f>corners,cv::Mat 
       continue;
     }
     for (const int v : neighbor_vtx[idx + 4]) {
-      //std::cout << "neighbor_vtx[" << idx << "] = " << v-4 << std::endl;
       if (v < 4) {
         *skip_flag = true;
       }

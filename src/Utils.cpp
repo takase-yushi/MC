@@ -1046,6 +1046,14 @@ void add_corner_edge(std::vector<cv::Point2f> &corners,cv::Mat &canny,double r1,
     free(flag);
 }
 
+/**
+ * @fn std::vector<cv::Point2f> slide_corner_edge(std::vector<cv::Point2f> &corners,cv::Mat &canny,double r1)
+ * @brief エッジ上に頂点を移動する
+ * @param[in] corners
+ * @param[in] canny
+ * @param[in] r1
+ * @return 頂点群を返す
+ */
 std::vector<cv::Point2f> slide_corner_edge(std::vector<cv::Point2f> &corners,cv::Mat &canny,double r1){
     std::vector<cv::Point2f> ret_corners = corners;
 
