@@ -980,15 +980,19 @@ void bubbleSort(std::vector<std::tuple<cv::Point2f,double,std::vector<Triangle>>
     }
 }
 
+/**
+ * @fn std::vector<Triangle> inter_div(std::vector<Triangle> &triangles, std::vector<cv::Point2f> &corners,cv::Point2f add_corner, int t)
+ * @brief
+ * @param triangles
+ * @param corners
+ * @param add_corner
+ * @param t
+ * @return
+ */
 std::vector<Triangle> inter_div(std::vector<Triangle> &triangles, std::vector<cv::Point2f> &corners,cv::Point2f add_corner, int t){
     Triangle triangle = triangles[t];
     std::vector<Triangle> add_triangles;
     add_triangles.clear();
-    Point3Vec triangleVec(corners[triangle.p1_idx], corners[triangle.p2_idx], corners[triangle.p3_idx]);
-    cv::Point2f p1 = triangleVec.p1;
-    cv::Point2f p2 = triangleVec.p2;
-    cv::Point2f p3 = triangleVec.p3;
-    //corners.emplace_back(add_corner);
 
     Triangle triangle_p1((int)corners.size() - 1,triangle.p1_idx,triangle.p2_idx);
     Triangle triangle_p2((int)corners.size() - 1,triangle.p2_idx,triangle.p3_idx);
@@ -1001,6 +1005,7 @@ std::vector<Triangle> inter_div(std::vector<Triangle> &triangles, std::vector<cv
     add_triangles.emplace_back(triangle_p1);
     add_triangles.emplace_back(triangle_p2);
     add_triangles.emplace_back(triangle_p3);
+
     return  add_triangles;
 }
 
