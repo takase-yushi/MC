@@ -1847,13 +1847,9 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
     std::ofstream tri_list;
     std::ofstream mv_list = std::ofstream("mv_list.csv");
     int hist_org[201] = {0}, hist_org_x[201] = {0}, hist_org_y[201] = {0};
-    int *hist, *hist_x, *hist_y;
     int basis_mv_tmp_x = 0,basis_mv_tmp_y = 0,sabun_mv_tmp_x = 0,sabun_mv_tmp_y = 0;
     bool para_flag = false;
 
-    hist = &hist_org[100];
-    hist_x = &hist_org_x[100];
-    hist_y = &hist_org_y[100];
     tri_list = std::ofstream("tri_list.csv");
 
     std::vector<cv::Mat> predict_buf;
@@ -1889,13 +1885,10 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
     tmp_mv_x = 0;
     tmp_mv_y = 0;
 //#pragma omp parallel for
+
+    // 基準ベクトル以外のベクトルを符号化
     for (int t = 0; t < (int) triangles.size(); t++) { // NOLINT
         tri_list << "triangle[" << t << "], ";
-        double sx, sy, lx, ly;
-        sx = -1;
-        sy = -1;
-        lx = -1;
-        ly = -1;
 
         Triangle triangle = triangles[t];
         int p1_idx = triangle.p1_idx;
@@ -1977,6 +1970,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
         }
 
         if (!add_corner.empty()) {
+            // 残差でソート
             bubbleSort(add_corner_pair, add_corner_pair.size());
             bubbleSort(add_corner_tuple, add_corner_tuple.size());
             if ((MSE_prev - std::get<1>(add_corner_tuple[0])) / MSE_prev >= 0) {
@@ -1996,357 +1990,103 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
                       << add_corner_pair[i].second << std::endl;
         }
 
+        // 動きベクトルの探索と保存
         double tmp_x[3], tmp_y[3];
-        int max_mv_x = 0, min_mv_x = 256, max_mv_y = 0, min_mv_y = 256;
         for (int q = 0; q <= 2; q++) {
-            if (max_mv_x < mv[q].x)max_mv_x = mv[q].x;
-            if (min_mv_x > mv[q].x)min_mv_x = mv[q].x;
-            if (max_mv_y < mv[q].y)max_mv_y = mv[q].y;
-            if (min_mv_y > mv[q].y)min_mv_y = mv[q].y;
-            tmp_x[q] = (int) (mv[q].x * 4);
+            tmp_x[q] = (int) (mv[q].x * 4); // 1/4に縮小した画像で探索しているため、4倍
             tmp_y[q] = (int) (mv[q].y * 4);
         }
+
+        // 差分ベクトル
         for (int q = 1; q <= 2; q++) {
             mv[q].x -= mv[0].x;
             mv[q].y -= mv[0].y;
-            if (abs(mv[q].x) <= 100) hist[mv[q].x]++;
-            if (abs(mv[q].y) <= 100) hist[mv[q].y]++;
-            if (abs(mv[q].x) <= 100) hist_x[mv[q].x]++;
-            if (abs(mv[q].y) <= 100) hist_y[mv[q].y]++;
         }
-        cv::Point2f mv_diff_tmp;
-        tmp_mv_x++;//warp_flagの1bit
+        tmp_mv_x++; //warp_flagの1bit
 
-        std::vector<std::pair<cv::Point2i, int>> add_mv_tmp;
-        add_mv_tmp.emplace_back(mv[0], triangle.p1_idx);
+        // もともとの頂点それぞれの動きベクトル
+        std::vector<std::pair<cv::Point2i, int>> add_mv_original;
+        add_mv_original.emplace_back(mv[0], triangle.p1_idx);
+
+        // para_flag: ガウスニュートン法が返すやつ
+        // 平行移動のほうが良い場合はpara_flag=true
         if (!para_flag) {
-            add_mv_tmp.emplace_back(mv[0] + mv[1], triangle.p2_idx);
-            add_mv_tmp.emplace_back(mv[0] + mv[2], triangle.p3_idx);
+            add_mv_original.emplace_back(mv[0] + mv[1], triangle.p2_idx);
+            add_mv_original.emplace_back(mv[0] + mv[2], triangle.p3_idx);
         } else {
-            add_mv_tmp.emplace_back(mv[0], triangle.p2_idx);
-            add_mv_tmp.emplace_back(mv[0], triangle.p3_idx);
+            add_mv_original.emplace_back(mv[0], triangle.p2_idx);
+            add_mv_original.emplace_back(mv[0], triangle.p3_idx);
         }
-        std::pair<std::vector<std::pair<cv::Point2i, int>>, std::pair<bool, bool>> add_mv(add_mv_tmp,
-                                                                                          std::pair<bool, bool>(false,
-                                                                                                                para_flag));
-        std::tuple<std::vector<std::pair<cv::Point2i, int>>, bool, bool, cv::Point2f, int,cv::Point2f> add_mv_tuple(add_mv_tmp,
+
+        //pair<3つの動きベクトル,頂点番号>, 基準ベクトルが存在するか表すフラグ, 平行移動を表すフラグ,実際に符号化する基準ベクトル(差分をとったもの),スタックを遡る個数,スタックの一番上の参照するベクトル
+        std::tuple<std::vector<std::pair<cv::Point2i, int>>, bool, bool, cv::Point2f, int, cv::Point2f> add_mv_tuple(add_mv_original,
                                                                                                                     false,
                                                                                                                     para_flag,
                                                                                                                     cv::Point2f(0,
                                                                                                                                 0),
                                                                                                                     0,cv::Point2f(0,0));
-        mv_basis[triangle.p1_idx].emplace_back(add_mv);
+
         mv_basis_tuple[triangle.p1_idx].emplace_back(add_mv_tuple);
-/*
-      if(!mv_basis[triangle.p1_idx].second){
 
-          mv_diff_tmp = mv[0];
-          mv_basis[triangle.p1_idx].first = mv[0];
-          mv_basis[triangle.p1_idx].second = true;
-
-
-          double init_Distance = 10E05;
-          double min_Distance = init_Distance;
-          int min_num = 0;
-          bool flag_around = false;
-          std::vector<int> neighbor = md.getNeighborVertexNum(triangle.p1_idx);
-          std::vector<cv::Point2f> neighbor_cood = md.getNeighborVertex(triangle.p1_idx);
-          for(int k = 0;k < (int)neighbor.size();k++){
-              //std::cout << "neighbor[" << k << "] = " << neighbor[k] - 4<< std::endl;
-              //std::cout << "neighbor_cood[" << k << "] = " << neighbor_cood[k] << std::endl;
-              if(mv_basis[neighbor[k] - 4].second){
-                  double Distance = md.getDistance(corners[triangle.p1_idx],neighbor_cood[k]);
-                  std::cout << "Distance = " << Distance << std::endl;
-                  flag_around = true;
-                  if(min_Distance > Distance){
-                      min_Distance = Distance;
-                      min_num = neighbor[k] - 4;
-                  }
-              }
-          }
-          //std::cout << "min_num = " << min_num << std::endl;
-          if(flag_around) {
-              double min_diff = 10E05;
-              int min_i = 0;
-              for (int i = 0; i < mv_basis[min_num].first.size(); i++) {
-                  cv::Point2f mv_diff_tmp_tmp = mv[0] - mv_basis[min_num].first[i];
-                  std::cout << "mv_diff_tmp_tmp [" << i << "] = " << mv_diff_tmp_tmp << std::endl;
-                  if (fabs(mv_diff_tmp_tmp.x) + fabs(mv_diff_tmp_tmp.y) < min_diff) {
-                      min_diff = fabs(mv_diff_tmp_tmp.x) + fabs(mv_diff_tmp_tmp.y);
-                      min_i = i;
-                  }
-              }
-              mv_diff_tmp = mv[0] - mv_basis[min_num].first[min_i];
-              mv_basis[triangle.p1_idx].first.emplace_back(mv[0]);
-              mv_basis[triangle.p1_idx].second = true;
-              //count_diff++;
-              std::cout << "count_diff = " << count_diff << std::endl;
-              std::cout << "mv_diff_tmp = " << mv_diff_tmp << std::endl;
-          }
-          else {
-              mv_diff_tmp = mv[0];
-              mv_basis[triangle.p1_idx].first.emplace_back(mv[0]);
-              mv_basis[triangle.p1_idx].second = true;
-          }
-      } else{
-          double min_diff = 10E05;
-          int min_i = 0;
-          for(int i = 0; i < mv_basis[triangle.p1_idx].first.size();i++) {
-              cv::Point2f mv_diff_tmp_tmp = mv[0] - mv_basis[triangle.p1_idx].first[i];
-              std::cout << "mv_diff_tmp_tmp [" << i << "] = " << mv_diff_tmp_tmp << std::endl;
-              if(fabs(mv_diff_tmp_tmp.x) + fabs(mv_diff_tmp_tmp.y) < min_diff){
-                  min_diff = fabs(mv_diff_tmp_tmp.x) + fabs(mv_diff_tmp_tmp.y);
-                  min_i = i;
-              }
-          }
-          mv_diff_tmp = mv[0] - mv_basis[triangle.p1_idx].first[min_i];
-          mv_basis[triangle.p1_idx].first.emplace_back(mv[0]);
-          count_diff++;
-          std::cout << "count_diff = " << count_diff << std::endl;
-          std::cout << "flag_mv_diff_tmp = " << mv_diff_tmp << std::endl;
-      }
-      if(!mv_basis[triangle.p2_idx].second){
-          mv_basis[triangle.p2_idx].first.emplace_back(mv[0] + mv[1]);
-          mv_basis[triangle.p2_idx].second = true;
-      }
-      if(!mv_basis[triangle.p3_idx].second){
-          mv_basis[triangle.p3_idx].first.emplace_back(mv[0] + mv[2]);
-          mv_basis[triangle.p3_idx].second = true;
-
-      }
-      */
         if (para_flag) {
             cnt++;
-            /*
-            golomb_mv_x += ozi::getGolombCode(16, (int)mv_diff_tmp.x, ozi::REGION1, ozi::GOLOMB, 0);
-            golomb_mv_x += 2;
-            golomb_mv_y += ozi::getGolombCode(16, (int)mv_diff_tmp.y, ozi::REGION1, ozi::GOLOMB, 0);
-            golomb_mv_y += 2;
-             */
-            /*
-            tmp_mv_x += ozi::getGolombCode(16, (int) mv_diff_tmp.x, ozi::REGION1, ozi::GOLOMB, 0);
-            tmp_mv_x += 2;
-            tmp_mv_y += ozi::getGolombCode(16, (int) mv_diff_tmp.y, ozi::REGION1, ozi::GOLOMB, 0);
-            tmp_mv_y += 2;
-             */
-        }
-            /*
-            if((tmp_x[0] == tmp_x[1]) &&(tmp_x[1] == tmp_x[2]) &&
-               (tmp_y[0] == tmp_y[1]) &&(tmp_y[1] == tmp_y[2])){
-                golomb_mv_x += ozi::getGolombCode(16, mv[0].x, ozi::REGION1, ozi::GOLOMB, 0);
-                golomb_mv_x += 2;
-                golomb_mv_y += ozi::getGolombCode(16, mv[0].y, ozi::REGION1, ozi::GOLOMB, 0);
-                golomb_mv_y += 2;
-               // cnt++;
-            }*/
-        else {
-            //golomb_mv_x += 9;
-            //golomb_mv_y += 9;
-            //mv[0] = mv_diff_tmp;
+        } else {
             for (int q = 1; q <= 2; q++) {
-                /*
-                if(q == 0)golomb_mv_x += ozi::getGolombCode(16, mv_diff_tmp.x, ozi::REGION1, ozi::GOLOMB, 0);
-                else golomb_mv_x += ozi::getGolombCode(16, mv[q].x, ozi::REGION1, ozi::GOLOMB, 0);
-                golomb_mv_x += 2;
-                if(q == 0)golomb_mv_y += ozi::getGolombCode(16, mv_diff_tmp.y, ozi::REGION1, ozi::GOLOMB, 0);
-                else golomb_mv_y += ozi::getGolombCode(16, mv[q].y, ozi::REGION1, ozi::GOLOMB, 0);
-                golomb_mv_y += 2;
-                 */
-                int golomb_para = 32;
-                if (q == 0)tmp_mv_x += ozi::getGolombCode(16, mv_diff_tmp.x, ozi::REGION1, ozi::GOLOMB, 0);
-                else sabun_mv_tmp_x += ozi::getGolombCode(golomb_para, mv[q].x, ozi::REGION1, ozi::GOLOMB, 0);
+                // see: https://ja.wikipedia.org/wiki/%E3%82%B4%E3%83%AD%E3%83%A0%E7%AC%A6%E5%8F%B7
+                // これでいうところのmがgolomb_parameter
+                int golomb_parameter = 32;
+                // x要素の符号化
+                sabun_mv_tmp_x += ozi::getGolombCode(golomb_parameter, mv[q].x, ozi::REGION1, ozi::GOLOMB, 0);
                 sabun_mv_tmp_x += 1;
-                if (q == 0)tmp_mv_y += ozi::getGolombCode(16, mv_diff_tmp.y, ozi::REGION1, ozi::GOLOMB, 0);
-                else sabun_mv_tmp_y += ozi::getGolombCode(golomb_para, mv[q].y, ozi::REGION1, ozi::GOLOMB, 0);
+
+                // y要素の符号化
+                sabun_mv_tmp_y += ozi::getGolombCode(golomb_parameter, mv[q].y, ozi::REGION1, ozi::GOLOMB, 0);
                 sabun_mv_tmp_y += 1;
+
                 std::cout << "x: " << mv[q].x << " code-length: "
-                          << ozi::getGolombCode(golomb_para, mv[q].x, ozi::REGION1, ozi::GOLOMB, 0) << std::endl;
+                          << ozi::getGolombCode(golomb_parameter, mv[q].x, ozi::REGION1, ozi::GOLOMB, 0) << std::endl;
                 std::cout << "y: " << mv[q].y << " code-length: "
-                          << ozi::getGolombCode(golomb_para, mv[q].y, ozi::REGION1, ozi::GOLOMB, 0) << std::endl;
+                          << ozi::getGolombCode(golomb_parameter, mv[q].y, ozi::REGION1, ozi::GOLOMB, 0) << std::endl;
 
             }
         }
-        /*
-        for(const auto p:mv){
-            golomb_mv_x += ozi::getGolombCode(7, p.x, ozi::REGION1, ozi::GOLOMB, 0);
-            golomb_mv_y += 3;
-            golomb_mv_y += ozi::getGolombCode(7, p.y, ozi::REGION1, ozi::GOLOMB, 0);
-            golomb_mv_y += 3;
-            std::cout << "x: " << p.x << " code-length: " << ozi::getGolombCode(7, p.x, ozi::REGION1, ozi::GOLOMB, 0) << std::endl;
-            std::cout << "y: " << p.y << " code-length: " << ozi::getGolombCode(7, p.y, ozi::REGION1, ozi::GOLOMB, 0) << std::endl;
-        }
-  */
-        /*
-        buffer[triangle.p1_idx].emplace_back(mv[0]);
-        buffer[triangle.p2_idx].emplace_back(mv[1]);
-        buffer[triangle.p3_idx].emplace_back(mv[2]);
-*/
-        //MSE += error_warp;
-        //Point3Vec mv_corners = Point3Vec(mv[0],mv[1],mv[2]);
-        //corners_warp = warping(ref, target, error_warp, triangleVec, prev_corners);
+
         error_warp = 0;
         cv::Point2d xp, va, vb, ta, tb, tc;
         ta = triangleVec.p1;
         tb = triangleVec.p2;
         tc = triangleVec.p3;
 
-        cv::Vec4f range = cv::Vec4f(0.0, ref.cols, 0.0, ref.rows);
-        // 座標のチェック
-        if (check_coordinate(corners[p1_idx], range) && check_coordinate(corners[p2_idx], range) &&
-            check_coordinate(corners[p3_idx], range)) {
-            lx = sx = corners[p1_idx].x;
-            ly = sy = corners[p1_idx].y;
-            sx = std::min((int) sx, std::min((int) corners[p2_idx].x, (int) corners[p3_idx].x));
-            lx = std::max((int) lx, std::max((int) corners[p2_idx].x, (int) corners[p3_idx].x));
-            sy = std::min((int) sy, std::min((int) corners[p2_idx].y, (int) corners[p3_idx].y));
-            ly = std::max((int) ly, std::max((int) corners[p2_idx].y, (int) corners[p3_idx].y));
-        }
-
-        cv::Point2f diff = getDifferenceVector(triangle, corners, ref_corners, mv_block);
-        error_block = error_block + LAMBDA * (ozi::getGolombCode(ozi::getGolombParam(0.5), (int) diff.x, ozi::REGION1,
-                                                                 ozi::KTH_GOLOMB, 1) +
-                                              ozi::getGolombCode(ozi::getGolombParam(0.5), (int) diff.y, ozi::REGION1,
-                                                                 ozi::KTH_GOLOMB, 1));
-
-        //std::cout << "block:" << error_block << " Warping:" << error_warp << std::endl;
-/*
-    if (error_block < error_warp && BM_AVAILABLE) {
-      freq_block++;
-//      cv::Point2f diff = getDifferenceVector(triangle, corners, ref_corners, mv_block);
-      diff_vector.emplace_back(diff);
-
-      // ブロックマッチング
-      for (int j = (int) (round(sy) - 1); j <= round(ly) + 1; j++) {
-        for (int i = (int) (round(sx) - 1); i <= round(lx) + 1; i++) {
-          xp.x = (double) i;
-          xp.y = (double) j;
-
-          // （i, j）がta, tb, tcで構成される三角形の内部なら
-          if (isInTriangle(triangleVec, xp)) {
-            int w = (int) (mv_block.x + 2 * i);
-            int h = (int) (mv_block.y + 2 * j);
-            if (w < 0 || expansion_ref.cols <= w || h < 0 || expansion_ref.rows <= h) {
-              std::cout << "w:" << w << " h:" << h << std::endl;
-              continue;
-            }
-
-            R(out, i, j) = R(expansion_ref, w, h);
-            G(out, i, j) = G(expansion_ref, w, h);
-            B(out, i, j) = B(expansion_ref, w, h);
-
-            if(error_block > 10) {
-              R(triangle_error_img, i, j) = 255;
-              G(triangle_error_img, i, j) = 0;
-              B(triangle_error_img, i, j) = 0;
-            }
-            block_matching_pixel_errors += (R(out, i, j) - R(target, i, j)) * (R(out, i, j) - R(target, i, j));
-            block_matching_pixel_errors += (G(out, i, j) - G(target, i, j)) * (G(out, i, j) - G(target, i, j));
-            block_matching_pixel_errors += (B(out, i, j) - B(target, i, j)) * (B(out, i, j) - B(target, i, j));
-            block_matching_pixel_nums++;
-          }
-        }
-      }
-      line(mv_image, cv::Point2d((ta.x + tb.x + tc.x) / 3.0, (ta.y + tb.y + tc.y) / 3.0),
-           cv::Point2d(mv_block.x / 2 + (ta.x + tb.x + tc.x) / 3.0, mv_block.y / 2 + (ta.y + tb.y + tc.y) / 3.0),
-           GREEN);
-    } *//*else if (WARP_AVAILABLE) {
-
-      freq_warp++;
-      // ワーピング 現在のフレーム
-      std::cout << "Warping target Frame" << std::endl;
-      for (int j = (int) (round(sy) - 1); j <= round(ly) + 1; j++) {
-        for (int i = (int) (round(sx) - 1); i <= round(lx) + 1; i++) {
-          xp.x = (double) i;
-          xp.y = (double) j;
-          // (i, j)がta, tb, tcで構成される三角形の内部なら
-          if (isInTriangle(triangleVec, xp)) {
-            double xx, yy, ee, gg, mmx, mmy, ii, jj;
-            unsigned char gg_warp, rr_warp, bb_warp;
-            va.x = ta.x - tc.x;
-            va.y = ta.y - tc.y;
-            vb.x = tb.x - tc.x;
-            vb.y = tb.y - tc.y;
-
-            xx = (((double) i - tc.x) * va.y) - (((double) j - tc.y) * va.x);
-            xx /= ((va.y * vb.x) - (va.x * vb.y));
-
-            yy = ((vb.x - va.x) * ((double) j - tc.y)) - ((vb.y - va.y) * ((double) i - tc.x));
-            yy /= (va.y * vb.x) - (va.x * vb.y);
-
-            gg = yy != 0 ? xx / yy : 0.0;
-
-            ee = yy;
-            //for (int i = 0; i < 3; i++) {
-            //std::cout << "mv[" << i << "] = " << mv[i].x << ", " << mv[i].y << std::endl;
-          //}
-            std::vector<cv::Point2f> ret_corners = corners_warp;
-            mmx = (ret_corners[1].x - ret_corners[0].x) * gg + ret_corners[0].x;
-            mmy = (ret_corners[1].y - ret_corners[0].y) * gg + ret_corners[0].y;
-
-            ii = (mmx - ret_corners[2].x) * ee + ret_corners[2].x;
-            jj = (mmy - ret_corners[2].y) * ee + ret_corners[2].y;
-
-            interpolation(expansion_ref, ii, jj, rr_warp, gg_warp, bb_warp);
-
-            R(out, i, j) = rr_warp;
-            G(out, i, j) = gg_warp;
-            B(out, i, j) = bb_warp;
-
-            if(error_warp > 10) {
-              R(triangle_error_img, i, j) = 255;
-              G(triangle_error_img, i, j) = 0;
-              B(triangle_error_img, i, j) = 0;
-            }
-            warping_pixel_errors += (R(out, i, j) - R(target, i, j)) * (R(out, i, j) - R(target, i, j));
-            warping_pixel_errors += (G(out, i, j) - G(target, i, j)) * (G(out, i, j) - G(target, i, j));
-            warping_pixel_errors += (B(out, i, j) - B(target, i, j)) * (B(out, i, j) - B(target, i, j));
-            warping_pixel_nums++;
-          }
-        }
-      }
-      line(mv_image, ta, corners_warp[0] / 2.0, GREEN);
-      line(mv_image, tb, corners_warp[1] / 2.0, GREEN);
-      line(mv_image, tc, corners_warp[2] / 2.0, GREEN);
-    }*/
-
         std::cout << numerator++ << "/" << denominator << "\n";
     }
 
-    for (int i = -100; i <= 100; i++) {
-        mv_list << i << "," << hist[i] << "," << i << "," << hist_x[i] << "," << i << "," << hist_y[i] << std::endl;
-
-    }
-    std::cout << "check1" << std::endl;
-/*
-    for (int i = 0; i < corners_size; i++) {
-        cv::Point2i prev = buffer[i][1];
-        if (buffer[i].size() != 2) {
-            for (int j = 1; j < (int) buffer[i].size() - 1; j++) {
-                cv::Point2i current = buffer[i][j + 1];
-                cv::Point2i diff_mv = current - prev;
-                buffer[i][j + 1] = diff_mv;
-                prev = current;
-            }
-        }
-    }
-    */
+    // 基準ベクトルの符号化
     std::vector<std::vector<cv::Point2i>> corded_mv(corners.size());
     std::queue<int> Queue_neighbor;
     bool init_flag = false;
-    //const bool prev_flag = true;
-    for (int i = 0; i < (int) mv_basis_tuple.size(); i++) {
-        for (int j = 0; j < (int) mv_basis_tuple[i].size(); j++) {
-            std::get<1>(mv_basis_tuple[i][j]) = true;
-            std::get<3>(mv_basis_tuple[i][j]) = std::get<0>(mv_basis_tuple[i][j])[0].first;
-            std::get<4>(mv_basis_tuple[i][j]) = 0;
-            std::get<5>(mv_basis_tuple[i][j]) = std::get<0>(mv_basis_tuple[i][j])[0].first;
-            corded_mv[i].emplace_back(std::get<0>(mv_basis_tuple[i][j])[0].first);
-            corded_mv[std::get<0>(mv_basis_tuple[i][j])[1].second].emplace_back(
-                    std::get<0>(mv_basis_tuple[i][j])[1].first);
-            corded_mv[std::get<0>(mv_basis_tuple[i][j])[2].second].emplace_back(
-                    std::get<0>(mv_basis_tuple[i][j])[2].first);
+
+    // 初期化のようなもの（1番最初に符号化するための頂点を見つける）
+    //    int start_idx = 0;
+    //    while(mv_basis_tuple[start_idx].empty()) start_idx++;
+
+    for (int i = 0; i < (int) mv_basis_tuple.size(); i++) { // i: 三角パッチの番号
+        for (int j = 0; j < (int) mv_basis_tuple[i].size(); j++) { // j: スタックのようなものを辿る
+            std::get<1>(mv_basis_tuple[i][j]) = true; // 符号化済みにする
+            std::get<3>(mv_basis_tuple[i][j]) = std::get<0>(mv_basis_tuple[i][j])[0].first; // 基準ベクトルの差分ベクトル（実際に符号化するもの）
+            std::get<4>(mv_basis_tuple[i][j]) = 0; // 遡る個数
+            std::get<5>(mv_basis_tuple[i][j]) = std::get<0>(mv_basis_tuple[i][j])[0].first; // スタックの1番上
+
+            int pt1_idx = i;
+            int pt2_idx = std::get<0>(mv_basis_tuple[i][j])[1].second;
+            int pt3_idx = std::get<0>(mv_basis_tuple[i][j])[2].second;
+            corded_mv[pt1_idx].emplace_back(std::get<0>(mv_basis_tuple[i][j])[0].first);
+//            corded_mv[pt2_idx].emplace_back(std::get<0>(mv_basis_tuple[i][j])[1].first);
+//            corded_mv[pt3_idx].emplace_back(std::get<0>(mv_basis_tuple[i][j])[2].first);
+
             init_flag = true;
-            std::vector<int> neighbor = md.getNeighborVertexNum(std::get<0>(mv_basis[i][j])[1].second);
+            // TODO: bug fix
+            std::vector<int> neighbor = md.getNeighborVertexNum(pt2_idx);
+//            std::vector<int> neighbor = md.getNeighborVertexNum(std::get<0>(mv_basis[i][j])[1].second);
             for (int k = 0; k < (int) neighbor.size(); k++) {
                 Queue_neighbor.push(neighbor[k] - 4);
             }
@@ -2354,34 +2094,36 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
         }
         if (init_flag)break;
     }
+
     while (!Queue_neighbor.empty()) {
-        //std::cout << "Queue_size = " << Queue_neighbor.size() << std::endl;
+        // 探索用の変数
         int current_idx = Queue_neighbor.front();
-        //std::cout << "current_idx = " << current_idx << std::endl;
         Queue_neighbor.pop();
-        for (int j = 0; j < (int) mv_basis_tuple[current_idx].size(); j++) {
-            //std::cout << "j = " << j << std::endl;
-            if(j == 0){
-                std::vector<int> neighbor = md.getNeighborVertexNum(
-                        std::get<0>(mv_basis_tuple[current_idx][j])[0].second);
-                for(int k = 0;k < (int)neighbor.size();k++){
-                    if(!mv_basis_tuple[neighbor[k] - 4].empty()){
-                        if (!std::get<1>(mv_basis_tuple[neighbor[k] - 4][j])) {
-                            Queue_neighbor.push(neighbor[k] - 4);
-                        }
+
+        // 取り出した頂点の隣接を入れる
+        if (!(int)mv_basis_tuple[current_idx].empty()) {
+            std::vector<int> neighbor = md.getNeighborVertexNum(
+                    std::get<0>(mv_basis_tuple[current_idx][0])[0].second);
+            for(int k = 0;k < (int)neighbor.size();k++){
+                if(!mv_basis_tuple[neighbor[k] - 4].empty()){
+                    if (!std::get<1>(mv_basis_tuple[neighbor[k] - 4][0])) {
+                        Queue_neighbor.push(neighbor[k] - 4);
                     }
                 }
             }
-            //std::cout << "check1" << std::endl;
-            if (!std::get<1>(mv_basis_tuple[current_idx][j])) {
-                //std::cout << "check2" << std::endl;
-                std::get<1>(mv_basis_tuple[current_idx][j]) = true;
+        }
+
+        for (int j = 0; j < (int) mv_basis_tuple[current_idx].size(); j++) {
+            bool is_coded = std::get<1>(mv_basis_tuple[current_idx][j]);
+            if (!is_coded) {
+                std::get<1>(mv_basis_tuple[current_idx][j]) = true; // 符号化済みに変更
+                // その頂点にいくつか動きベクトルがある場合
                 if (!corded_mv[current_idx].empty()) {
-                    //std::cout << "check3" << std::endl;
                     double min_cord = 10E05;
                     double min_prev = 10E05;
                     cv::Point2f min_diff(0, 0);
                     int back_number = 0;
+                    // その頂点
                     for (int i = 0; i < (int) corded_mv[current_idx].size(); i++) {
                         mv_diff = std::get<0>(mv_basis_tuple[current_idx][j])[0].first - corded_mv[current_idx][i];
                         mv_prev = std::get<0>(mv_basis_tuple[current_idx][j])[0].first - corded_mv[current_idx][i];
@@ -2392,7 +2134,6 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
                             back_number = (int) corded_mv[current_idx].size() - i;
                         }
                     }
-                    //std::cout << "check4" << std::endl;
                     mv_diff = std::get<0>(mv_basis_tuple[current_idx][j])[0].first;
                     if (fabs(mv_diff.x) + fabs(mv_diff.y) < min_cord) {
                         min_diff = mv_diff;
@@ -2402,17 +2143,15 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
                         mv_prev = mv_diff;
                         back_number = 0;
                     }
-                    //std::cout << "check5" << std::endl;
                     std::get<3>(mv_basis_tuple[current_idx][j]) = min_diff;
                     std::get<4>(mv_basis_tuple[current_idx][j]) = back_number;
                     std::get<5>(mv_basis_tuple[current_idx][j]) = mv_prev;
-                    corded_mv[std::get<0>(mv_basis_tuple[current_idx][j])[1].second].emplace_back(
-                            std::get<0>(mv_basis_tuple[current_idx][j])[1].first);
-                    corded_mv[std::get<0>(mv_basis_tuple[current_idx][j])[2].second].emplace_back(
-                            std::get<0>(mv_basis_tuple[current_idx][j])[2].first);
-                    //std::cout << "check6" << std::endl;
+                    // TODO: 基準ベクトル以外を使っていいのか？
+//                    corded_mv[std::get<0>(mv_basis_tuple[current_idx][j])[1].second].emplace_back(
+//                            std::get<0>(mv_basis_tuple[current_idx][j])[1].first);
+//                    corded_mv[std::get<0>(mv_basis_tuple[current_idx][j])[2].second].emplace_back(
+//                            std::get<0>(mv_basis_tuple[current_idx][j])[2].first);
                 } else {
-                    // std::cout << "check7" << std::endl;
                     double init_Distance = 10E05;
                     double min_Distance = init_Distance;
                     int min_num = 0;
@@ -2421,15 +2160,11 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
                             std::get<0>(mv_basis_tuple[current_idx][j])[0].second);
                     std::vector<cv::Point2f> neighbor_cood = md.getNeighborVertex(
                             std::get<0>(mv_basis_tuple[current_idx][j])[0].second);
-                    //std::cout << "check8" << std::endl;
                     for (int k = 0; k < (int) neighbor.size(); k++) {
-                        //std::cout << "check9" << std::endl;
                         if (!corded_mv[neighbor[k] - 4].empty()) {
-                            // std::cout << "check10" << std::endl;
                             flag_arround = true;
                             double Distance = md.getDistance(
                                     corners[std::get<0>(mv_basis_tuple[current_idx][j])[0].second], neighbor_cood[k]);
-                            //std::cout << "Distance = " << Distance << std::endl;
                             if (min_Distance > Distance) {
                                 min_Distance = Distance;
                                 min_num = neighbor[k] - 4;
@@ -2437,7 +2172,6 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
                         }
                     }
                     if(flag_arround) {
-                        //std::cout << "check11" << std::endl;
                         double min_cord = 10E05;
                         double min_prev = 10E05;
                         cv::Point2f min_diff(0, 0);
@@ -2452,7 +2186,6 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
                                 back_number = (int) corded_mv[current_idx].size() - i;
                             }
                         }
-                        //std::cout << "check12" << std::endl;
                         mv_diff = std::get<0>(mv_basis_tuple[current_idx][j])[0].first;
                         if (fabs(mv_diff.x) + fabs(mv_diff.y) < min_cord) {
                             min_diff = mv_diff;
@@ -2462,34 +2195,32 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
                             mv_prev = mv_diff;
                             back_number = 0;
                         }
-                        //std::cout << "check13" << std::endl;
                         std::get<3>(mv_basis_tuple[current_idx][j]) = min_diff;
                         std::get<4>(mv_basis_tuple[current_idx][j]) = back_number;
                         std::get<5>(mv_basis_tuple[current_idx][j]) = mv_prev;
-                        corded_mv[std::get<0>(mv_basis_tuple[current_idx][j])[1].second].emplace_back(
-                                std::get<0>(mv_basis_tuple[current_idx][j])[1].first);
-                        corded_mv[std::get<0>(mv_basis_tuple[current_idx][j])[2].second].emplace_back(
-                                std::get<0>(mv_basis_tuple[current_idx][j])[2].first);
+//                        corded_mv[std::get<0>(mv_basis_tuple[current_idx][j])[1].second].emplace_back(
+//                                std::get<0>(mv_basis_tuple[current_idx][j])[1].first);
+//                        corded_mv[std::get<0>(mv_basis_tuple[current_idx][j])[2].second].emplace_back(
+//                                std::get<0>(mv_basis_tuple[current_idx][j])[2].first);
                     }else{
                         std::get<3>(mv_basis_tuple[current_idx][j]) = std::get<0>(mv_basis_tuple[current_idx][j])[0].first;
                         std::get<4>(mv_basis_tuple[current_idx][j]) = 0;
                         std::get<5>(mv_basis_tuple[current_idx][j]) = std::get<0>(mv_basis_tuple[current_idx][j])[0].first;
-                        corded_mv[std::get<0>(mv_basis_tuple[current_idx][j])[1].second].emplace_back(
-                                std::get<0>(mv_basis_tuple[current_idx][j])[1].first);
-                        corded_mv[std::get<0>(mv_basis_tuple[current_idx][j])[2].second].emplace_back(
-                                std::get<0>(mv_basis_tuple[current_idx][j])[2].first);
+//                        corded_mv[std::get<0>(mv_basis_tuple[current_idx][j])[1].second].emplace_back(
+//                                std::get<0>(mv_basis_tuple[current_idx][j])[1].first);
+//                        corded_mv[std::get<0>(mv_basis_tuple[current_idx][j])[2].second].emplace_back(
+//                                std::get<0>(mv_basis_tuple[current_idx][j])[2].first);
                     }
-                    // std::cout << "check14" << std::endl;
                 }
             }
         }
     }
+
     int worth = 0;
     for(int i = 0;i < (int)mv_basis_tuple.size();i++) {
         for (int j = 0; j < (int) mv_basis_tuple[i].size(); j++) {
             int golomb_para = 16;
-            cv::Point2f mv_diff = std::get<3>(mv_basis_tuple[i][j]);
-            cv::Point2f basis = std::get<0>(mv_basis_tuple[i][j])[0].first;
+
             cv::Point2f prev = std::get<5>(mv_basis_tuple[i][j]);
             tmp_mv_x += 1;
             basis_mv_tmp_x += ozi::getGolombCode(golomb_para, prev.x, ozi::REGION1, ozi::GOLOMB, 0);
@@ -2497,6 +2228,9 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
             basis_mv_tmp_y += ozi::getGolombCode(golomb_para, prev.y, ozi::REGION1, ozi::GOLOMB, 0);
             basis_mv_tmp_y += 1;
 
+            // for debug
+            cv::Point2f mv_diff = std::get<3>(mv_basis_tuple[i][j]); // 遡って一番符号量が少ないときのベクトル
+            cv::Point2f basis = std::get<0>(mv_basis_tuple[i][j])[0].first; // 基準ベクトル（差分もとっていないそのままのもの）
             std::cout << "diff x: " << mv_diff.x << " code-length: "
                       << ozi::getGolombCode(golomb_para, mv_diff.x, ozi::REGION1, ozi::GOLOMB, 0) << " basis x: " << basis.x << " code-length: "
                       << ozi::getGolombCode(golomb_para, basis.x, ozi::REGION1, ozi::GOLOMB, 0) << " prev x: " << prev.x << " code-length: "
@@ -2505,6 +2239,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
                       << ozi::getGolombCode(golomb_para, mv_diff.y, ozi::REGION1, ozi::GOLOMB, 0) << " basis y: " << basis.y << " code-length: "
                       << ozi::getGolombCode(golomb_para, basis.y, ozi::REGION1, ozi::GOLOMB, 0)<< " prev y: " << prev.y << " code-length: "
                       << ozi::getGolombCode(golomb_para, prev.y, ozi::REGION1, ozi::GOLOMB, 0) << std::endl;
+
             worth += ozi::getGolombCode(golomb_para, prev.x, ozi::REGION1, ozi::GOLOMB, 0) - ozi::getGolombCode(golomb_para, basis.x, ozi::REGION1, ozi::GOLOMB, 0);
             worth += ozi::getGolombCode(golomb_para, prev.y, ozi::REGION1, ozi::GOLOMB, 0) - ozi::getGolombCode(golomb_para, basis.y, ozi::REGION1, ozi::GOLOMB, 0);
         }
@@ -2515,23 +2250,6 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
     std::cout << "sabun_mv_tmp = " << sabun_mv_tmp_x + sabun_mv_tmp_y << std::endl;
     std::cout << "basis_mv_tmp = " << basis_mv_tmp_x + basis_mv_tmp_y << std::endl;
 
-/*
-    for(int i = 0;i < (int)buffer.size();i++){
-      std::cout << "buffer[" << i << "]" << std::endl;
-        for(int j = 1;j < (int)buffer[i].size();j++){
-            golomb_mv_x += ozi::getGolombCode(2, buffer[i][j].x, ozi::REGION1, ozi::GOLOMB, 0);
-            golomb_mv_y += 3;
-            golomb_mv_y += ozi::getGolombCode(2, buffer[i][j].y, ozi::REGION1, ozi::GOLOMB, 0);
-            golomb_mv_y += 3;
-            std::cout << "x: " << buffer[i][j].x << " code-length: " << ozi::getGolombCode(2, buffer[i][j].x, ozi::REGION1, ozi::GOLOMB, 0) << std::endl;
-            std::cout << "y: " << buffer[i][j].y << " code-length: " << ozi::getGolombCode(2, buffer[i][j].y, ozi::REGION1, ozi::GOLOMB, 0) << std::endl;
-        }
-    }
-*/
-    //std::cout << "check point 1" << std::endl;
-    for(int k = 0;k < (int)ev.size();k++){
-        //std::cout << "ev = (" << ev[k].x <<"," << ev[k].y << std::endl;
-    }
     for(int k = 0;k < (int)mv_basis.size();k++){
         for(int l = 0;l < (int)mv_basis[k].size();l++) {
             std::cout << "mv_basis [" << k << "][" << l << "] = " << std::get<0>(mv_basis_tuple[k][l])[0].first << "flag = " << std::get<1>(mv_basis_tuple[k][l])
@@ -2547,8 +2265,6 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
     cv::imwrite("predict_warp.bmp",predict_warp);
     cv::imwrite("predict_para.bmp",predict_para);
     std::cout << "check point 2" << std::endl;
-    //double PSNR = 10*log10(255*255/MSE);
-    //std::cout << "PSNR = " << PSNR <<std::endl;
 
     std::vector<int> freq_x(1001, 0), freq_y(1001, 0);
     for (const cv::Point2f &v : diff_vector) {
@@ -2583,10 +2299,6 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
         }
     }
 
-/*
-  return PredictedImageResult(out, mv_image, freq_block, freq_warp, block_matching_pixel_nums, warping_pixel_nums,
-                                x_bits, y_bits, block_matching_pixel_errors, warping_pixel_errors);
-*/
     std::cout << "check point 5" << std::endl;
     return PredictedImageResult(predict_buf[3], mv_image, freq_block, freq_warp, block_matching_pixel_nums, warping_pixel_nums,
                                 x_bits, y_bits, block_matching_pixel_errors, warping_pixel_errors);
