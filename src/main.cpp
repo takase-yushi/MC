@@ -81,8 +81,8 @@ int addSideCorners(cv::Mat img, std::vector<cv::Point2f> &corners);
 std::vector<cv::Point2f> cornersQuantization(std::vector<cv::Point2f> &corners, const cv::Mat &target);
 
 PredictedImageResult
-getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4,const cv::Mat &refx8, const cv::Mat &target, const cv::Mat &targetx2, const cv::Mat &targetx4, const cv::Mat &targetx8, const cv::Mat &intra, std::vector<Triangle> &triangles,
-                  const std::vector<cv::Point2f> &ref_corners, std::vector<cv::Point2f> &corners, DelaunayTriangulation md,std::vector<cv::Point2f> &add_corners,int *add_count,const cv::Mat& residual_ref,int &tmp_mv_x,int &tmp_mv_y,bool add_flag);
+getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intra, std::vector<Triangle> &triangles, const std::vector<cv::Point2f> &ref_corners,
+                  std::vector<cv::Point2f> &corners, DelaunayTriangulation md,std::vector<cv::Point2f> &add_corners,int &add_count,const cv::Mat& residual_ref,int &tmp_mv_x,int &tmp_mv_y,bool add_flag);
 
 std::vector<cv::Point2f> uniqCoordinate(const std::vector<cv::Point2f> &corners);
 
@@ -742,7 +742,7 @@ int main(int argc, char *argv[]) {
 
                         int add_count_dummy = 0;
                         Gauss_Newton2(ref_gauss, target, ref, predict_buf, predict_warp, predict_para, color, error_warp,
-                                      triangleVec, prev_corners, tri_list, &para_flag, add_corner_dummy, &add_count_dummy,
+                                      triangleVec, prev_corners, tri_list, &para_flag, add_corner_dummy, add_count_dummy,
                                       t, residual_ref, triangle_size, false, erase_th_global);
                         MSE_later += error_warp;
                         triangle_size_sum_later += triangle_size;
@@ -1199,9 +1199,8 @@ int main(int argc, char *argv[]) {
             int tmp_mv_y = 0;
             add_corners.clear();
             std::cout << "check point 3" << std::endl;
-            PredictedImageResult result = getPredictedImage(ref_gauss, refx2, refx4, refx8, target, targetx2, targetx4,
-                                                            targetx8, ref, triangles, ref_corners, corners, md,
-                                                            add_corners, &add_count, residual_ref,tmp_mv_x,tmp_mv_y,true);
+            PredictedImageResult result = getPredictedImage(ref_gauss, target, ref, triangles, ref_corners, corners, md,
+                                                            add_corners, add_count, residual_ref,tmp_mv_x,tmp_mv_y,true);
             // 予測画像を得る
             int count = 0;
 
@@ -1828,14 +1827,14 @@ std::vector<cv::Point2f> cornersQuantization(std::vector<cv::Point2f> &corners, 
  * @return cv::Mat型の予測画像
  */
 PredictedImageResult
-getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4, const cv::Mat &refx8,const cv::Mat &target, const cv::Mat &targetx2, const cv::Mat &targetx4, const cv::Mat &targetx8,const cv::Mat &intra,  std::vector<Triangle> &triangles,
-                  const std::vector<cv::Point2f> &ref_corners, std::vector<cv::Point2f> &corners, DelaunayTriangulation md,std::vector<cv::Point2f> &add_corners,int *add_count,const cv::Mat& residual_ref,int &tmp_mv_x,int &tmp_mv_y ,bool add_flag) {
+getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intra,  std::vector<Triangle> &triangles,
+                  const std::vector<cv::Point2f> &ref_corners, std::vector<cv::Point2f> &corners, DelaunayTriangulation md,std::vector<cv::Point2f> &add_corners,int &add_count,const cv::Mat& residual_ref,int &tmp_mv_x,int &tmp_mv_y ,bool add_flag) {
     cv::Mat out = cv::Mat::zeros(target.size(), CV_8UC3);
     cv::Mat color = cv::Mat::zeros(target.size(), CV_8UC3);
     cv::Mat expansion_ref = bilinearInterpolation(ref);
-    cv::Mat predict_img0 = cv::Mat::zeros(targetx8.size(), CV_8UC3);
-    cv::Mat predict_img1 = cv::Mat::zeros(targetx4.size(), CV_8UC3);
-    cv::Mat predict_img2 = cv::Mat::zeros(targetx2.size(), CV_8UC3);
+    cv::Mat predict_img0 = cv::Mat::zeros(target.size()/8, CV_8UC3);//TODO .size()に除算オペレーター使えるのか確認
+    cv::Mat predict_img1 = cv::Mat::zeros(target.size()/4, CV_8UC3);
+    cv::Mat predict_img2 = cv::Mat::zeros(target.size()/2, CV_8UC3);
     cv::Mat predict_img3 = cv::Mat::zeros(target.size(), CV_8UC3);
     cv::Mat predict_warp = cv::Mat::zeros(target.size(), CV_8UC3);
     cv::Mat predict_para = cv::Mat::zeros(target.size(), CV_8UC3);
@@ -1981,7 +1980,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4
             bubbleSort(add_corner_pair, add_corner_pair.size());
             bubbleSort(add_corner_tuple, add_corner_tuple.size());
             if ((MSE_prev - std::get<1>(add_corner_tuple[0])) / MSE_prev >= 0) {
-                *add_count = *add_count + 1;
+                add_count = add_count + 1;
                 add_corners.emplace_back(std::get<0>(add_corner_pair[0]));
                 triangles = std::get<2>(add_corner_tuple[0]);
                 corners = add_corner_tmp;
@@ -2312,8 +2311,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &refx2, const cv::Mat &refx4
 
         std::cout << numerator++ << "/" << denominator << "\n";
     }
-    std::cout << "max_mv_x = " << max_mv_x << "min_mv_x = " << min_mv_x << "max_mv_y = " << max_mv_y << "min_mv_y = "
-              << min_mv_y << std::endl;
+
     for (int i = -100; i <= 100; i++) {
         mv_list << i << "," << hist[i] << "," << i << "," << hist_x[i] << "," << i << "," << hist_y[i] << std::endl;
 
