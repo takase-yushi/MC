@@ -1215,7 +1215,7 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
  * @return  std::vector<cv::Point2i>  推定した動きベクトルをクォーターペル精度で量子化して1bit左シフトしたものを返す
  */
 std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& current_color,const cv::Mat& intra, std::vector<cv::Mat>& predict_buf,cv::Mat&predict_warp,cv::Mat&predict_para,cv::Mat& color,
-                                       double &error_warp, Point3Vec target_corners, Point3Vec& ref_corners, std::ofstream &tri_list,bool *flag,std::vector<cv::Point2f> &add_corners,int *add_count,int t,const cv::Mat& residual_ref ,int &in_triangle_size,bool add_corner_flag,double erase_th_global){
+                                       double &error_warp, Point3Vec target_corners, Point3Vec& ref_corners, std::ofstream &tri_list,bool *flag,std::vector<cv::Point2f> &add_corners,int& add_count,int t,const cv::Mat& residual_ref ,int &in_triangle_size,bool add_corner_flag,double erase_th_global){
     void block_matching_full(const cv::Mat& prev, const cv::Mat& current, double &error, cv::Point2f &mv, Point3Vec tr);
    // std::cout << "add count = " << *add_count << std::endl;
     std::vector<std::vector<cv::Mat>> f_,g_;
@@ -2433,7 +2433,7 @@ for(int blare = 0;blare < 2;blare++) {
     a = p2 - p0;
     b = p1 - p0;
     double S = 0.5 * fabs(a.x*b.y - b.x*a.y);
-    if(PSNR_max < 50 && S > 5000 && *add_count < 100 && add_corner_flag) {
+    if(PSNR_max < 50 && S > 5000 && add_count < 100 && add_corner_flag) {
         cv::Point2f grav;
         cv::Point2f grav_residual(0,0);
         grav = (p0 + p1 + p2)/3;
@@ -2481,7 +2481,7 @@ for(int blare = 0;blare < 2;blare++) {
         //cv::goodFeaturesToTrack(residual, add_corner, POINT_MAX, GFTT_QUAULITY, 10, mask, 3);
         //*add_count = *add_count + 1;
         add_corner.emplace_back(grav);
-        std::cout << "add_count" << *add_count <<  std::endl;
+        std::cout << "add_count" << add_count <<  std::endl;
         std::copy(add_corner.begin(),add_corner.end(),std::back_inserter(add_corners));
         //add_corners.emplace_back(add_corner[0]);
         for(const cv::Point2f p : add_corners){
