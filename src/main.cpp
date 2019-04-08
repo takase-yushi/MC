@@ -1892,8 +1892,12 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
     int cnt = 0;
     tmp_mv_x = 0;
     tmp_mv_y = 0;
-#pragma omp parallel for
 
+    // 平行移動とワーピングを塗り分ける用
+    cv::Mat parallel_flag_img_color = target.clone();
+//    cv::cvtColor(target, parallel_flag_img_color, cv::COLOR_GRAY2BGR);
+
+#pragma omp parallel for
     // 基準ベクトル以外のベクトルを符号化
     for (int t = 0; t < (int) triangles.size(); t++) { // NOLINT
         tri_list << "triangle[" << t << "], ";
@@ -1923,6 +1927,27 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
                                                     error_warp, triangleVec, prev_corners, tri_list, &para_flag,
                                                     add_corner, add_count, t, residual_ref, in_triangle_size, false, erase_th_global);
         double MSE_prev = error_warp / (double) in_triangle_size;
+
+        // 並行移動のみ塗る
+        if(para_flag) {
+            double sx = std::min({(int)triangleVec.p1.x, (int)triangleVec.p2.x, (int)triangleVec.p3.x});
+            double lx = std::max({(int)triangleVec.p1.x, (int)triangleVec.p2.x, (int)triangleVec.p3.x});
+            double sy = std::min({(int)triangleVec.p1.y, (int)triangleVec.p2.y, (int)triangleVec.p3.y});
+            double ly = std::max({(int)triangleVec.p1.y, (int)triangleVec.p2.y, (int)triangleVec.p3.y});
+
+            for (int y = (int) (round(sy) - 1); y <= round(ly) + 1; y++) {
+                for (int x= (int) (round(sx) - 1); x <= round(lx) + 1; x++) {
+                    cv::Point2f xp(x, y);
+
+                    if(isInTriangle(triangleVec, xp)) {
+                        R(parallel_flag_img_color, x, y) = 255;
+                        G(parallel_flag_img_color, x, y) = 0;
+                        B(parallel_flag_img_color, x, y) = 0;
+                    }
+
+                }
+            }
+        }
 
         // <頂点座標, 残差>
         std::vector<std::pair<cv::Point2f, double>> add_corner_pair(add_corner.size());
@@ -2216,6 +2241,8 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
             }
         }
     }
+
+    cv::imwrite(getProjectDirectory() + "/img/minato/flag_img.png", parallel_flag_img_color);
 
     int worth = 0;
     for(int i = 0;i < (int)mv_basis_tuple.size();i++) {
