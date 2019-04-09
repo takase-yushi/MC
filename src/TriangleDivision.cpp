@@ -63,15 +63,29 @@ void TriangleDivision::insertTriangle(Point3Vec triangle) {
     insertTriangle(triangle.p1, triangle.p2, triangle.p3);
 }
 
-    /**
-     * @fn void insertTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3)
-     * @param[in] p1 頂点1
-     * @param[in] p2 頂点2
-     * @param[in] p3 頂点3
-     */
-    void insertTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3) {
-        triangles.emplace_back(p1, p2, p3);
-    }
+/**
+ * @fn void insertTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3)
+ * @param[in] p1 頂点1
+ * @param[in] p2 頂点2
+ * @param[in] p3 頂点3
+ */
+void TriangleDivision::insertTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3) {
+    std::vector<cv::Point2f> v;
+    v.push_back(p1);
+    v.push_back(p2);
+    v.push_back(p3);
+
+    // ラスタスキャン順でソート
+    std::sort(v.begin(), v.end(), [](const cv::Point2f &a1, const cv::Point2f &a2) {
+        if (a1.y != a2.y) {
+            return a1.y < a2.y;
+        } else {
+            return a1.x < a2.x;
+        }
+    });
+
+    triangles.emplace_back(p1, p2, p3);
+}
 
 /**
  * @fn void insertTriangle(float x1, float y1, float x2, float y2, float x3, float y3)
