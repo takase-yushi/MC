@@ -83,7 +83,7 @@ std::vector<cv::Point2f> cornersQuantization(std::vector<cv::Point2f> &corners, 
 
 PredictedImageResult
 getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intra, std::vector<Triangle> &triangles, const std::vector<cv::Point2f> &ref_corners,
-                  std::vector<cv::Point2f> &corners, DelaunayTriangulation md,std::vector<cv::Point2f> &add_corners,int &add_count,const cv::Mat& residual_ref,int &tmp_mv_x,int &tmp_mv_y,bool add_flag);
+                  std::vector<cv::Point2f> &corners, TriangleDivision triangle_division,std::vector<cv::Point2f> &add_corners,int &add_count,const cv::Mat& residual_ref,int &tmp_mv_x,int &tmp_mv_y,bool add_flag);
 
 std::vector<cv::Point2f> uniqCoordinate(const std::vector<cv::Point2f> &corners);
 
@@ -167,7 +167,7 @@ int main(int argc, char *argv[]) {
         std::cout << "target_file_name       : " << target_file_name << std::endl;
         std::cout << "ref_file_name          : " << ref_file_name << std::endl;
         std::cout << "ref_file_path          : " << ref_file_path << std::endl;
-        std::cout << "target_image file path       : " << target_file_path << std::endl;
+        std::cout << "target_image file path : " << target_file_path << std::endl;
         std::cout << "ref_intra_file_path    : " << ref_intra_file_path << std::endl;
         std::cout << "target_color_file_path : " << target_color_file_path << std::endl;
         std::cout << "ref_gauss file path    : " << ref_file_path << std::endl;
@@ -220,24 +220,12 @@ int main(int argc, char *argv[]) {
         cv::Mat target_bi,ref_bi;
         cv::Mat canny,canny_target;
 
-        cv::Mat color = cv::Mat::zeros(target_image.size(),CV_8UC3);
-        cv::Mat predict_img0 = cv::Mat::zeros(targetx8.size(), CV_8UC3);
-        cv::Mat predict_img1 = cv::Mat::zeros(targetx4.size(), CV_8UC3);
-        cv::Mat predict_img2 = cv::Mat::zeros(targetx2.size(), CV_8UC3);
-        cv::Mat predict_img3 = cv::Mat::zeros(target_image.size(), CV_8UC3);
-        cv::Mat predict_warp = cv::Mat::zeros(target_image.size(),CV_8UC3);
-        cv::Mat predict_para = cv::Mat::zeros(target_image.size(),CV_8UC3);
-        std::ofstream tri_list;
-
-        // デバッグ用に三角パッチごとの座標とPSNRを出していた
-        tri_list = std::ofstream("tri_list.csv");
-
         // QP変化させた参照画像はここで読む
         ref_image = cv::imread(ref_intra_file_path);
         target_image = cv::imread(target_file_path);
 
-        int block_size_x = 256;
-        int block_size_y = 256;
+        int block_size_x = 64;
+        int block_size_y = 64;
 
         std::cout << "width: " << target_image.cols << " height: " << target_image.rows << std::endl;
         int height_mod = target_image.rows % block_size_y;
@@ -250,21 +238,37 @@ int main(int argc, char *argv[]) {
         cv::resize(target_image, crop_target_image, cv::Size(ref_image.cols - width_mod, ref_image.rows - height_mod));
         cv::resize(ref_image, crop_ref_image, cv::Size(ref_image.cols - width_mod, ref_image.rows - height_mod));
 
+        target_image = crop_target_image.clone();
+        ref_image = crop_ref_image.clone();
+
+        std::cout << "target_image.size:" << target_image.cols << " " << target_image.rows << std::endl;
+
         cv::imwrite(img_directory + "/crop_ref.png", crop_ref_image);
         cv::imwrite(img_directory + "/crop_target.png", crop_target_image);
 
-        TriangleDivision triangle_division(crop_ref_image, crop_target_image);
+        TriangleDivision triangle_division(ref_image, target_image);
         triangle_division.initTriangle(block_size_x, block_size_y);
 
         std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
-
+        std::cout << "triangles.size():" << triangles.size() << std::endl;
         cv::Mat triangles_debug = crop_target_image.clone();
         for(const auto& triangle : triangles) {
             drawTriangle(triangles_debug, triangle.p1, triangle.p2, triangle.p3, RED);
         }
 
         cv::imwrite(img_directory + "/triangles.png", triangles_debug);
-        exit(0);
+
+        cv::Mat color = cv::Mat::zeros(target_image.size(),CV_8UC3);
+        cv::Mat predict_img0 = cv::Mat::zeros(targetx8.size(), CV_8UC3);
+        cv::Mat predict_img1 = cv::Mat::zeros(targetx4.size(), CV_8UC3);
+        cv::Mat predict_img2 = cv::Mat::zeros(targetx2.size(), CV_8UC3);
+        cv::Mat predict_img3 = cv::Mat::zeros(target_image.size(), CV_8UC3);
+        cv::Mat predict_warp = cv::Mat::zeros(target_image.size(),CV_8UC3);
+        cv::Mat predict_para = cv::Mat::zeros(target_image.size(),CV_8UC3);
+        std::ofstream tri_list;
+
+        // デバッグ用に三角パッチごとの座標とPSNRを出していた
+        tri_list = std::ofstream("tri_list.csv");
 
         // ガウスニュートン法の階層化でのみ使用するきれいなiフレーム
         ref_gauss = cv::imread(ref_file_path);
@@ -898,17 +902,18 @@ int main(int argc, char *argv[]) {
 //            }
 //*/
             // 定常三角形
-            int W_num = 12,H_num = 8;
-            int W_step = target_image.cols/W_num,H_step = target_image.rows/H_num;
-            corners.clear();
-            for(int j = 0;j <= H_num;j++){
-                for(int i = 0;i <= W_num;i++){
-                    int x = i*W_step,y = j*H_step;
-                    if(x >= target_image.cols)x = target_image.cols - 1;
-                    if(y >= target_image.rows)y = target_image.rows - 1;
-                    corners.emplace_back(cv::Point2f(x,y));
-                }
-            }
+//            int W_num = 12,H_num = 8;
+//            int W_step = target_image.cols/W_num,H_step = target_image.rows/H_num;
+//            corners.clear();
+//            for(int j = 0;j <= H_num;j++){
+//                for(int i = 0;i <= W_num;i++){
+//                    int x = i*W_step,y = j*H_step;
+//                    if(x >= target_image.cols)x = target_image.cols - 1;
+//                    if(y >= target_image.rows)y = target_image.rows - 1;
+//                    corners.emplace_back(cv::Point2f(x,y));
+//                }
+//            }
+            corners = triangle_division.getCorners();
 
             std::cout << "corners's size :" << corners.size() << std::endl;
             std::cout << "ref_corners's size :" << ref_corners.size() << std::endl;
@@ -923,7 +928,9 @@ int main(int argc, char *argv[]) {
             std::cout << "corner size(erased):" << corners.size() << std::endl;
 
             // 減らした点で細分割
+            std::cout << rect << std::endl;
             subdiv = cv::Subdiv2D(rect);
+            for(const cv::Point2f c : corners) std::cout << c.x << " " << c.y << std::endl;
             subdiv.insert(corners);
 
             md = DelaunayTriangulation(Rectangle(0, 0, target_image.cols, target_image.rows));
@@ -1235,7 +1242,10 @@ int main(int argc, char *argv[]) {
             int tmp_mv_y = 0;
             add_corners.clear();
             std::cout << "check point 3" << std::endl;
-            PredictedImageResult result = getPredictedImage(ref_gauss, target_image, ref_image, triangles, ref_corners, corners, md,
+
+            triangles = triangle_division.getTriangleIndexList();
+
+            PredictedImageResult result = getPredictedImage(ref_gauss, target_image, ref_image, triangles, ref_corners, corners, triangle_division,
                                                             add_corners, add_count, residual_ref,tmp_mv_x,tmp_mv_y,true);
             // 予測画像を得る
 
@@ -1866,7 +1876,7 @@ std::vector<cv::Point2f> cornersQuantization(std::vector<cv::Point2f> &corners, 
  */
 PredictedImageResult
 getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intra,  std::vector<Triangle> &triangles,
-                  const std::vector<cv::Point2f> &ref_corners, std::vector<cv::Point2f> &corners, DelaunayTriangulation md,std::vector<cv::Point2f> &add_corners,int &add_count,const cv::Mat& residual_ref,int &tmp_mv_x,int &tmp_mv_y ,bool add_flag) {
+                  const std::vector<cv::Point2f> &ref_corners, std::vector<cv::Point2f> &corners, TriangleDivision triangle_division,std::vector<cv::Point2f> &add_corners,int &add_count,const cv::Mat& residual_ref,int &tmp_mv_x,int &tmp_mv_y ,bool add_flag) {
     cv::Mat out = cv::Mat::zeros(target.size(), CV_8UC3);
     cv::Mat color = cv::Mat::zeros(target.size(), CV_8UC3);
     cv::Mat expansion_ref = bilinearInterpolation(ref);
@@ -2141,7 +2151,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
 
             init_flag = true;
             // TODO: bug fix
-            std::vector<int> neighbor = md.getNeighborVertexNum(pt2_idx);
+            std::vector<int> neighbor = triangle_division.getNeighborVertexIndexList(pt2_idx);
 //            std::vector<int> neighbor = md.getNeighborVertexNum(std::get<0>(mv_basis[i][j])[1].second);
             for (int k = 0; k < (int) neighbor.size(); k++) {
                 Queue_neighbor.push(neighbor[k] - 4);
@@ -2158,7 +2168,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
 
         // 取り出した頂点の隣接を入れる
         if (!(int)mv_basis_tuple[current_idx].empty()) {
-            std::vector<int> neighbor = md.getNeighborVertexNum(
+            std::vector<int> neighbor = triangle_division.getNeighborVertexIndexList(
                     std::get<0>(mv_basis_tuple[current_idx][0])[0].second);
             for(int k = 0;k < (int)neighbor.size();k++){
                 if(!mv_basis_tuple[neighbor[k] - 4].empty()){
@@ -2212,14 +2222,14 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
                     double min_Distance = init_Distance;
                     int min_num = 0;
                     bool flag_arround = false;
-                    std::vector<int> neighbor = md.getNeighborVertexNum(
+                    std::vector<int> neighbor = triangle_division.getNeighborVertexIndexList(
                             std::get<0>(mv_basis_tuple[current_idx][j])[0].second);
-                    std::vector<cv::Point2f> neighbor_cood = md.getNeighborVertex(
+                    std::vector<cv::Point2f> neighbor_cood = triangle_division.getNeighborVertexCoordinateList(
                             std::get<0>(mv_basis_tuple[current_idx][j])[0].second);
                     for (int k = 0; k < (int) neighbor.size(); k++) {
                         if (!corded_mv[neighbor[k] - 4].empty()) {
                             flag_arround = true;
-                            double Distance = md.getDistance(
+                            double Distance = triangle_division.getDistance(
                                     corners[std::get<0>(mv_basis_tuple[current_idx][j])[0].second], neighbor_cood[k]);
                             if (min_Distance > Distance) {
                                 min_Distance = Distance;
