@@ -156,3 +156,50 @@ void TriangleDivision::insertTriangle(int p1_idx, int p2_idx, int p3_idx) {
 void TriangleDivision::insertTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
 //    triangles.emplace_back(cv::Point2f(x1, y1), cv::Point2f(x2, y2), cv::Point2f(x3, y3));
 }
+
+/**
+ *
+ * @param p1_idx
+ * @param p2_idx
+ * @param p3_idx
+ * @param divide_flag
+ */
+void TriangleDivision::addNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int divide_flag) {
+
+    neighbor_vtx[p1_idx].emplace(p2_idx);
+    neighbor_vtx[p2_idx].emplace(p3_idx);
+
+    neighbor_vtx[p1_idx].emplace(p3_idx);
+    neighbor_vtx[p3_idx].emplace(p1_idx);
+
+    neighbor_vtx[p2_idx].emplace(p1_idx);
+    neighbor_vtx[p3_idx].emplace(p2_idx);
+
+}
+
+double TriangleDivision::getDistance(const cv::Point2f &a, const cv::Point2f &b){
+    cv::Point2f v = a - b;
+    return std::sqrt(v.x * v.x + v.y * v.y);
+}
+
+std::vector<int> TriangleDivision::getNeighborVertexIndexList(int idx) {
+    std::set<int> s = neighbor_vtx[idx];
+    std::vector<int> v;
+
+    for(const auto e : s) {
+        v.emplace_back(e);
+    }
+
+    return v;
+}
+
+std::vector<cv::Point2f> TriangleDivision::getNeighborVertexCoordinateList(int idx) {
+    std::set<int> s = neighbor_vtx[idx];
+    std::vector<cv::Point2f> v;
+
+    for(const auto e : s) {
+        v.emplace_back(corners[e]);
+    }
+
+    return v;
+}
