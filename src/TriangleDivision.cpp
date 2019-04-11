@@ -61,12 +61,14 @@ void TriangleDivision::initTriangle(int block_size_x, int block_size_y, int divi
             if(divide_flag == LEFT_DEVIDE) {
                 insertTriangle(p1_idx, p2_idx, p3_idx);
                 insertTriangle(p2_idx, p3_idx, p4_idx);
-
+                addNeighborVertex(p1_idx, p2_idx, p3_idx, LEFT_DEVIDE);
+                addNeighborVertex(p2_idx, p3_idx, p4_idx, LEFT_DEVIDE);
             }else{
                 insertTriangle(p1_idx, p2_idx, p4_idx);
                 insertTriangle(p1_idx, p3_idx, p4_idx);
+                addNeighborVertex(p1_idx, p2_idx, p4_idx, RIGHT_DEVIDE);
+                addNeighborVertex(p1_idx, p3_idx, p4_idx, RIGHT_DEVIDE);
             }
-
         }
     }
 
