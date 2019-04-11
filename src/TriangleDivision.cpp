@@ -1,22 +1,22 @@
+#include <cmath>
+
 //
 // Created by kasph on 2019/04/08.
 //
 
 #include "../includes/TriangleDivision.h"
 #include <opencv2/core.hpp>
+#include <iostream>
 #include "../includes/Utils.h"
-
+#include <set>
+#include <vector>
+#include <utility>
+#include <algorithm>
 
 TriangleDivision::TriangleDivision(const cv::Mat &refImage, const cv::Mat &targetImage) : target_image(targetImage),
-                                                                                          ref_image(refImage) {};
+                                                                                          ref_image(refImage) {}
 
 void TriangleDivision::initTriangle(int block_size_x, int block_size_y, int divide_flag) {
-
-//        // block_x_size, block_y_sizeで割って, あまりは捨ててしまう処理
-//        int width = ((int)(target_image.cols / block_x_size) * block_x_size);
-//        int height = ((int)(target_image.rows / block_y_size) * block_y_size);
-
-//        cv::Rect image_size(0, 0, width, height);
 
     int block_num_x = target_image.cols / block_size_x;
     int block_num_y = target_image.rows / block_size_y;
@@ -33,14 +33,40 @@ void TriangleDivision::initTriangle(int block_size_x, int block_size_y, int divi
      *  p3                     p4
      *
      */
+
+    // すべての頂点を入れる
+    for(int block_y = 0 ; block_y <= block_num_y ; block_y++) {
+        for (int block_x = 0; block_x <= block_num_x; block_x++) {
+            int nx = block_x * block_size_x;
+            int ny = block_y * block_size_y;
+
+            if(nx < 0) nx = 0;
+            if(target_image.cols <= nx) nx = target_image.cols - 1;
+            if(ny < 0) ny = 0;
+            if(target_image.rows <= ny) ny = target_image.rows - 1;
+            corners.emplace_back(nx, ny);
+            neighbor_vtx.emplace_back();
+        }
+    }
+
+    std::cout << "block_num_y:" << block_num_y << std::endl;
+    std::cout << "block_num_x:" << block_num_x << std::endl;
+
     for(int block_y = 0 ; block_y < block_num_y ; block_y++) {
         for(int block_x = 0 ; block_x < block_num_x ; block_x++) {
-            cv::Point2f p1(      block_x * block_size_x,        block_y * block_size_y);
-            cv::Point2f p2((block_x + 1) * block_size_x,        block_y * block_size_y);
-            cv::Point2f p3(      block_x * block_size_x,  (block_y + 1) * block_size_y);
-            cv::Point2f p4((block_x + 1) * block_size_x,  (block_y + 1) * block_size_y);
-            insertTriangle(p1, p2, p3);
-            insertTriangle(p2, p3, p4);
+            int p1_idx = block_x + block_y * (block_num_x + 1);
+            int p2_idx = p1_idx + 1;
+            int p3_idx = p1_idx + block_num_x + 1;
+            int p4_idx = p3_idx + 1;
+            if(divide_flag == LEFT_DEVIDE) {
+                insertTriangle(p1_idx, p2_idx, p3_idx);
+                insertTriangle(p2_idx, p3_idx, p4_idx);
+
+            }else{
+                insertTriangle(p1_idx, p2_idx, p4_idx);
+                insertTriangle(p1_idx, p3_idx, p4_idx);
+            }
+
         }
     }
 
@@ -52,8 +78,27 @@ void TriangleDivision::initTriangle(int block_size_x, int block_size_y, int divi
  * @return
  */
 std::vector<Point3Vec> TriangleDivision::getTriangleCoordinateList() {
+    std::vector<Point3Vec> vec;
+
+    for(const Triangle triangle : triangles) {
+        vec.emplace_back(corners[triangle.p1_idx], corners[triangle.p2_idx], corners[triangle.p3_idx]);
+    }
+
+    return vec;
+}
+
+/**
+ *
+ * @return
+ */
+std::vector<Triangle> TriangleDivision::getTriangleIndexList() {
     return triangles;
 }
+
+std::vector<cv::Point2f> TriangleDivision::getCorners() {
+    return corners;
+}
+
 
 /**
  * @fn void insertTriangle(Point3Vec triangle)
@@ -84,7 +129,19 @@ void TriangleDivision::insertTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2
         }
     });
 
-    triangles.emplace_back(p1, p2, p3);
+//    triangles.emplace_back(p1, p2, p3);
+}
+
+void TriangleDivision::insertTriangle(int p1_idx, int p2_idx, int p3_idx) {
+    std::vector<int> v;
+    v.push_back(p1_idx);
+    v.push_back(p2_idx);
+    v.push_back(p3_idx);
+
+    // ラスタスキャン順でソート
+    std::sort(v.begin(), v.end());
+
+    triangles.emplace_back(p1_idx, p2_idx, p3_idx);
 }
 
 /**
@@ -97,5 +154,5 @@ void TriangleDivision::insertTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2
  * @param[in] y3 頂点3のy座標
  */
 void TriangleDivision::insertTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
-    triangles.emplace_back(cv::Point2f(x1, y1), cv::Point2f(x2, y2), cv::Point2f(x3, y3));
+//    triangles.emplace_back(cv::Point2f(x1, y1), cv::Point2f(x2, y2), cv::Point2f(x3, y3));
 }
