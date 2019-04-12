@@ -169,12 +169,12 @@ void TriangleDivision::insertTriangle(float x1, float y1, float x2, float y2, fl
 void TriangleDivision::addNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int divide_flag) {
 
     neighbor_vtx[p1_idx].emplace(p2_idx);
-    neighbor_vtx[p2_idx].emplace(p3_idx);
+    neighbor_vtx[p2_idx].emplace(p1_idx);
 
     neighbor_vtx[p1_idx].emplace(p3_idx);
     neighbor_vtx[p3_idx].emplace(p1_idx);
 
-    neighbor_vtx[p2_idx].emplace(p1_idx);
+    neighbor_vtx[p2_idx].emplace(p3_idx);
     neighbor_vtx[p3_idx].emplace(p2_idx);
 
 }
