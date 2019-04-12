@@ -2151,34 +2151,41 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
 
             init_flag = true;
             // TODO: bug fix
-            std::vector<int> neighbor = triangle_division.getNeighborVertexIndexList(pt2_idx);
+            std::vector<int> neighbor = triangle_division.getNeighborVertexIndexList(pt1_idx);
 //            std::vector<int> neighbor = md.getNeighborVertexNum(std::get<0>(mv_basis[i][j])[1].second);
             for (int k = 0; k < (int) neighbor.size(); k++) {
-                Queue_neighbor.push(neighbor[k] - 4);
+                Queue_neighbor.push(neighbor[k]);
             }
             break;
         }
         if (init_flag)break;
     }
 
+    std::vector<bool> inqueue_flag(corners.size(), false);
     while (!Queue_neighbor.empty()) {
         // 探索用の変数
         int current_idx = Queue_neighbor.front();
         Queue_neighbor.pop();
-
         // 取り出した頂点の隣接を入れる
         if (!(int)mv_basis_tuple[current_idx].empty()) {
-            std::vector<int> neighbor = triangle_division.getNeighborVertexIndexList(
-                    std::get<0>(mv_basis_tuple[current_idx][0])[0].second);
+            std::vector<int> neighbor = triangle_division.getNeighborVertexIndexList(current_idx);
+
             for(int k = 0;k < (int)neighbor.size();k++){
-                if(!mv_basis_tuple[neighbor[k] - 4].empty()){
-                    if (!std::get<1>(mv_basis_tuple[neighbor[k] - 4][0])) {
-                        Queue_neighbor.push(neighbor[k] - 4);
+                if(!mv_basis_tuple[neighbor[k]].empty()){
+                    bool f = false;
+                    for(int j = 0 ; j < (int)(mv_basis_tuple[neighbor[k]]).size() ; j++) {
+                        if(!std::get<1>(mv_basis_tuple[neighbor[k]][j])) f = true;
+                    }
+
+                    if (f && !inqueue_flag[k]) {
+                        Queue_neighbor.push(neighbor[k]);
+                        inqueue_flag[neighbor[k]] = true;
                     }
                 }
             }
         }
 
+        // その頂点に設定されている基準ベクトルをすべて符号化する
         for (int j = 0; j < (int) mv_basis_tuple[current_idx].size(); j++) {
             bool is_coded = std::get<1>(mv_basis_tuple[current_idx][j]);
             if (!is_coded) {
@@ -2227,13 +2234,13 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
                     std::vector<cv::Point2f> neighbor_cood = triangle_division.getNeighborVertexCoordinateList(
                             std::get<0>(mv_basis_tuple[current_idx][j])[0].second);
                     for (int k = 0; k < (int) neighbor.size(); k++) {
-                        if (!corded_mv[neighbor[k] - 4].empty()) {
+                        if (!corded_mv[neighbor[k]].empty()) {
                             flag_arround = true;
                             double Distance = triangle_division.getDistance(
                                     corners[std::get<0>(mv_basis_tuple[current_idx][j])[0].second], neighbor_cood[k]);
                             if (min_Distance > Distance) {
                                 min_Distance = Distance;
-                                min_num = neighbor[k] - 4;
+                                min_num = neighbor[k];
                             }
                         }
                     }
