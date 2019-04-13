@@ -1413,9 +1413,12 @@ int main(int argc, char *argv[]) {
             std::cout << "corners.size():" << corners.size() << std::endl;
 
             // 生成したターゲット画像
-            std::string out_file_name = std::string(o_file_name);
-            std::cout << "out_file_name:" << out_file_name << std::endl;
-            cv::imwrite(out_file_name, out);
+            std::vector<std::string> split_output_name = splitString(std::string(o_file_name), '.');
+            std::string outFileName = split_output_name[0];
+            std::string extension = split_output_name[1];
+            std::string outFilePath = img_directory  + outFileName + "_" + std::to_string(block_size_x) + "_" + std::to_string(block_size_y) + "." + extension;
+            std::cout << "outFilePath:" << outFilePath << std::endl;
+            cv::imwrite(outFilePath, out);
             std::cout << "check point 1" << std::endl;
 
             cv::Mat residual = cv::Mat::zeros(target_image.size(), CV_8UC3);
@@ -1439,7 +1442,7 @@ int main(int argc, char *argv[]) {
             cv::imwrite(file_path + img_path + "residual.png",residual);
             std::cout << "check point 4" << std::endl;
             double psnr_1;
-            printf("%s's PSNR:%f\n", out_file_name.c_str(), (psnr_1 = getPSNR(target_image, out)));
+            printf("%s's PSNR:%f\n", outFilePath.c_str(), (psnr_1 = getPSNR(target_image, out)));
             std::cout << "check point 5" << std::endl;
             // 四角形を描画した画像を出力
             cv::Point2f p1 = cv::Point2f(150, 100);
@@ -1457,20 +1460,26 @@ int main(int argc, char *argv[]) {
             char date[64];
             strftime(date, sizeof(date), "%Y/%m/%d %a %H:%M:%S", localtime(&tt));
 
-            fprintf(fp, (out_file_name + "\n").c_str());
-            if (WARP_AVAILABLE) fprintf(fp, "WARPING ON\n");
-            if (BM_AVAILABLE) fprintf(fp, "BlockMatching ON\n");
-            if (HARRIS) fprintf(fp, "HARRIS CORNER LIMIT MODE\n");
-            if (THRESHOLD) fprintf(fp, "THRESHOLD MODE");
+            fprintf(fp, (outFilePath + "\n").c_str());
+            // 符号量たち
+            int prev_id_code_amount = 0;
+            for (int i = 0; i <= 1000; i++) {
+                if (prev_id_count[i] != 0) {
+                    prev_id_code_amount +=
+                            ozi::getGolombCode(ozi::getGolombParam(0.5), i - 500, ozi::REGION1, ozi::KTH_GOLOMB, 3) *
+                            prev_id_count[i];
+                }
+            }
             fprintf(fp, ("lambda:" + std::to_string(LAMBDA)).c_str());
             fprintf(fp, "QUANTIZE_STEP:%d\n", QUANTIZE);
             fprintf(fp, "%s\n", date);
             fprintf(fp, "PSNR : %f\n", psnr_1);
+            fprintf(fp, "code amount : %d[bit]\n", golomb_x + golomb_y + prev_id_code_amount + golomb_mv_x + golomb_mv_y);
             fprintf(fp, "freq_block:%d(%f%%)\n", result.freq_block, result.getBlockMatchingFrequency());
             fprintf(fp, "freq_warp:%d(%f%%)\n", result.freq_warp, result.getWarpingFrequency());
             fprintf(fp, "BlockMatching's PSNR : %f\n", result.getBlockMatchingPatchPSNR());
             fprintf(fp, "Warping's PSNR : %f\n", result.getWarpingPatchPSNR());
-            fprintf(fp, (std::to_string(t / 60) + "m" + std::to_string(t % 60) + "sec\n\n").c_str());
+            fprintf(fp, (std::to_string(t / 60) + "m" + std::to_string(t % 60) + "sec\n").c_str());
             fprintf(fp, "reference        : %s\n", ref_file_name.c_str());
             fprintf(fp, "target_image     : %s\n", target_file_name.c_str());
             fprintf(fp, "threshold        : %d\n", threshold);
@@ -1486,17 +1495,8 @@ int main(int argc, char *argv[]) {
             fprintf(fp, "golomb code(x)   : %d\n", result.getXbits());
             fprintf(fp, "golomb code(y)   : %d\n", result.getYbits());
             fprintf(fp, "prev_id flag ---------------------\n");
-            // 符号量たち
-            int prev_id_code_amount = 0;
-            for (int i = 0; i <= 1000; i++) {
-                if (prev_id_count[i] != 0) {
-                    prev_id_code_amount +=
-                            ozi::getGolombCode(ozi::getGolombParam(0.5), i - 500, ozi::REGION1, ozi::KTH_GOLOMB, 3) *
-                            prev_id_count[i];
-                }
-            }
             fprintf(fp, "golomb code      : %d\n",  prev_id_code_amount);
-            fprintf(fp, "golomb code full : %d\n", golomb_x + golomb_y + prev_id_code_amount);
+            fprintf(fp, "golomb code full : %d\n\n", golomb_x + golomb_y + prev_id_code_amount);
             fclose(fp);
             std::cout << "log written" << std::endl;
 
@@ -2231,7 +2231,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
         }
     }
 
-    cv::imwrite(getProjectDirectory() + "/img/minato/flag_img.png", parallel_flag_img_color);
+    cv::imwrite(getProjectDirectory() + "/img/minato/flag_img_64_64_QP37.png", parallel_flag_img_color);
 
     int worth = 0;
     for(int i = 0;i < (int)mv_basis_tuple.size();i++) {
