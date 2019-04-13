@@ -374,17 +374,6 @@ int main(int argc, char *argv[]) {
 
             double threshold = 17;
 
-            std::string out_file_name;
-
-            if (HARRIS) {
-                out_file_name =
-                        img_directory + out_file[0] + "_corners_size_" + std::to_string(corners.size()) + "." + out_file[1];
-            } else if (THRESHOLD) {
-                out_file_name = img_directory + out_file[0] + "_threshold_" + std::to_string(threshold) + "_lambda_" +
-                                std::to_string(LAMBDA) + "." + out_file[1];
-            }
-            std::cout << "out_file_name:" << out_file_name << std::endl;
-
             std::cout << "target_image.cols = " << target_image.cols << "target_image.rows = "<< target_image.rows << std::endl;
             // Subdiv2Dの初期化
             cv::Size size = target_image.size();
@@ -1424,6 +1413,8 @@ int main(int argc, char *argv[]) {
             std::cout << "corners.size():" << corners.size() << std::endl;
 
             // 生成したターゲット画像
+            std::string out_file_name = std::string(o_file_name);
+            std::cout << "out_file_name:" << out_file_name << std::endl;
             cv::imwrite(out_file_name, out);
             std::cout << "check point 1" << std::endl;
 
