@@ -172,34 +172,6 @@ int main(int argc, char *argv[]) {
         std::cout << "target_color_file_path : " << target_color_file_path << std::endl;
         std::cout << "ref_gauss file path    : " << ref_file_path << std::endl;
 
-        // 符号量
-        std::ofstream code_amount;
-        if (HARRIS) code_amount = std::ofstream(img_directory + "code_amount_harris.txt");
-        else if (THRESHOLD) code_amount = std::ofstream(img_directory + "code_amount_THRESHOLD.txt");
-
-        // PSNRとしきい値以下の点を取り除いたグラフ（頂点を1つずつ取り除いたやつ）
-        std::ofstream psnr_points_efficience;
-        if (HARRIS) psnr_points_efficience = std::ofstream(img_directory + "psnr_remove_corner_harris.txt");
-        if (THRESHOLD) psnr_points_efficience = std::ofstream(img_directory + "psnr_remove_corner_threshold.txt");
-
-        // 頂点数を制限して取った場合のPSNRとの関係
-        std::ofstream corner_psnr;
-        if (HARRIS) corner_psnr = std::ofstream(img_directory + "corner_psnr_harris.txt");
-        if (THRESHOLD) corner_psnr = std::ofstream(img_directory + "corner_psnr_threshold.txt");
-
-        std::ofstream corner_code_amount;
-        if (HARRIS) corner_code_amount = std::ofstream(img_directory + "corner_code_amount_harris.txt");
-        if (THRESHOLD) corner_code_amount = std::ofstream(img_directory + "corner_code_amount_threshold.txt");
-
-        // 頂点数とMSE
-        std::ofstream rate_mse;
-        if (HARRIS) rate_mse = std::ofstream(img_directory + "rate_mse_harris.txt");
-        else if (THRESHOLD) rate_mse = std::ofstream(img_directory + "rate_mse_threshold.txt");
-
-        std::ofstream rate_psnr;
-        if (HARRIS) rate_psnr = std::ofstream(img_directory + "rate_psnr_harris.txt");
-        else if (THRESHOLD) rate_psnr = std::ofstream(img_directory + "rate_psnr_threshold.txt");
-
         //RD性能グラフにしたい
         std::ofstream rate_psnr_csv;
         rate_psnr_csv = std::ofstream(img_directory + target_file_name + "rate_psnr_csv.csv");
@@ -401,17 +373,6 @@ int main(int argc, char *argv[]) {
         {
 
             double threshold = 17;
-
-            std::string out_file_name;
-
-            if (HARRIS) {
-                out_file_name =
-                        img_directory + out_file[0] + "_corners_size_" + std::to_string(corners.size()) + "." + out_file[1];
-            } else if (THRESHOLD) {
-                out_file_name = img_directory + out_file[0] + "_threshold_" + std::to_string(threshold) + "_lambda_" +
-                                std::to_string(LAMBDA) + "." + out_file[1];
-            }
-            std::cout << "out_file_name:" << out_file_name << std::endl;
 
             std::cout << "target_image.cols = " << target_image.cols << "target_image.rows = "<< target_image.rows << std::endl;
             // Subdiv2Dの初期化
@@ -1452,7 +1413,12 @@ int main(int argc, char *argv[]) {
             std::cout << "corners.size():" << corners.size() << std::endl;
 
             // 生成したターゲット画像
-            cv::imwrite(out_file_name, out);
+            std::vector<std::string> split_output_name = splitString(std::string(o_file_name), '.');
+            std::string outFileName = split_output_name[0];
+            std::string extension = split_output_name[1];
+            std::string outFilePath = img_directory  + outFileName + "_" + std::to_string(block_size_x) + "_" + std::to_string(block_size_y) + "." + extension;
+            std::cout << "outFilePath:" << outFilePath << std::endl;
+            cv::imwrite(outFilePath, out);
             std::cout << "check point 1" << std::endl;
 
             cv::Mat residual = cv::Mat::zeros(target_image.size(), CV_8UC3);
@@ -1476,7 +1442,7 @@ int main(int argc, char *argv[]) {
             cv::imwrite(file_path + img_path + "residual.png",residual);
             std::cout << "check point 4" << std::endl;
             double psnr_1;
-            printf("%s's PSNR:%f\n", out_file_name.c_str(), (psnr_1 = getPSNR(target_image, out)));
+            printf("%s's PSNR:%f\n", outFilePath.c_str(), (psnr_1 = getPSNR(target_image, out)));
             std::cout << "check point 5" << std::endl;
             // 四角形を描画した画像を出力
             cv::Point2f p1 = cv::Point2f(150, 100);
@@ -1487,28 +1453,14 @@ int main(int argc, char *argv[]) {
             cv::imwrite(file_path + img_path + "rect.png", out);
             std::cout << "check point 6" << std::endl;
             // ログ -------------------------------------------------------------------------------
-            fp = fopen("C:\\Users\\kasph\\workspace\\MC\\log.txt", "a");
+            std::string logPath = getProjectDirectory() + "/log.txt";
+            fp = fopen(logPath.c_str(), "a");
             time_t tt;
             time(&tt);
             char date[64];
             strftime(date, sizeof(date), "%Y/%m/%d %a %H:%M:%S", localtime(&tt));
 
-            fprintf(fp, (out_file_name + "\n").c_str());
-            if (WARP_AVAILABLE) fprintf(fp, "WARPING ON\n");
-            if (BM_AVAILABLE) fprintf(fp, "BlockMatching ON\n");
-            if (HARRIS) fprintf(fp, "HARRIS CORNER LIMIT MODE\n");
-            if (THRESHOLD) fprintf(fp, "THRESHOLD MODE");
-            fprintf(fp, ("lambda:" + std::to_string(LAMBDA)).c_str());
-            fprintf(fp, "QUANTIZE_STEP:%d\n", QUANTIZE);
-            fprintf(fp, "%s\n", date);
-            fprintf(fp, "PSNR : %f\n", psnr_1);
-            fprintf(fp, "freq_block:%d(%f%%)\n", result.freq_block, result.getBlockMatchingFrequency());
-            fprintf(fp, "freq_warp:%d(%f%%)\n", result.freq_warp, result.getWarpingFrequency());
-            fprintf(fp, "BlockMatching's PSNR : %f\n", result.getBlockMatchingPatchPSNR());
-            fprintf(fp, "Warping's PSNR : %f\n", result.getWarpingPatchPSNR());
-            fprintf(fp, (std::to_string(t / 60) + "m" + std::to_string(t % 60) + "sec\n\n").c_str());
-            fclose(fp);
-            std::cout << "log writed" << std::endl;
+            fprintf(fp, (outFilePath + "\n").c_str());
             // 符号量たち
             int prev_id_code_amount = 0;
             for (int i = 0; i <= 1000; i++) {
@@ -1518,25 +1470,35 @@ int main(int argc, char *argv[]) {
                             prev_id_count[i];
                 }
             }
-            code_amount << "reference  :" << ref_file_name << std::endl;
-            code_amount << "target_image     :" << target_file_name << std::endl;
-            code_amount << "threshold  :" << threshold << std::endl;
-            code_amount << "corner size:" << corners.size() << std::endl;
-            code_amount << "mode       :" << (THRESHOLD ? "threshold" : "harris") << std::endl;
-            code_amount << "coordinate vector ---------------------" << std::endl;
-            code_amount << "golomb code(x) : " << golomb_x << std::endl;
-            code_amount << "golomb code(y) : " << golomb_y << std::endl;
-            code_amount << "motion vector ---------------------" << std::endl;
-            code_amount << "golomb code(x) : " << golomb_mv_x << std::endl;
-            code_amount << "golomb code(y) : " << golomb_mv_y << std::endl;
-            code_amount << "diff vector ---------------------" << std::endl;
-            code_amount << "golomb code(x) : " << result.getXbits() << std::endl;
-            code_amount << "golomb code(y) : " << result.getYbits() << std::endl;
-            code_amount << "technic flag ---------------------" << std::endl;
-            code_amount << triangles.size() << std::endl;
-            code_amount << "prev_id flag ---------------------" << std::endl;
-            code_amount << "golomb code : " << prev_id_code_amount << std::endl << std::endl;
-            code_amount << "golomb code full : " << golomb_x + golomb_y + prev_id_code_amount << std::endl << std::endl;
+            fprintf(fp, ("lambda:" + std::to_string(LAMBDA)).c_str());
+            fprintf(fp, "QUANTIZE_STEP:%d\n", QUANTIZE);
+            fprintf(fp, "%s\n", date);
+            fprintf(fp, "PSNR : %f\n", psnr_1);
+            fprintf(fp, "code amount : %d[bit]\n", golomb_x + golomb_y + prev_id_code_amount + golomb_mv_x + golomb_mv_y);
+            fprintf(fp, "freq_block:%d(%f%%)\n", result.freq_block, result.getBlockMatchingFrequency());
+            fprintf(fp, "freq_warp:%d(%f%%)\n", result.freq_warp, result.getWarpingFrequency());
+            fprintf(fp, "BlockMatching's PSNR : %f\n", result.getBlockMatchingPatchPSNR());
+            fprintf(fp, "Warping's PSNR : %f\n", result.getWarpingPatchPSNR());
+            fprintf(fp, (std::to_string(t / 60) + "m" + std::to_string(t % 60) + "sec\n").c_str());
+            fprintf(fp, "reference        : %s\n", ref_file_name.c_str());
+            fprintf(fp, "target_image     : %s\n", target_file_name.c_str());
+            fprintf(fp, "threshold        : %d\n", threshold);
+            fprintf(fp, "corner size      : %d\n", corners.size());
+            fprintf(fp, "triangles.size() : %d\n", triangles.size());
+            fprintf(fp, "coordinate vector ---------------------\n");
+            fprintf(fp, "golomb code(x)   : %d\n", golomb_x);
+            fprintf(fp, "golomb code(y)   : %d\n", golomb_y);
+            fprintf(fp, "motion vector ---------------------\n");
+            fprintf(fp, "golomb code(x)   : %d\n", golomb_mv_x);
+            fprintf(fp, "golomb code(y)   : %d\n", golomb_mv_y);
+            fprintf(fp, "diff vector ---------------------\n");
+            fprintf(fp, "golomb code(x)   : %d\n", result.getXbits());
+            fprintf(fp, "golomb code(y)   : %d\n", result.getYbits());
+            fprintf(fp, "prev_id flag ---------------------\n");
+            fprintf(fp, "golomb code      : %d\n",  prev_id_code_amount);
+            fprintf(fp, "golomb code full : %d\n\n", golomb_x + golomb_y + prev_id_code_amount);
+            fclose(fp);
+            std::cout << "log written" << std::endl;
 
 
             int cnt = 0;
@@ -1548,20 +1510,6 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-            psnr_points_efficience << threshold << " " << psnr_1 << std::endl;
-
-            corner_psnr << corners.size() << " " << psnr_1 << std::endl;
-            corner_code_amount << corners.size() << " "
-                               << golomb_x + golomb_y + golomb_mv_x + golomb_mv_y + result.getXbits() +
-                                  result.getYbits() +
-                                  triangles.size() << std::endl;
-            rate_mse << golomb_x + golomb_y + golomb_mv_x + golomb_mv_y + result.getXbits() + result.getYbits() +
-                        triangles.size() << " " << getMSE(target_image, out, cv::Rect(0, 0, target_image.cols, target_image.rows))
-                     << std::endl;
-            rate_psnr << golomb_x + golomb_y + golomb_mv_x + golomb_mv_y + result.getXbits() + result.getYbits() +
-                         triangles.size() << " " << psnr_1 << " " << "corner:" << corners.size() << " triangle:"
-                      << triangles.size() << " BM:" << result.getBlockMatchingFrequency() << "% Warp:"
-                      << result.getWarpingFrequency() << "%" << std::endl;
             rate_psnr_csv << golomb_x + golomb_y + golomb_mv_x + golomb_mv_y + result.getXbits() + result.getYbits() +
                              triangles.size() << "," << psnr_1 << std::endl;
 
@@ -1894,7 +1842,6 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
     std::vector<cv::Point2i> tmp;
     std::ofstream tri_list;
     std::ofstream mv_list = std::ofstream("mv_list.csv");
-    int hist_org[201] = {0}, hist_org_x[201] = {0}, hist_org_y[201] = {0};
     int basis_mv_tmp_x = 0,basis_mv_tmp_y = 0,sabun_mv_tmp_x = 0,sabun_mv_tmp_y = 0;
     bool para_flag = false;
 
@@ -1935,7 +1882,6 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
 
     // 平行移動とワーピングを塗り分ける用
     cv::Mat parallel_flag_img_color = target.clone();
-//    cv::cvtColor(target, parallel_flag_img_color, cv::COLOR_GRAY2BGR);
 
 #pragma omp parallel for
     // 基準ベクトル以外のベクトルを符号化
@@ -1943,13 +1889,9 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
         tri_list << "triangle[" << t << "], ";
 
         Triangle triangle = triangles[t];
-        int p1_idx = triangle.p1_idx;
-        int p2_idx = triangle.p2_idx;
-        int p3_idx = triangle.p3_idx;
-
 
         // 良い方法を選んで貼り付け
-        double error_block, error_warp;
+        double error_warp;
         cv::Point2f mv_block;
         Point3Vec triangleVec(corners[triangle.p1_idx], corners[triangle.p2_idx], corners[triangle.p3_idx]);
 
@@ -2289,7 +2231,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
         }
     }
 
-    cv::imwrite(getProjectDirectory() + "/img/minato/flag_img.png", parallel_flag_img_color);
+    cv::imwrite(getProjectDirectory() + "/img/minato/flag_img_64_64_QP37.png", parallel_flag_img_color);
 
     int worth = 0;
     for(int i = 0;i < (int)mv_basis_tuple.size();i++) {
