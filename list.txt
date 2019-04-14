@@ -15,4 +15,5 @@
 # \img\car\               car_limit_I22.bmp            car_000091_limit.bmp          car_P27_test.bmp             car_limit_I27.bmp       car_000090_limit.bmp           car_000091_1024.bmp            car_18Q4
 # \img\in_to_tree\        tree_I22.bmp                 tree_143_1024.bmp             in_to_tree_P35_9.bmp         tree_I35.bmp            tree_140_1024.bmp              tree_143_1024_color.bmp        tree_9Q4
 # \img\minato\             minato_limit_2_I22.bmp       minato_000413_limit.bmp       minato_P22_22.bmp            minato_limit_2_I22.bmp  minato_mirai_000413_limit.bmp  minato_16                      \\minato_
-\img\minato\             minato_limit_2_I22.bmp       minato_000413_limit.bmp       minato_QP37.bmp                minato_limit_2_I37.bmp  minato_mirai_000413_limit.bmp  minato_16                      \\minato_
+#\img\minato\             minato_limit_2_I22.bmp       minato_000413_limit.bmp       minato_QP37.bmp                minato_limit_2_I37.bmp  minato_mirai_000413_limit.bmp  minato_16                      \\minato_
+\img\minato\             minato_1792_1024_QP22.png       minato_000413_limit.bmp       minato_QP22.bmp            minato_1792_1024_QP22.png  minato_mirai_000413_limit.bmp  minato_16                      \\minato_

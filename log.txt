@@ -26708,3 +26708,936 @@ BlockMatching's PSNR : nan
 Warping's PSNR : nan
 2m51sec
 
+C:\Users\kasph\workspace\MC\img\minato_P22_22_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/01 Mon 17:35:23
+PSNR : 28.482690
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+2m24sec
+
+C:\Users\kasph\workspace\MC\img\minato\minato_P22_22_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/06 Sat 17:00:35
+PSNR : 28.482690
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+7m2sec
+
+C:\Users\kasph\workspace\MC\img\minato\minato_P27_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/06 Sat 17:08:05
+PSNR : 27.708862
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m33sec
+
+C:\Users\kasph\workspace\MC\img\minato\minato_P29_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/06 Sat 17:11:22
+PSNR : 27.899935
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m32sec
+
+C:\Users\kasph\workspace\MC\img\minato\minato_P33_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/06 Sat 17:14:25
+PSNR : 27.557385
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m31sec
+
+C:\Users\kasph\workspace\MC\img\minato\minato_P37_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/06 Sat 17:15:55
+PSNR : 26.707168
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m32sec
+
+C:\Users\kasph\workspace\MC\img\minato\minato_P22_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/06 Sat 18:29:51
+PSNR : 28.144431
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m31sec
+
+C:\Users\kasph\workspace\MC\img\minato\minato_P22_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/08 Mon 17:25:51
+PSNR : 28.295442
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m33sec
+
+C:\Users\kasph\workspace\MC\img\minato\minato_P22_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/08 Mon 17:28:41
+PSNR : 28.231061
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m32sec
+
+C:\Users\kasph\workspace\MC\img\minato\minato_P22_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/11 Thu 18:20:42
+PSNR : 29.250385
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m31sec
+
+C:\Users\kasph\workspace\MC\img\minato\minato_P22_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/11 Thu 18:40:26
+PSNR : 29.287175
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m32sec
+
+C:\Users\kasph\workspace\MC\img\minato\minato_P22_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/11 Thu 19:06:51
+PSNR : 29.288714
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m36sec
+
+C:\Users\kasph\workspace\MC\img\minato\minato_P22_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/12 Fri 16:51:41
+PSNR : 29.461001
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m42sec
+
+C:\Users\kasph\workspace\MC\img\minato\minato_P22_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/12 Fri 18:37:25
+PSNR : 29.134399
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m31sec
+
+C:\Users\kasph\workspace\MC\img\minato\minato_P22_threshold_17.000000_lambda_0.200000.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/13 Sat 16:30:32
+PSNR : 29.139667
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m33sec
+
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 527
+triangles.size() : 960
+coordinate vector ---------------------
+golomb code(x)   : 1348
+golomb code(y)   : 1252
+motion vector ---------------------
+golomb code(x)   : 13307
+golomb code(y)   : 11218
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 1238
+golomb code full : 3838
+minato_P22.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/13 Sat 16:44:09
+PSNR : 29.167902
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m35sec
+
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 527
+triangles.size() : 960
+coordinate vector ---------------------
+golomb code(x)   : 1348
+golomb code(y)   : 1252
+motion vector ---------------------
+golomb code(x)   : 13724
+golomb code(y)   : 11630
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 1238
+golomb code full : 3838
+C:\Users\kasph\workspace\MCC:\Users\kasph\workspace\MC\img\minato\minato_P22.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/13 Sat 16:48:54
+PSNR : 29.202579
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m30sec
+
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 527
+triangles.size() : 960
+coordinate vector ---------------------
+golomb code(x)   : 1348
+golomb code(y)   : 1252
+motion vector ---------------------
+golomb code(x)   : 13609
+golomb code(y)   : 11482
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 1238
+golomb code full : 3838
+C:\Users\kasph\workspace\MC\img\minato\_64_64minato_P22.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/13 Sat 16:56:08
+PSNR : 29.229051
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m30sec
+
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 527
+triangles.size() : 960
+coordinate vector ---------------------
+golomb code(x)   : 1348
+golomb code(y)   : 1252
+motion vector ---------------------
+golomb code(x)   : 13442
+golomb code(y)   : 11319
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 1238
+golomb code full : 3838
+C:\Users\kasph\workspace\MC\img\minato\bmp_64_64.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/13 Sat 17:03:36
+PSNR : 29.225885
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m36sec
+
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 527
+triangles.size() : 960
+coordinate vector ---------------------
+golomb code(x)   : 1348
+golomb code(y)   : 1252
+motion vector ---------------------
+golomb code(x)   : 13413
+golomb code(y)   : 11305
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 1238
+golomb code full : 3838
+C:\Users\kasph\workspace\MC\img\minato\minato_P22_64_64.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/13 Sat 17:05:50
+PSNR : 29.355779
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m35sec
+
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 527
+triangles.size() : 960
+coordinate vector ---------------------
+golomb code(x)   : 1348
+golomb code(y)   : 1252
+motion vector ---------------------
+golomb code(x)   : 13612
+golomb code(y)   : 11490
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 1238
+golomb code full : 3838
+C:\Users\kasph\workspace\MC\img\minato\minato_QP27_64_64.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/13 Sat 17:09:38
+PSNR : 29.038255
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m28sec
+
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 527
+triangles.size() : 960
+coordinate vector ---------------------
+golomb code(x)   : 1348
+golomb code(y)   : 1252
+motion vector ---------------------
+golomb code(x)   : 13066
+golomb code(y)   : 11001
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 1238
+golomb code full : 3838
+C:\Users\kasph\workspace\MC\img\minato\minato_QP22_64_64.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/13 Sat 17:14:30
+PSNR : 29.243893
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m27sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 527
+triangles.size() : 960
+coordinate vector ---------------------
+golomb code(x)   : 1348
+golomb code(y)   : 1252
+motion vector ---------------------
+golomb code(x)   : 13623
+golomb code(y)   : 11566
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 1238
+golomb code full : 3838
+
+C:\Users\kasph\workspace\MC\img\minato\minato_QP27_64_64.bmp
+WARPING ON
+BlockMatching ON
+THRESHOLD MODElambda:0.200000QUANTIZE_STEP:4
+2019/04/13 Sat 17:19:04
+PSNR : 28.946400
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m35sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 527
+triangles.size() : 960
+coordinate vector ---------------------
+golomb code(x)   : 1348
+golomb code(y)   : 1252
+motion vector ---------------------
+golomb code(x)   : 12690
+golomb code(y)   : 10611
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 1238
+golomb code full : 3838
+
+C:\Users\kasph\workspace\MC\img\minato\minato_QP29_64_64.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/04/13 Sat 17:24:54
+PSNR : 28.724503
+code amount : 28472[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m30sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 527
+triangles.size() : 960
+coordinate vector ---------------------
+golomb code(x)   : 1348
+golomb code(y)   : 1252
+motion vector ---------------------
+golomb code(x)   : 13361
+golomb code(y)   : 11273
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 1238
+golomb code full : 3838
+
+C:\Users\kasph\workspace\MC\img\minato\minato_QP33_64_64.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/04/13 Sat 17:29:39
+PSNR : 28.571302
+code amount : 25733[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m32sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 527
+triangles.size() : 960
+coordinate vector ---------------------
+golomb code(x)   : 1348
+golomb code(y)   : 1252
+motion vector ---------------------
+golomb code(x)   : 11972
+golomb code(y)   : 9923
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 1238
+golomb code full : 3838
+
+C:\Users\kasph\workspace\MC\img\minato\minato_QP37_64_64.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/04/13 Sat 17:32:48
+PSNR : 27.535340
+code amount : 24280[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m35sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 527
+triangles.size() : 960
+coordinate vector ---------------------
+golomb code(x)   : 1348
+golomb code(y)   : 1252
+motion vector ---------------------
+golomb code(x)   : 11265
+golomb code(y)   : 9177
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 1238
+golomb code full : 3838
+
+C:\Users\kasph\workspace\MC\img\minato\minato_QP37_128_128.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/04/14 Sun 16:47:55
+PSNR : 26.867727
+code amount : 9111[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m37sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 144
+triangles.size() : 240
+coordinate vector ---------------------
+golomb code(x)   : 410
+golomb code(y)   : 422
+motion vector ---------------------
+golomb code(x)   : 4058
+golomb code(y)   : 3507
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 714
+golomb code full : 1546
+
+C:\Users\kasph\workspace\MC\img\minato\minato_QP37_64_64.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/04/14 Sun 16:53:07
+PSNR : 27.543904
+code amount : 23681[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m33sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 527
+triangles.size() : 960
+coordinate vector ---------------------
+golomb code(x)   : 1348
+golomb code(y)   : 1252
+motion vector ---------------------
+golomb code(x)   : 10953
+golomb code(y)   : 8890
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 1238
+golomb code full : 3838
+
+C:\Users\kasph\workspace\MC\img\minato\minato_QP37_64_64.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/04/14 Sun 16:55:25
+PSNR : 27.522039
+code amount : 23858[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m33sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 527
+triangles.size() : 960
+coordinate vector ---------------------
+golomb code(x)   : 1348
+golomb code(y)   : 1252
+motion vector ---------------------
+golomb code(x)   : 11054
+golomb code(y)   : 8966
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 1238
+golomb code full : 3838
+
+C:\Users\kasph\workspace\MC\img\minato\minato_QP37_128_128.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/04/14 Sun 16:58:02
+PSNR : 26.818202
+code amount : 8880[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m36sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 144
+triangles.size() : 240
+coordinate vector ---------------------
+golomb code(x)   : 410
+golomb code(y)   : 422
+motion vector ---------------------
+golomb code(x)   : 3938
+golomb code(y)   : 3396
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 714
+golomb code full : 1546
+
+C:\Users\kasph\workspace\MC\img\minato\minato_QP33_128_128.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/04/14 Sun 17:00:32
+PSNR : 27.733174
+code amount : 10261[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m36sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 144
+triangles.size() : 240
+coordinate vector ---------------------
+golomb code(x)   : 410
+golomb code(y)   : 422
+motion vector ---------------------
+golomb code(x)   : 4634
+golomb code(y)   : 4081
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 714
+golomb code full : 1546
+
+C:\Users\kasph\workspace\MC\img\minato\minato_QP29_128_128.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/04/14 Sun 17:02:16
+PSNR : 28.206132
+code amount : 9850[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m36sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 144
+triangles.size() : 240
+coordinate vector ---------------------
+golomb code(x)   : 410
+golomb code(y)   : 422
+motion vector ---------------------
+golomb code(x)   : 4433
+golomb code(y)   : 3871
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 714
+golomb code full : 1546
+
+C:\Users\kasph\workspace\MC\img\minato\minato_QP29_128_128.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/04/14 Sun 17:03:25
+PSNR : 27.813958
+code amount : 10227[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m36sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 144
+triangles.size() : 240
+coordinate vector ---------------------
+golomb code(x)   : 410
+golomb code(y)   : 422
+motion vector ---------------------
+golomb code(x)   : 4618
+golomb code(y)   : 4063
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 714
+golomb code full : 1546
+
+C:\Users\kasph\workspace\MC\img\minato\minato_QP27_128_128.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/04/14 Sun 17:09:57
+PSNR : 28.074424
+code amount : 10357[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m34sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 144
+triangles.size() : 240
+coordinate vector ---------------------
+golomb code(x)   : 410
+golomb code(y)   : 422
+motion vector ---------------------
+golomb code(x)   : 4688
+golomb code(y)   : 4123
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 714
+golomb code full : 1546
+
+C:\Users\kasph\workspace\MC\img\minato\minato_QP27_128_128.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/04/14 Sun 17:11:17
+PSNR : 28.302624
+code amount : 10385[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m37sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 144
+triangles.size() : 240
+coordinate vector ---------------------
+golomb code(x)   : 410
+golomb code(y)   : 422
+motion vector ---------------------
+golomb code(x)   : 4702
+golomb code(y)   : 4137
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 714
+golomb code full : 1546
+
+C:\Users\kasph\workspace\MC\img\minato\minato_QP22_128_128.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/04/14 Sun 17:14:32
+PSNR : 28.249756
+code amount : 10593[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m36sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 144
+triangles.size() : 240
+coordinate vector ---------------------
+golomb code(x)   : 410
+golomb code(y)   : 422
+motion vector ---------------------
+golomb code(x)   : 4805
+golomb code(y)   : 4242
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 714
+golomb code full : 1546
+
+C:\Users\kasph\workspace\MC\img\minato\minato_QP29_64_64.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/04/14 Sun 17:35:45
+PSNR : 29.135606
+code amount : 27230[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m33sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 527
+triangles.size() : 960
+coordinate vector ---------------------
+golomb code(x)   : 1348
+golomb code(y)   : 1252
+motion vector ---------------------
+golomb code(x)   : 12734
+golomb code(y)   : 10658
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 1238
+golomb code full : 3838
+
+C:\Users\kasph\workspace\MC\img\minato\minato_QP33_64_64.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/04/14 Sun 17:38:13
+PSNR : 28.436142
+code amount : 26068[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m34sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 527
+triangles.size() : 960
+coordinate vector ---------------------
+golomb code(x)   : 1348
+golomb code(y)   : 1252
+motion vector ---------------------
+golomb code(x)   : 12149
+golomb code(y)   : 10081
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 1238
+golomb code full : 3838
+
+C:\Users\kasph\workspace\MC\img\minato\minato_QP37_64_64.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/04/14 Sun 17:40:27
+PSNR : 27.469147
+code amount : 24408[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+1m33sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 527
+triangles.size() : 960
+coordinate vector ---------------------
+golomb code(x)   : 1348
+golomb code(y)   : 1252
+motion vector ---------------------
+golomb code(x)   : 11317
+golomb code(y)   : 9253
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 1238
+golomb code full : 3838
+
+C:\Users\kasph\workspace\MC\img\minato\minato_QP22_256_256.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/04/14 Sun 19:30:14
+PSNR : 24.275298
+code amount : 2150[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m25sec
+reference        : minato_1792_1024_QP22.png
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 40
+triangles.size() : 56
+coordinate vector ---------------------
+golomb code(x)   : 154
+golomb code(y)   : 152
+motion vector ---------------------
+golomb code(x)   : 901
+golomb code(y)   : 764
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 179
+golomb code full : 485
+
+C:\Users\kasph\workspace\MC\img\minato\minato_QP22_256_256.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/04/14 Sun 20:13:50
+PSNR : 24.891893
+code amount : 2253[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+0m25sec
+reference        : minato_1792_1024_QP22.png
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 40
+triangles.size() : 56
+coordinate vector ---------------------
+golomb code(x)   : 154
+golomb code(y)   : 152
+motion vector ---------------------
+golomb code(x)   : 950
+golomb code(y)   : 818
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 179
+golomb code full : 485
+
