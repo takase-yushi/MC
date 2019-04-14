@@ -103,6 +103,14 @@ cv::Mat triangle_error_img;
 #define LAMBDA 0.2
 #define INTER_DIV true // 頂点追加するかしないか
 
+#define DIVIDE_MODE RIGHT_DIVIDE
+
+
+int qp;
+int block_size_x;
+int block_size_y;
+
+
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
 int main(int argc, char *argv[]) {
@@ -145,7 +153,7 @@ int main(int argc, char *argv[]) {
     while (fgets(buf, sizeof(buf), img_list) != nullptr) {
         if (buf[0] == '#') continue;
         char t_file_name[256], r_file_name[256], o_file_name[256], i_file_path[256], csv_prefix[256],r_intra_file_name[256],target_color_file_name[256],c_file_name[256];
-        sscanf(buf, "%s %s %s %s %s %s %s", i_file_path, r_file_name, t_file_name, o_file_name,r_intra_file_name,target_color_file_name,c_file_name);
+        sscanf(buf, "%s %s %s %s %s %s %s %d %d %d", i_file_path, r_file_name, t_file_name, o_file_name,r_intra_file_name,target_color_file_name,c_file_name, &qp, &block_size_x, &block_size_y);
 
         std::string img_path = std::string(i_file_path);
         std::string img_directory = file_path + img_path;
@@ -196,14 +204,11 @@ int main(int argc, char *argv[]) {
         ref_image = cv::imread(ref_intra_file_path);
         target_image = cv::imread(target_file_path);
 
-        int block_size_x = 256;
-        int block_size_y = 256;
-
         cv::Mat tmp_target, tmp_ref;
 
-        cv::resize(target_image, tmp_target, cv::Size(1792, 1024));
-
-        target_image = tmp_target.clone();
+//        cv::resize(target_image, tmp_target, cv::Size(1792, 1024));
+//
+//        target_image = tmp_target.clone();
 
         std::cout << "width: " << target_image.cols << " height: " << target_image.rows << std::endl;
         int height_mod = target_image.rows % block_size_y;
@@ -226,7 +231,7 @@ int main(int argc, char *argv[]) {
 
 
         TriangleDivision triangle_division(ref_image, target_image);
-        triangle_division.initTriangle(block_size_x, block_size_y);
+        triangle_division.initTriangle(block_size_x, block_size_y, RIGHT_DIVIDE);
 
         std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
         std::cout << "triangles.size():" << triangles.size() << std::endl;
@@ -896,7 +901,6 @@ int main(int argc, char *argv[]) {
             // 減らした点で細分割
             std::cout << rect << std::endl;
             subdiv = cv::Subdiv2D(rect);
-            for(const cv::Point2f c : corners) std::cout << c.x << " " << c.y << std::endl;
             subdiv.insert(corners);
 
             md = DelaunayTriangulation(Rectangle(0, 0, target_image.cols, target_image.rows));
@@ -1006,7 +1010,6 @@ int main(int argc, char *argv[]) {
             double mean = 0.0;
             std::cout << csv_file_prefix << std::endl;
             for (int i = 0; i < (int) freq_coord_x.size(); i++) {
-                std::cout << i << " " << freq_coord_x[i] << std::endl;
                 fprintf(fp, "%d,%d\n", i - min_coord_x, freq_coord_x[i]);
                 os << i - min_coord_x << " " << freq_coord_x[i] << std::endl;
                 mean += (i - min_coord_x) * freq_coord_x[i];
@@ -1163,17 +1166,24 @@ int main(int argc, char *argv[]) {
             subdiv.getTriangleList(triangles_as_vec6f);
 
             cv::Mat triangle_target = target_image.clone();
+            cv::Mat mv_image = target_image.clone();
+            for(auto t : triangles) {
+                // 三角形を描画
+                drawTriangle(triangle_target, t.p1, t.p2, t.p3, cv::Scalar(255, 255, 255));
+                drawTriangle(mv_image, t.p1, t.p2, t.p3, cv::Scalar(255, 255, 255));
+            }
+
+            if(DIVIDE_MODE == LEFT_DIVIDE) {
+                cv::imwrite(file_path + img_path + "triangle_" + out_file[0] + "_" + std::to_string(block_size_x) + "_" + std::to_string(block_size_y) + "_LEFT.png", triangle_target);
+            }else{
+                cv::imwrite(file_path + img_path + "triangle_" + out_file[0] + "_" + std::to_string(block_size_x) + "_" + std::to_string(block_size_y) + "_RIGHT.png", triangle_target);
+            }
 
             std::vector<Triangle> triangles;
-            cv::Mat mv_image = target_image.clone();
 
             // 頂点とindexを結びつけ
             for (auto t:triangles_as_vec6f) {
                 cv::Point2f p1(t[0], t[1]), p2(t[2], t[3]), p3(t[4], t[5]);
-
-                // 三角形を描画
-                drawTriangle(triangle_target, p1, p2, p3, cv::Scalar(255, 255, 255));
-                drawTriangle(mv_image, p1, p2, p3, cv::Scalar(255, 255, 255));
 
                 int i1 = -1, i2 = -1, i3 = -1;
                 for (int i = 0; i < (int) corners.size(); i++) {
@@ -1187,9 +1197,6 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-
-
-            cv::imwrite(file_path + img_path + "triangle_" + out_file[0] + "_" + std::to_string(block_size_x) + "_" + std::to_string(block_size_y) + ".png", triangle_target);
 
 
             puts("");
@@ -1417,7 +1424,10 @@ int main(int argc, char *argv[]) {
             std::vector<std::string> split_output_name = splitString(std::string(o_file_name), '.');
             std::string outFileName = split_output_name[0];
             std::string extension = split_output_name[1];
-            std::string outFilePath = img_directory  + outFileName + "_" + std::to_string(block_size_x) + "_" + std::to_string(block_size_y) + "." + extension;
+
+            std::string outFilePath = img_directory + outFileName + "_" + std::to_string(block_size_x) + "_" + std::to_string(block_size_y) +
+                          (DIVIDE_MODE == LEFT_DIVIDE ? "_LEFT." : "_RIGHT.") + extension;
+
             std::cout << "outFilePath:" << outFilePath << std::endl;
             cv::imwrite(outFilePath, out);
             std::cout << "check point 1" << std::endl;
@@ -1440,7 +1450,7 @@ int main(int argc, char *argv[]) {
                 //drawTriangle(corner_reduction, p1, p2, p3, BLUE);
                 drawTriangle(residual, p1, p2, p3, RED);
             }
-            cv::imwrite(file_path + img_path + "residual.png",residual);
+//            cv::imwrite(file_path + img_path + "residual.png",residual);
             std::cout << "check point 4" << std::endl;
             double psnr_1;
             printf("%s's PSNR:%f\n", outFilePath.c_str(), (psnr_1 = getPSNR(target_image, out)));
@@ -1486,6 +1496,9 @@ int main(int argc, char *argv[]) {
             fprintf(fp, "threshold        : %d\n", threshold);
             fprintf(fp, "corner size      : %d\n", corners.size());
             fprintf(fp, "triangles.size() : %d\n", triangles.size());
+            fprintf(fp, "block_size_x     : %d\n", block_size_x);
+            fprintf(fp, "block_size_y     : %d\n", block_size_y);
+            fprintf(fp, "qp               : %d\n", qp);
             fprintf(fp, "coordinate vector ---------------------\n");
             fprintf(fp, "golomb code(x)   : %d\n", golomb_x);
             fprintf(fp, "golomb code(y)   : %d\n", golomb_y);
@@ -2232,7 +2245,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
         }
     }
 
-    cv::imwrite(getProjectDirectory() + "/img/minato/flag_img_256_256_QP22.png", parallel_flag_img_color);
+    cv::imwrite(getProjectDirectory() + "/img/minato/flag_img_" + std::to_string(block_size_x) + "_" + std::to_string(block_size_y) + "_QP" + std::to_string(qp) + "_RIGHT.png", parallel_flag_img_color);
 
     int worth = 0;
     for(int i = 0;i < (int)mv_basis_tuple.size();i++) {
