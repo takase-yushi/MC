@@ -196,8 +196,14 @@ int main(int argc, char *argv[]) {
         ref_image = cv::imread(ref_intra_file_path);
         target_image = cv::imread(target_file_path);
 
-        int block_size_x = 64;
-        int block_size_y = 64;
+        int block_size_x = 256;
+        int block_size_y = 256;
+
+        cv::Mat tmp_target, tmp_ref;
+
+        cv::resize(target_image, tmp_target, cv::Size(1792, 1024));
+
+        target_image = tmp_target.clone();
 
         std::cout << "width: " << target_image.cols << " height: " << target_image.rows << std::endl;
         int height_mod = target_image.rows % block_size_y;
@@ -217,6 +223,7 @@ int main(int argc, char *argv[]) {
 
         cv::imwrite(img_directory + "/crop_ref.png", crop_ref_image);
         cv::imwrite(img_directory + "/crop_target.png", crop_target_image);
+
 
         TriangleDivision triangle_division(ref_image, target_image);
         triangle_division.initTriangle(block_size_x, block_size_y);
@@ -340,8 +347,6 @@ int main(int argc, char *argv[]) {
         std::cout << corners_org.size() << std::endl;
         // あまりにも輝度値の変化がなければ頂点を削除
         for(int i = 0;i < (int)corners_org.size();i++){
-            std::cout << "i: " << i << std::endl;
-            std::cout << corners_org[i].x << " " << corners_org[i].y << std::endl;
             if(residual_refx4.at<unsigned char>((int)corners_org[i].y/4.0,(int)corners_org[i].x/4.0) <= 1){
                 corners_org.erase(corners_org.begin() + i);
                 i--;
@@ -1183,13 +1188,9 @@ int main(int argc, char *argv[]) {
             }
 
 
-            if (HARRIS) {
-                cv::imwrite(file_path + img_path + "triangle_" + out_file[0] + "_corner_size_" +
-                            std::to_string(corners.size()) + "_lambda_" + std::to_string(LAMBDA) + ".png", triangle_target);
-            } else if (THRESHOLD) {
-                cv::imwrite(file_path + img_path + "triangle_" + out_file[0] + "_threshold_" + std::to_string(threshold) +
-                            "_lambda_" + std::to_string(LAMBDA) + ".png", triangle_target);
-            }
+
+            cv::imwrite(file_path + img_path + "triangle_" + out_file[0] + "_" + std::to_string(block_size_x) + "_" + std::to_string(block_size_y) + ".png", triangle_target);
+
 
             puts("");
 
@@ -2231,7 +2232,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
         }
     }
 
-    cv::imwrite(getProjectDirectory() + "/img/minato/flag_img_64_64_QP37.png", parallel_flag_img_color);
+    cv::imwrite(getProjectDirectory() + "/img/minato/flag_img_256_256_QP22.png", parallel_flag_img_color);
 
     int worth = 0;
     for(int i = 0;i < (int)mv_basis_tuple.size();i++) {
