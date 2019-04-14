@@ -9,14 +9,14 @@
 #include <set>
 #include <vector>
 
-#define LEFT_DEVIDE 1
-#define RIGHT_DEVIDE 2
+#define LEFT_DIVIDE 1
+#define RIGHT_DIVIDE 2
 
 class TriangleDivision {
 
 public:
     TriangleDivision(const cv::Mat &refImage, const cv::Mat &targetImage);
-    void initTriangle(int block_size_x, int block_size_y, int divide_flag = LEFT_DEVIDE);
+    void initTriangle(int block_size_x, int block_size_y, int divide_flag = LEFT_DIVIDE);
     std::vector<Point3Vec> getTriangleCoordinateList();
     std::vector<Triangle> getTriangleIndexList();
     std::vector<cv::Point2f> getCorners();

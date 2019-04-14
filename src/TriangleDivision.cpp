@@ -58,16 +58,16 @@ void TriangleDivision::initTriangle(int block_size_x, int block_size_y, int divi
             int p2_idx = p1_idx + 1;
             int p3_idx = p1_idx + block_num_x + 1;
             int p4_idx = p3_idx + 1;
-            if(divide_flag == LEFT_DEVIDE) {
+            if(divide_flag == LEFT_DIVIDE) {
                 insertTriangle(p1_idx, p2_idx, p3_idx);
                 insertTriangle(p2_idx, p3_idx, p4_idx);
-                addNeighborVertex(p1_idx, p2_idx, p3_idx, LEFT_DEVIDE);
-                addNeighborVertex(p2_idx, p3_idx, p4_idx, LEFT_DEVIDE);
+                addNeighborVertex(p1_idx, p2_idx, p3_idx, LEFT_DIVIDE);
+                addNeighborVertex(p2_idx, p3_idx, p4_idx, LEFT_DIVIDE);
             }else{
                 insertTriangle(p1_idx, p2_idx, p4_idx);
                 insertTriangle(p1_idx, p3_idx, p4_idx);
-                addNeighborVertex(p1_idx, p2_idx, p4_idx, RIGHT_DEVIDE);
-                addNeighborVertex(p1_idx, p3_idx, p4_idx, RIGHT_DEVIDE);
+                addNeighborVertex(p1_idx, p2_idx, p4_idx, RIGHT_DIVIDE);
+                addNeighborVertex(p1_idx, p3_idx, p4_idx, RIGHT_DIVIDE);
             }
         }
     }
