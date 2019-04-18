@@ -103,7 +103,7 @@ cv::Mat triangle_error_img;
 #define LAMBDA 0.2
 #define INTER_DIV true // 頂点追加するかしないか
 
-#define DIVIDE_MODE RIGHT_DIVIDE
+#define DIVIDE_MODE LEFT_DIVIDE
 
 
 int qp;
@@ -231,9 +231,9 @@ int main(int argc, char *argv[]) {
 
 
         TriangleDivision triangle_division(ref_image, target_image);
-        triangle_division.initTriangle(block_size_x, block_size_y, RIGHT_DIVIDE);
+        triangle_division.initTriangle(block_size_x, block_size_y);
 
-        triangle_division.subdivision(ref_gauss_gray);
+        triangle_division.subdivision(cv::imread(ref_file_path));
         std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
         std::cout << "triangles.size():" << triangles.size() << std::endl;
         cv::Mat triangles_debug = crop_target_image.clone();
@@ -243,11 +243,13 @@ int main(int argc, char *argv[]) {
 
         corners = triangle_division.getCorners();
         std::cout << "mid: " << corners.size() / 2 << std::endl;
-        std::vector<Point3Vec> covered_triangles = triangle_division.getIdxCoveredTriangleCoordinateList(corners.size() / 2);
+        std::vector<Point3Vec> covered_triangles = triangle_division.getIdxCoveredTriangleCoordinateList(corners.size() / 2 + 100);
         for(const auto& triangle : covered_triangles) {
+          std::cout << triangle.p1 << " " << triangle.p2 << " " << triangle.p3 << std::endl;
           drawTriangle(triangles_debug, triangle.p1, triangle.p2, triangle.p3, RED);
         }
-        drawPoint(triangles_debug, corners[corners.size() / 2], BLUE, 4);
+
+        drawPoint(triangles_debug, corners[corners.size() / 2 + 100], BLUE, 4);
 
         cv::imwrite(img_directory + "/triangles.png", triangles_debug);
 
