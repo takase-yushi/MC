@@ -10,6 +10,7 @@
 #include <opencv2/core/mat.hpp>
 #include "config.h"
 #include <vector>
+#include <queue>
 #include "Utils.h"
 #include "../includes/DelaunayTriangulation.hpp"
 
