@@ -12,6 +12,39 @@
 #define LEFT_DIVIDE 1
 #define RIGHT_DIVIDE 2
 
+/**
+ * （初期の分割を，右上から左下に対角線を引くタイプの場合と仮定すると）
+ * --------------
+ * TYPE1の分割
+ *   -----------------
+ *   |             *
+ *   |          *
+ *   |       *
+ *   |   *
+ *   |*
+ *
+ * TYPE2の分割
+ *
+ *                  * |
+ *             *      |
+ *         *          |
+ *     *              |
+ *  ------------------|
+ *
+ *  TYPE3の分割
+ *    -----------------
+ *     *              |
+ *         *          |
+ *             *      |
+ *                *
+ *                |
+ *                    |
+ */
+#define TYPE1 0
+#define TYPE2 1
+#define TYPE3 2
+#define TYPE4 3
+
 class TriangleDivision {
 
 public:
@@ -24,17 +57,24 @@ public:
     std::vector<cv::Point2f> getNeighborVertexCoordinateList(int idx);
     double getDistance(const cv::Point2f &a, const cv::Point2f &b);
 
+    std::vector<Point3Vec> getIdxCoveredTriangleCoordinateList(int idx);
+    std::vector<Triangle> getIdxCoveredTriangleIndexList(int idx);
+
+    void subdivision(cv::Mat gaussRefImage);
+
 private:
     std::vector<cv::Point2f> corners;
-    std::vector<Triangle> triangles;
+    std::vector<std::pair<Triangle, int> > triangles;
     cv::Mat target_image, ref_image;
     std::vector<std::set<int> > neighbor_vtx;
+    std::vector<std::set<int> > covered_triangle;
 
-    void insertTriangle(Point3Vec triangle);
-    void insertTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3);
-    void insertTriangle(int p1_idx, int p2_idx, int p3_idx);
-    void insertTriangle(float x1, float y1, float x2, float y2, float x3, float y3);
+    void insertTriangle(Point3Vec triangle, int type);
+    void insertTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type);
+    int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
+    void insertTriangle(float x1, float y1, float x2, float y2, float x3, float y3, int type);
     void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int divide_flag);
+    void addCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_no);
 };
 
 #endif //ENCODER_TRIANGLEDIVISION_H
