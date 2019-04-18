@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
     std::cout << "OpenCV_version : " << getVersionOfOpenCV() << std::endl;
 
     const std::string file_path = getProjectDirectory();
-
+    std::cout << file_path << std::endl;
     FILE *img_list;
     if ((img_list = fopen((file_path + "\\list.txt").c_str(), "r")) == NULL) {
         std::cerr << "Error : Can not open file" << std::endl;
@@ -233,15 +233,25 @@ int main(int argc, char *argv[]) {
         TriangleDivision triangle_division(ref_image, target_image);
         triangle_division.initTriangle(block_size_x, block_size_y, RIGHT_DIVIDE);
 
+        triangle_division.subdivision(ref_gauss_gray);
         std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
         std::cout << "triangles.size():" << triangles.size() << std::endl;
         cv::Mat triangles_debug = crop_target_image.clone();
         for(const auto& triangle : triangles) {
-            drawTriangle(triangles_debug, triangle.p1, triangle.p2, triangle.p3, RED);
+            drawTriangle(triangles_debug, triangle.p1, triangle.p2, triangle.p3, cv::Scalar(255, 255, 255));
         }
+
+        corners = triangle_division.getCorners();
+        std::cout << "mid: " << corners.size() / 2 << std::endl;
+        std::vector<Point3Vec> covered_triangles = triangle_division.getIdxCoveredTriangleCoordinateList(corners.size() / 2);
+        for(const auto& triangle : covered_triangles) {
+          drawTriangle(triangles_debug, triangle.p1, triangle.p2, triangle.p3, RED);
+        }
+        drawPoint(triangles_debug, corners[corners.size() / 2], BLUE, 4);
 
         cv::imwrite(img_directory + "/triangles.png", triangles_debug);
 
+        exit(0);
         cv::Mat color = cv::Mat::zeros(target_image.size(),CV_8UC3);
         cv::Mat predict_img0 = cv::Mat::zeros(targetx8.size(), CV_8UC3);
         cv::Mat predict_img1 = cv::Mat::zeros(targetx4.size(), CV_8UC3);
@@ -376,10 +386,6 @@ int main(int argc, char *argv[]) {
         ref_corners.clear();
         for (auto & i : ref_corners_org) ref_corners.emplace_back(i);
 
-        // for (int corner_ratio = 10; corner_ratio > 0; corner_ratio-=2) {
-//    for(int corner_ratio = 1 ; corner_ratio <= 10 ; corner_ratio++) {
-//    double corner_ratio = 10;
-//    while(corner_ratio > 0){
         {
 
             double threshold = 17;
@@ -866,24 +872,8 @@ int main(int argc, char *argv[]) {
 //                    mv_distance /= 2;
 //                }
 //            }
-//
-//            std::ofstream corner_list_later = std::ofstream("corner_list_" + corner_file_name + "_later.dat");
-//            for(const cv::Point2f point : corners){
-//                corner_list_later << point.x << " " << point.y << std::endl;
-//            }
 //*/
-            // 定常三角形
-//            int W_num = 12,H_num = 8;
-//            int W_step = target_image.cols/W_num,H_step = target_image.rows/H_num;
-//            corners.clear();
-//            for(int j = 0;j <= H_num;j++){
-//                for(int i = 0;i <= W_num;i++){
-//                    int x = i*W_step,y = j*H_step;
-//                    if(x >= target_image.cols)x = target_image.cols - 1;
-//                    if(y >= target_image.rows)y = target_image.rows - 1;
-//                    corners.emplace_back(cv::Point2f(x,y));
-//                }
-//            }
+
             corners = triangle_division.getCorners();
 
             std::cout << "corners's size :" << corners.size() << std::endl;
