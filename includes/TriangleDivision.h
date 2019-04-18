@@ -36,8 +36,7 @@
  *     *              |
  *         *          |
  *             *      |
- *                *
- *                |
+ *                *   |
  *                    |
  */
 #define TYPE1 0
@@ -62,6 +61,23 @@ public:
 
     void subdivision(cv::Mat gaussRefImage);
 
+
+    class GaussResult{
+    public:
+        int triangle_index;
+
+        GaussResult(int triangleIndex, const Triangle &triangle, int type, double rmseBeforeSubdiv,
+                    double rmseAfterSubdiv);
+
+        GaussResult();
+
+        Triangle triangle;
+        int type;
+        double RMSE_before_subdiv;
+        double RMSE_after_subdiv;
+
+    };
+
 private:
     std::vector<cv::Point2f> corners;
     std::vector<std::pair<Triangle, int> > triangles;
@@ -75,6 +91,9 @@ private:
     void insertTriangle(float x1, float y1, float x2, float y2, float x3, float y3, int type);
     void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int divide_flag);
     void addCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_no);
+
+
+
 };
 
 #endif //ENCODER_TRIANGLEDIVISION_H
