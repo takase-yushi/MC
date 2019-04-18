@@ -9,7 +9,6 @@
 #include <iostream>
 #include <queue>
 #include <stdlib.h>
-#include <malloc.h>
 #include <math.h>
 #include <fstream>
 #include "../includes/DelaunayTriangulation.hpp"
