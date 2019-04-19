@@ -236,22 +236,27 @@ int main(int argc, char *argv[]) {
         triangle_division.subdivision(cv::imread(ref_file_path));
         std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
         std::cout << "triangles.size():" << triangles.size() << std::endl;
-        cv::Mat triangles_debug = crop_target_image.clone();
-        for(const auto& triangle : triangles) {
-            drawTriangle(triangles_debug, triangle.p1, triangle.p2, triangle.p3, cv::Scalar(255, 255, 255));
-        }
 
         corners = triangle_division.getCorners();
         std::cout << "mid: " << corners.size() / 2 << std::endl;
-        std::vector<Point3Vec> covered_triangles = triangle_division.getIdxCoveredTriangleCoordinateList(corners.size() / 2 + 100);
-        for(const auto& triangle : covered_triangles) {
-          std::cout << triangle.p1 << " " << triangle.p2 << " " << triangle.p3 << std::endl;
-          drawTriangle(triangles_debug, triangle.p1, triangle.p2, triangle.p3, RED);
+        for(int k = 0 ; k < 10 ; k++){
+          cv::Mat triangles_debug = crop_target_image.clone();
+          for(const auto& triangle : triangles) {
+            drawTriangle(triangles_debug, triangle.p1, triangle.p2, triangle.p3, cv::Scalar(255, 255, 255));
+          }
+
+          std::vector<Point3Vec> covered_triangles = triangle_division.getIdxCoveredTriangleCoordinateList(corners.size() / 2 + 100 + k);
+          for(const auto& triangle : covered_triangles) {
+            std::cout << triangle.p1 << " " << triangle.p2 << " " << triangle.p3 << std::endl;
+            drawTriangle(triangles_debug, triangle.p1, triangle.p2, triangle.p3, RED);
+          }
+          drawPoint(triangles_debug, corners[corners.size() / 2 + 100 + k], BLUE, 4);
+
+          cv::imwrite(img_directory + "/triangles_before_" + std::to_string(100 + k) + ".png", triangles_debug);
         }
 
-        drawPoint(triangles_debug, corners[corners.size() / 2 + 100], BLUE, 4);
 
-        cv::imwrite(img_directory + "/triangles.png", triangles_debug);
+
 
         exit(0);
         cv::Mat color = cv::Mat::zeros(target_image.size(),CV_8UC3);
