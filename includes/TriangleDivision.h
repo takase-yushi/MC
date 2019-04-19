@@ -84,6 +84,7 @@ private:
     cv::Mat target_image, ref_image;
     std::vector<std::set<int> > neighbor_vtx;
     std::vector<std::set<int> > covered_triangle;
+    std::vector<std::vector<int> > corner_flag;
 
     void insertTriangle(Point3Vec triangle, int type);
     void insertTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type);

@@ -47,6 +47,17 @@ void TriangleDivision::initTriangle(int block_size_x, int block_size_y, int divi
      *
      */
 
+    corner_flag.resize(ref_image.rows);
+    for(int i = 0 ; i < ref_image.rows ; i++) {
+      corner_flag[i].resize(ref_image.cols);
+    }
+
+    for(int y = 0 ; y < ref_image.rows ; y++) {
+      for(int x = 0 ; x < ref_image.cols ; x++) {
+        corner_flag[y][x] = -1;
+      }
+    }
+
     // すべての頂点を入れる
     for(int block_y = 0 ; block_y <= block_num_y ; block_y++) {
         for (int block_x = 0; block_x <= block_num_x; block_x++) {
@@ -58,6 +69,7 @@ void TriangleDivision::initTriangle(int block_size_x, int block_size_y, int divi
             if(ny < 0) ny = 0;
             if(target_image.rows <= ny) ny = target_image.rows - 1;
             corners.emplace_back(nx, ny);
+            corner_flag[ny][nx] = corners.size() - 1;
             neighbor_vtx.emplace_back();
         }
     }
@@ -402,12 +414,31 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage) {
         cv::Point2f e = d + x;
         cv::Point2f f = corners[triangle.first.p3_idx];
 
-        corners.push_back(b);
-        int b_idx = static_cast<int>(corners.size() - 1);
-        corners.push_back(d);
-        int d_idx = static_cast<int>(corners.size() - 1);
-        corners.push_back(e);
-        int e_idx = static_cast<int>(corners.size() - 1);
+        std::cout << corner_flag.size() << std::endl;
+        int b_idx = corner_flag[(int)b.y][(int)b.x];
+        if(b_idx == -1) {
+          corners.push_back(b);
+          b_idx = static_cast<int>(corners.size() - 1);
+          corner_flag[(int)b.y][(int)b.x] = b_idx;
+        }
+
+        int d_idx = corner_flag[(int)d.y][(int)d.x];
+        if(d_idx == -1) {
+          corners.push_back(d);
+          d_idx = static_cast<int>(corners.size() - 1);
+          corner_flag[(int)d.y][(int)d.x] = d_idx;
+        }
+
+
+        int e_idx = corner_flag[(int)e.y][(int)e.x];
+        if(e_idx == -1) {
+          corners.push_back(e);
+          e_idx = static_cast<int>(corners.size() - 1);
+          corner_flag[(int)e.y][(int)e.x] = e_idx;
+        }
+
+        std::cout << b_idx << " " << d_idx << " " << e_idx << std::endl;
+
         int t1_idx = insertTriangle(triangle.first.p1_idx, b_idx, d_idx, TYPE1);
         int t2_idx = insertTriangle(b_idx, d_idx, e_idx, TYPE2);
         int t3_idx = insertTriangle(b_idx, triangle.first.p2_idx, e_idx, TYPE1);
@@ -420,7 +451,7 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage) {
         neighbor_vtx[triangle.first.p2_idx].erase(triangle.first.p3_idx);
         neighbor_vtx[triangle.first.p3_idx].erase(triangle.first.p1_idx);
         neighbor_vtx[triangle.first.p3_idx].erase(triangle.first.p2_idx);
-//
+
         covered_triangle[triangle.first.p1_idx].erase(results[i].triangle_index);
         covered_triangle[triangle.first.p2_idx].erase(results[i].triangle_index);
         covered_triangle[triangle.first.p3_idx].erase(results[i].triangle_index);
@@ -465,12 +496,26 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage) {
         cv::Point2f e = corners[triangle.first.p3_idx] + x;
         cv::Point2f f = corners[triangle.first.p3_idx];
 
-        corners.push_back(b);
-        int b_idx = static_cast<int>(corners.size() - 1);
-        corners.push_back(c);
-        int c_idx = static_cast<int>(corners.size() - 1);
-        corners.push_back(e);
-        int e_idx = static_cast<int>(corners.size() - 1);
+        int b_idx = corner_flag[(int)b.y][(int)b.x];
+        if(b_idx == -1) {
+          corners.push_back(b);
+          b_idx = static_cast<int>(corners.size() - 1);
+          corner_flag[(int)b.y][(int)b.x] = b_idx;
+        }
+
+        int c_idx = corner_flag[(int)c.y][(int)c.x];
+        if(c_idx == -1) {
+          corners.push_back(c);
+          c_idx = static_cast<int>(corners.size() - 1);
+          corner_flag[(int)c.y][(int)c.x] = c_idx;
+        }
+
+        int e_idx = corner_flag[(int)e.y][(int)e.x];
+        if(e_idx == -1) {
+          corners.push_back(e);
+          e_idx = static_cast<int>(corners.size() - 1);
+          corner_flag[(int)e.y][(int)e.x] = e_idx;
+        }
 
         int t1_idx = insertTriangle(triangle.first.p1_idx, b_idx, c_idx, TYPE2);
         int t2_idx = insertTriangle(b_idx, triangle.first.p2_idx, e_idx, TYPE2);
