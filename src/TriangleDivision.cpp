@@ -273,8 +273,6 @@ std::vector<cv::Point2f> TriangleDivision::getNeighborVertexCoordinateList(int i
 }
 
 std::vector<Point3Vec> TriangleDivision::getIdxCoveredTriangleCoordinateList(int idx) {
-  std::cout << "idx:" << idx << std::endl;
-  std::cout << "covered_triangle.size(): " << covered_triangle.size() << std::endl;
   std::set<int> s = covered_triangle[idx];
   std::vector<Point3Vec> v;
   std::cout << corners[idx] << std::endl;
@@ -301,109 +299,46 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage) {
   // initで分割された三角パッチはすべて入れる
   for(const auto triangle : triangles) targetTriangleQueue.emplace(triangle);
 
-  int denominator = targetTriangleQueue.size();
-  int numerator = 0;
+  for(int step = 0 ; step < steps ; step++) {
+    std::vector<GaussResult> results(triangles.size());
+    previousDivideFlag.resize(triangles.size());
 
-  std::vector<GaussResult> results(triangles.size());
+    int denominator = triangles.size();
+    int numerator = 0;
+
+    const double divide_th = 0.05;
+
+    std::cout << "triangles.size(): " << triangles.size() << std::endl;
+    std::cout << "results.size():" << results.size() << std::endl;
+    std::cout << "previousDivideFlag.size():" << previousDivideFlag.size() << std::endl;
 
 #pragma omp parallel for
-  for(int i = 0 ; i < (int)triangles.size() ; i++) {
-    std::pair<Triangle, int> triangle = triangles[i];
+    for (int i = 0; i < (int) triangles.size(); i++) {
+      // 一つ前のステップで分割されてないならばやる必要はない
+      if(!previousDivideFlag[i]) continue;
 
-    double RMSE_before_subdiv = 0.0;
-    cv::Point2f p1 = corners[triangle.first.p1_idx];
-    cv::Point2f p2 = corners[triangle.first.p2_idx];
-    cv::Point2f p3 = corners[triangle.first.p3_idx];
+      std::pair<Triangle, int> triangle = triangles[i];
 
-    Point3Vec refTriangle(p1, p2, p3);
-    Point3Vec targetTriangle(p1, p2, p3);
-    int triangle_size = 0;
+      double RMSE_before_subdiv = 0.0;
+      cv::Point2f p1 = corners[triangle.first.p1_idx];
+      cv::Point2f p2 = corners[triangle.first.p2_idx];
+      cv::Point2f p3 = corners[triangle.first.p3_idx];
 
-    RMSE_before_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, targetTriangle, refTriangle, triangle_size);
-    RMSE_before_subdiv /= triangle_size;
+      Point3Vec refTriangle(p1, p2, p3);
+      Point3Vec targetTriangle(p1, p2, p3);
+      int triangle_size = 0;
 
-    double RMSE_after_subdiv = 0.0;
-    triangle_size = 0;
-    int triangle_size_sum = 0;
+      RMSE_before_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, targetTriangle, refTriangle,
+                                         triangle_size);
+      RMSE_before_subdiv /= triangle_size;
 
-    // 三角形を分割し，その結果でRMSEを見る
-    if(triangle.second == TYPE1) {
-      // 縦横それぞれ1/2したものを作る
-      cv::Point2f x = (p2 - p1) / 2; // x-axis
-      cv::Point2f y = (p3 - p1) / 2; // y-axis
+      double RMSE_after_subdiv = 0.0;
+      triangle_size = 0;
+      int triangle_size_sum = 0;
 
-      cv::Point2f a = corners[triangle.first.p1_idx];
-      cv::Point2f b = a + x;
-      cv::Point2f c = corners[triangle.first.p2_idx];
-      cv::Point2f d = a + y;
-      cv::Point2f e = d + x;
-      cv::Point2f f = corners[triangle.first.p3_idx];
-
-      std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
-      subdiv_ref_triangles.emplace_back(a, b, d);
-      subdiv_target_triangles.emplace_back(a, b, d);
-      subdiv_ref_triangles.emplace_back(b, c, e);
-      subdiv_target_triangles.emplace_back(b, c, e);
-      subdiv_ref_triangles.emplace_back(b, d, e);
-      subdiv_target_triangles.emplace_back(b, d, e);
-      subdiv_ref_triangles.emplace_back(d, e, f);
-      subdiv_target_triangles.emplace_back(d, e, f);
-
-      for(int j = 0 ; j < (int)subdiv_ref_triangles.size() ; j++) {
-        RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j], subdiv_ref_triangles[j], triangle_size);
-        triangle_size_sum += triangle_size;
-      }
-
-      RMSE_after_subdiv /= (double)triangle_size_sum;
-      std::cout << "before:" << RMSE_before_subdiv << " after:" << RMSE_after_subdiv << std::endl;
-      results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
-    }else if(triangle.second == TYPE2){
-      cv::Point2f x = (p2 - p3) / 2.0;
-      cv::Point2f y = (p1 - p3) / 2.0;
-
-      std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
-      cv::Point2f a = corners[triangle.first.p1_idx];
-      cv::Point2f b = corners[triangle.first.p3_idx] + x + y;
-      cv::Point2f c = corners[triangle.first.p3_idx] + y;
-      cv::Point2f d = corners[triangle.first.p2_idx];
-      cv::Point2f e = corners[triangle.first.p3_idx] + x;
-      cv::Point2f f = corners[triangle.first.p3_idx];
-
-      subdiv_ref_triangles.emplace_back(a, b, c);
-      subdiv_ref_triangles.emplace_back(b, d, e);
-      subdiv_ref_triangles.emplace_back(b, c, e);
-      subdiv_ref_triangles.emplace_back(c, e, f);
-
-      subdiv_target_triangles.emplace_back(b, d, e);
-      subdiv_target_triangles.emplace_back(a, b, c);
-      subdiv_target_triangles.emplace_back(b, c, e);
-      subdiv_target_triangles.emplace_back(c, e, f);
-
-      for(int j = 0 ; j < (int)subdiv_ref_triangles.size() ; j++) {
-        RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
-                                          subdiv_ref_triangles[j], triangle_size);
-        triangle_size_sum += triangle_size;
-      }
-
-      RMSE_after_subdiv /= triangle_size_sum;
-
-      results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
-    }
-    numerator++;
-    std::cout << numerator << "/" << denominator << std::endl;
-  }
-
-  numerator = 0;
-  // Queueが空になるまで続ける
-  for(int i = 0 ; i < (int)results.size() ; i++) {
-    double diff = (results[i].RMSE_before_subdiv - results[i].RMSE_after_subdiv) / results[i].RMSE_before_subdiv;
-    if(results[i].type == TYPE1) {
-      if(diff > 0.06) {
-        std::pair<Triangle, int> triangle = std::make_pair(results[i].triangle, results[i].type);
-
-        cv::Point2f p1 = corners[triangle.first.p1_idx];
-        cv::Point2f p2 = corners[triangle.first.p2_idx];
-        cv::Point2f p3 = corners[triangle.first.p3_idx];
+      // 三角形を分割し，その結果でRMSEを見る
+      if (triangle.second == TYPE1) {
+        // 縦横それぞれ1/2したものを作る
         cv::Point2f x = (p2 - p1) / 2; // x-axis
         cv::Point2f y = (p3 - p1) / 2; // y-axis
 
@@ -414,77 +349,26 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage) {
         cv::Point2f e = d + x;
         cv::Point2f f = corners[triangle.first.p3_idx];
 
-        std::cout << corner_flag.size() << std::endl;
-        int b_idx = corner_flag[(int)b.y][(int)b.x];
-        if(b_idx == -1) {
-          corners.push_back(b);
-          b_idx = static_cast<int>(corners.size() - 1);
-          corner_flag[(int)b.y][(int)b.x] = b_idx;
+        std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
+        subdiv_ref_triangles.emplace_back(a, b, d);
+        subdiv_target_triangles.emplace_back(a, b, d);
+        subdiv_ref_triangles.emplace_back(b, c, e);
+        subdiv_target_triangles.emplace_back(b, c, e);
+        subdiv_ref_triangles.emplace_back(b, d, e);
+        subdiv_target_triangles.emplace_back(b, d, e);
+        subdiv_ref_triangles.emplace_back(d, e, f);
+        subdiv_target_triangles.emplace_back(d, e, f);
+
+        for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
+          RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
+                                            subdiv_ref_triangles[j], triangle_size);
+          triangle_size_sum += triangle_size;
         }
 
-        int d_idx = corner_flag[(int)d.y][(int)d.x];
-        if(d_idx == -1) {
-          corners.push_back(d);
-          d_idx = static_cast<int>(corners.size() - 1);
-          corner_flag[(int)d.y][(int)d.x] = d_idx;
-        }
-
-
-        int e_idx = corner_flag[(int)e.y][(int)e.x];
-        if(e_idx == -1) {
-          corners.push_back(e);
-          e_idx = static_cast<int>(corners.size() - 1);
-          corner_flag[(int)e.y][(int)e.x] = e_idx;
-        }
-
-        std::cout << b_idx << " " << d_idx << " " << e_idx << std::endl;
-
-        int t1_idx = insertTriangle(triangle.first.p1_idx, b_idx, d_idx, TYPE1);
-        int t2_idx = insertTriangle(b_idx, d_idx, e_idx, TYPE2);
-        int t3_idx = insertTriangle(b_idx, triangle.first.p2_idx, e_idx, TYPE1);
-        int t4_idx = insertTriangle(d_idx, e_idx, triangle.first.p3_idx, TYPE1);
-
-        std::cout << triangle.first.p1_idx << " " << triangle.first.p2_idx << " " << triangle.first.p3_idx << std::endl;
-        neighbor_vtx[triangle.first.p1_idx].erase(triangle.first.p2_idx);
-        neighbor_vtx[triangle.first.p1_idx].erase(triangle.first.p3_idx);
-        neighbor_vtx[triangle.first.p2_idx].erase(triangle.first.p1_idx);
-        neighbor_vtx[triangle.first.p2_idx].erase(triangle.first.p3_idx);
-        neighbor_vtx[triangle.first.p3_idx].erase(triangle.first.p1_idx);
-        neighbor_vtx[triangle.first.p3_idx].erase(triangle.first.p2_idx);
-
-        covered_triangle[triangle.first.p1_idx].erase(results[i].triangle_index);
-        covered_triangle[triangle.first.p2_idx].erase(results[i].triangle_index);
-        covered_triangle[triangle.first.p3_idx].erase(results[i].triangle_index);
-
-        neighbor_vtx.emplace_back();
-        neighbor_vtx.emplace_back();
-        neighbor_vtx.emplace_back();
-        addNeighborVertex(triangle.first.p1_idx, b_idx, d_idx, TYPE1);
-        addNeighborVertex(b_idx, d_idx, e_idx, TYPE2);
-        addNeighborVertex(b_idx, triangle.first.p2_idx, e_idx, TYPE1);
-        addNeighborVertex(d_idx, e_idx, triangle.first.p3_idx, TYPE1);
-
-        covered_triangle.emplace_back();
-        covered_triangle.emplace_back();
-        covered_triangle.emplace_back();
-        addCoveredTriangle(triangle.first.p1_idx, b_idx, d_idx, t1_idx);
-        addCoveredTriangle(b_idx, d_idx, e_idx, t2_idx);
-        addCoveredTriangle(b_idx, triangle.first.p2_idx, e_idx, t3_idx);
-        addCoveredTriangle(d_idx, e_idx, triangle.first.p3_idx, t4_idx);
-
-//          targetTriangleQueue.emplace(Triangle(triangle.first.p1_idx, b_idx, d_idx), TYPE1);
-//          targetTriangleQueue.emplace(b_idx, d_idx, e_idx, TYPE2);
-//          targetTriangleQueue.emplace(b_idx, triangle.first.p2_idx, e_idx, TYPE1);
-//          targetTriangleQueue.emplace(d_idx, e_idx, triangle.first.p3_idx, TYPE1);
-      }
-    }else if(results[i].type == TYPE2){
-      if(diff > 0.06) {
-        std::pair<Triangle, int> triangle = std::make_pair(results[i].triangle, results[i].type);
-
-        cv::Point2f p1 = corners[triangle.first.p1_idx];
-        cv::Point2f p2 = corners[triangle.first.p2_idx];
-        cv::Point2f p3 = corners[triangle.first.p3_idx];
-
+        RMSE_after_subdiv /= (double) triangle_size_sum;
+        std::cout << "before:" << RMSE_before_subdiv << " after:" << RMSE_after_subdiv << std::endl;
+        results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
+      } else if (triangle.second == TYPE2) {
         cv::Point2f x = (p2 - p3) / 2.0;
         cv::Point2f y = (p1 - p3) / 2.0;
 
@@ -496,73 +380,212 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage) {
         cv::Point2f e = corners[triangle.first.p3_idx] + x;
         cv::Point2f f = corners[triangle.first.p3_idx];
 
-        int b_idx = corner_flag[(int)b.y][(int)b.x];
-        if(b_idx == -1) {
-          corners.push_back(b);
-          b_idx = static_cast<int>(corners.size() - 1);
-          corner_flag[(int)b.y][(int)b.x] = b_idx;
+        subdiv_ref_triangles.emplace_back(a, b, c);
+        subdiv_ref_triangles.emplace_back(b, d, e);
+        subdiv_ref_triangles.emplace_back(b, c, e);
+        subdiv_ref_triangles.emplace_back(c, e, f);
+
+        subdiv_target_triangles.emplace_back(b, d, e);
+        subdiv_target_triangles.emplace_back(a, b, c);
+        subdiv_target_triangles.emplace_back(b, c, e);
+        subdiv_target_triangles.emplace_back(c, e, f);
+
+        for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
+          RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
+                                            subdiv_ref_triangles[j], triangle_size);
+          triangle_size_sum += triangle_size;
         }
 
-        int c_idx = corner_flag[(int)c.y][(int)c.x];
-        if(c_idx == -1) {
-          corners.push_back(c);
-          c_idx = static_cast<int>(corners.size() - 1);
-          corner_flag[(int)c.y][(int)c.x] = c_idx;
-        }
+        RMSE_after_subdiv /= triangle_size_sum;
 
-        int e_idx = corner_flag[(int)e.y][(int)e.x];
-        if(e_idx == -1) {
-          corners.push_back(e);
-          e_idx = static_cast<int>(corners.size() - 1);
-          corner_flag[(int)e.y][(int)e.x] = e_idx;
-        }
-
-        int t1_idx = insertTriangle(triangle.first.p1_idx, b_idx, c_idx, TYPE2);
-        int t2_idx = insertTriangle(b_idx, triangle.first.p2_idx, e_idx, TYPE2);
-        int t3_idx = insertTriangle(b_idx, c_idx, e_idx, TYPE1);
-        int t4_idx = insertTriangle(c_idx, e_idx, triangle.first.p3_idx, TYPE2);
-
-        neighbor_vtx[triangle.first.p1_idx].erase(triangle.first.p2_idx);
-        neighbor_vtx[triangle.first.p1_idx].erase(triangle.first.p3_idx);
-        neighbor_vtx[triangle.first.p2_idx].erase(triangle.first.p1_idx);
-        neighbor_vtx[triangle.first.p2_idx].erase(triangle.first.p3_idx);
-        neighbor_vtx[triangle.first.p3_idx].erase(triangle.first.p1_idx);
-        neighbor_vtx[triangle.first.p3_idx].erase(triangle.first.p2_idx);
-
-        covered_triangle[triangle.first.p1_idx].erase(results[i].triangle_index);
-        covered_triangle[triangle.first.p2_idx].erase(results[i].triangle_index);
-        covered_triangle[triangle.first.p3_idx].erase(results[i].triangle_index);
-
-        neighbor_vtx.emplace_back();
-        neighbor_vtx.emplace_back();
-        neighbor_vtx.emplace_back();
-        addNeighborVertex(triangle.first.p1_idx, b_idx, c_idx, TYPE2);
-        addNeighborVertex(b_idx, triangle.first.p2_idx, e_idx, TYPE2);
-        addNeighborVertex(b_idx, c_idx, e_idx, TYPE1);
-        addNeighborVertex(c_idx, e_idx, triangle.first.p3_idx, TYPE2);
-
-        covered_triangle.emplace_back();
-        covered_triangle.emplace_back();
-        covered_triangle.emplace_back();
-        addCoveredTriangle(triangle.first.p1_idx, b_idx, c_idx, t1_idx);
-        addCoveredTriangle(b_idx, triangle.first.p2_idx, e_idx, t2_idx);
-        addCoveredTriangle(b_idx, c_idx, e_idx, t3_idx);
-        addCoveredTriangle(c_idx, e_idx, triangle.first.p3_idx, t4_idx);
-
-//            targetTriangleQueue.emplace(triangle.first.p1_idx, b_idx, c_idx, TYPE2);
-//            targetTriangleQueue.emplace(b_idx, triangle.first.p2_idx, e_idx, TYPE2);
-//            targetTriangleQueue.emplace(b_idx, c_idx, e_idx, TYPE1);
-//            targetTriangleQueue.emplace(c_idx, e_idx, triangle.first.p3_idx, TYPE2);
+        results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
       }
-    }else if(results[i].type == TYPE3) {
-        // TODO: あとで書く
-    }else if(results[i].type == TYPE4){
-        // TODO: あとで書く
+      numerator++;
+      std::cout << numerator << "/" << denominator << std::endl;
     }
 
-    numerator++;
-    std::cout << numerator << "/" << denominator << std::endl;
-  }
+    numerator = 0;
+    // Queueが空になるまで続ける
+    for (int i = 0; i < (int) results.size(); i++) {
+      // 一つ前のステップで分割されてないならばやる必要はない
+      if(!previousDivideFlag[i]) continue;
 
+      double diff = (results[i].RMSE_before_subdiv - results[i].RMSE_after_subdiv) / results[i].RMSE_before_subdiv;
+      if (results[i].type == TYPE1) {
+        if (diff > divide_th) {
+          std::cout << "divide!"<< std::endl;
+          std::pair<Triangle, int> triangle = std::make_pair(results[i].triangle, results[i].type);
+
+          cv::Point2f p1 = corners[triangle.first.p1_idx];
+          cv::Point2f p2 = corners[triangle.first.p2_idx];
+          cv::Point2f p3 = corners[triangle.first.p3_idx];
+          cv::Point2f x = (p2 - p1) / 2; // x-axis
+          cv::Point2f y = (p3 - p1) / 2; // y-axis
+
+          cv::Point2f a = corners[triangle.first.p1_idx];
+          cv::Point2f b = a + x;
+          cv::Point2f c = corners[triangle.first.p2_idx];
+          cv::Point2f d = a + y;
+          cv::Point2f e = d + x;
+          cv::Point2f f = corners[triangle.first.p3_idx];
+
+          std::cout << corner_flag.size() << std::endl;
+          int b_idx = corner_flag[(int) b.y][(int) b.x];
+          if (b_idx == -1) {
+            corners.push_back(b);
+            b_idx = static_cast<int>(corners.size() - 1);
+            corner_flag[(int) b.y][(int) b.x] = b_idx;
+          }
+
+          int d_idx = corner_flag[(int) d.y][(int) d.x];
+          if (d_idx == -1) {
+            corners.push_back(d);
+            d_idx = static_cast<int>(corners.size() - 1);
+            corner_flag[(int) d.y][(int) d.x] = d_idx;
+          }
+
+
+          int e_idx = corner_flag[(int) e.y][(int) e.x];
+          if (e_idx == -1) {
+            corners.push_back(e);
+            e_idx = static_cast<int>(corners.size() - 1);
+            corner_flag[(int) e.y][(int) e.x] = e_idx;
+          }
+
+          std::cout << b_idx << " " << d_idx << " " << e_idx << std::endl;
+
+          int t1_idx = insertTriangle(triangle.first.p1_idx, b_idx, d_idx, TYPE1);
+          int t2_idx = insertTriangle(b_idx, d_idx, e_idx, TYPE2);
+          int t3_idx = insertTriangle(b_idx, triangle.first.p2_idx, e_idx, TYPE1);
+          int t4_idx = insertTriangle(d_idx, e_idx, triangle.first.p3_idx, TYPE1);
+
+          std::cout << triangle.first.p1_idx << " " << triangle.first.p2_idx << " " << triangle.first.p3_idx
+                    << std::endl;
+          neighbor_vtx[triangle.first.p1_idx].erase(triangle.first.p2_idx);
+          neighbor_vtx[triangle.first.p1_idx].erase(triangle.first.p3_idx);
+          neighbor_vtx[triangle.first.p2_idx].erase(triangle.first.p1_idx);
+          neighbor_vtx[triangle.first.p2_idx].erase(triangle.first.p3_idx);
+          neighbor_vtx[triangle.first.p3_idx].erase(triangle.first.p1_idx);
+          neighbor_vtx[triangle.first.p3_idx].erase(triangle.first.p2_idx);
+
+          covered_triangle[triangle.first.p1_idx].erase(results[i].triangle_index);
+          covered_triangle[triangle.first.p2_idx].erase(results[i].triangle_index);
+          covered_triangle[triangle.first.p3_idx].erase(results[i].triangle_index);
+
+          neighbor_vtx.emplace_back();
+          neighbor_vtx.emplace_back();
+          neighbor_vtx.emplace_back();
+          addNeighborVertex(triangle.first.p1_idx, b_idx, d_idx, TYPE1);
+          addNeighborVertex(b_idx, d_idx, e_idx, TYPE2);
+          addNeighborVertex(b_idx, triangle.first.p2_idx, e_idx, TYPE1);
+          addNeighborVertex(d_idx, e_idx, triangle.first.p3_idx, TYPE1);
+
+          covered_triangle.emplace_back();
+          covered_triangle.emplace_back();
+          covered_triangle.emplace_back();
+          addCoveredTriangle(triangle.first.p1_idx, b_idx, d_idx, t1_idx);
+          addCoveredTriangle(b_idx, d_idx, e_idx, t2_idx);
+          addCoveredTriangle(b_idx, triangle.first.p2_idx, e_idx, t3_idx);
+          addCoveredTriangle(d_idx, e_idx, triangle.first.p3_idx, t4_idx);
+
+          previousDivideFlag[results[i].triangle_index] = false;
+          previousDivideFlag.emplace_back(true);
+          previousDivideFlag.emplace_back(true);
+          previousDivideFlag.emplace_back(true);
+          previousDivideFlag.emplace_back(true);
+        }else{
+          previousDivideFlag[results[i].triangle_index] = false;
+        }
+      } else if (results[i].type == TYPE2) {
+        if (diff > divide_th) {
+          std::cout << "divide!"<< std::endl;
+          std::pair<Triangle, int> triangle = std::make_pair(results[i].triangle, results[i].type);
+
+          cv::Point2f p1 = corners[triangle.first.p1_idx];
+          cv::Point2f p2 = corners[triangle.first.p2_idx];
+          cv::Point2f p3 = corners[triangle.first.p3_idx];
+
+          cv::Point2f x = (p2 - p3) / 2.0;
+          cv::Point2f y = (p1 - p3) / 2.0;
+
+          std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
+          cv::Point2f a = corners[triangle.first.p1_idx];
+          cv::Point2f b = corners[triangle.first.p3_idx] + x + y;
+          cv::Point2f c = corners[triangle.first.p3_idx] + y;
+          cv::Point2f d = corners[triangle.first.p2_idx];
+          cv::Point2f e = corners[triangle.first.p3_idx] + x;
+          cv::Point2f f = corners[triangle.first.p3_idx];
+
+          int b_idx = corner_flag[(int) b.y][(int) b.x];
+          if (b_idx == -1) {
+            corners.push_back(b);
+            b_idx = static_cast<int>(corners.size() - 1);
+            corner_flag[(int) b.y][(int) b.x] = b_idx;
+          }
+
+          int c_idx = corner_flag[(int) c.y][(int) c.x];
+          if (c_idx == -1) {
+            corners.push_back(c);
+            c_idx = static_cast<int>(corners.size() - 1);
+            corner_flag[(int) c.y][(int) c.x] = c_idx;
+          }
+
+          int e_idx = corner_flag[(int) e.y][(int) e.x];
+          if (e_idx == -1) {
+            corners.push_back(e);
+            e_idx = static_cast<int>(corners.size() - 1);
+            corner_flag[(int) e.y][(int) e.x] = e_idx;
+          }
+
+          int t1_idx = insertTriangle(triangle.first.p1_idx, b_idx, c_idx, TYPE2);
+          int t2_idx = insertTriangle(b_idx, triangle.first.p2_idx, e_idx, TYPE2);
+          int t3_idx = insertTriangle(b_idx, c_idx, e_idx, TYPE1);
+          int t4_idx = insertTriangle(c_idx, e_idx, triangle.first.p3_idx, TYPE2);
+
+          neighbor_vtx[triangle.first.p1_idx].erase(triangle.first.p2_idx);
+          neighbor_vtx[triangle.first.p1_idx].erase(triangle.first.p3_idx);
+          neighbor_vtx[triangle.first.p2_idx].erase(triangle.first.p1_idx);
+          neighbor_vtx[triangle.first.p2_idx].erase(triangle.first.p3_idx);
+          neighbor_vtx[triangle.first.p3_idx].erase(triangle.first.p1_idx);
+          neighbor_vtx[triangle.first.p3_idx].erase(triangle.first.p2_idx);
+
+          covered_triangle[triangle.first.p1_idx].erase(results[i].triangle_index);
+          covered_triangle[triangle.first.p2_idx].erase(results[i].triangle_index);
+          covered_triangle[triangle.first.p3_idx].erase(results[i].triangle_index);
+
+          neighbor_vtx.emplace_back();
+          neighbor_vtx.emplace_back();
+          neighbor_vtx.emplace_back();
+          addNeighborVertex(triangle.first.p1_idx, b_idx, c_idx, TYPE2);
+          addNeighborVertex(b_idx, triangle.first.p2_idx, e_idx, TYPE2);
+          addNeighborVertex(b_idx, c_idx, e_idx, TYPE1);
+          addNeighborVertex(c_idx, e_idx, triangle.first.p3_idx, TYPE2);
+
+          covered_triangle.emplace_back();
+          covered_triangle.emplace_back();
+          covered_triangle.emplace_back();
+          addCoveredTriangle(triangle.first.p1_idx, b_idx, c_idx, t1_idx);
+          addCoveredTriangle(b_idx, triangle.first.p2_idx, e_idx, t2_idx);
+          addCoveredTriangle(b_idx, c_idx, e_idx, t3_idx);
+          addCoveredTriangle(c_idx, e_idx, triangle.first.p3_idx, t4_idx);
+
+          previousDivideFlag[results[i].triangle_index] = false;
+          previousDivideFlag.emplace_back(true);
+          previousDivideFlag.emplace_back(true);
+          previousDivideFlag.emplace_back(true);
+          previousDivideFlag.emplace_back(true);
+        }else{
+          previousDivideFlag[results[i].triangle_index] = false;
+        }
+      } else if (results[i].type == TYPE3) {
+        // TODO: あとで書く
+      } else if (results[i].type == TYPE4) {
+        // TODO: あとで書く
+      }
+
+      numerator++;
+      std::cout << "subdiv: "<< numerator << "/" << denominator << std::endl;
+    }
+  }
 
 }
