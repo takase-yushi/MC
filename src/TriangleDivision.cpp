@@ -293,11 +293,10 @@ std::vector<Triangle> TriangleDivision::getIdxCoveredTriangleIndexList(int idx) 
  * @brief 三角パッチの再分割を行う
  * @param[in] gaussRefImage ガウスニュートン法の第1層目の画像
  */
-void TriangleDivision::subdivision(cv::Mat gaussRefImage) {
-  std::queue<std::pair<Triangle, int> > targetTriangleQueue;
-
-  // initで分割された三角パッチはすべて入れる
-  for(const auto triangle : triangles) targetTriangleQueue.emplace(triangle);
+void TriangleDivision::subdivision(cv::Mat gaussRefImage, int steps) {
+  // 一つ前に分割されている場合、更に分割すればよいが
+  // 分割されていないのであればこれ以上分割する必要はない
+  std::vector<bool> previousDivideFlag(triangles.size(), true);
 
   for(int step = 0 ; step < steps ; step++) {
     std::vector<GaussResult> results(triangles.size());

@@ -59,7 +59,7 @@ public:
     std::vector<Point3Vec> getIdxCoveredTriangleCoordinateList(int idx);
     std::vector<Triangle> getIdxCoveredTriangleIndexList(int idx);
 
-    void subdivision(cv::Mat gaussRefImage);
+    void subdivision(cv::Mat gaussRefImage, int steps);
 
 
     class GaussResult{
