@@ -46,9 +46,9 @@ std::vector<cv::Point2f> warping(const cv::Mat& prev_color, const cv::Mat& curre
 double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,const cv::Mat& intra,
                                       Point3Vec target_corners, Point3Vec& ref_corners,int &triangle_size);
 
-std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& current_color,const cv::Mat& intra,std::vector<cv::Mat>& predict_buf,cv::Mat&predict_warp,cv::Mat&predict_para,cv::Mat& color,
-                                       double &error_warp, Point3Vec target_corners, Point3Vec& ref_corners, std::ofstream &tri_list,
-                                       bool *flag,std::vector<cv::Point2f> &add_corners,int &add_count,int t,const cv::Mat& residual_ref,int& in_triangle_size,bool add_corner_flag,double erase_th_global);
+std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& current_color,const cv::Mat& intra,std::vector<cv::Mat>& predict_buf,cv::Mat&predict_warp,cv::Mat&predict_para,
+                                       double &error_warp, Point3Vec target_corners, Point3Vec& ref_corners,
+                                       bool *flag,int t,const cv::Mat& residual_ref,int& in_triangle_size,double erase_th_global);
 
 std::vector<cv::Point2i> Gauss_Golomb(Triangle triangle, bool *flag, std::vector<cv::Point2i> &ev, std::vector<cv::Point2f> corners, DelaunayTriangulation md,std::vector<cv::Point2i> mv,const cv::Mat& target,const cv::Mat& targetx8,bool &para_flag);
 /**

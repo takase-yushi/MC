@@ -233,7 +233,7 @@ int main(int argc, char *argv[]) {
         TriangleDivision triangle_division(ref_image, target_image);
         triangle_division.initTriangle(block_size_x, block_size_y);
 
-        triangle_division.subdivision(cv::imread(ref_file_path), 3);
+        triangle_division.subdivision(cv::imread(ref_file_path), 2);
         std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
         std::cout << "triangles.size():" << triangles.size() << std::endl;
 
@@ -244,7 +244,7 @@ int main(int argc, char *argv[]) {
           for(const auto& triangle : triangles) {
             drawTriangle(triangles_debug, triangle.p1, triangle.p2, triangle.p3, cv::Scalar(255, 255, 255));
           }
-          cv::imwrite(img_directory + "/triangles_step3.png", triangles_debug);
+          cv::imwrite(img_directory + "/triangles_step2.png", triangles_debug);
 
           std::vector<Point3Vec> covered_triangles = triangle_division.getIdxCoveredTriangleCoordinateList(corners.size() / 2 + 100 + k);
           for(const auto& triangle : covered_triangles) {
@@ -253,13 +253,9 @@ int main(int argc, char *argv[]) {
           }
           drawPoint(triangles_debug, corners[corners.size() / 2 + 100 + k], BLUE, 4);
 
-          cv::imwrite(img_directory + "/triangles_step3_" + std::to_string(100 + k) + ".png", triangles_debug);
+          cv::imwrite(img_directory + "/triangles_step2_" + std::to_string(100 + k) + ".png", triangles_debug);
         }
 
-
-
-
-        exit(0);
         cv::Mat color = cv::Mat::zeros(target_image.size(),CV_8UC3);
         cv::Mat predict_img0 = cv::Mat::zeros(targetx8.size(), CV_8UC3);
         cv::Mat predict_img1 = cv::Mat::zeros(targetx4.size(), CV_8UC3);
@@ -1855,7 +1851,6 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
     std::ofstream tri_list;
     std::ofstream mv_list = std::ofstream("mv_list.csv");
     int basis_mv_tmp_x = 0,basis_mv_tmp_y = 0,sabun_mv_tmp_x = 0,sabun_mv_tmp_y = 0;
-    bool para_flag = false;
 
     tri_list = std::ofstream("tri_list.csv");
 
@@ -1896,15 +1891,18 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
     cv::Mat parallel_flag_img_color = target.clone();
 
 #pragma omp parallel for
-    // 基準ベクトル以外のベクトルを符号化
+    // 基準ベクトル以外のベ   クトルを符号化
     for (int t = 0; t < (int) triangles.size(); t++) { // NOLINT
-        tri_list << "triangle[" << t << "], ";
+
+//        tri_list << "triangle[" << t << "], ";
 
         Triangle triangle = triangles[t];
 
+//        std::cout << triangle.p1_idx << " " << triangle.p2_idx << " " << triangle.p3_idx << std::endl;
+//        std::cout << corners[triangle.p1_idx] << " " << corners[triangle.p2_idx] << " " << corners[triangle.p3_idx] << std::endl;
+
         // 良い方法を選んで貼り付け
         double error_warp;
-        cv::Point2f mv_block;
         Point3Vec triangleVec(corners[triangle.p1_idx], corners[triangle.p2_idx], corners[triangle.p3_idx]);
 
         // ガウスニュートン法による変形
@@ -1915,12 +1913,20 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
         std::vector<Triangle> triangles_tmp;
         int in_triangle_size;
 
+
         // para_flag == trueなら平行移動
         // add_corner: 追加候補の頂点
-        std::vector<cv::Point2i> mv = Gauss_Newton2(ref, target, intra, predict_buf, predict_warp, predict_para, color,
-                                                    error_warp, triangleVec, prev_corners, tri_list, &para_flag,
-                                                    add_corner, add_count, t, residual_ref, in_triangle_size, false, erase_th_global);
+//        Gauss_Newton(ref, target, intra, triangleVec, prev_corners, in_triangle_size);
+//        std::vector<cv::Point2i> mv;
+        bool para_flag = false;
+        std::vector<cv::Point2i> mv = Gauss_Newton2(ref, target, intra, predict_buf, predict_warp, predict_para,
+                                                    error_warp, triangleVec, prev_corners, &para_flag,
+                                                    t, residual_ref, in_triangle_size, erase_th_global);
         double MSE_prev = error_warp / (double) in_triangle_size;
+        numerator++;
+        std::cout << numerator << "/" << denominator << std::endl;
+        continue;
+
 
         // 並行移動のみ塗る
         if(para_flag) {
@@ -1980,9 +1986,9 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
 
                 int triangle_later_size;
                 // add_countは足した頂点の数らしい(ループで共有)
-                Gauss_Newton2(ref, target, intra, predict_buf_dummy, predict_warp, predict_para, color, error_warp,
-                         triangleVec_later, prev_corners, tri_list, &para_flag, add_corner, add_count, t,
-                              residual_ref, triangle_later_size, false,erase_th_global);
+                Gauss_Newton2(ref, target, intra, predict_buf_dummy, predict_warp, predict_para, error_warp,
+                         triangleVec_later, prev_corners, &para_flag, t,
+                              residual_ref, triangle_later_size,erase_th_global);
                 MSE_later += error_warp;
                 triangle_size_sum_later += triangle_later_size;
             }
