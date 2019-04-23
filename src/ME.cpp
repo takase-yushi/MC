@@ -1222,25 +1222,30 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
     else target_corner.p3.x /= 8;
     if(target_corners.p3.y == f_[0][3].rows - 1)target_corner.p3.y = f_[0][3].rows / 8 -1;
     else target_corner.p3.y /= 8;
-for(int blare = 0;blare < 2;blare++) {
-    cv::Point2f v0(0.0, 0.0), v1(0.0, 0.0), v2(0.0, 0.0);
-    v.clear();
-    v.emplace_back(v0);
-    v.emplace_back(v1);
-    v.emplace_back(v2);
-    v_para.x = 0;
-    v_para.y = 0;
-    v_para_max.x = 0;
-    v_para_max.y = 0;
-    p0 = target_corners.p1;
-    p1 = target_corners.p2;
-    p2 = target_corners.p3;
-    for (int z = 0; z < 4; z++) {
-/*
-        if(z == 2){
-            for (int s = 0; s < 3; s++) {
-                v[s].x = 0;
-                v[s].y = 0;
+
+    for(int blare = 0;blare < 2;blare++) {
+        cv::Point2f v0(0.0, 0.0), v1(0.0, 0.0), v2(0.0, 0.0);
+        v.clear();
+        v.emplace_back(v0);
+        v.emplace_back(v1);
+        v.emplace_back(v2);
+        v_para.x = 0;
+        v_para.y = 0;
+        v_para_max.x = 0;
+        v_para_max.y = 0;
+        p0 = target_corners.p1;
+        p1 = target_corners.p2;
+        p2 = target_corners.p3;
+        for (int z = 0; z < 4; z++) {
+            cv::Point2f aaa = target_corners.p2 - target_corners.p1;
+            cv::Point2f bbb = target_corners.p3 - target_corners.p2;
+            if(aaa.x == 32 || bbb.x == 32) {
+                for(int vectors = 0 ; vectors < v.size() ; vectors++) {
+                    v[vectors].x = 0.0; v[vectors].y = 0.0;
+                }
+                v_para.x = 0.0; v_para.y = 0.0;
+                puts("hoge");
+                continue;
             }
 
             if(z == 0 && blare == 0){
