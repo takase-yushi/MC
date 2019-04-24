@@ -525,9 +525,24 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
             triangle.emplace_back(p2);
 
             for (int s = 0; s < 3; s++) {
-                if (z != 0)v[s] *= 2;//上の階層で求めた動きベクトルを2倍して初期ベクトルとする
+                if (z != 0 && (p0.x + v[s].x * 2 >= 0 && p0.x + v[s].x * 2 <= f_img.cols - 1) &&
+                    (p1.x + v[s].x * 2 >= 0 && p1.x + v[s].x * 2 <= f_img.cols - 1) &&
+                    (p2.x + v[s].x * 2 >= 0 && p2.x + v[s].x * 2 <= f_img.cols - 1) &&
+                    (p0.y + v[s].y * 2 >= 0 && p0.y + v[s].y * 2 <= f_img.rows - 1) &&
+                    (p1.y + v[s].y * 2 >= 0 && p1.y + v[s].y * 2 <= f_img.rows - 1) &&
+                    (p2.y + v[s].y * 2 >= 0 && p2.y + v[s].y * 2 <= f_img.rows - 1)) {
+                    v[s] *= 2;
+                }
+
             }
-            if(z != 0)v_para *= 2;
+            if(z != 0 && (p0.x + v_para.x * 2 >= 0 && p0.x + v_para.x * 2 <= f_img.cols - 1) &&
+               (p1.x + v_para.x * 2 >= 0 && p1.x + v_para.x * 2 <= f_img.cols - 1) &&
+               (p2.x + v_para.x * 2 >= 0 && p2.x + v_para.x * 2 <= f_img.cols - 1) &&
+               (p0.y + v_para.y * 2 >= 0 && p0.y + v_para.y * 2 <= f_img.rows - 1) &&
+               (p1.y + v_para.y * 2 >= 0 && p1.y + v_para.y * 2 <= f_img.rows - 1) &&
+               (p2.y + v_para.y * 2 >= 0 && p2.y + v_para.y * 2 <= f_img.rows - 1)) {
+                v_para *= 2;
+            }
 
             v_stack.clear();
             v_stack_para.clear();
@@ -1342,13 +1357,25 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
 
 
             for (int s = 0; s < 3; s++) {
-                if (z != 0) {
+                if (z != 0 && (p0.x + v[s].x * 2 >= 0 && p0.x + v[s].x * 2 <= f_img.cols - 1) &&
+                              (p1.x + v[s].x * 2 >= 0 && p1.x + v[s].x * 2 <= f_img.cols - 1) &&
+                              (p2.x + v[s].x * 2 >= 0 && p2.x + v[s].x * 2 <= f_img.cols - 1) &&
+                              (p0.y + v[s].y * 2 >= 0 && p0.y + v[s].y * 2 <= f_img.rows - 1) &&
+                              (p1.y + v[s].y * 2 >= 0 && p1.y + v[s].y * 2 <= f_img.rows - 1) &&
+                              (p2.y + v[s].y * 2 >= 0 && p2.y + v[s].y * 2 <= f_img.rows - 1)) {
                     v[s] *= 2;
                 }
+
             }
-            if(z != 0) {
+            if(z != 0 && (p0.x + v_para.x * 2 >= 0 && p0.x + v_para.x * 2 <= f_img.cols - 1) &&
+                         (p1.x + v_para.x * 2 >= 0 && p1.x + v_para.x * 2 <= f_img.cols - 1) &&
+                         (p2.x + v_para.x * 2 >= 0 && p2.x + v_para.x * 2 <= f_img.cols - 1) &&
+                         (p0.y + v_para.y * 2 >= 0 && p0.y + v_para.y * 2 <= f_img.rows - 1) &&
+                         (p1.y + v_para.y * 2 >= 0 && p1.y + v_para.y * 2 <= f_img.rows - 1) &&
+                         (p2.y + v_para.y * 2 >= 0 && p2.y + v_para.y * 2 <= f_img.rows - 1)) {
                 v_para *= 2;
             }
+
 
             v_stack.clear();
             v_stack_para.clear();
@@ -1606,6 +1633,12 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                         d_y_later = X_later.y - y0_later;
                         d_x_later_para = X_later_para.x - x0_later_para;
                         d_y_later_para = X_later_para.y - y0_later_para;
+                        if(x0_later < 0 || x0_later > f_img.cols - 1 || y0_later < 0 || y0_later > f_img.rows -1) {
+                            std::cout << "x0_later = " << x0_later << " y0_later = " << y0_later << std::endl;
+                        }
+                        if(x0_later_para < 0 || x0_later_para > f_img.cols - 1 || y0_later_para < 0 || y0_later_para > f_img.rows -1) {
+                            std::cout << "x0_later_para = " << x0_later_para << " y0_later_para = " << y0_later_para << std::endl;
+                        }
 
                         f = f_expand[x0][y0] * (1 - d_x) * (1 - d_y) + f_expand[x0 + 1][y0] * d_x * (1 - d_y) +
                             f_expand[x0][y0 + 1] * (1 - d_x) * d_y + f_expand[x0 + 1][y0 + 1] * d_x * d_y;
