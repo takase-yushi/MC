@@ -1737,15 +1737,24 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                     }
                     for (int k = 0; k < 2; k++) {
                         if (k % 2 == 0) {
-                            if ((0 <= triangle[(int) (k / 2)].x + v_para.x + delta_uv.at<double>(k, 0)) &&
-                                (f_[0][z].cols - 1 >=
-                                 triangle[(int) (k / 2)].x + v_para.x + delta_uv.at<double>(k, 0))) {
+                            if ((0 <= triangle[0].x + v_para.x + delta_uv_para.at<double>(k, 0)) &&
+                                (f_[0][z].cols - 1 >= triangle[0].x + v_para.x + delta_uv_para.at<double>(k, 0)) &&
+                                 (0 <= triangle[1].x + v_para.x + delta_uv_para.at<double>(k, 0)) &&
+                                (f_[0][z].cols - 1 >=triangle[1].x + v_para.x + delta_uv_para.at<double>(k, 0)) &&
+                                 (0 <= triangle[2].x + v_para.x + delta_uv_para.at<double>(k, 0)) &&
+                                (f_[0][z].cols - 1 >= triangle[2].x + v_para.x + delta_uv_para.at<double>(k, 0))) {
                                 v_para.x = v_para.x + delta_uv_para.at<double>(k, 0);
                             }
                         } else {
-                            if ((0 <= triangle[(int) (k / 2)].y + v_para.y + delta_uv.at<double>(k, 0)) &&
+                            if ((0 <= triangle[0].y + v_para.y + delta_uv_para.at<double>(k, 0)) &&
                                 (f_[0][z].rows - 1 >=
-                                 triangle[(int) (k / 2)].y + v_para.y + delta_uv.at<double>(k, 0))) {
+                                 triangle[0].y + v_para.y + delta_uv_para.at<double>(k, 0)) &&
+                                 (0 <= triangle[1].y + v_para.y + delta_uv_para.at<double>(k, 0)) &&
+                                (f_[0][z].rows - 1 >=
+                                 triangle[1].y + v_para.y + delta_uv_para.at<double>(k, 0)) &&
+                                 (0 <= triangle[2].y + v_para.y + delta_uv_para.at<double>(k, 0)) &&
+                                (f_[0][z].rows - 1 >=
+                                 triangle[2].y + v_para.y + delta_uv_para.at<double>(k, 0))){
                                 v_para.y = v_para.y + delta_uv_para.at<double>(k, 0);
                             }
                         }
