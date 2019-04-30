@@ -86,11 +86,8 @@ private:
     std::vector<std::set<int> > covered_triangle;
     std::vector<std::vector<int> > corner_flag;
 
-    void insertTriangle(Point3Vec triangle, int type);
-    void insertTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type);
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
-    void insertTriangle(float x1, float y1, float x2, float y2, float x3, float y3, int type);
-    void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int divide_flag);
+    void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
     void addCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_no);
 
 
