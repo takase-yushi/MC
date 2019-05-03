@@ -233,7 +233,7 @@ int main(int argc, char *argv[]) {
         TriangleDivision triangle_division(ref_image, target_image);
         triangle_division.initTriangle(block_size_x, block_size_y);
 
-        triangle_division.subdivision(cv::imread(ref_file_path), 2);
+        triangle_division.subdivision(cv::imread(ref_file_path), 3);
         std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
         std::cout << "triangles.size():" << triangles.size() << std::endl;
 
@@ -244,7 +244,7 @@ int main(int argc, char *argv[]) {
           for(const auto& triangle : triangles) {
             drawTriangle(triangles_debug, triangle.p1, triangle.p2, triangle.p3, cv::Scalar(255, 255, 255));
           }
-          cv::imwrite(img_directory + "/triangles_step2.png", triangles_debug);
+          cv::imwrite(img_directory + "/triangles_step3.png", triangles_debug);
 
           std::vector<Point3Vec> covered_triangles = triangle_division.getIdxCoveredTriangleCoordinateList(corners.size() / 2 + 100 + k);
           for(const auto& triangle : covered_triangles) {
@@ -253,7 +253,7 @@ int main(int argc, char *argv[]) {
           }
           drawPoint(triangles_debug, corners[corners.size() / 2 + 100 + k], BLUE, 4);
 
-          cv::imwrite(img_directory + "/triangles_step2_" + std::to_string(100 + k) + ".png", triangles_debug);
+          cv::imwrite(img_directory + "/triangles_step3_" + std::to_string(100 + k) + ".png", triangles_debug);
         }
 
         cv::Mat color = cv::Mat::zeros(target_image.size(),CV_8UC3);
@@ -1439,12 +1439,10 @@ int main(int argc, char *argv[]) {
                 }
             }
             md.getTriangleList(triangles_mydelaunay);
-            for(const cv::Vec6f t : triangles_mydelaunay){
-                cv::Point2f p1(t[0], t[1]), p2(t[2], t[3]), p3(t[4], t[5]);
-                //drawTriangle(corner_reduction, p1, p2, p3, BLUE);
-                drawTriangle(residual, p1, p2, p3, RED);
+            for(const Point3Vec &t : triangle_division.getTriangleCoordinateList()){
+                drawTriangle(residual, t.p1, t.p2, t.p3, RED);
             }
-//            cv::imwrite(file_path + img_path + "residual.png",residual);
+            cv::imwrite(file_path + img_path + "residual.png",residual);
             std::cout << "check point 4" << std::endl;
             double psnr_1;
             printf("%s's PSNR:%f\n", outFilePath.c_str(), (psnr_1 = getPSNR(target_image, out)));
