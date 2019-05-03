@@ -31,18 +31,64 @@
  *     *              |
  *  ------------------|
  *
- *  TYPE3の分割
+ * TYPE3の分割
  *    -----------------
  *     *              |
  *         *          |
  *             *      |
  *                *   |
  *                    |
+ * TYPE4の分割
+ *
+ *    | *
+ *    |     *
+ *    |        *
+ *    |            *
+ *    ----------------|
+ *
+ * TYPE5の分割
+ *  ------------------
+ *   *             *
+ *     *         *
+ *        *   *
+ *          *
+ *
+ * TYPE6の分割
+ *  |*
+ *  |  *
+ *  |     *
+ *  |        *
+ *  |     *
+ *  |  *
+ *  |*
+ *
+ * TYPE7の分割
+ *           *
+ *        *     *
+ *      *         *
+ *   *              *
+ *  ------------------
+ *
+ * TYPE8の分割
+ *                 |
+ *              *  |
+ *           *     |
+ *         *       |
+ *           *     |
+ *              *  |
+ *                 |
  */
-#define TYPE1 0
-#define TYPE2 1
-#define TYPE3 2
-#define TYPE4 3
+
+enum DIVIDE {
+    TYPE1,
+    TYPE2,
+    TYPE3,
+    TYPE4,
+    TYPE5,
+    TYPE6,
+    TYPE7,
+    TYPE8
+};
 
 class TriangleDivision {
 
@@ -56,7 +102,7 @@ public:
     std::vector<cv::Point2f> getNeighborVertexCoordinateList(int idx);
     double getDistance(const cv::Point2f &a, const cv::Point2f &b);
 
-    std::vector<Point3Vec> getIdxCoveredTriangleCoordinateList(int idx);
+    std::vector<Point3Vec> getIdxCoveredTriangleCoordinateList(int target_vertex_idx);
     std::vector<Triangle> getIdxCoveredTriangleIndexList(int idx);
 
     void subdivision(cv::Mat gaussRefImage, int steps);
@@ -86,14 +132,12 @@ private:
     std::vector<std::set<int> > covered_triangle;
     std::vector<std::vector<int> > corner_flag;
 
-    void insertTriangle(Point3Vec triangle, int type);
-    void insertTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type);
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
-    void insertTriangle(float x1, float y1, float x2, float y2, float x3, float y3, int type);
-    void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int divide_flag);
+    void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
     void addCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_no);
-
-
+    void removeTriangleNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
+    void removeTriangleCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_idx);
+    int addCorner(cv::Point2f p);
 
 };
 
