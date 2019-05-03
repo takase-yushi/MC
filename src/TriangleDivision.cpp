@@ -269,15 +269,15 @@ std::vector<cv::Point2f> TriangleDivision::getNeighborVertexCoordinateList(int i
 /**
  * @fn std::vector<Point3Vec> TriangleDivision::getIdxCoveredTriangleCoordinateList(int idx)
  * @brief 指定された頂点が含まれる三角形の集合を返す
- * @param[in] idx 頂点のインデックス
+ * @param[in] target_vertex_idx 頂点のインデックス
  * @return 三角形の集合(座標で返される)
  */
-std::vector<Point3Vec> TriangleDivision::getIdxCoveredTriangleCoordinateList(int idx) {
-  std::set<int> s = covered_triangle[idx];
+std::vector<Point3Vec> TriangleDivision::getIdxCoveredTriangleCoordinateList(int target_vertex_idx) {
+  std::set<int> s = covered_triangle[target_vertex_idx];
   std::vector<Point3Vec> v;
-  std::cout << corners[idx] << std::endl;
-  for(auto idx : s) {
-    Triangle triangle = triangles[idx].first;
+
+  for(auto triangle_idx : s) {
+    Triangle triangle = triangles[triangle_idx].first;
     v.emplace_back(corners[triangle.p1_idx], corners[triangle.p2_idx], corners[triangle.p3_idx]);
   }
 
