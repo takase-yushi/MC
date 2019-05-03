@@ -294,6 +294,47 @@ std::vector<Triangle> TriangleDivision::getIdxCoveredTriangleIndexList(int idx) 
 }
 
 /**
+ * @fn void TriangleDivision::removeTriangleNeighborVertex(int p1_idx, int p2_idx, int p3_idx)
+ * @brief 指定された三角形に含まれる頂点隣接ノード集合から、自分以外のノードを消す
+ * @details 日本語が難しいからコードで理解して
+ * @param p1_idx
+ * @param p2_idx
+ * @param p3_idx
+ */
+void TriangleDivision::removeTriangleNeighborVertex(int p1_idx, int p2_idx, int p3_idx) {
+    neighbor_vtx[p1_idx].erase(p2_idx);
+    neighbor_vtx[p1_idx].erase(p3_idx);
+    neighbor_vtx[p2_idx].erase(p1_idx);
+    neighbor_vtx[p2_idx].erase(p3_idx);
+    neighbor_vtx[p3_idx].erase(p1_idx);
+    neighbor_vtx[p3_idx].erase(p2_idx);
+}
+
+/**
+ * @fn void TriangleDivision::removeTriangleCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_idx)
+ * @brief p1, p2, p3を含む三角形の集合から, triangle_idx番目の三角形を消す
+ * @param p1_idx 頂点1のインデックス
+ * @param p2_idx 頂点2のインデックス
+ * @param p3_idx 頂点3のインデックス
+ * @param triangle_idx 削除対象の三角形のインデックス
+ */
+void TriangleDivision::removeTriangleCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_idx) {
+    covered_triangle[p1_idx].erase(triangle_idx);
+    covered_triangle[p2_idx].erase(triangle_idx);
+    covered_triangle[p3_idx].erase(triangle_idx);
+}
+
+/**
+ * @fn int TriangleDivision::addCorner()
+ * @param[in] p 追加する頂点の座標
+ * @return 頂点番号を返す
+ */
+int TriangleDivision::addCorner(cv::Point2f p) {
+    corners.emplace_back(p);
+    neighbor_vtx.emplace_back();
+}
+
+/**
  * @fn void TriangleDivision::subdivision()
  * @brief 三角パッチの再分割を行う
  * @param[in] gaussRefImage ガウスニュートン法の第1層目の画像
@@ -581,11 +622,6 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage, int steps) {
           previousDivideFlag.emplace_back(true);
         }else{
           previousDivideFlag[results[i].triangle_index] = false;
-        }
-      } else if (results[i].type == TYPE3) {
-        // TODO: あとで書く
-      } else if (results[i].type == TYPE4) {
-        // TODO: あとで書く
       }
 
       numerator++;
@@ -594,3 +630,4 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage, int steps) {
   }
 
 }
+

@@ -102,7 +102,7 @@ public:
     std::vector<cv::Point2f> getNeighborVertexCoordinateList(int idx);
     double getDistance(const cv::Point2f &a, const cv::Point2f &b);
 
-    std::vector<Point3Vec> getIdxCoveredTriangleCoordinateList(int idx);
+    std::vector<Point3Vec> getIdxCoveredTriangleCoordinateList(int target_vertex_idx);
     std::vector<Triangle> getIdxCoveredTriangleIndexList(int idx);
 
     void subdivision(cv::Mat gaussRefImage, int steps);
@@ -135,8 +135,9 @@ private:
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
     void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
     void addCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_no);
-
-
+    void removeTriangleNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
+    void removeTriangleCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_idx);
+    int addCorner(cv::Point2f p);
 
 };
 
