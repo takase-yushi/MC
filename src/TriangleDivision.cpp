@@ -333,6 +333,7 @@ void TriangleDivision::removeTriangleCoveredTriangle(int p1_idx, int p2_idx, int
 int TriangleDivision::addCorner(cv::Point2f p) {
     corners.emplace_back(p);
     neighbor_vtx.emplace_back();
+    return corners.size();
 }
 
 /**
