@@ -353,8 +353,6 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage, int steps) {
     int denominator = triangles.size();
     int numerator = 0;
 
-    const double divide_th = 0.05;
-
     std::cout << "triangles.size(): " << triangles.size() << std::endl;
     std::cout << "results.size():" << results.size() << std::endl;
     std::cout << "previousDivideFlag.size():" << previousDivideFlag.size() << std::endl;
@@ -383,75 +381,254 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage, int steps) {
       triangle_size = 0;
       int triangle_size_sum = 0;
 
-      // 三角形を分割し，その結果でRMSEを見る
-      if (triangle.second == TYPE1) {
-        // 縦横それぞれ1/2したものを作る
-        cv::Point2f x = (p2 - p1) / 2; // x-axis
-        cv::Point2f y = (p3 - p1) / 2; // y-axis
+      switch(triangle.second) {
+          case DIVIDE::TYPE1:
+              {
+                  cv::Point2f p1 = corners[triangle.first.p1_idx];
+                  cv::Point2f p2 = corners[triangle.first.p2_idx];
+                  cv::Point2f p3 = corners[triangle.first.p3_idx];
 
-        cv::Point2f a = corners[triangle.first.p1_idx];
-        cv::Point2f b = a + x;
-        cv::Point2f c = corners[triangle.first.p2_idx];
-        cv::Point2f d = a + y;
-        cv::Point2f e = d + x;
-        cv::Point2f f = corners[triangle.first.p3_idx];
+                  cv::Point2f x = (p2 - p1) / 2.0;
+                  cv::Point2f y = (p3 - p1) / 2.0;
 
-        std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
-        subdiv_ref_triangles.emplace_back(a, b, d);
-        subdiv_target_triangles.emplace_back(a, b, d);
-        subdiv_ref_triangles.emplace_back(b, c, e);
-        subdiv_target_triangles.emplace_back(b, c, e);
-        subdiv_ref_triangles.emplace_back(b, d, e);
-        subdiv_target_triangles.emplace_back(b, d, e);
-        subdiv_ref_triangles.emplace_back(d, e, f);
-        subdiv_target_triangles.emplace_back(d, e, f);
+                  cv::Point2f a = p1;
+                  cv::Point2f b = p2;
+                  cv::Point2f c = a + x + y;
+                  cv::Point2f d = p3;
 
-        for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
-          RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
-                                            subdiv_ref_triangles[j], triangle_size);
-          triangle_size_sum += triangle_size;
-        }
+                  std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
+                  subdiv_ref_triangles.emplace_back(a, b, c);
+                  subdiv_target_triangles.emplace_back(a, b, c);
+                  subdiv_ref_triangles.emplace_back(a, c, d);
+                  subdiv_target_triangles.emplace_back(a, c, d);
 
-        RMSE_after_subdiv /= (double) triangle_size_sum;
-        std::cout << "before:" << RMSE_before_subdiv << " after:" << RMSE_after_subdiv << std::endl;
-        results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
-      } else if (triangle.second == TYPE2) {
-        cv::Point2f x = (p2 - p3) / 2.0;
-        cv::Point2f y = (p1 - p3) / 2.0;
+                  for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
+                      RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
+                                                        subdiv_ref_triangles[j], triangle_size);
+                      triangle_size_sum += triangle_size;
+                  }
 
-        std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
-        cv::Point2f a = corners[triangle.first.p1_idx];
-        cv::Point2f b = corners[triangle.first.p3_idx] + x + y;
-        cv::Point2f c = corners[triangle.first.p3_idx] + y;
-        cv::Point2f d = corners[triangle.first.p2_idx];
-        cv::Point2f e = corners[triangle.first.p3_idx] + x;
-        cv::Point2f f = corners[triangle.first.p3_idx];
+                  RMSE_after_subdiv /= (double) triangle_size_sum;
+                  results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
+              }
+              break;
+          case TYPE2:
+              {
+                  cv::Point2f p1 = corners[triangle.first.p1_idx];
+                  cv::Point2f p2 = corners[triangle.first.p2_idx];
+                  cv::Point2f p3 = corners[triangle.first.p3_idx];
 
-        subdiv_ref_triangles.emplace_back(a, b, c);
-        subdiv_ref_triangles.emplace_back(b, d, e);
-        subdiv_ref_triangles.emplace_back(b, c, e);
-        subdiv_ref_triangles.emplace_back(c, e, f);
+                  cv::Point2f x = (p2 - p3) / 2.0;
+                  cv::Point2f y = (p1 - p3) / 2.0;
 
-        subdiv_target_triangles.emplace_back(b, d, e);
-        subdiv_target_triangles.emplace_back(a, b, c);
-        subdiv_target_triangles.emplace_back(b, c, e);
-        subdiv_target_triangles.emplace_back(c, e, f);
+                  cv::Point2f a = p1;
+                  cv::Point2f b = p3 + x + y;
+                  cv::Point2f c = p2;
+                  cv::Point2f d = p3;
 
-        for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
-          RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
-                                            subdiv_ref_triangles[j], triangle_size);
-          triangle_size_sum += triangle_size;
-        }
+                  std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
+                  subdiv_ref_triangles.emplace_back(a, b, d);
+                  subdiv_target_triangles.emplace_back(a, b, d);
+                  subdiv_ref_triangles.emplace_back(b, c, d);
+                  subdiv_target_triangles.emplace_back(b, c, d);
 
-        RMSE_after_subdiv /= triangle_size_sum;
+                  for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
+                      RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
+                                                        subdiv_ref_triangles[j], triangle_size);
+                      triangle_size_sum += triangle_size;
+                  }
 
-        results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
+                  RMSE_after_subdiv /= (double) triangle_size_sum;
+                  results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
+              }
+              break;
+          case TYPE3:
+              {
+                  cv::Point2f p1 = corners[triangle.first.p1_idx];
+                  cv::Point2f p2 = corners[triangle.first.p2_idx];
+                  cv::Point2f p3 = corners[triangle.first.p3_idx];
+
+                  cv::Point2f x = (p1 - p2) / 2.0;
+                  cv::Point2f y = (p3 - p2) / 2.0;
+
+                  cv::Point2f a = p1;
+                  cv::Point2f b = p2;
+                  cv::Point2f c = p2 + x + y;
+                  cv::Point2f d = p3;
+
+                  std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
+                  subdiv_ref_triangles.emplace_back(a, b, c);
+                  subdiv_target_triangles.emplace_back(a, b, c);
+                  subdiv_ref_triangles.emplace_back(b, c, d);
+                  subdiv_target_triangles.emplace_back(b, c, d);
+
+                  for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
+                      RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
+                                                        subdiv_ref_triangles[j], triangle_size);
+                      triangle_size_sum += triangle_size;
+                  }
+
+                  RMSE_after_subdiv /= (double) triangle_size_sum;
+                  results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
+              }
+              break;
+          case TYPE4:
+              {
+                  cv::Point2f p1 = corners[triangle.first.p1_idx];
+                  cv::Point2f p2 = corners[triangle.first.p2_idx];
+                  cv::Point2f p3 = corners[triangle.first.p3_idx];
+
+                  cv::Point2f x = (p3 - p2) / 2.0;
+                  cv::Point2f y = (p1 - p2) / 2.0;
+
+                  cv::Point2f a = p1;
+                  cv::Point2f b = p2 + x + y;
+                  cv::Point2f c = p2;
+                  cv::Point2f d = p3;
+
+                  std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
+                  subdiv_ref_triangles.emplace_back(a, b, c);
+                  subdiv_target_triangles.emplace_back(a, b, c);
+                  subdiv_ref_triangles.emplace_back(b, c, d);
+                  subdiv_target_triangles.emplace_back(b, c, d);
+
+                  for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
+                      RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
+                                                        subdiv_ref_triangles[j], triangle_size);
+                      triangle_size_sum += triangle_size;
+                  }
+
+                  RMSE_after_subdiv /= (double) triangle_size_sum;
+                  results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
+              }
+              break;
+          case DIVIDE::TYPE5:
+              {
+                  cv::Point2f p1 = corners[triangle.first.p1_idx];
+                  cv::Point2f p2 = corners[triangle.first.p2_idx];
+                  cv::Point2f p3 = corners[triangle.first.p3_idx];
+
+                  cv::Point2f x = (p2 - p1) / 2.0;
+
+                  cv::Point2f a = p1;
+                  cv::Point2f b = p1 + x;
+                  cv::Point2f c = p2;
+                  cv::Point2f d = p3;
+
+                  std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
+                  subdiv_ref_triangles.emplace_back(a, b, d);
+                  subdiv_target_triangles.emplace_back(a, b, d);
+                  subdiv_ref_triangles.emplace_back(b, c, d);
+                  subdiv_target_triangles.emplace_back(b, c, d);
+
+                  for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
+                      RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
+                                                        subdiv_ref_triangles[j], triangle_size);
+                      triangle_size_sum += triangle_size;
+                  }
+
+                  RMSE_after_subdiv /= (double) triangle_size_sum;
+                  results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
+              }
+              break;
+          case DIVIDE::TYPE6:
+              {
+                  cv::Point2f p1 = corners[triangle.first.p1_idx];
+                  cv::Point2f p2 = corners[triangle.first.p2_idx];
+                  cv::Point2f p3 = corners[triangle.first.p3_idx];
+
+                  cv::Point2f y = (p3 - p1) / 2.0;
+
+                  cv::Point2f a = p1;
+                  cv::Point2f b = p1 + y;
+                  cv::Point2f c = p2;
+                  cv::Point2f d = p3;
+
+                  std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
+                  subdiv_ref_triangles.emplace_back(a, b, c);
+                  subdiv_target_triangles.emplace_back(a, b, c);
+                  subdiv_ref_triangles.emplace_back(b, c, d);
+                  subdiv_target_triangles.emplace_back(b, c, d);
+
+                  for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
+                      RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
+                                                        subdiv_ref_triangles[j], triangle_size);
+                      triangle_size_sum += triangle_size;
+                  }
+
+                  RMSE_after_subdiv /= (double) triangle_size_sum;
+                  results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
+              }
+              break;
+          case DIVIDE::TYPE7:
+              {
+                  cv::Point2f p1 = corners[triangle.first.p1_idx];
+                  cv::Point2f p2 = corners[triangle.first.p2_idx];
+                  cv::Point2f p3 = corners[triangle.first.p3_idx];
+
+                  cv::Point2f x = (p3 - p2) / 2.0;
+
+                  cv::Point2f a = p1;
+                  cv::Point2f b = p2;
+                  cv::Point2f c = p2 + x;
+                  cv::Point2f d = p3;
+
+                  std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
+                  subdiv_ref_triangles.emplace_back(a, b, c);
+                  subdiv_target_triangles.emplace_back(a, b, c);
+                  subdiv_ref_triangles.emplace_back(a, c, d);
+                  subdiv_target_triangles.emplace_back(a, c, d);
+
+                  for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
+                      RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
+                                                        subdiv_ref_triangles[j], triangle_size);
+                      triangle_size_sum += triangle_size;
+                  }
+
+                  RMSE_after_subdiv /= (double) triangle_size_sum;
+                  results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
+              }
+              break;
+          case DIVIDE::TYPE8:
+              {
+                  cv::Point2f p1 = corners[triangle.first.p1_idx];
+                  cv::Point2f p2 = corners[triangle.first.p2_idx];
+                  cv::Point2f p3 = corners[triangle.first.p3_idx];
+
+                  cv::Point2f y = (p3 - p1) / 2.0;
+
+                  cv::Point2f a = p2;
+                  cv::Point2f b = p1;
+                  cv::Point2f c = p1 + y;
+                  cv::Point2f d = p3;
+
+                  std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
+                  subdiv_ref_triangles.emplace_back(a, b, c);
+                  subdiv_target_triangles.emplace_back(a, b, c);
+                  subdiv_ref_triangles.emplace_back(a, c, d);
+                  subdiv_target_triangles.emplace_back(a, c, d);
+
+                  for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
+                      RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
+                                                        subdiv_ref_triangles[j], triangle_size);
+                      triangle_size_sum += triangle_size;
+                  }
+
+                  RMSE_after_subdiv /= (double) triangle_size_sum;
+                  results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
+              }
+              break;
+          default:
+              break;
       }
+
       numerator++;
       std::cout << numerator << "/" << denominator << std::endl;
     }
 
     numerator = 0;
+    const double divide_th = 0.04;
+
     // Queueが空になるまで続ける
     for (int i = 0; i < (int) results.size(); i++) {
       // 一つ前のステップで分割されてないならばやる必要はない
