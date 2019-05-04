@@ -233,7 +233,9 @@ int main(int argc, char *argv[]) {
         TriangleDivision triangle_division(ref_image, target_image);
         triangle_division.initTriangle(block_size_x, block_size_y);
 
-        triangle_division.subdivision(cv::imread(ref_file_path), 3);
+        // 何回再帰的に分割を行うか
+        const int division_steps = 1;
+        triangle_division.subdivision(cv::imread(ref_file_path), division_steps);
         std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
         std::cout << "triangles.size():" << triangles.size() << std::endl;
 
@@ -244,7 +246,7 @@ int main(int argc, char *argv[]) {
           for(const auto& triangle : triangles) {
             drawTriangle(triangles_debug, triangle.p1, triangle.p2, triangle.p3, cv::Scalar(255, 255, 255));
           }
-          cv::imwrite(img_directory + "/triangles_step3.png", triangles_debug);
+          cv::imwrite(img_directory + "/triangles_step" + std::to_string(division_steps) + ".png", triangles_debug);
 
           std::vector<Point3Vec> covered_triangles = triangle_division.getIdxCoveredTriangleCoordinateList(corners.size() / 2 + 100 + k);
           for(const auto& triangle : covered_triangles) {
@@ -253,8 +255,9 @@ int main(int argc, char *argv[]) {
           }
           drawPoint(triangles_debug, corners[corners.size() / 2 + 100 + k], BLUE, 4);
 
-          cv::imwrite(img_directory + "/triangles_step3_" + std::to_string(100 + k) + ".png", triangles_debug);
+          cv::imwrite(img_directory + "/triangles_step" + std::to_string(division_steps) + "_" + std::to_string(100 + k) + ".png", triangles_debug);
         }
+        exit(0);
 
         cv::Mat color = cv::Mat::zeros(target_image.size(),CV_8UC3);
         cv::Mat predict_img0 = cv::Mat::zeros(targetx8.size(), CV_8UC3);
