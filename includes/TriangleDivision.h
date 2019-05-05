@@ -6,6 +6,7 @@
 #define ENCODER_TRIANGLEDIVISION_H
 
 #include "Utils.h"
+#include "CodingTreeUnit.h"
 #include <set>
 #include <vector>
 
@@ -106,7 +107,8 @@ public:
     std::vector<Triangle> getIdxCoveredTriangleIndexList(int idx);
 
     void subdivision(cv::Mat gaussRefImage, int steps);
-
+    void reconstructionTriangle(std::vector<CodingTreeUnit*> ctu);
+    void reconstructionTriangle(CodingTreeUnit* ctu, Point3Vec triangle, int type);
 
     class GaussResult{
     public:
@@ -124,6 +126,17 @@ public:
 
     };
 
+    struct SplitResult {
+    public:
+        Point3Vec t1, t2;
+        int t1_type, t2_type;
+
+        SplitResult(const Point3Vec &t1, const Point3Vec &t2, int t1Type, int t2Type);
+    };
+
+    static SplitResult getSplitTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type);
+
+
 private:
     std::vector<cv::Point2f> corners;
     std::vector<std::pair<Triangle, int> > triangles;
@@ -131,6 +144,7 @@ private:
     std::vector<std::set<int> > neighbor_vtx;
     std::vector<std::set<int> > covered_triangle;
     std::vector<std::vector<int> > corner_flag;
+    std::vector<bool> delete_flag;
 
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
     void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
@@ -138,6 +152,7 @@ private:
     void removeTriangleNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
     void removeTriangleCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_idx);
     int addCorner(cv::Point2f p);
+    bool split(cv::Mat& gaussRefImage, CodingTreeUnit* ctu, Point3Vec triangle, int type, int steps);
 
 };
 
