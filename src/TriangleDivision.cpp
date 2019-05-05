@@ -1082,3 +1082,170 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage, int steps) {
 
 }
 
+bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3Vec triangle, int type, int steps) {
+    if(steps == 0) return false;
+
+    double RMSE_before_subdiv = 0.0;
+    cv::Point2f p1 = triangle.p1;
+    cv::Point2f p2 = triangle.p2;
+    cv::Point2f p3 = triangle.p3;
+
+    Point3Vec refTriangle(p1, p2, p3);
+    Point3Vec targetTriangle(p1, p2, p3);
+    int triangle_size = 0;
+
+    RMSE_before_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, targetTriangle, refTriangle,
+                                       triangle_size);
+    RMSE_before_subdiv /= triangle_size;
+
+    SplitResult triangles = getSplitTriangle(p1, p2, p3, type);
+
+    std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
+    subdiv_ref_triangles.push_back(triangles.t1);
+    subdiv_target_triangles.push_back(triangles.t1);
+    subdiv_ref_triangles.push_back(triangles.t2);
+    subdiv_target_triangles.push_back(triangles.t2);
+
+    double RMSE_after_subdiv = 0.0;
+    int triangle_size_sum = 0;
+
+#pragma omp parallel for
+    for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
+        RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
+                                          subdiv_ref_triangles[j], triangle_size);
+        triangle_size_sum += triangle_size;
+    }
+
+    RMSE_after_subdiv /= (double) triangle_size_sum;
+
+    std::cout << "RMSE_before:" << RMSE_before_subdiv << " RMSE_after:" << RMSE_after_subdiv << std::endl;
+    std::cout << "percentage:" << (RMSE_before_subdiv - RMSE_after_subdiv) / RMSE_before_subdiv << std::endl;
+    if((RMSE_before_subdiv - RMSE_after_subdiv) / RMSE_before_subdiv >= 0.05) {
+        ctu->split_cu_flag1 = true;
+        ctu->split_cu_flag2 = true;
+        std::cout << triangles.t1.p1 << " " << triangles.t1.p2 << " " << triangles.t1.p3 << std::endl;
+        ctu->ctu1 = new CodingTreeUnit();
+        bool ret = split(gaussRefImage, ctu->ctu1, triangles.t1, triangles.t1_type, steps - 1);
+        if(ret) {
+            ctu->ctu1->split_cu_flag1 = true;
+        }
+
+        ctu->ctu2 = new CodingTreeUnit();
+        std::cout << triangles.t2.p1 << " " << triangles.t2.p2 << " " << triangles.t2.p3 << std::endl;
+        ret = split(gaussRefImage, ctu->ctu2, triangles.t2, triangles.t2_type, steps - 1);
+        if(ret) {
+            ctu->ctu2->split_cu_flag2 = true;
+        }
+
+        return true;
+    }else{
+        return false;
+    }
+
+}
+
+TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type){
+    cv::Point2f a, b, c, d;
+    switch(type) {
+        case DIVIDE::TYPE1:
+        {
+            cv::Point2f x = (p2 - p1) / 2.0;
+            cv::Point2f y = (p3 - p1) / 2.0;
+
+            a = p1;
+            b = p2;
+            c = a + x + y;
+            d = p3;
+
+            return SplitResult(Point3Vec(a, b, c), Point3Vec(a, c, d), TYPE5, TYPE6);
+        }
+        case DIVIDE::TYPE2:
+        {
+            cv::Point2f x = (p2 - p3) / 2.0;
+            cv::Point2f y = (p1 - p3) / 2.0;
+
+            a = p1;
+            b = p3 + x + y;
+            c = p2;
+            d = p3;
+
+            return SplitResult(Point3Vec(a, b, d), Point3Vec(b, c, d), TYPE8, TYPE7);
+        }
+        case DIVIDE::TYPE3:
+        {
+            cv::Point2f x = (p1 - p2) / 2.0;
+            cv::Point2f y = (p3 - p2) / 2.0;
+
+            a = p1;
+            b = p2;
+            c = p2 + x + y;
+            d = p3;
+
+            return SplitResult(Point3Vec(a, b, c), Point3Vec(b, c, d), TYPE5, TYPE8);
+        }
+        case DIVIDE::TYPE4:
+        {
+            cv::Point2f x = (p3 - p2) / 2.0;
+            cv::Point2f y = (p1 - p2) / 2.0;
+
+            a = p1;
+            b = p2 + x + y;
+            c = p2;
+            d = p3;
+
+            return SplitResult(Point3Vec(a, b, c), Point3Vec(b, c, d), TYPE6, TYPE7);
+        }
+        case DIVIDE::TYPE5:
+        {
+            cv::Point2f x = (p2 - p1) / 2.0;
+
+            a = p1;
+            b = p1 + x;
+            c = p2;
+            d = p3;
+
+            return SplitResult(Point3Vec(a, b, d), Point3Vec(b, c, d), TYPE3, TYPE1);
+        }
+        case DIVIDE::TYPE6:
+        {
+            cv::Point2f y = (p3 - p1) / 2.0;
+
+            a = p1;
+            b = p1 + y;
+            c = p2;
+            d = p3;
+
+            return SplitResult(Point3Vec(a, b, c), Point3Vec(b, c, d), TYPE4, TYPE1);
+        }
+        case DIVIDE::TYPE7:
+        {
+            cv::Point2f x = (p3 - p2) / 2.0;
+
+            a = p1;
+            b = p2;
+            c = p2 + x;
+            d = p3;
+
+            return SplitResult(Point3Vec(a, b, c), Point3Vec(a, c, d), TYPE2, TYPE4);
+        }
+        case DIVIDE::TYPE8:
+        {
+            cv::Point2f y = (p3 - p1) / 2.0;
+
+            a = p2;
+            b = p1;
+            c = p1 + y;
+            d = p3;
+
+            return SplitResult(Point3Vec(a, b, c), Point3Vec(a, c, d), TYPE2, TYPE3);
+        }
+        default:
+            break;
+    }
+}
+
+
+TriangleDivision::SplitResult::SplitResult(const Point3Vec &t1, const Point3Vec &t2, int t1Type, int t2Type) : t1(t1),
+                                                                                                               t2(t2),
+                                                                                                               t1_type(t1Type),
+                                                                                                               t2_type(t2Type) {}
