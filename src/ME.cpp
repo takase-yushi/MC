@@ -542,6 +542,17 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
                (p1.y + v_para.y * 2 >= 0 && p1.y + v_para.y * 2 <= f_img.rows - 1) &&
                (p2.y + v_para.y * 2 >= 0 && p2.y + v_para.y * 2 <= f_img.rows - 1)) {
                 v_para *= 2;
+            }else{
+                double length = 2;
+                while(z != 0 && (p0.x + v_para.x * length >= 0 && p0.x + v_para.x * length <= f_img.cols - 1) &&
+                      (p1.x + v_para.x * length >= 0 && p1.x + v_para.x * length <= f_img.cols - 1) &&
+                      (p2.x + v_para.x * length >= 0 && p2.x + v_para.x * length <= f_img.cols - 1) &&
+                      (p0.y + v_para.y * length >= 0 && p0.y + v_para.y * length <= f_img.rows - 1) &&
+                      (p1.y + v_para.y * length >= 0 && p1.y + v_para.y * length <= f_img.rows - 1) &&
+                      (p2.y + v_para.y * length >= 0 && p2.y + v_para.y * length <= f_img.rows - 1) == false || length > 1){
+                        length -= 0.1;
+                }
+                v_para *= length;
             }
 
             v_stack.clear();
@@ -1383,6 +1394,17 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                          (p1.y + v_para.y * 2 >= 0 && p1.y + v_para.y * 2 <= f_img.rows - 1) &&
                          (p2.y + v_para.y * 2 >= 0 && p2.y + v_para.y * 2 <= f_img.rows - 1)) {
                 v_para *= 2;
+            }else{
+                double length = 2;
+                while(z != 0 && (p0.x + v_para.x * length >= 0 && p0.x + v_para.x * length <= f_img.cols - 1) &&
+                      (p1.x + v_para.x * length >= 0 && p1.x + v_para.x * length <= f_img.cols - 1) &&
+                      (p2.x + v_para.x * length >= 0 && p2.x + v_para.x * length <= f_img.cols - 1) &&
+                      (p0.y + v_para.y * length >= 0 && p0.y + v_para.y * length <= f_img.rows - 1) &&
+                      (p1.y + v_para.y * length >= 0 && p1.y + v_para.y * length <= f_img.rows - 1) &&
+                      (p2.y + v_para.y * length >= 0 && p2.y + v_para.y * length <= f_img.rows - 1) == false || length > 1){
+                    length -= 0.1;
+                }
+                v_para *= length;
             }
 
 
