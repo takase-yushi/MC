@@ -524,33 +524,29 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
             triangle.emplace_back(p1);
             triangle.emplace_back(p2);
 
-            for (int s = 0; s < 3; s++) {
-                if (z != 0 && (p0.x + v[s].x * 2 >= 0 && p0.x + v[s].x * 2 <= f_img.cols - 1) &&
-                    (p1.x + v[s].x * 2 >= 0 && p1.x + v[s].x * 2 <= f_img.cols - 1) &&
-                    (p2.x + v[s].x * 2 >= 0 && p2.x + v[s].x * 2 <= f_img.cols - 1) &&
-                    (p0.y + v[s].y * 2 >= 0 && p0.y + v[s].y * 2 <= f_img.rows - 1) &&
-                    (p1.y + v[s].y * 2 >= 0 && p1.y + v[s].y * 2 <= f_img.rows - 1) &&
-                    (p2.y + v[s].y * 2 >= 0 && p2.y + v[s].y * 2 <= f_img.rows - 1)) {
-                    v[s] *= 2;
-                }
-
-            }
-            if(z != 0 && (p0.x + v_para.x * 2 >= 0 && p0.x + v_para.x * 2 <= f_img.cols - 1) &&
-               (p1.x + v_para.x * 2 >= 0 && p1.x + v_para.x * 2 <= f_img.cols - 1) &&
-               (p2.x + v_para.x * 2 >= 0 && p2.x + v_para.x * 2 <= f_img.cols - 1) &&
-               (p0.y + v_para.y * 2 >= 0 && p0.y + v_para.y * 2 <= f_img.rows - 1) &&
-               (p1.y + v_para.y * 2 >= 0 && p1.y + v_para.y * 2 <= f_img.rows - 1) &&
-               (p2.y + v_para.y * 2 >= 0 && p2.y + v_para.y * 2 <= f_img.rows - 1)) {
-                v_para *= 2;
-            }else{
+            bool length2_flag = false;
+            if(z != 0) {
                 double length = 2;
-                while(z != 0 && (p0.x + v_para.x * length >= 0 && p0.x + v_para.x * length <= f_img.cols - 1) &&
-                      (p1.x + v_para.x * length >= 0 && p1.x + v_para.x * length <= f_img.cols - 1) &&
-                      (p2.x + v_para.x * length >= 0 && p2.x + v_para.x * length <= f_img.cols - 1) &&
-                      (p0.y + v_para.y * length >= 0 && p0.y + v_para.y * length <= f_img.rows - 1) &&
-                      (p1.y + v_para.y * length >= 0 && p1.y + v_para.y * length <= f_img.rows - 1) &&
-                      (p2.y + v_para.y * length >= 0 && p2.y + v_para.y * length <= f_img.rows - 1) == false || length > 1){
-                        length -= 0.1;
+                while ( (p0.x + v[0].x * 2 < 0 && p0.x + v[0].x * 2 > f_img.cols - 1) &&
+                        (p1.x + v[1].x * 2 < 0 && p1.x + v[1].x * 2 > f_img.cols - 1) &&
+                        (p2.x + v[2].x * 2 < 0 && p2.x + v[2].x * 2 > f_img.cols - 1) &&
+                        (p0.y + v[0].y * 2 < 0 && p0.y + v[0].y * 2 > f_img.rows - 1) &&
+                        (p1.y + v[1].y * 2 < 0 && p1.y + v[1].y * 2 > f_img.rows - 1) &&
+                        (p2.y + v[2].y * 2 < 0 && p2.y + v[2].y * 2 > f_img.rows - 1) ) {
+                    if(length <= 1)break;
+                    length -= 0.1;
+                }
+                for (int s = 0; s < 3; s++) v[s] *= length;
+
+                length = 2;
+                while ( (p0.x + v_para.x * length < 0 && p0.x + v_para.x * length > f_img.cols - 1) &&
+                        (p1.x + v_para.x * length < 0 && p1.x + v_para.x * length > f_img.cols - 1) &&
+                        (p2.x + v_para.x * length < 0 && p2.x + v_para.x * length > f_img.cols - 1) &&
+                        (p0.y + v_para.y * length < 0 && p0.y + v_para.y * length > f_img.rows - 1) &&
+                        (p1.y + v_para.y * length < 0 && p1.y + v_para.y * length > f_img.rows - 1) &&
+                        (p2.y + v_para.y * length < 0 && p2.y + v_para.y * length > f_img.rows - 1) ) {
+                    if(length <= 1)break;
+                    length -= 0.1;
                 }
                 v_para *= length;
             }
@@ -1376,32 +1372,28 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
             triangle.emplace_back(p2);
 
 
-            for (int s = 0; s < 3; s++) {
-                if (z != 0 && (p0.x + v[s].x * 2 >= 0 && p0.x + v[s].x * 2 <= f_img.cols - 1) &&
-                              (p1.x + v[s].x * 2 >= 0 && p1.x + v[s].x * 2 <= f_img.cols - 1) &&
-                              (p2.x + v[s].x * 2 >= 0 && p2.x + v[s].x * 2 <= f_img.cols - 1) &&
-                              (p0.y + v[s].y * 2 >= 0 && p0.y + v[s].y * 2 <= f_img.rows - 1) &&
-                              (p1.y + v[s].y * 2 >= 0 && p1.y + v[s].y * 2 <= f_img.rows - 1) &&
-                              (p2.y + v[s].y * 2 >= 0 && p2.y + v[s].y * 2 <= f_img.rows - 1)) {
-                    v[s] *= 2;
-                }
-
-            }
-            if(z != 0 && (p0.x + v_para.x * 2 >= 0 && p0.x + v_para.x * 2 <= f_img.cols - 1) &&
-                         (p1.x + v_para.x * 2 >= 0 && p1.x + v_para.x * 2 <= f_img.cols - 1) &&
-                         (p2.x + v_para.x * 2 >= 0 && p2.x + v_para.x * 2 <= f_img.cols - 1) &&
-                         (p0.y + v_para.y * 2 >= 0 && p0.y + v_para.y * 2 <= f_img.rows - 1) &&
-                         (p1.y + v_para.y * 2 >= 0 && p1.y + v_para.y * 2 <= f_img.rows - 1) &&
-                         (p2.y + v_para.y * 2 >= 0 && p2.y + v_para.y * 2 <= f_img.rows - 1)) {
-                v_para *= 2;
-            }else{
+            bool length2_flag = false;
+            if(z != 0) {
                 double length = 2;
-                while(z != 0 && (p0.x + v_para.x * length >= 0 && p0.x + v_para.x * length <= f_img.cols - 1) &&
-                      (p1.x + v_para.x * length >= 0 && p1.x + v_para.x * length <= f_img.cols - 1) &&
-                      (p2.x + v_para.x * length >= 0 && p2.x + v_para.x * length <= f_img.cols - 1) &&
-                      (p0.y + v_para.y * length >= 0 && p0.y + v_para.y * length <= f_img.rows - 1) &&
-                      (p1.y + v_para.y * length >= 0 && p1.y + v_para.y * length <= f_img.rows - 1) &&
-                      (p2.y + v_para.y * length >= 0 && p2.y + v_para.y * length <= f_img.rows - 1) == false || length > 1){
+                while ( (p0.x + v[0].x * 2 < 0 && p0.x + v[0].x * 2 > f_img.cols - 1) &&
+                        (p1.x + v[1].x * 2 < 0 && p1.x + v[1].x * 2 > f_img.cols - 1) &&
+                        (p2.x + v[2].x * 2 < 0 && p2.x + v[2].x * 2 > f_img.cols - 1) &&
+                        (p0.y + v[0].y * 2 < 0 && p0.y + v[0].y * 2 > f_img.rows - 1) &&
+                        (p1.y + v[1].y * 2 < 0 && p1.y + v[1].y * 2 > f_img.rows - 1) &&
+                        (p2.y + v[2].y * 2 < 0 && p2.y + v[2].y * 2 > f_img.rows - 1) ) {
+                    if(length <= 1)break;
+                    length -= 0.1;
+                }
+                for (int s = 0; s < 3; s++) v[s] *= length;
+
+                length = 2;
+                while ( (p0.x + v_para.x * length < 0 && p0.x + v_para.x * length > f_img.cols - 1) &&
+                        (p1.x + v_para.x * length < 0 && p1.x + v_para.x * length > f_img.cols - 1) &&
+                        (p2.x + v_para.x * length < 0 && p2.x + v_para.x * length > f_img.cols - 1) &&
+                        (p0.y + v_para.y * length < 0 && p0.y + v_para.y * length > f_img.rows - 1) &&
+                        (p1.y + v_para.y * length < 0 && p1.y + v_para.y * length > f_img.rows - 1) &&
+                        (p2.y + v_para.y * length < 0 && p2.y + v_para.y * length > f_img.rows - 1) ) {
+                    if(length <= 1)break;
                     length -= 0.1;
                 }
                 v_para *= length;
