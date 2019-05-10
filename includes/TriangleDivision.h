@@ -94,21 +94,6 @@ enum DIVIDE {
 class TriangleDivision {
 
 public:
-    TriangleDivision(const cv::Mat &refImage, const cv::Mat &targetImage);
-    void initTriangle(int block_size_x, int block_size_y, int divide_flag = LEFT_DIVIDE);
-    std::vector<Point3Vec> getTriangleCoordinateList();
-    std::vector<Triangle> getTriangleIndexList();
-    std::vector<cv::Point2f> getCorners();
-    std::vector<int> getNeighborVertexIndexList(int idx);
-    std::vector<cv::Point2f> getNeighborVertexCoordinateList(int idx);
-    double getDistance(const cv::Point2f &a, const cv::Point2f &b);
-
-    std::vector<Point3Vec> getIdxCoveredTriangleCoordinateList(int target_vertex_idx);
-    std::vector<Triangle> getIdxCoveredTriangleIndexList(int idx);
-
-    void subdivision(cv::Mat gaussRefImage, int steps);
-    void reconstructionTriangle(std::vector<CodingTreeUnit*> ctu);
-    void reconstructionTriangle(CodingTreeUnit* ctu, Point3Vec triangle, int type);
 
     class GaussResult{
     public:
@@ -134,7 +119,24 @@ public:
         SplitResult(const Point3Vec &t1, const Point3Vec &t2, int t1Type, int t2Type);
     };
 
+    TriangleDivision(const cv::Mat &refImage, const cv::Mat &targetImage);
+    void initTriangle(int block_size_x, int block_size_y, int divide_flag = LEFT_DIVIDE);
+    std::vector<std::pair<Point3Vec, int> > getTriangles();
+    std::vector<Point3Vec> getTriangleCoordinateList();
+    std::vector<Triangle> getTriangleIndexList();
+    std::vector<cv::Point2f> getCorners();
+    std::vector<int> getNeighborVertexIndexList(int idx);
+    std::vector<cv::Point2f> getNeighborVertexCoordinateList(int idx);
+    double getDistance(const cv::Point2f &a, const cv::Point2f &b);
+
+    std::vector<Point3Vec> getIdxCoveredTriangleCoordinateList(int target_vertex_idx);
+    std::vector<Triangle> getIdxCoveredTriangleIndexList(int idx);
+
+    void subdivision(cv::Mat gaussRefImage, int steps);
+
+
     static SplitResult getSplitTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type);
+    bool split(cv::Mat& gaussRefImage, CodingTreeUnit* ctu, Point3Vec triangle, int type, int steps);
 
 
 private:
@@ -152,7 +154,6 @@ private:
     void removeTriangleNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
     void removeTriangleCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_idx);
     int addCorner(cv::Point2f p);
-    bool split(cv::Mat& gaussRefImage, CodingTreeUnit* ctu, Point3Vec triangle, int type, int steps);
 
 };
 

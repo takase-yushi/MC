@@ -152,6 +152,20 @@ std::vector<Triangle> TriangleDivision::getTriangleIndexList() {
     return v;
 }
 
+std::vector<std::pair<Point3Vec, int> > TriangleDivision::getTriangles() {
+    std::vector<std::pair<Point3Vec, int> > ts;
+
+    cv::Point2f p1, p2, p3;
+    for(auto & triangle : triangles){
+        p1 = corners[triangle.first.p1_idx];
+        p2 = corners[triangle.first.p2_idx];
+        p3 = corners[triangle.first.p3_idx];
+        ts.emplace_back(Point3Vec(p1, p2, p3), triangle.second);
+    }
+
+    return ts;
+};
+
 /**
  * @fn std::vector<cv::Point2f> TriangleDivision::getCorners()
  * @brief 頂点の集合を返す
