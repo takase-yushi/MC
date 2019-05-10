@@ -367,38 +367,6 @@ int TriangleDivision::addCorner(cv::Point2f p) {
  */
 void TriangleDivision::subdivision(cv::Mat gaussRefImage, int steps) {
 
-    std::vector<CodingTreeUnit*> foo(triangles.size());
-    for(int i = 0 ; i < triangles.size() ; i++) {
-        foo[i] = new CodingTreeUnit();
-        foo[i]->split_cu_flag1 = foo[i]->split_cu_flag2 = false;
-        foo[i]->ctu1 = foo[i]->ctu2 = nullptr;
-    }
-//#pragma omp parallel for
-    for(int i = 0 ; i < 15 ; i++) {
-        std::pair<Triangle, int> triangle = triangles[i];
-
-        double RMSE_before_subdiv = 0.0;
-        cv::Point2f p1 = corners[triangle.first.p1_idx];
-        cv::Point2f p2 = corners[triangle.first.p2_idx];
-        cv::Point2f p3 = corners[triangle.first.p3_idx];
-        std::cout << "start: " << p1 << " " << p2 << " " << p3 << std::endl;
-        split(gaussRefImage, foo[i], Point3Vec(p1, p2, p3), triangle.second, 3);
-    }
-
-    Reconstruction rec(gaussRefImage);
-    rec.init(128, 128, LEFT_DIVIDE);
-    puts("");
-    rec.reconstructionTriangle(foo);
-    std::vector<Point3Vec> hoge = rec.getTriangleCoordinateList();
-
-    cv::Mat reconstructedImage = cv::imread(getProjectDirectory() + "/img/minato/minato_000413_limit.bmp ");
-    for(const auto foo : hoge) {
-//        std::cout << foo.p1 << " " << foo.p2 << " " << foo.p3 << std::endl;
-        drawTriangle(reconstructedImage, foo.p1, foo.p2, foo.p3, cv::Scalar(255, 255, 255));
-    }
-    cv::imwrite(getProjectDirectory() + "/img/minato/reconstruction.png", reconstructedImage);
-
-    exit(0);
     if(steps == 0) return;
 
     // 一つ前に分割されている場合、更に分割すればよいが
@@ -1132,8 +1100,6 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
 
     RMSE_after_subdiv /= (double) triangle_size_sum;
 
-    std::cout << "RMSE_before:" << RMSE_before_subdiv << " RMSE_after:" << RMSE_after_subdiv << std::endl;
-    std::cout << "percentage:" << (RMSE_before_subdiv - RMSE_after_subdiv) / RMSE_before_subdiv << std::endl;
     if((RMSE_before_subdiv - RMSE_after_subdiv) / RMSE_before_subdiv >= 0.05) {
         ctu->split_cu_flag1 = true;
         ctu->split_cu_flag2 = true;

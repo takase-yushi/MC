@@ -19,6 +19,7 @@
 #include "../includes/psnr.h"
 #include "../includes/Golomb.hpp"
 #include "../includes/TriangleDivision.h"
+#include "../includes/Reconstruction.h"
 
 struct PredictedImageResult {
     cv::Mat out, mv_image;
@@ -232,11 +233,45 @@ int main(int argc, char *argv[]) {
 
         TriangleDivision triangle_division(ref_image, target_image);
         triangle_division.initTriangle(block_size_x, block_size_y);
+        std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
+
+        std::vector<std::pair<Point3Vec, int> > init_triangles = triangle_division.getTriangles();
+        std::vector<CodingTreeUnit*> foo(init_triangles.size());
+        for(int i = 0 ; i < init_triangles.size() ; i++) {
+            foo[i] = new CodingTreeUnit();
+            foo[i]->split_cu_flag1 = foo[i]->split_cu_flag2 = false;
+            foo[i]->ctu1 = foo[i]->ctu2 = nullptr;
+        }
+
+        cv::Mat gaussRefImage = cv::imread(ref_file_path);
+#pragma omp parallel for
+        for(int i = 0 ; i < init_triangles.size() ; i++) {
+            std::pair<Point3Vec, int> triangle = init_triangles[i];
+
+            double RMSE_before_subdiv = 0.0;
+            cv::Point2f p1 = triangle.first.p1;
+            cv::Point2f p2 = triangle.first.p2;
+            cv::Point2f p3 = triangle.first.p3;
+            triangle_division.split(gaussRefImage, foo[i], Point3Vec(p1, p2, p3), triangle.second, 8);
+        }
+
+        Reconstruction rec(gaussRefImage);
+        rec.init(128, 128, LEFT_DIVIDE);
+        puts("");
+        rec.reconstructionTriangle(foo);
+        std::vector<Point3Vec> hoge = rec.getTriangleCoordinateList();
+
+        cv::Mat reconstructedImage = cv::imread(getProjectDirectory() + "/img/minato/minato_000413_limit.bmp ");
+        for(const auto foo : hoge) {
+            drawTriangle(reconstructedImage, foo.p1, foo.p2, foo.p3, cv::Scalar(255, 255, 255));
+        }
+        cv::imwrite(getProjectDirectory() + "/img/minato/reconstruction.png", reconstructedImage);
+
 
         // 何回再帰的に分割を行うか
         const int division_steps = 1;
         triangle_division.subdivision(cv::imread(ref_file_path), division_steps);
-        std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
+        triangles = triangle_division.getTriangleCoordinateList();
         std::cout << "triangles.size():" << triangles.size() << std::endl;
 
         corners = triangle_division.getCorners();
