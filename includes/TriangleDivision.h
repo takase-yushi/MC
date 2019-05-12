@@ -150,6 +150,8 @@ private:
     std::vector<std::set<int> > covered_triangle;
     std::vector<std::vector<int> > corner_flag;
     std::vector<bool> delete_flag;
+    std::vector<bool> isCodedTriangle;
+    int block_size_x, block_size_y;
 
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
     void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
