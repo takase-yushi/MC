@@ -252,7 +252,7 @@ int main(int argc, char *argv[]) {
             cv::Point2f p1 = triangle.first.p1;
             cv::Point2f p2 = triangle.first.p2;
             cv::Point2f p3 = triangle.first.p3;
-            triangle_division.split(gaussRefImage, foo[i], Point3Vec(p1, p2, p3), triangle.second, 8);
+            triangle_division.split(gaussRefImage, foo[i], Point3Vec(p1, p2, p3), i, triangle.second, 8);
         }
 
         Reconstruction rec(gaussRefImage);

@@ -136,7 +136,7 @@ public:
 
 
     static SplitResult getSplitTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type);
-    bool split(cv::Mat& gaussRefImage, CodingTreeUnit* ctu, Point3Vec triangle, int type, int steps);
+    bool split(cv::Mat& gaussRefImage, CodingTreeUnit* ctu, Point3Vec triangle, int triangle_index, int type, int steps);
 
 
 private:
@@ -154,6 +154,7 @@ private:
     void removeTriangleNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
     void removeTriangleCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_idx);
     int addCorner(cv::Point2f p);
+    int addCorner(Triangle triangle, int triangle_index, int type);
 
 };
 
