@@ -159,7 +159,8 @@ private:
     void removeTriangleNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
     void removeTriangleCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_idx);
     int addCorner(cv::Point2f p);
-    int addCorner(Triangle triangle, int triangle_index, int type);
+    void addCornerAndTriangle(Triangle triangle, int triangle_index, int type);
+    bool isCTU(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3);
 
 };
 

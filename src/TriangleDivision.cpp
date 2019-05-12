@@ -344,8 +344,8 @@ std::vector<Point3Vec> TriangleDivision::getIdxCoveredTriangleCoordinateList(int
 }
 
 /**
- * @fn std::vector<Triangle> TriangleDivision::getIdxCoveredTriangleIndexList(int idx)
- * @brief 指定の頂点を含む三角形の集合（座標）を返す
+ * @fn std::vector<int> TriangleDivision::getIdxCoveredTriangleIndexList(int idx)
+ * @brief 指定の頂点を含む三角形の集合（頂点番号）を返す
  * @param[in] idx 頂点のインデックス
  * @return 三角形の集合（座標）
  */
@@ -414,7 +414,7 @@ int TriangleDivision::addCorner(cv::Point2f p) {
  * @param type
  * @return
  */
-int TriangleDivision::addCorner(Triangle triangle, int triangle_index, int type){
+void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_index, int type){
     switch(type) {
         case DIVIDE::TYPE1:
         {
@@ -1384,13 +1384,13 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
                                        triangle_size);
     RMSE_before_subdiv /= triangle_size;
 
-    SplitResult triangles = getSplitTriangle(p1, p2, p3, type);
+    SplitResult split_triangles = getSplitTriangle(p1, p2, p3, type);
 
     std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
-    subdiv_ref_triangles.push_back(triangles.t1);
-    subdiv_target_triangles.push_back(triangles.t1);
-    subdiv_ref_triangles.push_back(triangles.t2);
-    subdiv_target_triangles.push_back(triangles.t2);
+    subdiv_ref_triangles.push_back(split_triangles.t1);
+    subdiv_target_triangles.push_back(split_triangles.t1);
+    subdiv_ref_triangles.push_back(split_triangles.t2);
+    subdiv_target_triangles.push_back(split_triangles.t2);
 
     double RMSE_after_subdiv = 0.0;
     int triangle_size_sum = 0;
@@ -1404,14 +1404,18 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
 
     RMSE_after_subdiv /= (double) triangle_size_sum;
 
-    if((RMSE_before_subdiv - RMSE_after_subdiv) / RMSE_before_subdiv >= 0.05) {
-        addCorner(Triangle(corner_flag[(int)p1.y][(int)p1.x],corner_flag[(int)p2.y][(int)p2.x],corner_flag[(int)p3.y][(int)p3.x]), triangle_index, type);
+    if((RMSE_before_subdiv - RMSE_after_subdiv) / RMSE_before_subdiv >= 0.04) {
+        addCornerAndTriangle(Triangle(corner_flag[(int) p1.y][(int) p1.x], corner_flag[(int) p2.y][(int) p2.x],
+                                      corner_flag[(int) p3.y][(int) p3.x]), triangle_index, type);
 
         ctu->split_cu_flag1 = true;
         ctu->split_cu_flag2 = true;
 
         ctu->ctu1 = new CodingTreeUnit();
-        bool ret = split(gaussRefImage, ctu->ctu1, triangles.t1, triangles.t1_type, steps - 1);
+
+        int t1_idx = triangles.size() - 2;
+        int t2_idx = triangles.size() - 1;
+        bool ret = split(gaussRefImage, ctu->ctu1, split_triangles.t1, t1_idx,split_triangles.t1_type, steps - 1);
         if(ret) {
             ctu->ctu1->split_cu_flag1 = true;
         }
