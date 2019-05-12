@@ -349,8 +349,17 @@ std::vector<Point3Vec> TriangleDivision::getIdxCoveredTriangleCoordinateList(int
  * @param[in] idx 頂点のインデックス
  * @return 三角形の集合（座標）
  */
-std::vector<Triangle> TriangleDivision::getIdxCoveredTriangleIndexList(int idx) {
-    return std::vector<Triangle>(); // TODO: 実装
+std::vector<int> TriangleDivision::getIdxCoveredTriangleIndexList(int target_vertex_idx) {
+    std::set<int> s = covered_triangle[target_vertex_idx];
+    std::vector<int> v;
+
+    for(auto triangle_idx : s) {
+        v.emplace_back(triangle_idx);
+    }
+
+    std::sort(v.begin(), v.end());
+
+    return v;
 }
 
 /**

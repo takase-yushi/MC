@@ -130,7 +130,7 @@ public:
     double getDistance(const cv::Point2f &a, const cv::Point2f &b);
 
     std::vector<Point3Vec> getIdxCoveredTriangleCoordinateList(int target_vertex_idx);
-    std::vector<Triangle> getIdxCoveredTriangleIndexList(int idx);
+    std::vector<int> getIdxCoveredTriangleIndexList(int idx);
 
     void subdivision(cv::Mat gaussRefImage, int steps);
 
