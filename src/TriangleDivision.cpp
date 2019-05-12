@@ -157,6 +157,36 @@ std::vector<Triangle> TriangleDivision::getTriangleIndexList() {
     return v;
 }
 
+/**
+ * @fn std::vector<Point3Vec> getAllTriangleCoordinateList()
+ * @brief 現在存在するすべての三角形の集合(座標)を返す（※論理削除されたパッチも含まれています）
+ * @return 三角形の集合（座標）
+ */
+std::vector<Point3Vec> TriangleDivision::getAllTriangleCoordinateList() {
+    std::vector<Point3Vec> vec;
+
+    for(int i = 0 ; i < triangles.size() ; i++) {
+        Triangle triangle = triangles[i].first;
+        vec.emplace_back(corners[triangle.p1_idx], corners[triangle.p2_idx], corners[triangle.p3_idx]);
+    }
+
+    return vec;
+}
+
+/**
+ * @fn std::vector<Triangle> TriangleDivision::getAllTriangleIndexList()
+ * @brief 現在存在する三角形の集合(インデックス)を返す（※論理削除されたパッチも含まれています）
+ * @return 三角形の集合（インデックス）
+ */
+std::vector<Triangle> TriangleDivision::getAllTriangleIndexList() {
+    std::vector<Triangle> v;
+    for(int i = 0 ; i < triangles.size() ; i++) {
+        v.emplace_back(triangles[i].first);
+    }
+    return v;
+}
+
+
 std::vector<std::pair<Point3Vec, int> > TriangleDivision::getTriangles() {
     std::vector<std::pair<Point3Vec, int> > ts;
 

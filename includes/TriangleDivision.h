@@ -138,6 +138,8 @@ public:
     static SplitResult getSplitTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type);
     bool split(cv::Mat& gaussRefImage, CodingTreeUnit* ctu, Point3Vec triangle, int triangle_index, int type, int steps);
 
+    std::vector<Point3Vec> getAllTriangleCoordinateList();
+    std::vector<Triangle> getAllTriangleIndexList();
 
 private:
     std::vector<cv::Point2f> corners;
