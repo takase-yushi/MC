@@ -115,6 +115,10 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int di
         }
     }
 
+    for(int i = 0 ; i < isCodedTriangle.size() ; i++) {
+        isCodedTriangle[i] = false;
+    }
+
     delete_flag.resize(triangles.size());
     for(int i = 0 ; i < delete_flag.size() ; i++) {
         delete_flag[i] = false;
@@ -165,7 +169,7 @@ std::vector<std::pair<Point3Vec, int> > TriangleDivision::getTriangles() {
     }
 
     return ts;
-};
+}
 
 /**
  * @fn std::vector<cv::Point2f> TriangleDivision::getCorners()
@@ -204,6 +208,7 @@ int TriangleDivision::insertTriangle(int p1_idx, int p2_idx, int p3_idx, int typ
 
     triangles.emplace_back(triangle, type);
     covered_triangle.emplace_back();
+    isCodedTriangle.emplace_back(true);
 
     return static_cast<int>(triangles.size() - 1);
 }
@@ -647,6 +652,7 @@ int TriangleDivision::addCorner(Triangle triangle, int triangle_index, int type)
             break;
     }
 
+    isCodedTriangle[triangle_index] = false;
     delete_flag[triangle_index] = true;
 }
 
@@ -1364,7 +1370,7 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
 
         ctu->split_cu_flag1 = true;
         ctu->split_cu_flag2 = true;
-        std::cout << triangles.t1.p1 << " " << triangles.t1.p2 << " " << triangles.t1.p3 << std::endl;
+
         ctu->ctu1 = new CodingTreeUnit();
         bool ret = split(gaussRefImage, ctu->ctu1, triangles.t1, triangles.t1_type, steps - 1);
         if(ret) {
@@ -1372,14 +1378,14 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
         }
 
         ctu->ctu2 = new CodingTreeUnit();
-        std::cout << triangles.t2.p1 << " " << triangles.t2.p2 << " " << triangles.t2.p3 << std::endl;
-        ret = split(gaussRefImage, ctu->ctu2, triangles.t2, triangles.t2_type, steps - 1);
+        ret = split(gaussRefImage, ctu->ctu2, split_triangles.t2, t2_idx, split_triangles.t2_type, steps - 1);
         if(ret) {
             ctu->ctu2->split_cu_flag2 = true;
         }
 
         return true;
     }else{
+        isCodedTriangle[triangle_index] = true;
         return false;
     }
 
