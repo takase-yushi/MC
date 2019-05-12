@@ -1521,6 +1521,49 @@ TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(cv::Point2f p1,
     }
 }
 
+/**
+ * @fn std::vector<int> getSpatialMvList()
+ * @brief t_idx番目の三角形の空間予測動きベクトル候補を返す
+ * @param[in] t_idx 三角パッチのインデックス
+ * @return 候補のパッチの番号を返す
+ */
+std::vector<int> TriangleDivision::getSpatialTriangleList(int t_idx){
+    std::pair<Triangle, int> triangle = triangles[t_idx];
+    std::set<int> spatialTriangles;
+
+    std::vector<int> list1 = getIdxCoveredTriangleIndexList(triangle.first.p1_idx);
+    std::vector<int> list2 = getIdxCoveredTriangleIndexList(triangle.first.p2_idx);
+    std::vector<int> list3 = getIdxCoveredTriangleIndexList(triangle.first.p3_idx);
+
+    std::set<int> mutualIndexSet1, mutualIndexSet2, mutualIndexSet3;
+
+    for(auto idx : list1) if(isCodedTriangle[idx]) mutualIndexSet1.emplace(idx);
+    for(auto idx : list2) if(isCodedTriangle[idx]) mutualIndexSet2.emplace(idx);
+    for(auto idx : list3) if(isCodedTriangle[idx]) mutualIndexSet3.emplace(idx);
+
+    for(auto idx : mutualIndexSet1) spatialTriangles.emplace(idx);
+    for(auto idx : mutualIndexSet2) spatialTriangles.emplace(idx);
+    for(auto idx : mutualIndexSet3) spatialTriangles.emplace(idx);
+
+    std::vector<int> ret;
+
+    for(auto idx : spatialTriangles){
+        ret.emplace_back(idx);
+    }
+
+    return ret;
+}
+
+bool TriangleDivision::isCTU(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3) {
+    double x1 = fabs(p1.x - p2.x);
+    double x2 = fabs(p2.x - p3.x);
+    double x3 = fabs(p3.x - p1.x);
+    double y1 = fabs(p1.y - p2.y);
+    double y2 = fabs(p2.y - p3.y);
+    double y3 = fabs(p3.y - p1.y);
+
+    return (x1 == block_size_x || x2 == block_size_x || x3 == block_size_x) && (y1 == block_size_y || y2 == block_size_y || y3 == block_size_y);
+}
 
 TriangleDivision::SplitResult::SplitResult(const Point3Vec &t1, const Point3Vec &t2, int t1Type, int t2Type) : t1(t1),
                                                                                                                t2(t2),
