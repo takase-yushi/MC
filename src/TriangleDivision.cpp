@@ -38,8 +38,9 @@ TriangleDivision::GaussResult::GaussResult(): triangle(Triangle(-1, -1, -1)) {}
  * @param[in] block_size_y
  * @param[in] divide_flag
  */
-void TriangleDivision::initTriangle(int block_size_x, int block_size_y, int divide_flag) {
-
+void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int divide_flag) {
+    block_size_x = _block_size_x;
+    block_size_y = _block_size_y;
     int block_num_x = target_image.cols / block_size_x;
     int block_num_y = target_image.rows / block_size_y;
 
