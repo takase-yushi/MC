@@ -354,6 +354,7 @@ void TriangleDivision::removeTriangleCoveredTriangle(int p1_idx, int p2_idx, int
  * @return 頂点番号を返す
  */
 int TriangleDivision::addCorner(cv::Point2f p) {
+    if(corner_flag[(int)p.y][(int)p.x] != -1) return corner_flag[(int)p.y][(int)p.x];
     corners.emplace_back(p);
     neighbor_vtx.emplace_back();
     return corners.size();
@@ -687,11 +688,7 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage, int steps) {
                         cv::Point2f c = a + x + y;
                         cv::Point2f d = p3;
 
-                        int c_idx = corner_flag[(int)c.y][(int)c.x];
-                        if (c_idx == -1) {
-                            c_idx = addCorner(c) - 1;
-                            corner_flag[(int)c.y][(int)c.x] = c_idx;
-                        }
+                        int c_idx = addCorner(c);
 
                         int a_idx = triangle.p1_idx;
                         int b_idx = triangle.p2_idx;
@@ -736,11 +733,7 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage, int steps) {
                         cv::Point2f c = p2;
                         cv::Point2f d = p3;
 
-                        int b_idx = corner_flag[(int)b.y][(int)b.x];
-                        if (b_idx == -1) {
-                            b_idx = addCorner(b) - 1;
-                            corner_flag[(int)b.y][(int)b.x] = b_idx;
-                        }
+                        int b_idx = addCorner(b);
 
                         int a_idx = triangle.p1_idx;
                         int c_idx = triangle.p2_idx;
@@ -785,11 +778,7 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage, int steps) {
                         cv::Point2f c = p2 + x + y;
                         cv::Point2f d = p3;
 
-                        int c_idx = corner_flag[(int)c.y][(int)c.x];
-                        if (c_idx == -1) {
-                            c_idx = addCorner(c) - 1;
-                            corner_flag[(int)c.y][(int)c.x] = c_idx;
-                        }
+                        int c_idx = addCorner(c);
 
                         int a_idx = triangle.p1_idx;
                         int b_idx = triangle.p2_idx;
@@ -834,11 +823,7 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage, int steps) {
                         cv::Point2f c = p2;
                         cv::Point2f d = p3;
 
-                        int b_idx = corner_flag[(int)b.y][(int)b.x];
-                        if (b_idx == -1) {
-                            b_idx = addCorner(b) - 1;
-                            corner_flag[(int)b.y][(int)b.x] = b_idx;
-                        }
+                        int b_idx = addCorner(b);
 
                         int a_idx = triangle.p1_idx;
                         int c_idx = triangle.p2_idx;
@@ -879,11 +864,7 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage, int steps) {
 
                         cv::Point2f b = p1 + x;
 
-                        int b_idx = corner_flag[(int)b.y][(int)b.x];
-                        if (b_idx == -1) {
-                            b_idx = addCorner(b) - 1;
-                            corner_flag[(int)b.y][(int)b.x] = b_idx;
-                        }
+                        int b_idx = addCorner(b);
 
                         int a_idx = triangle.p1_idx;
                         int c_idx = triangle.p2_idx;
@@ -924,11 +905,7 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage, int steps) {
 
                         cv::Point2f b = p1 + y;
 
-                        int b_idx = corner_flag[(int)b.y][(int)b.x];
-                        if (b_idx == -1) {
-                            b_idx = addCorner(b) - 1;
-                            corner_flag[(int)b.y][(int)b.x] = b_idx;
-                        }
+                        int b_idx = addCorner(b);
 
                         int a_idx = triangle.p1_idx;
                         int c_idx = triangle.p2_idx;
@@ -969,11 +946,7 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage, int steps) {
 
                         cv::Point2f c = p2 + x;
 
-                        int c_idx = corner_flag[(int)c.y][(int)c.x];
-                        if (c_idx == -1) {
-                            c_idx = addCorner(c) - 1;
-                            corner_flag[(int)c.y][(int)c.x] = c_idx;
-                        }
+                        int c_idx = addCorner(c);
 
                         int a_idx = triangle.p1_idx;
                         int b_idx = triangle.p2_idx;
@@ -1014,11 +987,7 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage, int steps) {
 
                         cv::Point2f c = p1 + y;
 
-                        int c_idx = corner_flag[(int)c.y][(int)c.x];
-                        if (c_idx == -1) {
-                            c_idx = addCorner(c) - 1;
-                            corner_flag[(int)c.y][(int)c.x] = c_idx;
-                        }
+                        int c_idx = addCorner(c);
 
                         int a_idx = triangle.p2_idx;
                         int b_idx = triangle.p1_idx;
@@ -1064,7 +1033,7 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage, int steps) {
 
 }
 
-bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3Vec triangle, int type, int steps) {
+bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3Vec triangle, int triangle_index, int type, int steps) {
     if(steps == 0) return false;
 
     double RMSE_before_subdiv = 0.0;
@@ -1101,6 +1070,8 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
     RMSE_after_subdiv /= (double) triangle_size_sum;
 
     if((RMSE_before_subdiv - RMSE_after_subdiv) / RMSE_before_subdiv >= 0.05) {
+        addCorner(Triangle(corner_flag[(int)p1.y][(int)p1.x],corner_flag[(int)p2.y][(int)p2.x],corner_flag[(int)p3.y][(int)p3.x]), triangle_index, type);
+
         ctu->split_cu_flag1 = true;
         ctu->split_cu_flag2 = true;
         std::cout << triangles.t1.p1 << " " << triangles.t1.p2 << " " << triangles.t1.p3 << std::endl;
