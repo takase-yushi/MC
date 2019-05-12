@@ -93,6 +93,7 @@ void storeFrequency(const std::string &file_path, const std::vector<int> freq, i
 cv::Point2f getDifferenceVector(const Triangle &triangle, const std::vector<cv::Point2f> &corners,
                                 const std::vector<cv::Point2f> &corners_mv, const cv::Point2f &mv);
 
+cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit *> ctu);
 
 // 問題は差分ベクトルどうするの…？って
 std::vector<int> count_all_diff_x_mv(1001, 0);
@@ -244,29 +245,32 @@ int main(int argc, char *argv[]) {
         }
 
         cv::Mat gaussRefImage = cv::imread(ref_file_path);
-#pragma omp parallel for
+        cv::Mat spatialMvTestImage;
+    //#pragma omp parallel for
         for(int i = 0 ; i < init_triangles.size() ; i++) {
+//        for(int i = 0 ; i < 50 ; i++) {
             std::pair<Point3Vec, int> triangle = init_triangles[i];
-
-            double RMSE_before_subdiv = 0.0;
+            std::cout << "i:" << i << std::endl;
             cv::Point2f p1 = triangle.first.p1;
             cv::Point2f p2 = triangle.first.p2;
             cv::Point2f p3 = triangle.first.p3;
+
             triangle_division.split(gaussRefImage, foo[i], Point3Vec(p1, p2, p3), i, triangle.second, 8);
-        }
+//            triangle_division.getSpatialTriangleList(triangles.size() - 1);
+//            int prev_triangles_max = triangles.size();
+//            triangles = triangle_division.getAllTriangleCoordinateList();
+//            corners = triangle_division.getCorners();
+//            if(prev_triangles_max < triangles.size()) {
+//                int draw_triangle_index = triangles.size() - 1;
+//                spatialMvTestImage = getReconstructionDivisionImage(gaussRefImage, foo);
+//                for(auto& t : triangle_division.getSpatialTriangleList(draw_triangle_index)) {
+//                    drawTriangle(spatialMvTestImage, triangles[t].p1, triangles[t].p2, triangles[t].p3, BLUE);
+//                }
+//                drawTriangle(spatialMvTestImage, triangles[draw_triangle_index].p1, triangles[draw_triangle_index].p2, triangles[draw_triangle_index].p3, RED);
+//                cv::imwrite(img_directory + "/spatialTriangle_" + std::to_string(draw_triangle_index) + ".png", spatialMvTestImage);
+            }
 
-        Reconstruction rec(gaussRefImage);
-        rec.init(128, 128, LEFT_DIVIDE);
-        puts("");
-        rec.reconstructionTriangle(foo);
-        std::vector<Point3Vec> hoge = rec.getTriangleCoordinateList();
-
-        cv::Mat reconstructedImage = cv::imread(getProjectDirectory() + "/img/minato/minato_000413_limit.bmp ");
-        for(const auto foo : hoge) {
-            drawTriangle(reconstructedImage, foo.p1, foo.p2, foo.p3, cv::Scalar(255, 255, 255));
-        }
-        cv::imwrite(getProjectDirectory() + "/img/minato/reconstruction.png", reconstructedImage);
-
+        getReconstructionDivisionImage(gaussRefImage, foo);
 
         // 何回再帰的に分割を行うか
         const int division_steps = 1;
@@ -2482,3 +2486,18 @@ cv::Point2f getDifferenceVector(const Triangle &triangle, const std::vector<cv::
     return diff;
 }
 
+cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit *> ctu) {
+    Reconstruction rec(image);
+    rec.init(128, 128, LEFT_DIVIDE);
+    puts("");
+    rec.reconstructionTriangle(ctu);
+    std::vector<Point3Vec> hoge = rec.getTriangleCoordinateList();
+
+    cv::Mat reconstructedImage = cv::imread(getProjectDirectory() + "/img/minato/minato_000413_limit.bmp ");
+    for(const auto foo : hoge) {
+        drawTriangle(reconstructedImage, foo.p1, foo.p2, foo.p3, cv::Scalar(255, 255, 255));
+    }
+    cv::imwrite(getProjectDirectory() + "/img/minato/reconstruction.png", reconstructedImage);
+
+    return reconstructedImage;
+}
