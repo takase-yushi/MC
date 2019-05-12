@@ -357,7 +357,296 @@ int TriangleDivision::addCorner(cv::Point2f p) {
     if(corner_flag[(int)p.y][(int)p.x] != -1) return corner_flag[(int)p.y][(int)p.x];
     corners.emplace_back(p);
     neighbor_vtx.emplace_back();
-    return corners.size();
+    corner_flag[(int)p.y][(int)p.x] = static_cast<int>(corners.size() - 1);
+    return static_cast<int>(corners.size() - 1);
+}
+
+
+/**
+ *
+ * @param triangle
+ * @param triangle_index
+ * @param type
+ * @return
+ */
+int TriangleDivision::addCorner(Triangle triangle, int triangle_index, int type){
+    switch(type) {
+        case DIVIDE::TYPE1:
+        {
+            cv::Point2f p1 = corners[triangle.p1_idx];
+            cv::Point2f p2 = corners[triangle.p2_idx];
+            cv::Point2f p3 = corners[triangle.p3_idx];
+
+            cv::Point2f x = (p2 - p1) / 2.0;
+            cv::Point2f y = (p3 - p1) / 2.0;
+
+            cv::Point2f a = p1;
+            cv::Point2f b = p2;
+            cv::Point2f c = a + x + y;
+            cv::Point2f d = p3;
+
+            int c_idx = addCorner(c);
+
+            int a_idx = triangle.p1_idx;
+            int b_idx = triangle.p2_idx;
+            int d_idx = triangle.p3_idx;
+
+            int t1_idx = insertTriangle(a_idx, b_idx, c_idx, TYPE5);
+            int t2_idx = insertTriangle(a_idx, c_idx, d_idx, TYPE6);
+
+            removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
+            removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, triangle_index);
+
+            addNeighborVertex(a_idx, b_idx, c_idx);
+            addNeighborVertex(a_idx, c_idx, d_idx);
+
+            covered_triangle.emplace_back();
+            covered_triangle.emplace_back();
+            addCoveredTriangle(a_idx, b_idx, c_idx, t1_idx);
+            addCoveredTriangle(a_idx, c_idx, d_idx, t2_idx);
+
+        }
+            break;
+        case DIVIDE::TYPE2:
+        {
+            cv::Point2f p1 = corners[triangle.p1_idx];
+            cv::Point2f p2 = corners[triangle.p2_idx];
+            cv::Point2f p3 = corners[triangle.p3_idx];
+
+            cv::Point2f x = (p2 - p3) / 2.0;
+            cv::Point2f y = (p1 - p3) / 2.0;
+
+            cv::Point2f a = p1;
+            cv::Point2f b = p3 + x + y;
+            cv::Point2f c = p2;
+            cv::Point2f d = p3;
+
+            int b_idx = addCorner(b);
+
+            int a_idx = triangle.p1_idx;
+            int c_idx = triangle.p2_idx;
+            int d_idx = triangle.p3_idx;
+
+            int t1_idx = insertTriangle(a_idx, b_idx, d_idx, TYPE8);
+            int t2_idx = insertTriangle(b_idx, c_idx, d_idx, TYPE7);
+
+            removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
+            removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, triangle_index);
+
+            addNeighborVertex(a_idx, b_idx, d_idx);
+            addNeighborVertex(b_idx, c_idx, d_idx);
+
+            covered_triangle.emplace_back();
+            covered_triangle.emplace_back();
+            addCoveredTriangle(a_idx, b_idx, d_idx, t1_idx);
+            addCoveredTriangle(b_idx, c_idx, d_idx, t2_idx);
+        }
+            break;
+        case DIVIDE::TYPE3:
+        {
+            cv::Point2f p1 = corners[triangle.p1_idx];
+            cv::Point2f p2 = corners[triangle.p2_idx];
+            cv::Point2f p3 = corners[triangle.p3_idx];
+
+            cv::Point2f x = (p1 - p2) / 2.0;
+            cv::Point2f y = (p3 - p2) / 2.0;
+
+            cv::Point2f a = p1;
+            cv::Point2f b = p2;
+            cv::Point2f c = p2 + x + y;
+            cv::Point2f d = p3;
+
+            int c_idx = addCorner(c);
+
+            int a_idx = triangle.p1_idx;
+            int b_idx = triangle.p2_idx;
+            int d_idx = triangle.p3_idx;
+
+            int t1_idx = insertTriangle(a_idx, b_idx, c_idx, TYPE5);
+            int t2_idx = insertTriangle(b_idx, c_idx, d_idx, TYPE8);
+
+            removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
+            removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, triangle_index);
+
+            addNeighborVertex(a_idx, b_idx, c_idx);
+            addNeighborVertex(b_idx, c_idx, d_idx);
+
+            covered_triangle.emplace_back();
+            covered_triangle.emplace_back();
+            addCoveredTriangle(a_idx, b_idx, c_idx, t1_idx);
+            addCoveredTriangle(b_idx, c_idx, d_idx, t2_idx);
+
+        }
+            break;
+        case DIVIDE::TYPE4:
+        {
+            cv::Point2f p1 = corners[triangle.p1_idx];
+            cv::Point2f p2 = corners[triangle.p2_idx];
+            cv::Point2f p3 = corners[triangle.p3_idx];
+
+            cv::Point2f x = (p3 - p2) / 2.0;
+            cv::Point2f y = (p1 - p2) / 2.0;
+
+            cv::Point2f a = p1;
+            cv::Point2f b = p2 + x + y;
+            cv::Point2f c = p2;
+            cv::Point2f d = p3;
+
+            int b_idx = addCorner(b);
+
+            int a_idx = triangle.p1_idx;
+            int c_idx = triangle.p2_idx;
+            int d_idx = triangle.p3_idx;
+
+            int t1_idx = insertTriangle(a_idx, b_idx, c_idx, TYPE6);
+            int t2_idx = insertTriangle(b_idx, c_idx, d_idx, TYPE7);
+
+            removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
+            removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, triangle_index);
+
+            addNeighborVertex(a_idx, b_idx, c_idx);
+            addNeighborVertex(b_idx, c_idx, d_idx);
+
+            covered_triangle.emplace_back();
+            covered_triangle.emplace_back();
+            addCoveredTriangle(a_idx, b_idx, c_idx, t1_idx);
+            addCoveredTriangle(b_idx, c_idx, d_idx, t2_idx);
+
+        }
+            break;
+        case DIVIDE::TYPE5:
+        {
+            cv::Point2f p1 = corners[triangle.p1_idx];
+            cv::Point2f p2 = corners[triangle.p2_idx];
+            cv::Point2f p3 = corners[triangle.p3_idx];
+
+            cv::Point2f x = (p2 - p1) / 2.0;
+
+            cv::Point2f b = p1 + x;
+
+            int b_idx = addCorner(b);
+
+            int a_idx = triangle.p1_idx;
+            int c_idx = triangle.p2_idx;
+            int d_idx = triangle.p3_idx;
+
+            int t1_idx = insertTriangle(a_idx, b_idx, d_idx, TYPE3);
+            int t2_idx = insertTriangle(b_idx, c_idx, d_idx, TYPE1);
+
+            removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
+            removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, triangle_index);
+
+            addNeighborVertex(a_idx, b_idx, d_idx);
+            addNeighborVertex(b_idx, c_idx, d_idx);
+
+            covered_triangle.emplace_back();
+            covered_triangle.emplace_back();
+            addCoveredTriangle(a_idx, b_idx, d_idx, t1_idx);
+            addCoveredTriangle(b_idx, c_idx, d_idx, t2_idx);
+
+        }
+            break;
+        case DIVIDE::TYPE6:
+        {
+            cv::Point2f p1 = corners[triangle.p1_idx];
+            cv::Point2f p2 = corners[triangle.p2_idx];
+            cv::Point2f p3 = corners[triangle.p3_idx];
+
+            cv::Point2f y = (p3 - p1) / 2.0;
+
+            cv::Point2f b = p1 + y;
+
+            int b_idx = addCorner(b);
+
+            int a_idx = triangle.p1_idx;
+            int c_idx = triangle.p2_idx;
+            int d_idx = triangle.p3_idx;
+
+            int t1_idx = insertTriangle(a_idx, b_idx, c_idx, TYPE4);
+            int t2_idx = insertTriangle(b_idx, c_idx, d_idx, TYPE1);
+
+            removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
+            removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, triangle_index);
+
+            addNeighborVertex(a_idx, b_idx, c_idx);
+            addNeighborVertex(b_idx, c_idx, d_idx);
+
+            covered_triangle.emplace_back();
+            covered_triangle.emplace_back();
+            addCoveredTriangle(a_idx, b_idx, c_idx, t1_idx);
+            addCoveredTriangle(b_idx, c_idx, d_idx, t2_idx);
+
+        }
+            break;
+        case DIVIDE::TYPE7:
+        {
+            cv::Point2f p1 = corners[triangle.p1_idx];
+            cv::Point2f p2 = corners[triangle.p2_idx];
+            cv::Point2f p3 = corners[triangle.p3_idx];
+
+            cv::Point2f x = (p3 - p2) / 2.0;
+
+            cv::Point2f c = p2 + x;
+
+            int c_idx = addCorner(c);
+
+            int a_idx = triangle.p1_idx;
+            int b_idx = triangle.p2_idx;
+            int d_idx = triangle.p3_idx;
+
+            int t1_idx = insertTriangle(a_idx, b_idx, c_idx, TYPE2);
+            int t2_idx = insertTriangle(a_idx, c_idx, d_idx, TYPE4);
+
+            removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
+            removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, triangle_index);
+
+            addNeighborVertex(a_idx, b_idx, c_idx);
+            addNeighborVertex(a_idx, c_idx, d_idx);
+
+            covered_triangle.emplace_back();
+            covered_triangle.emplace_back();
+            addCoveredTriangle(a_idx, b_idx, c_idx, t1_idx);
+            addCoveredTriangle(a_idx, c_idx, d_idx, t2_idx);
+
+        }
+            break;
+        case DIVIDE::TYPE8:
+        {
+            cv::Point2f p1 = corners[triangle.p1_idx];
+            cv::Point2f p2 = corners[triangle.p2_idx];
+            cv::Point2f p3 = corners[triangle.p3_idx];
+
+            cv::Point2f y = (p3 - p1) / 2.0;
+
+            cv::Point2f c = p1 + y;
+
+            int c_idx = addCorner(c);
+
+            int a_idx = triangle.p2_idx;
+            int b_idx = triangle.p1_idx;
+            int d_idx = triangle.p3_idx;
+
+            int t1_idx = insertTriangle(a_idx, b_idx, c_idx, TYPE2);
+            int t2_idx = insertTriangle(a_idx, c_idx, d_idx, TYPE3);
+
+            removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
+            removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, triangle_index);
+
+            addNeighborVertex(a_idx, b_idx, c_idx);
+            addNeighborVertex(a_idx, c_idx, d_idx);
+
+            covered_triangle.emplace_back();
+            covered_triangle.emplace_back();
+            addCoveredTriangle(a_idx, b_idx, c_idx, t1_idx);
+            addCoveredTriangle(a_idx, c_idx, d_idx, t2_idx);
+
+        }
+            break;
+        default:
+            break;
+    }
+
+    delete_flag[triangle_index] = true;
 }
 
 /**
