@@ -1811,11 +1811,12 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                     flag_blare = true;
                     MSE_min = MSE;
                 }
-                if (fabs(PSNR_max - PSNR_para_max) <= th || PSNR_para_max > PSNR_max) {
-                    *flag = true;
-                } else{
-                    *flag = false;
-                }
+                *flag = true;
+//                if (fabs(PSNR_max - PSNR_para_max) <= th || PSNR_para_max > PSNR_max) {
+//                    *flag = true;
+//                } else{
+//                    *flag = false;
+//                }
             }
             //tri_list << "PSNR, " << PSNR << ", PSNR_para," << PSNR_para << std::endl;
             double alpha, beta, det;
