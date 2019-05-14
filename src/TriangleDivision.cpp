@@ -32,17 +32,18 @@ TriangleDivision::GaussResult::GaussResult(): triangle(Triangle(-1, -1, -1)) {}
 
 
 /**
- * @fn void TriangleDivision::initTriangle(int block_size_x, int block_size_y, int divide_flag)
+ * @fn void TriangleDivision::initTriangle(int block_size_x, int block_size_y, int _divide_steps, int divide_flag)
  * @brief 三角形を初期化する
  * @param[in] block_size_x
  * @param[in] block_size_y
  * @param[in] divide_flag
  */
-void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int divide_flag) {
+void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _divide_steps, int divide_flag) {
     block_size_x = _block_size_x;
     block_size_y = _block_size_y;
     int block_num_x = target_image.cols / block_size_x;
     int block_num_y = target_image.rows / block_size_y;
+    divide_steps = _divide_steps;
 
     /*
      *  p1                     p2
@@ -234,7 +235,7 @@ int TriangleDivision::insertTriangle(int p1_idx, int p2_idx, int p3_idx, int typ
         }
     });
 
-    Triangle triangle(v[0].second, v[1].second, v[2].second);
+    Triangle triangle(v[0].second, v[1].second, v[2].second, triangles.size());
 
     triangles.emplace_back(triangle, type);
     covered_triangle.emplace_back();
@@ -1567,6 +1568,24 @@ std::vector<int> TriangleDivision::getSpatialTriangleList(int t_idx){
     return ret;
 }
 
+/**
+ * @fn std::vector<int> TriangleDivision::getCollocatedTriangleList(int t_idx)
+ * @brief 時間予測したベクトル候補を返す
+ * @param t_idx 三角パッチのインデックス
+ * @return
+ */
+std::vector<int> TriangleDivision::getCollocatedTriangleList(int t_idx) {
+
+}
+
+/**
+ * @fn bool TriangleDivision::isCTU(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3)
+ * @brief CTU相当のパッチ（つまりは1回も分割されていないパッチ）であるかどうか調べる
+ * @param[in] p1 頂点１の座標
+ * @param[in] p2 頂点２の座標
+ * @param[in] p3 頂点３の座標
+ * @return CTUであるばあいtrue, それ以外はfalse
+ */
 bool TriangleDivision::isCTU(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3) {
     double x1 = fabs(p1.x - p2.x);
     double x2 = fabs(p2.x - p3.x);

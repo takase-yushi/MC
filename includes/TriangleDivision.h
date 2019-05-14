@@ -120,7 +120,7 @@ public:
     };
 
     TriangleDivision(const cv::Mat &refImage, const cv::Mat &targetImage);
-    void initTriangle(int block_size_x, int block_size_y, int divide_flag = LEFT_DIVIDE);
+    void initTriangle(int block_size_x, int block_size_y, int _divide_steps, int divide_flag = LEFT_DIVIDE);
     std::vector<std::pair<Point3Vec, int> > getTriangles();
     std::vector<Point3Vec> getTriangleCoordinateList();
     std::vector<Triangle> getTriangleIndexList();
@@ -138,9 +138,11 @@ public:
     static SplitResult getSplitTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type);
     bool split(cv::Mat& gaussRefImage, CodingTreeUnit* ctu, Point3Vec triangle, int triangle_index, int type, int steps);
     std::vector<int> getSpatialTriangleList(int t_idx);
+    std::vector<int> getCollocatedTriangleList(int t_idx);
 
     std::vector<Point3Vec> getAllTriangleCoordinateList();
     std::vector<Triangle> getAllTriangleIndexList();
+    int divide_steps;
 
 private:
     std::vector<cv::Point2f> corners;
