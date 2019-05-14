@@ -233,7 +233,8 @@ int main(int argc, char *argv[]) {
 
 
         TriangleDivision triangle_division(ref_image, target_image);
-        triangle_division.initTriangle(block_size_x, block_size_y);
+        int divide_steps = 8;
+        triangle_division.initTriangle(block_size_x, block_size_y, divide_steps, LEFT_DIVIDE);
         std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
 
         std::vector<std::pair<Point3Vec, int> > init_triangles = triangle_division.getTriangles();
@@ -255,7 +256,7 @@ int main(int argc, char *argv[]) {
             cv::Point2f p2 = triangle.first.p2;
             cv::Point2f p3 = triangle.first.p3;
 
-            triangle_division.split(gaussRefImage, foo[i], Point3Vec(p1, p2, p3), i, triangle.second, 8);
+            triangle_division.split(gaussRefImage, foo[i], Point3Vec(p1, p2, p3), i, triangle.second, divide_steps);
 //            triangle_division.getSpatialTriangleList(triangles.size() - 1);
 //            int prev_triangles_max = triangles.size();
 //            triangles = triangle_division.getAllTriangleCoordinateList();
