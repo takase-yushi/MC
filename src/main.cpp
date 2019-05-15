@@ -243,6 +243,7 @@ int main(int argc, char *argv[]) {
             foo[i] = new CodingTreeUnit();
             foo[i]->split_cu_flag1 = foo[i]->split_cu_flag2 = false;
             foo[i]->leftNode = foo[i]->rightNode = nullptr;
+            foo[i]->triangle_index = i;
         }
 
         cv::Mat gaussRefImage = cv::imread(ref_file_path);

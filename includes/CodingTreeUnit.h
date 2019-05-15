@@ -17,6 +17,7 @@ public:
     CodingTreeUnit *parentNode;
     int depth;
     int position; // left or right
+    int triangle_index;
 };
 
 
