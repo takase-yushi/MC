@@ -1380,10 +1380,15 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
     Point3Vec refTriangle(p1, p2, p3);
     Point3Vec targetTriangle(p1, p2, p3);
     int triangle_size = 0;
+    std::vector<cv::Mat> predicted_buf; //
+    double error = 0.0;
+    bool parallel_flag;
+    int num;
+    cv::Mat warp_p_image, residual_ref;
 
-    RMSE_before_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, targetTriangle, refTriangle,
-                                       triangle_size);
-    RMSE_before_subdiv /= triangle_size;
+    std::vector<cv::Point2i> mv_parallel = Gauss_Newton2(ref_image, target_image, gaussRefImage, predicted_buf, warp_p_image, warp_p_image, error, targetTriangle, refTriangle, &parallel_flag, num, residual_ref, triangle_size, 0.4);
+
+    RMSE_before_subdiv = error / triangle_size;
 
     SplitResult split_triangles = getSplitTriangle(p1, p2, p3, type);
 
@@ -1396,10 +1401,12 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
     double RMSE_after_subdiv = 0.0;
     int triangle_size_sum = 0;
 
+    std::vector<std::vector<cv::Point2i> > split_mv_result;
 #pragma omp parallel for
     for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
-        RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
-                                          subdiv_ref_triangles[j], triangle_size);
+        mv_parallel = Gauss_Newton2(ref_image, target_image, gaussRefImage, predicted_buf, warp_p_image, warp_p_image, error, subdiv_target_triangles[j], subdiv_ref_triangles[j], &parallel_flag, num, residual_ref, triangle_size, 0.4);
+        split_mv_result.emplace_back(mv_parallel);
+        RMSE_after_subdiv += error;
         triangle_size_sum += triangle_size;
     }
 
