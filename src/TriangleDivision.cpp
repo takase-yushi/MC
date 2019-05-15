@@ -44,6 +44,7 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
     int block_num_x = target_image.cols / block_size_x;
     int block_num_y = target_image.rows / block_size_y;
     divide_steps = _divide_steps;
+    coded_picture_num = 0;
 
     /*
      *  p1                     p2
@@ -69,6 +70,7 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
         }
     }
 
+    previousMvList.emplace_back();
     // すべての頂点を入れる
     for(int block_y = 0 ; block_y <= block_num_y ; block_y++) {
         for (int block_x = 0; block_x <= block_num_x; block_x++) {
@@ -82,7 +84,16 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
             corners.emplace_back(nx, ny);
             corner_flag[ny][nx] = corners.size() - 1;
             neighbor_vtx.emplace_back();
+
+            // 前の動きベクトルを保持しておくやつ
+            previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
         }
+    }
+
+    // 過去のMVを残すやつを初期化
+    for(auto node : previousMvList[coded_picture_num]) {
+        node->leftNode = node->rightNode = nullptr;
+        node->mv = cv::Point2f(0.0, 0.0);
     }
 
     std::cout << "block_num_y:" << block_num_y << std::endl;
@@ -1418,13 +1429,15 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
 
         ctu->split_cu_flag1 = true;
         ctu->split_cu_flag2 = true;
-        ctu->parentNode = ctu;
 
         ctu->leftNode = new CodingTreeUnit();
         int t1_idx = triangles.size() - 2;
         bool ret = split(gaussRefImage, ctu->leftNode, split_triangles.t1, t1_idx,split_triangles.t1_type, steps - 1);
         if(ret) {
             ctu->leftNode->split_cu_flag1 = true;
+            ctu->leftNode->parentNode = ctu;
+            ctu->leftNode->triangle_index = t1_idx;
+            ctu->depth = divide_steps - steps;
         }
 
         ctu->rightNode = new CodingTreeUnit();
@@ -1432,6 +1445,9 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
         ret = split(gaussRefImage, ctu->rightNode, split_triangles.t2, t2_idx, split_triangles.t2_type, steps - 1);
         if(ret) {
             ctu->rightNode->split_cu_flag2 = true;
+            ctu->rightNode->parentNode = ctu;
+            ctu->rightNode->triangle_index = t2_idx;
+            ctu->depth = divide_steps - steps;
         }
 
         return true;
@@ -1576,13 +1592,32 @@ std::vector<int> TriangleDivision::getSpatialTriangleList(int t_idx){
 }
 
 /**
- * @fn std::vector<int> TriangleDivision::getCollocatedTriangleList(int t_idx)
+ * @fn cv::Point2f TriangleDivision::getCollocatedTriangleList(int t_idx)
  * @brief 時間予測したベクトル候補を返す
  * @param t_idx 三角パッチのインデックス
  * @return
  */
-std::vector<int> TriangleDivision::getCollocatedTriangleList(int t_idx) {
+cv::Point2f TriangleDivision::getCollocatedTriangleList(int t_idx, CodingTreeUnit* unit) {
+    CodingTreeUnit* tmp_unit = unit;
+    cv::Point2f mv;
 
+    while(tmp_unit->parentNode != nullptr) tmp_unit = tmp_unit->parentNode;
+    int root_triangle_idx = tmp_unit->triangle_index;
+    std::vector<int> route = getDivideOrder(unit);
+    CollocatedMvTree* prevMvList = previousMvList[0][root_triangle_idx];
+
+    for(auto direction : route) {
+        if(prevMvList == nullptr) {
+            mv = prevMvList->mv;
+        }
+        if(direction == 1) {
+            prevMvList = prevMvList->rightNode;
+        }else{
+            prevMvList = prevMvList->leftNode;
+        }
+    }
+
+    return mv;
 }
 
 /**

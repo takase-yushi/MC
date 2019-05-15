@@ -139,7 +139,7 @@ public:
     static SplitResult getSplitTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type);
     bool split(cv::Mat& gaussRefImage, CodingTreeUnit* ctu, Point3Vec triangle, int triangle_index, int type, int steps);
     std::vector<int> getSpatialTriangleList(int t_idx);
-    std::vector<int> getCollocatedTriangleList(int t_idx);
+    cv::Point2f getCollocatedTriangleList(int t_idx, CodingTreeUnit* unit);
 
     std::vector<Point3Vec> getAllTriangleCoordinateList();
     std::vector<Triangle> getAllTriangleIndexList();
@@ -155,6 +155,8 @@ private:
     std::vector<bool> delete_flag;
     std::vector<bool> isCodedTriangle;
     int block_size_x, block_size_y;
+    std::vector<std::vector<CollocatedMvTree*>> previousMvList;
+    int coded_picture_num;
 
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
     void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
