@@ -7,6 +7,7 @@
 
 #include "Utils.h"
 #include "CodingTreeUnit.h"
+#include "../src/CollocatedMvTree.h"
 #include <set>
 #include <vector>
 
@@ -133,7 +134,7 @@ public:
     std::vector<int> getIdxCoveredTriangleIndexList(int idx);
 
     void subdivision(cv::Mat gaussRefImage, int steps);
-
+    void constructPreviousCodingTree(std::vector<CollocatedMvTree*> trees);
 
     static SplitResult getSplitTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type);
     bool split(cv::Mat& gaussRefImage, CodingTreeUnit* ctu, Point3Vec triangle, int triangle_index, int type, int steps);
@@ -163,6 +164,8 @@ private:
     int addCorner(cv::Point2f p);
     void addCornerAndTriangle(Triangle triangle, int triangle_index, int type);
     bool isCTU(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3);
+    std::vector<int> getDivideOrder(CodingTreeUnit* currentNode);
+
 
 };
 

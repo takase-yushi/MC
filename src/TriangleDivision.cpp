@@ -1604,6 +1604,36 @@ bool TriangleDivision::isCTU(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3) {
     return (x1 == block_size_x || x2 == block_size_x || x3 == block_size_x) && (y1 == block_size_y || y2 == block_size_y || y3 == block_size_y);
 }
 
+/**
+ * @fn std::vector<int> TriangleDivision::getDivideOrder(CodingTreeUnit* currentNode)
+ * @brief 木をたどって分割の順番を調べて返す
+ * @param currentNode 調べたいノード
+ * @return 1なら右、0なら左を表すvectorを返す
+ */
+std::vector<int> TriangleDivision::getDivideOrder(CodingTreeUnit* currentNode){
+    if(currentNode->parentNode == nullptr) return std::vector<int>(); // ルートノード
+
+    std::vector<int> route;
+    while(currentNode->parentNode != nullptr) {
+        if(currentNode->parentNode->rightNode != nullptr) {
+            route.emplace_back(1); // right-node
+        }else{
+            route.emplace_back(0); // left-node
+        }
+    }
+
+    std::reverse(route.begin(), route.end());
+    return route;
+}
+
+/**
+ * @fn void TriangleDivision::constructPreviousCodingTree(std::vector<CollocatedMvTree*> trees)
+ * @param trees
+ */
+void TriangleDivision::constructPreviousCodingTree(std::vector<CollocatedMvTree*> trees) {
+
+}
+
 TriangleDivision::SplitResult::SplitResult(const Point3Vec &t1, const Point3Vec &t2, int t1Type, int t2Type) : t1(t1),
                                                                                                                t2(t2),
                                                                                                                t1_type(t1Type),
