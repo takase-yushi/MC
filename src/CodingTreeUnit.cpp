@@ -5,6 +5,6 @@
 #include "../includes/CodingTreeUnit.h"
 
 CodingTreeUnit::~CodingTreeUnit() {
-    delete ctu1;
-    delete ctu2;
+    delete leftNode;
+    delete rightNode;
 }

@@ -12,8 +12,11 @@ public:
 
     bool split_cu_flag1;
     bool split_cu_flag2;
-    CodingTreeUnit *ctu1;
-    CodingTreeUnit *ctu2;
+    CodingTreeUnit *leftNode;
+    CodingTreeUnit *rightNode;
+    CodingTreeUnit *parentNode;
+    int depth;
+    int position; // left or right
 };
 
 

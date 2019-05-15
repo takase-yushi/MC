@@ -97,8 +97,8 @@ void Reconstruction::reconstructionTriangle(CodingTreeUnit* ctu, Point3Vec trian
     triangle.p3 = ret[2].first;
     TriangleDivision::SplitResult result = TriangleDivision::getSplitTriangle(triangle.p1, triangle.p2, triangle.p3, type);
 
-    if(ctu->split_cu_flag1 != false) reconstructionTriangle(ctu->ctu1, result.t1, result.t1_type);
-    if(ctu->split_cu_flag2 != false) reconstructionTriangle(ctu->ctu2, result.t2, result.t2_type);
+    if(ctu->split_cu_flag1 != false) reconstructionTriangle(ctu->leftNode, result.t1, result.t1_type);
+    if(ctu->split_cu_flag2 != false) reconstructionTriangle(ctu->rightNode, result.t2, result.t2_type);
 }
 
 bool Reconstruction::isAdditionalPoint(cv::Point2f p){
