@@ -9,13 +9,14 @@
 #include <opencv2/core/types.hpp>
 
 class CollocatedMvTree {
-    CollocatedMvTree* leftNode;
-    CollocatedMvTree* rightNode;
 public:
+
+    CollocatedMvTree* leftNode;
+
     virtual ~CollocatedMvTree();
 
-private:
     cv::Point2f mv;
+    CollocatedMvTree* rightNode;
 };
 
 
