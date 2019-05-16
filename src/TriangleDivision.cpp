@@ -136,6 +136,10 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
         delete_flag[i] = false;
     }
 
+    predicted_buf.emplace_back(cv::Mat::zeros(ref_image.size()/8, CV_8UC3));
+    predicted_buf.emplace_back(cv::Mat::zeros(ref_image.size()/4, CV_8UC3));
+    predicted_buf.emplace_back(cv::Mat::zeros(ref_image.size()/2, CV_8UC3));
+    predicted_buf.emplace_back(cv::Mat::zeros(ref_image.size(), CV_8UC3));
 }
 
 /**
@@ -1391,13 +1395,18 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
     Point3Vec refTriangle(p1, p2, p3);
     Point3Vec targetTriangle(p1, p2, p3);
     int triangle_size = 0;
-    std::vector<cv::Mat> predicted_buf; //
     double error = 0.0;
     bool parallel_flag;
     int num;
-    cv::Mat warp_p_image, residual_ref;
+    cv::Mat warp_p_image, residual_ref, parallel_p_image;
 
-    std::vector<cv::Point2i> mv_parallel = Gauss_Newton2(ref_image, target_image, gaussRefImage, predicted_buf, warp_p_image, warp_p_image, error, targetTriangle, refTriangle, &parallel_flag, num, residual_ref, triangle_size, 0.4);
+    warp_p_image = cv::Mat::zeros(gaussRefImage.rows, gaussRefImage.cols, CV_8UC3);
+    parallel_p_image = cv::Mat::zeros(gaussRefImage.rows, gaussRefImage.cols, CV_8UC3);
+    residual_ref = cv::Mat::zeros(gaussRefImage.rows, gaussRefImage.cols, CV_8UC3);
+
+    std::vector<cv::Point2i> mv_parallel = Gauss_Newton2(gaussRefImage, target_image, ref_image, predicted_buf,
+                                                            warp_p_image, parallel_p_image, error, targetTriangle, refTriangle,
+                                                            &parallel_flag, num, residual_ref, triangle_size, 0);
 
     RMSE_before_subdiv = error / triangle_size;
 
