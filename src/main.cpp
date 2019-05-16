@@ -249,8 +249,8 @@ int main(int argc, char *argv[]) {
         cv::Mat gaussRefImage = cv::imread(ref_file_path);
         cv::Mat spatialMvTestImage;
     //#pragma omp parallel for
-        for(int i = 0 ; i < init_triangles.size() ; i++) {
-//        for(int i = 0 ; i < 50 ; i++) {
+//        for(int i = 0 ; i < init_triangles.size() ; i++) {
+        for(int i = 0 ; i < 10 ; i++) {
             std::pair<Point3Vec, int> triangle = init_triangles[i];
             std::cout << "i:" << i << std::endl;
             cv::Point2f p1 = triangle.first.p1;
@@ -273,7 +273,9 @@ int main(int argc, char *argv[]) {
             }
 
         getReconstructionDivisionImage(gaussRefImage, foo);
+        triangle_division.constructPreviousCodingTree(foo, 0);
 
+        exit(0);
         // 何回再帰的に分割を行うか
         const int division_steps = 1;
         triangle_division.subdivision(cv::imread(ref_file_path), division_steps);
@@ -1897,7 +1899,8 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
     tri_list = std::ofstream("tri_list.csv");
 
     std::vector<cv::Mat> predict_buf;
-    predict_buf.emplace_back(predict_img0);
+    predict_buf
+    .emplace_back(predict_img0);
     predict_buf.emplace_back(predict_img1);
     predict_buf.emplace_back(predict_img2);
     predict_buf.emplace_back(predict_img3);
