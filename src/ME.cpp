@@ -426,8 +426,8 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
         p2 = target_corners.p3;
         for (int z = 0; z < 4; z++) {//各階層ごとに
             double scale = pow(2, 3-z);//各階層のスケーリングの値
-            cv::Mat f_img = f_[blare][z];//対照画像
-            cv::Mat g_img = g_[blare][z];//参照画像
+            cv::Mat f_img = mv_filter(f_[blare][z], 2);//対照画像
+            cv::Mat g_img = mv_filter(g_[blare][z], 2);//参照画像
             cv::Mat point;
             const int expand = 500;
             unsigned char **f_expand;//画像の周りに500ピクセルだけ黒の領域を設ける(念のため)
