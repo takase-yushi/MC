@@ -93,7 +93,8 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
     // 過去のMVを残すやつを初期化
     for(auto node : previousMvList[coded_picture_num]) {
         node->leftNode = node->rightNode = nullptr;
-        node->mv = cv::Point2f(0.0, 0.0);
+        node->mv_decimal = cv::Point2f(0.0, 0.0);
+        node->mv_integer = cv::Point2f(0.0, 0.0);
     }
 
     std::cout << "block_num_y:" << block_num_y << std::endl;
@@ -1410,6 +1411,12 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
 
     RMSE_before_subdiv = error / triangle_size;
 
+    ctu->mv_integer = mv_parallel[0]; // 整数部
+    ctu->mv_decimal = mv_parallel[3]; // 小数部
+
+    double hoge = Gauss_Newton(gaussRefImage, target_image, ref_image, targetTriangle, refTriangle, triangle_size);
+    hoge /= triangle_size;
+
     SplitResult split_triangles = getSplitTriangle(p1, p2, p3, type);
 
     std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
@@ -1424,13 +1431,15 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
     std::vector<std::vector<cv::Point2i> > split_mv_result;
 #pragma omp parallel for
     for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
-        mv_parallel = Gauss_Newton2(ref_image, target_image, gaussRefImage, predicted_buf, warp_p_image, warp_p_image, error, subdiv_target_triangles[j], subdiv_ref_triangles[j], &parallel_flag, num, residual_ref, triangle_size, 0.4);
+        mv_parallel = Gauss_Newton2(gaussRefImage, target_image, ref_image, predicted_buf, warp_p_image, warp_p_image, error, subdiv_target_triangles[j], subdiv_ref_triangles[j], &parallel_flag, num, residual_ref, triangle_size, 0.4);
         split_mv_result.emplace_back(mv_parallel);
         RMSE_after_subdiv += error;
         triangle_size_sum += triangle_size;
     }
 
     RMSE_after_subdiv /= (double) triangle_size_sum;
+
+    std::cout << "RMSE_before_subdiv:" << RMSE_before_subdiv << " RMSE_after_subdiv:" << RMSE_after_subdiv << std::endl;
 
     if((RMSE_before_subdiv - RMSE_after_subdiv) / RMSE_before_subdiv >= 0.04) {
         addCornerAndTriangle(Triangle(corner_flag[(int) p1.y][(int) p1.x], corner_flag[(int) p2.y][(int) p2.x],
@@ -1606,18 +1615,19 @@ std::vector<int> TriangleDivision::getSpatialTriangleList(int t_idx){
  * @param t_idx 三角パッチのインデックス
  * @return
  */
-cv::Point2f TriangleDivision::getCollocatedTriangleList(int t_idx, CodingTreeUnit* unit) {
+std::pair<cv::Point2f, cv::Point2f> TriangleDivision::getCollocatedTriangleList(int t_idx, CodingTreeUnit* unit) {
     CodingTreeUnit* tmp_unit = unit;
-    cv::Point2f mv;
 
     while(tmp_unit->parentNode != nullptr) tmp_unit = tmp_unit->parentNode;
     int root_triangle_idx = tmp_unit->triangle_index;
     std::vector<int> route = getDivideOrder(unit);
     CollocatedMvTree* prevMvList = previousMvList[0][root_triangle_idx];
 
+    cv::Point2f mv_integer, mv_decimal;
     for(auto direction : route) {
         if(prevMvList == nullptr) {
-            mv = prevMvList->mv;
+            mv_integer = prevMvList->mv_integer;
+            mv_decimal = prevMvList->mv_decimal;
         }
         if(direction == 1) {
             prevMvList = prevMvList->rightNode;
@@ -1626,7 +1636,7 @@ cv::Point2f TriangleDivision::getCollocatedTriangleList(int t_idx, CodingTreeUni
         }
     }
 
-    return mv;
+    return std::make_pair(mv_integer, mv_decimal);
 }
 
 /**
