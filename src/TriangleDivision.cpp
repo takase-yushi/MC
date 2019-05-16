@@ -1669,6 +1669,27 @@ void TriangleDivision::constructPreviousCodingTree(std::vector<CollocatedMvTree*
 
 }
 
+
+/**
+ * @fn void TriangleDivision::constructPreviousCodingTree(std::vector<CollocatedMvTree*> trees)
+ * @param trees
+ */
+void TriangleDivision::constructPreviousCodingTree(CodingTreeUnit* codingTree, CollocatedMvTree* constructedTree) {
+    constructedTree->mv_decimal = codingTree->mv_decimal;
+    constructedTree->mv_integer = codingTree->mv_integer;
+
+    if(codingTree->rightNode != nullptr) {
+        constructedTree->rightNode = new CollocatedMvTree();
+        constructPreviousCodingTree(codingTree->rightNode, constructedTree->rightNode);
+    }
+    if(codingTree->leftNode != nullptr) {
+        constructedTree->leftNode = new CollocatedMvTree();
+        constructPreviousCodingTree(codingTree->leftNode, constructedTree->leftNode);
+    }
+
+}
+
+
 TriangleDivision::SplitResult::SplitResult(const Point3Vec &t1, const Point3Vec &t2, int t1Type, int t2Type) : t1(t1),
                                                                                                                t2(t2),
                                                                                                                t1_type(t1Type),

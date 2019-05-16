@@ -134,12 +134,12 @@ public:
     std::vector<int> getIdxCoveredTriangleIndexList(int idx);
 
     void subdivision(cv::Mat gaussRefImage, int steps);
-    void constructPreviousCodingTree(std::vector<CollocatedMvTree*> trees);
+    void constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num = 0);
 
     static SplitResult getSplitTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type);
     bool split(cv::Mat& gaussRefImage, CodingTreeUnit* ctu, Point3Vec triangle, int triangle_index, int type, int steps);
     std::vector<int> getSpatialTriangleList(int t_idx);
-    cv::Point2f getCollocatedTriangleList(int t_idx, CodingTreeUnit* unit);
+    std::pair<cv::Point2f, cv::Point2f> getCollocatedTriangleList(int t_idx, CodingTreeUnit* unit);
 
     std::vector<Point3Vec> getAllTriangleCoordinateList();
     std::vector<Triangle> getAllTriangleIndexList();
@@ -157,6 +157,7 @@ private:
     int block_size_x, block_size_y;
     std::vector<std::vector<CollocatedMvTree*>> previousMvList;
     int coded_picture_num;
+    std::vector<cv::Mat> predicted_buf;
 
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
     void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
@@ -167,7 +168,7 @@ private:
     void addCornerAndTriangle(Triangle triangle, int triangle_index, int type);
     bool isCTU(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3);
     std::vector<int> getDivideOrder(CodingTreeUnit* currentNode);
-
+    void constructPreviousCodingTree(CodingTreeUnit* codingTree, CollocatedMvTree* constructedTree);
 
 };
 
