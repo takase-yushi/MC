@@ -1277,8 +1277,8 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
         for (int z = 0; z < 4; z++) {
 
             int scale = pow(2, 3-z),scale_x = scale,scale_y = scale;
-            cv::Mat f_img = f_[blare][z];//対照画像
-            cv::Mat g_img = g_[blare][z];//参照画像
+            cv::Mat f_img = f_[blare][z].clone();//対照画像
+            cv::Mat g_img = g_[blare][z].clone();//参照画像
             cv::Mat point;
             f_img = mv_filter(f_img,2);
             g_img = mv_filter(g_img,2);
