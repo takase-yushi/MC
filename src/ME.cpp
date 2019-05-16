@@ -401,7 +401,7 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
 
     float delta_x, delta_y;//頂点を動かしたときのパッチ内の変動量x軸y軸独立に計算(delta_gを求めるために必要)
     std::vector<cv::Point2f> triangle, triangle_later,triangle_later_para;//三角形の頂点を格納
-    std::vector<cv::Point2f> in_triangle, in_triangle_later,in_triangle_later_para;//三角形の内部の座標を格納
+    std::vector<cv::Point2f> in_triangle_pixel, in_triangle_later,in_triangle_later_para;//三角形の内部の座標を格納
     cv::Point2f xp(0.0, 0.0), p, p0, p1, p2;
     std::vector<cv::Point2i> mv,mv_diff;
     cv::Point2f v_para,v_para_max;//平行移動の動きベクトルを格納
@@ -581,13 +581,13 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
                 if(lx - sx == 0 || ly - sy == 0){
                     std::cout << "baund = 0" << std::endl;
                 }
-                in_triangle.clear();
+                in_triangle_pixel.clear();
                 for (int j = (int) (round(sy) - 1); j <= round(ly) + 1; j++) {
                     for (int i = (int) (round(sx) - 1); i <= round(lx) + 1; i++) {
                         xp.x = (float) i;
                         xp.y = (float) j;
                         if (isInTriangle(triangleVec, xp) == 1) {
-                            in_triangle.emplace_back(xp);//三角形の内部のピクセルを格納
+                            in_triangle_pixel.emplace_back(xp);//三角形の内部のピクセルを格納
                         }
                     }
                 }
@@ -638,9 +638,9 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
                     }
                     B_para.at<double>(k, 0) = 0;
                 }
-                for (int m = 0; m < (int) in_triangle.size(); m++) {//パッチ内の画素ごとに
-                    X.x = in_triangle[m].x - p0.x;
-                    X.y = in_triangle[m].y - p0.y;
+                for (int m = 0; m < (int) in_triangle_pixel.size(); m++) {//パッチ内の画素ごとに
+                    X.x = in_triangle_pixel[m].x - p0.x;
+                    X.y = in_triangle_pixel[m].y - p0.y;
                     alpha = (X.x * b.y - X.y * b.x) / det;
                     beta = (a.x * X.y - a.y * X.x) / det;
 
@@ -784,9 +784,9 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
                 }
                 Error = MSE;//パッチ全体の予測残差の和
                 Error_para = MSE_para;
-                triangle_size = (int)in_triangle.size();
-                MSE = (in_triangle.size() == 0 ? MSE : MSE / in_triangle.size());//パッチ内の平均2乗誤差
-                MSE_para = (in_triangle.size() == 0 ? MSE_para : MSE_para / in_triangle.size());
+                triangle_size = (int)in_triangle_pixel.size();
+                MSE = (in_triangle_pixel.size() == 0 ? MSE : MSE / in_triangle_pixel.size());//パッチ内の平均2乗誤差
+                MSE_para = (in_triangle_pixel.size() == 0 ? MSE_para : MSE_para / in_triangle_pixel.size());
                 PSNR = 10 * log10((255 * 255) / MSE);//パッチ内のPSNR
                 PSNR_para = 10 * log10((255 * 255) / MSE_para);
 
@@ -845,8 +845,8 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
             Error = v_stack[0].second;
             v_para = v_stack_para[0].first;
             Error_para = v_stack_para[0].second;
-            MSE = Error / (double)in_triangle.size();
-            MSE_para = Error_para / (double)in_triangle.size();
+            MSE = Error / (double)in_triangle_pixel.size();
+            MSE_para = Error_para / (double)in_triangle_pixel.size();
             PSNR = 10 * log10((255 * 255) / MSE);
             PSNR_para = 10 * log10((255 * 255) / MSE_para);
 
@@ -1018,11 +1018,11 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
             b.y = triangle[1].y - triangle[0].y;
             det = a.x * b.y - a.y * b.x;
 
-            for (int i = 0; i < (int) in_triangle.size(); i++) {
+            for (int i = 0; i < (int) in_triangle_pixel.size(); i++) {
                 double d_x, d_y;
                 int x0, y0;
-                X.x = in_triangle[i].x - triangle[0].x;
-                X.y = in_triangle[i].y - triangle[0].y;
+                X.x = in_triangle_pixel[i].x - triangle[0].x;
+                X.y = in_triangle_pixel[i].y - triangle[0].y;
                 alpha = (X.x * b.y - X.y * b.x) / det;
                 beta = (a.x * X.y - a.y * X.x) / det;
                 X.x += triangle[0].x;
@@ -1974,14 +1974,14 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
             det = a.x * b.y - a.y * b.x;
 
             if(blare == 0) {
-                warp = (unsigned char *) malloc(sizeof(unsigned char) * (int) in_triangle.size());
-                para = (unsigned char *) malloc(sizeof(unsigned char) * (int) in_triangle.size());
+                warp = (unsigned char *) malloc(sizeof(unsigned char) * (int) in_triangle_pixels.size());
+                para = (unsigned char *) malloc(sizeof(unsigned char) * (int) in_triangle_pixels.size());
             }
-            for (int i = 0; i < (int) in_triangle.size(); i++) {
+            for (int i = 0; i < (int) in_triangle_pixels.size(); i++) {
                 double d_x, d_y,d_x_para,d_y_para;
                 int x0, y0,x0_para,y0_para;
-                X.x = in_triangle[i].x - triangle[0].x;
-                X.y = in_triangle[i].y - triangle[0].y;
+                X.x = in_triangle_pixels[i].x - triangle[0].x;
+                X.y = in_triangle_pixels[i].y - triangle[0].y;
                 alpha = (X.x * b.y - X.y * b.x) / det;
                 beta = (a.x * X.y - a.y * X.x) / det;
                 X.x += triangle[0].x;
@@ -2120,7 +2120,8 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
         }
     }
 
-    for (int i = 0; i < (int) in_triangle.size(); i++) {
+    double squaredError = 0.0;
+    for (int i = 0; i < (int) in_triangle_pixels.size(); i++) {
         unsigned char y;
         int Y;
         if (*flag == true) {
@@ -2129,7 +2130,7 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
         else{
             y = warp[i];
         }
-        cv::Point2f X = in_triangle[i];
+        cv::Point2f X = in_triangle_pixels[i];
         R(predict_buf[3], (int) X.x, (int) X.y) = (unsigned char) y;
         G(predict_buf[3], (int) X.x, (int) X.y) = (unsigned char) y;
         B(predict_buf[3], (int) X.x, (int) X.y) = (unsigned char) y;
