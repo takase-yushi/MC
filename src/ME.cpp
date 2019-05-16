@@ -312,9 +312,9 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
 
     // 対象画像の縮小
     f0x1 = current_color;//第0階層の対象フレーム
-    f0x2 = half_2(f0x1); //第1階層の対象フレーム
-    f0x4 = half_2(f0x2); //第2階層の対象フレーム
-    f0x8 = half_2(f0x4); //第3階層の対象フレーム
+    f0x2 = half(f0x1,2); //第1階層の対象フレーム
+    f0x4 = half(f0x2,2); //第2階層の対象フレーム
+    f0x8 = half(f0x4,2); //第3階層の対象フレーム
     f_0.emplace_back(f0x8);
     f_0.emplace_back(f0x4);
     f_0.emplace_back(f0x2);
@@ -322,9 +322,9 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
 
     // 参照画像の縮小
     g0x1 = prev_color;   //第0階層の参照フレーム
-    g0x2 = half_2(g0x1); //第1階層の参照フレーム(1/2)
-    g0x4 = half_2(g0x2); //第2階層の参照フレーム(1/4)
-    g0x8 = half_2(g0x4); //第3階層の参照フレーム(1/8)
+    g0x2 = half(g0x1,2); //第1階層の参照フレーム(1/2)
+    g0x4 = half(g0x2,2); //第2階層の参照フレーム(1/4)
+    g0x8 = half(g0x4,2); //第3階層の参照フレーム(1/8)
     g_0.emplace_back(g0x8);
     g_0.emplace_back(g0x4);
     g_0.emplace_back(g0x2);
@@ -335,9 +335,9 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
     // 上と同様にフィルタのパラメータを変えて階層化を行う
     // 参照画像
     fx1 = current_color;
-    fx2 = half_2(fx1);
-    fx4 = half(fx2);
-    fx8 = half(fx4);
+    fx2 = half(fx1,2);
+    fx4 = half(fx2,1);
+    fx8 = half(fx4,1);
     f_1.emplace_back(fx8);
     f_1.emplace_back(fx4);
     f_1.emplace_back(fx2);
@@ -345,9 +345,9 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
 
     // 対象画像
     gx1 = prev_color;
-    gx2 = half_2(gx1);
-    gx4 = half(gx2);
-    gx8 = half(gx4);
+    gx2 = half(gx1,2);
+    gx4 = half(gx2,1);
+    gx8 = half(gx4,1);
     g_1.emplace_back(gx8);
     g_1.emplace_back(gx4);
     g_1.emplace_back(gx2);
