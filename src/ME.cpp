@@ -1916,10 +1916,11 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                     mv4[0] /= 2;
                     x0 = (int)mv4[0].x;
                     y0 = (int)mv4[0].y;
-                    d_x = mv4[0].x - x0;
+                    d_x = mv4[0].x - x0; // ハーフペル相当になっている
                     d_y = mv4[0].y - y0;
-                    mv[0].x = x0;
-                    mv[0].y = y0;
+                    mv[0].x = x0; mv[0].y = y0;
+                    mv[1].x = x0; mv[1].y = y0;
+                    mv[2].x = x0; mv[2].y = y0;
                     cv::Point2i dv(d_x,d_y);
                     mv.emplace_back(dv);
                 }
