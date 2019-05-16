@@ -839,8 +839,16 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
                 }
 
             }
-            bubbleSort(v_stack, v_stack.size());//予測残差の小さい順にソート
-            bubbleSort(v_stack_para, v_stack_para.size());
+
+            std::sort(v_stack.begin(), v_stack.end(), [](std::pair<std::vector<cv::Point2f>,double> a, std::pair<std::vector<cv::Point2f>,double> b){
+                return a.second < b.second;
+            });
+
+            std::sort(v_stack_para.begin(), v_stack_para.end(), [](std::pair<cv::Point2f,double> a, std::pair<cv::Point2f,double> b){
+                return a.second < b.second;
+            });
+
+
             v = v_stack[0].first;//一番良い動きベクトルを採用
             Error = v_stack[0].second;
             v_para = v_stack_para[0].first;
@@ -1787,12 +1795,22 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                     prev_PSNR = PSNR;
                     v_prev = v;
                 }
-                bubbleSort(v_stack, v_stack.size());
-                bubbleSort(v_stack_para, v_stack_para.size());
-                v = v_stack[(int) v_stack.size() - 1].first;
-                PSNR = v_stack[(int) v_stack.size() - 1].second;
-                v_para = v_stack_para[(int) v_stack_para.size() - 1].first;
-                PSNR_para = v_stack_para[(int) v_stack_para.size() - 1].second;
+                std::sort(v_stack.begin(), v_stack.end(), [](std::pair<std::vector<cv::Point2f>,double> a, std::pair<std::vector<cv::Point2f>,double> b){
+                    return a.second < b.second;
+                });
+
+                std::sort(v_stack_para.begin(), v_stack_para.end(), [](std::pair<cv::Point2f,double> a, std::pair<cv::Point2f,double> b){
+                    return a.second < b.second;
+                });
+
+                v = v_stack[0].first;
+                Error = v_stack[0].second;
+                v_para = v_stack_para[0].first;
+                Error_para = v_stack_para[0].second;
+                MSE = Error / (double)in_triangle_pixels.size();
+                MSE_para = Error_para / (double)in_triangle_pixels.size();
+                PSNR = 10.0 * log10((255 * 255) / MSE);
+                PSNR_para = 10.0 * log10((255 * 255) / MSE_para);
             }
 
             bool flag_blare = false,flag_blare_para = false;
