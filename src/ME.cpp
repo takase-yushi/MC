@@ -1717,10 +1717,10 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                          break;
                      }*/
                     v_pair.first = v;
-                    v_pair.second = PSNR;
+                    v_pair.second = Error;
                     v_stack.emplace_back(v_pair);
                     v_pair_para.first = v_para;
-                    v_pair_para.second = PSNR_para;
+                    v_pair_para.second = Error_para;
                     v_stack_para.emplace_back(v_pair_para);
                     for (int k = 0; k < 6; k++) {
                         if (k % 2 == 0) {
