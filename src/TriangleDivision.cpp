@@ -1681,10 +1681,13 @@ std::vector<int> TriangleDivision::getDivideOrder(CodingTreeUnit* currentNode){
 }
 
 /**
- * @fn void TriangleDivision::constructPreviousCodingTree(std::vector<CollocatedMvTree*> trees)
+ * @fn void TriangleDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num)
  * @param trees
  */
-void TriangleDivision::constructPreviousCodingTree(std::vector<CollocatedMvTree*> trees) {
+void TriangleDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num) {
+    for(int i = 0 ; i < 10 ; i++) {
+        constructPreviousCodingTree(trees[i], previousMvList[pic_num][i]);
+    }
 
 }
 
