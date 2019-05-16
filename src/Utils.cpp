@@ -681,9 +681,9 @@ cv::Mat half_sharp(cv::Mat &in) {
 
 /***
  * @fn cv::Mat mv_filter(cv::Mat &in, int k)
- * @brief
- * @param in
- * @return
+ * @brief 画像に対してkタップの移動平均フィルタを追加する
+ * @param in 入力画像
+ * @return フィルタをかけた画像
  */
 cv::Mat mv_filter(cv::Mat &in,int k){
     cv::Mat out = cv::Mat::zeros((int) (in.rows), (int) (in.cols), CV_8UC3);
