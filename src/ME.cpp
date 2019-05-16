@@ -13,6 +13,7 @@
 #include <fstream>
 #include "../includes/DelaunayTriangulation.hpp"
 #include "../includes/Utils.h"
+#include <algorithm>
 
 #define HEIGHT 1024
 #define WIDTH 1920
@@ -396,7 +397,7 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
     bool parallel_flag;                              // 平行移動 = true, ワーピング = false
 
     const double th = 0.5;                           //ワーピングか平行移動を選択するための閾値
-    double MSE,MSE_para,Error,Error_min = 0,Error_para,Error_para_min = 0; //予測残差諸々
+    double MSE,MSE_para,Error,Error_min = 1E6,Error_para,Error_para_min = 1E6; //予測残差諸々
     double PSNR,PSNR_max = 0,PSNR_para,PSNR_para_max = 0;
 
     float delta_x, delta_y;//頂点を動かしたときのパッチ内の変動量x軸y軸独立に計算(delta_gを求めるために必要)
@@ -837,7 +838,6 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
                         }
                     }
                 }
-
             }
 
             std::sort(v_stack.begin(), v_stack.end(), [](std::pair<std::vector<cv::Point2f>,double> a, std::pair<std::vector<cv::Point2f>,double> b){
@@ -1836,6 +1836,7 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
 //                    *flag = false;
 //                }
             }
+
             //tri_list << "PSNR, " << PSNR << ", PSNR_para," << PSNR_para << std::endl;
             double alpha, beta, det;
 
