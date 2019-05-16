@@ -2154,6 +2154,7 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
         B(predict_buf[3], (int) X.x, (int) X.y) = (unsigned char) y;
         Y = sqrt(residual_ref.at<unsigned char>((int)X.y,(int)X.x)*abs((int)M(current_color,(int)X.x,(int)X.y) - y)) + 0.5;
         Y = abs((int)M(current_color,(int)X.x,(int)X.y) - y);
+        squaredError += Y * Y;
         if(Y > 255) {
             Y = 255;
         }
@@ -2169,13 +2170,16 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
     p2 = target_corners.p3;
     a = p2 - p0;
     b = p1 - p0;
-    double S = 0.5 * fabs(a.x*b.y - b.x*a.y);
+
 
     if (!*flag) {
         error_warp = Error_min;
     } else {
         error_warp = Error_para_min;
     }
+
+    error_warp = squaredError;
+
     return mv;
 }
 
