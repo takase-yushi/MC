@@ -1205,7 +1205,7 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
     std::string str;
     float delta_x, delta_y;
     std::vector<cv::Point2f> triangle, triangle_later, triangle_delta,triangle_later_para;
-    std::vector<cv::Point2f> in_triangle, in_triangle_later,in_triangle_later_para;
+    std::vector<cv::Point2f> in_triangle_pixels, in_triangle_later,in_triangle_later_para;
     cv::Point2f xp(0.0, 0.0), p0, p1, p2, p;
     std::vector<cv::Point2f> corners, corners_org;
     std::vector<cv::Point2i> mv,mv_diff;
@@ -1421,13 +1421,13 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
             double lx = std::max({(int) p0.x, (int) p1.x, (int) p2.x});
             double sy = std::min({(int) p0.y, (int) p1.y, (int) p2.y});
             double ly = std::max({(int) p0.y, (int) p1.y, (int) p2.y});
-            in_triangle.clear();
+            in_triangle_pixels.clear();
             for (int j = (int) (round(sy) - 1); j <= round(ly) + 1; j++) {
                 for (int i = (int) (round(sx) - 1); i <= round(lx) + 1; i++) {
                     xp.x = (float) i;
                     xp.y = (float) j;
                     if (isInTriangle(triangleVec, xp) == 1) {
-                        in_triangle.emplace_back(xp);
+                        in_triangle_pixels.emplace_back(xp);
                     }
                 }
             }
@@ -1465,13 +1465,13 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                     double lx = std::max({(int) p0.x, (int) p1.x, (int) p2.x});
                     double sy = std::min({(int) p0.y, (int) p1.y, (int) p2.y});
                     double ly = std::max({(int) p0.y, (int) p1.y, (int) p2.y});
-                    in_triangle.clear();
+                    in_triangle_pixels.clear();
                     for (int j = (int) (round(sy) - 1); j <= round(ly) + 1; j++) {
                         for (int i = (int) (round(sx) - 1); i <= round(lx) + 1; i++) {
                             xp.x = (float) i;
                             xp.y = (float) j;
                             if (isInTriangle(triangleVec, xp) == 1) {
-                                in_triangle.emplace_back(xp);
+                                in_triangle_pixels.emplace_back(xp);
                             }
                         }
                     }
@@ -1533,9 +1533,9 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                         }
                         B_para.at<double>(k, 0) = 0;
                     }
-                    for (int m = 0; m < (int) in_triangle.size(); m++) {
-                        X.x = in_triangle[m].x - p0.x;
-                        X.y = in_triangle[m].y - p0.y;
+                    for (int m = 0; m < (int) in_triangle_pixels.size(); m++) {
+                        X.x = in_triangle_pixels[m].x - p0.x;
+                        X.y = in_triangle_pixels[m].y - p0.y;
 
                         alpha = (X.x * b.y - X.y * b.x) / det;
                         beta = (a.x * X.y - a.y * X.x) / det;
@@ -1726,9 +1726,9 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                     }
                     Error = MSE;
                     Error_para = MSE_para;
-                    MSE = (in_triangle.size() == 0 ? MSE : MSE / in_triangle.size());
-                    MSE_para = (in_triangle.size() == 0 ? MSE_para : MSE_para / in_triangle.size());
-                    in_triangle_size = in_triangle.size();
+                    MSE = (in_triangle_pixels.size() == 0 ? MSE : MSE / in_triangle_pixels.size());
+                    MSE_para = (in_triangle_pixels.size() == 0 ? MSE_para : MSE_para / in_triangle_pixels.size());
+                    in_triangle_size = in_triangle_pixels.size();
                     PSNR = 10 * log10((255 * 255) / MSE);
                     PSNR_para = 10 * log10((255 * 255) / MSE_para);
                     cv::solve(gg, B, delta_uv);
