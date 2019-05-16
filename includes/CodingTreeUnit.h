@@ -6,6 +6,8 @@
 #define ENCODER_CODINGTREEUNIT_H
 
 
+#include <opencv2/core/types.hpp>
+
 class CodingTreeUnit {
 public:
     virtual ~CodingTreeUnit();
@@ -18,6 +20,8 @@ public:
     int depth;
     int position; // left or right
     int triangle_index;
+    cv::Point2i mv_integer;
+    cv::Point2i mv_decimal;
 };
 
 

@@ -11,11 +11,10 @@
 class CollocatedMvTree {
 public:
 
-    CollocatedMvTree* leftNode;
-
     virtual ~CollocatedMvTree();
-
-    cv::Point2f mv;
+    cv::Point2i mv_decimal;
+    cv::Point2i mv_integer;
+    CollocatedMvTree* leftNode;
     CollocatedMvTree* rightNode;
 };
 
