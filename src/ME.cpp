@@ -1097,9 +1097,8 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
         }
     }
 
-    if(parallel_flag == true){
-        Error_min = Error_para_min;
-    }
+    if(parallel_flag) return Error_para_min;
+
     return Error_min;
 }
 
@@ -1276,35 +1275,7 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
         p1 = target_corners.p2;
         p2 = target_corners.p3;
         for (int z = 0; z < 4; z++) {
-            cv::Point2f aaa = target_corners.p2 - target_corners.p1;
-            cv::Point2f bbb = target_corners.p3 - target_corners.p2;
-            if(aaa.x == 32 || bbb.x == 32) {
-                for(int vectors = 0 ; vectors < v.size() ; vectors++) {
-                    v[vectors].x = 0.0; v[vectors].y = 0.0;
-                }
-                v_para.x = 0.0; v_para.y = 0.0;
-                puts("hoge");
-                continue;
-            }
 
-            if(z == 0 && blare == 0){
-                for (int s = 0; s < 3; s++) {
-                    v[s].x = 0;
-                    v[s].y = 0;
-                }
-            }
-            if(z == 0 && blare == 1){
-                for (int s = 0; s < 3; s++) {
-                    v[s].x = 0;
-                    v[s].y = 0;
-                }
-            }
-            if(z == 1 && blare == 2){
-                for (int s = 0; s < 3; s++) {
-                    v[s].x = 0;
-                    v[s].y = 0;
-                }
-            }
             int scale = pow(2, 3-z),scale_x = scale,scale_y = scale;
             cv::Mat f_img = f_[blare][z];//対照画像
             cv::Mat g_img = g_[blare][z];//参照画像
