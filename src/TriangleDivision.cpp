@@ -46,6 +46,11 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
     divide_steps = _divide_steps;
     coded_picture_num = 0;
 
+    corners.clear();
+    neighbor_vtx.clear();
+    covered_triangle.clear();
+    triangles.clear();
+
     /*
      *  p1                     p2
      *   *---------------------*
@@ -1413,9 +1418,6 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
 
     ctu->mv_integer = mv_parallel[0]; // 整数部
     ctu->mv_decimal = mv_parallel[3]; // 小数部
-
-    double hoge = Gauss_Newton(gaussRefImage, target_image, ref_image, targetTriangle, refTriangle, triangle_size);
-    hoge /= triangle_size;
 
     SplitResult split_triangles = getSplitTriangle(p1, p2, p3, type);
 
