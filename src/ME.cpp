@@ -395,7 +395,8 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
     cv::Mat delta_uv_para = cv::Mat_<double>(2,1);   // ガウスニュートン法の6x1の左辺のベクトル(平行移動)
     double delta_g[dim] = {0},delta_g_para[2] = {0}; // 論文の付録で求めた予測パッチの動きに対する偏微分(6x6または2x2の行列を構成するために必要)
     bool parallel_flag;                              // 平行移動 = true, ワーピング = false
-
+    unsigned char *warp;
+    unsigned char *para;
     const double th = 0.5;                           //ワーピングか平行移動を選択するための閾値
     double MSE,MSE_para,Error,Error_min = 1E6,Error_para,Error_para_min = 1E6; //予測残差諸々
     double PSNR,PSNR_max = 0,PSNR_para,PSNR_para_max = 0;
@@ -901,7 +902,7 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
                 pp2_para.y = triangle[2].y + v_para.y;
             }
             double Quant = 4;
-            std::vector<cv::Point2f> mv2, mv3,mv_diff_tmp;
+            std::vector<cv::Point2f> mv2, mv3, mv4, mv_diff_tmp;
             cv::Point2f ave_v;
             pp.clear();
             pp.emplace_back(pp0);
@@ -946,6 +947,10 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
                 mv3.emplace_back(v_max[0]);
                 mv3.emplace_back(v_max[1]);
                 mv3.emplace_back(v_max[2]);
+                mv4.clear();
+                mv4.emplace_back(v_para_max);
+                mv4.emplace_back(v_para_max);
+                mv4.emplace_back(v_para_max);
                 pp.clear();
                 pp.emplace_back(pp0);
                 pp.emplace_back(pp1);
@@ -959,6 +964,10 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
                         //mv3[j] -= ave_v;
                         int x0, y0;
                         double d_x, d_y;
+                        mv3[j] *= Quant;
+                        mv3[j].x = (int)mv3[j].x;
+                        mv3[j].y = (int)mv3[j].y;
+                        mv3[j] /= 2;
                         x0 = (int) floor(mv3[j].x);
                         y0 = (int) floor(mv3[j].y);
                         d_x = mv3[j].x - x0;
@@ -972,15 +981,23 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
                     }
                 }
                 else{
-                    mv[0] = v_para_max;
+                    mv4[0] = v_para_max;
+                    int x0,y0;
                     double d_x,d_y;
-                    d_x = v_para_max.x - mv[0].x;
-                    d_y = v_para_max.y - mv[0].y;
-                    d_x *= Quant;
-                    d_y *= Quant;
-                    d_x = (int)floor(d_x + 0.5);
-                    d_y = (int)floor(d_y + 0.5);
+                    mv4[0] *= Quant;
+                    mv4[0].x = (int)mv4[0].x;
+                    mv4[0].y = (int)mv4[0].y;
+                    mv4[0] /= 2;
+                    x0 = (int)mv4[0].x;
+                    y0 = (int)mv4[0].y;
+                    d_x = mv4[0].x - x0; // ハーフペル相当になっている
+                    d_y = mv4[0].y - y0;
+                    mv[0].x = x0; mv[0].y = y0;
+                    mv[1].x = x0; mv[1].y = y0;
+                    mv[2].x = x0; mv[2].y = y0;
                     cv::Point2i dv(d_x,d_y);
+                    mv.emplace_back(dv); // 安全のために小数部を3つ追加
+                    mv.emplace_back(dv);
                     mv.emplace_back(dv);
                 }
 
@@ -1026,9 +1043,13 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
             b.y = triangle[1].y - triangle[0].y;
             det = a.x * b.y - a.y * b.x;
 
+            if(blare == 0) {
+                warp = (unsigned char *) malloc(sizeof(unsigned char) * (int) in_triangle_pixel.size());
+                para = (unsigned char *) malloc(sizeof(unsigned char) * (int) in_triangle_pixel.size());
+            }
             for (int i = 0; i < (int) in_triangle_pixel.size(); i++) {
-                double d_x, d_y;
-                int x0, y0;
+                double d_x, d_y, d_x_para, d_y_para;
+                int x0, y0, x0_para, y0_para;
                 X.x = in_triangle_pixel[i].x - triangle[0].x;
                 X.y = in_triangle_pixel[i].y - triangle[0].y;
                 alpha = (X.x * b.y - X.y * b.x) / det;
@@ -1076,6 +1097,28 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
                 d_x = X_later.x - x0;
                 y0 = floor(X_later.y);
                 d_y = X_later.y - y0;
+                x0_para = floor(X_later_para.x);
+                d_x_para = X_later_para.x - x0_para;
+                y0_para = floor(X_later_para.y);
+                d_y_para = X_later_para.y - y0_para;
+                int y, y_para;
+
+                y = (int) floor((M(g_[blare][z], (int) x0, (int) y0) * (1 - d_x) * (1 - d_y) +
+                                 M(g_[blare][z], (int) x0 + 1, (int) y0) * d_x * (1 - d_y)
+                                 + M(g_[blare][z], (int) x0, (int) y0 + 1) * (1 - d_x) * d_y +
+                                 M(g_[blare][z], (int) x0 + 1, (int) y0 + 1) * d_x * d_y) + 0.5);
+                y_para = (int) floor((M(g_[blare][z], (int) x0_para, (int) y0_para) * (1 - d_x_para) * (1 - d_y_para) +
+                                      M(g_[blare][z], (int) x0_para + 1, (int) y0_para) * d_x_para * (1 - d_y_para)
+                                      + M(g_[blare][z], (int) x0_para, (int) y0_para + 1) * (1 - d_x_para) * d_y_para +
+                                      M(g_[blare][z], (int) x0_para + 1, (int) y0_para + 1) * d_x_para * d_y_para)+ 0.5);
+                if(z == 3){
+                    if(flag_blare_para){
+                        para[i] = (unsigned char) y_para;
+                    }
+                    else{
+                        warp[i] = (unsigned char) y;
+                    }
+                }
             }
 
             for (int j = 0; j < 3; j++) {
@@ -1096,10 +1139,23 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
 
         }
     }
+    double squaredError = 0.0;
+    for (int i = 0; i < (int) in_triangle_pixel.size(); i++) {
+        unsigned char y;
+        if (parallel_flag == true) {
+            y = para[i];
+        }
+        else{
+            y = warp[i];
+        }
+        cv::Point2f X = in_triangle_pixel[i];
+        squaredError += (M(current_color,(int)X.x,(int)X.y) - y) * (M(current_color,(int)X.x,(int)X.y) - y);
+    }
 
-    if(parallel_flag) return Error_para_min;
+    //if(parallel_flag) return Error_para_min;
 
-    return Error_min;
+    //return Error_min;
+    return squaredError;
 }
 
 /**
@@ -2024,7 +2080,7 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                 d_x_para = X_later_para.x - x0_para;
                 y0_para = floor(X_later_para.y);
                 d_y_para = X_later_para.y - y0_para;
-                int y, y1,y_para;
+                int y, y_para;
 
                 y = (int) floor((M(g_[blare][z], (int) x0, (int) y0) * (1 - d_x) * (1 - d_y) +
                                  M(g_[blare][z], (int) x0 + 1, (int) y0) * d_x * (1 - d_y)
