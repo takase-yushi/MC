@@ -1684,6 +1684,7 @@ std::vector<int> TriangleDivision::getDivideOrder(CodingTreeUnit* currentNode){
         }else{
             route.emplace_back(0); // left-node
         }
+        currentNode = currentNode->parentNode;
     }
 
     std::reverse(route.begin(), route.end());
