@@ -1922,6 +1922,8 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                     mv[1].x = x0; mv[1].y = y0;
                     mv[2].x = x0; mv[2].y = y0;
                     cv::Point2i dv(d_x,d_y);
+                    mv.emplace_back(dv); // 安全のために小数部を3つ追加
+                    mv.emplace_back(dv);
                     mv.emplace_back(dv);
                 }
                 for (int j = 0; j < 3; j++) {
