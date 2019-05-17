@@ -1414,6 +1414,12 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
                                                             warp_p_image, parallel_p_image, error, targetTriangle, refTriangle,
                                                             &parallel_flag, num, residual_ref, triangle_size, 0);
 
+    std::vector<int> ret = getDivideOrder(ctu);
+    for(auto r:ret) {
+        std::cout << r << " ";
+    }
+    puts("");
+
     RMSE_before_subdiv = error / triangle_size;
 
     ctu->mv_integer = mv_parallel[0]; // 整数部
@@ -1451,6 +1457,7 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
         ctu->split_cu_flag2 = true;
 
         ctu->leftNode = new CodingTreeUnit();
+        ctu->leftNode->parentNode = ctu;
         int t1_idx = triangles.size() - 2;
         bool ret = split(gaussRefImage, ctu->leftNode, split_triangles.t1, t1_idx,split_triangles.t1_type, steps - 1);
         if(ret) {
@@ -1461,6 +1468,7 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
         }
 
         ctu->rightNode = new CodingTreeUnit();
+        ctu->rightNode->parentNode = ctu;
         int t2_idx = triangles.size() - 1;
         ret = split(gaussRefImage, ctu->rightNode, split_triangles.t2, t2_idx, split_triangles.t2_type, steps - 1);
         if(ret) {
@@ -1690,7 +1698,6 @@ void TriangleDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> 
     for(int i = 0 ; i < 10 ; i++) {
         constructPreviousCodingTree(trees[i], previousMvList[pic_num][i]);
     }
-
 }
 
 
