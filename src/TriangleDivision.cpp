@@ -1414,12 +1414,6 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
                                                             warp_p_image, parallel_p_image, error, targetTriangle, refTriangle,
                                                             &parallel_flag, num, residual_ref, triangle_size, 0);
 
-    std::vector<int> ret = getDivideOrder(ctu);
-    for(auto r:ret) {
-        std::cout << r << " ";
-    }
-    puts("");
-
     RMSE_before_subdiv = error / triangle_size;
 
     ctu->mv_integer = mv_parallel[0]; // 整数部
@@ -1623,26 +1617,39 @@ std::vector<int> TriangleDivision::getSpatialTriangleList(int t_idx){
  * @fn cv::Point2f TriangleDivision::getCollocatedTriangleList(int t_idx)
  * @brief 時間予測したベクトル候補を返す
  * @param t_idx 三角パッチのインデックス
- * @return
+ * @return 整数の動きベクトルと小数部の動きベクトルのペア
  */
 std::pair<cv::Point2f, cv::Point2f> TriangleDivision::getCollocatedTriangleList(CodingTreeUnit* unit) {
     CodingTreeUnit* tmp_unit = unit;
 
+    if(tmp_unit == nullptr) {
+        std::cout << "nullptr" << std::endl;
+    }
     while(tmp_unit->parentNode != nullptr) tmp_unit = tmp_unit->parentNode;
+
     int root_triangle_idx = tmp_unit->triangle_index;
+
     std::vector<int> route = getDivideOrder(unit);
-    CollocatedMvTree* prevMvList = previousMvList[0][root_triangle_idx];
+
+    CollocatedMvTree* currentNode = previousMvList[0][root_triangle_idx];
+    CollocatedMvTree* previousNode;
 
     cv::Point2f mv_integer, mv_decimal;
-    for(auto direction : route) {
-        if(prevMvList == nullptr) {
-            mv_integer = prevMvList->mv_integer;
-            mv_decimal = prevMvList->mv_decimal;
+    int depth = 2;
+
+    if(route.empty()) return std::make_pair(currentNode->mv_integer, currentNode->mv_decimal);
+
+    for(int i = 0 ; i < depth ; i++){
+        int direction = route[i];
+        if(currentNode == nullptr) {
+            mv_integer = previousNode->mv_integer;
+            mv_decimal = previousNode->mv_decimal;
         }
+        previousNode = currentNode;
         if(direction == 1) {
-            prevMvList = prevMvList->rightNode;
+            currentNode = currentNode->rightNode;
         }else{
-            prevMvList = prevMvList->leftNode;
+            currentNode = currentNode->leftNode;
         }
     }
 
