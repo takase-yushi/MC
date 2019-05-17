@@ -1633,21 +1633,18 @@ std::pair<cv::Point2f, cv::Point2f> TriangleDivision::getCollocatedTriangleList(
     int root_triangle_idx = tmp_unit->triangle_index;
 
     std::vector<int> route = getDivideOrder(unit);
-
+    std::cout << "root_idx:" << root_triangle_idx << std::endl;
     CollocatedMvTree* currentNode = previousMvList[0][root_triangle_idx];
-    CollocatedMvTree* previousNode;
+    CollocatedMvTree* previousNode = currentNode;
 
     cv::Point2f mv_integer, mv_decimal;
     int depth = 2;
 
     if(route.empty()) return std::make_pair(currentNode->mv_integer, currentNode->mv_decimal);
 
-    for(int i = 0 ; i < depth ; i++){
+    for(int i = 0 ; i < depth || currentNode != nullptr ; i++){
         int direction = route[i];
-        if(currentNode == nullptr) {
-            mv_integer = previousNode->mv_integer;
-            mv_decimal = previousNode->mv_decimal;
-        }
+
         previousNode = currentNode;
         if(direction == 1) {
             currentNode = currentNode->rightNode;
@@ -1655,6 +1652,9 @@ std::pair<cv::Point2f, cv::Point2f> TriangleDivision::getCollocatedTriangleList(
             currentNode = currentNode->leftNode;
         }
     }
+
+    mv_integer = previousNode->mv_integer;
+    mv_decimal = previousNode->mv_decimal;
 
     return std::make_pair(mv_integer, mv_decimal);
 }
