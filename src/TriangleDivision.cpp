@@ -1390,6 +1390,18 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage, int steps) {
 
 }
 
+/**
+ * @fn bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3Vec triangle, int triangle_index, int type, int steps)
+ * @brief 与えられたトライアングルを分割するか判定し，必要な場合は分割を行う
+ * @details この関数は再帰的に呼び出され，そのたびに分割を行う
+ * @param gaussRefImage ガウス・ニュートン法の参照画像
+ * @param ctu CodingTreeUnitのrootノード
+ * @param triangle 三角形の各点の座標
+ * @param triangle_index 三角形のindex
+ * @param type 分割方向
+ * @param steps 分割回数
+ * @return 分割した場合はtrue, そうでない場合falseを返す
+ */
 bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3Vec triangle, int triangle_index, int type, int steps) {
     if(steps == 0) return false;
 
@@ -1483,6 +1495,15 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
 
 }
 
+/**
+ * @fn TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type)
+ * @details ３点の座標とtypeを受け取り，分割した形状を返す
+ * @param p1 頂点１の座標
+ * @param p2 頂点２の座標
+ * @param p3 頂点３の座標
+ * @param type 分割形状
+ * @return 分割結果
+ */
 TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type){
     cv::Point2f a, b, c, d;
     switch(type) {
@@ -1706,7 +1727,9 @@ std::vector<int> TriangleDivision::getDivideOrder(CodingTreeUnit* currentNode){
 
 /**
  * @fn void TriangleDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num)
- * @param trees
+ * @brief 過去の動きベクトルを参照するためのTreeを構築する
+ * @param trees 分割形状
+ * @param pic_num 何枚目のPピクチャか
  */
 void TriangleDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num) {
 
@@ -1771,7 +1794,9 @@ void TriangleDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> 
 
 /**
  * @fn void TriangleDivision::constructPreviousCodingTree(std::vector<CollocatedMvTree*> trees)
- * @param trees
+ * @brief 木を再帰的に呼び出し構築する
+ * @param codingTree 分割結果を表す木
+ * @param constructedTree 構築するための木
  */
 void TriangleDivision::constructPreviousCodingTree(CodingTreeUnit* codingTree, CollocatedMvTree* constructedTree) {
     constructedTree->mv_decimal = codingTree->mv_decimal;
