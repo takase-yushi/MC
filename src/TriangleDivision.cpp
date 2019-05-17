@@ -1419,6 +1419,9 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
     ctu->mv_integer = mv_parallel[0]; // 整数部
     ctu->mv_decimal = mv_parallel[3]; // 小数部
 
+    std::pair<cv::Point2f, cv::Point2f> ret = getCollocatedTriangleList(ctu);
+    std::cout << ret.first << " " << ret.second << std::endl;
+
     SplitResult split_triangles = getSplitTriangle(p1, p2, p3, type);
 
     std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
@@ -1695,6 +1698,9 @@ std::vector<int> TriangleDivision::getDivideOrder(CodingTreeUnit* currentNode){
     }
 
     std::reverse(route.begin(), route.end());
+    for(auto idx : route) std::cout << idx << " ";
+    puts("");
+
     return route;
 }
 
@@ -1703,9 +1709,63 @@ std::vector<int> TriangleDivision::getDivideOrder(CodingTreeUnit* currentNode){
  * @param trees
  */
 void TriangleDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num) {
+
     for(int i = 0 ; i < 10 ; i++) {
-        constructPreviousCodingTree(trees[i], previousMvList[pic_num][i]);
+        CollocatedMvTree* left = new CollocatedMvTree();
+        left->mv_integer = cv::Point2i(1000, 1000);
+        left->mv_decimal = cv::Point2i(1000, 1000);
+
+        left->leftNode = new CollocatedMvTree();
+        left->leftNode->mv_integer = cv::Point2i(1000, 1000);
+        left->leftNode->mv_decimal = cv::Point2i(1000, 1000);
+        left->leftNode->leftNode = new CollocatedMvTree();
+        left->leftNode->leftNode->mv_integer = cv::Point2i(1000, 1000);
+        left->leftNode->leftNode->mv_decimal = cv::Point2i(1000, 1000);
+        left->leftNode->rightNode = new CollocatedMvTree();
+        left->leftNode->rightNode->mv_integer = cv::Point2i(1000, 1000);
+        left->leftNode->rightNode->mv_decimal = cv::Point2i(1000, 1000);
+
+        left->rightNode = new CollocatedMvTree();
+        left->rightNode->mv_integer = cv::Point2i(1000, 1000);
+        left->rightNode->mv_decimal = cv::Point2i(1000, 1000);
+        left->rightNode->leftNode = new CollocatedMvTree();
+        left->rightNode->leftNode->mv_integer = cv::Point2i(1000, 1000);
+        left->rightNode->leftNode->mv_decimal = cv::Point2i(1000, 1000);
+        left->rightNode->rightNode = new CollocatedMvTree();
+        left->rightNode->rightNode->mv_integer = cv::Point2i(1000, 1000);
+        left->rightNode->rightNode->mv_decimal = cv::Point2i(1000, 1000);
+        previousMvList[pic_num][i]->leftNode = left;
+
+        CollocatedMvTree* right = new CollocatedMvTree();
+        right->mv_integer = cv::Point2i(1000, 1000);
+        right->mv_decimal = cv::Point2i(1000, 1000);
+
+        right->leftNode = new CollocatedMvTree();
+        right->leftNode->mv_integer = cv::Point2i(1000, 1000);
+        right->leftNode->mv_decimal = cv::Point2i(1000, 1000);
+        right->leftNode->leftNode = new CollocatedMvTree();
+        right->leftNode->leftNode->mv_integer = cv::Point2i(1000, 1000);
+        right->leftNode->leftNode->mv_decimal = cv::Point2i(1000, 1000);
+        right->leftNode->rightNode = new CollocatedMvTree();
+        right->leftNode->rightNode->mv_integer = cv::Point2i(1000, 1000);
+        right->leftNode->rightNode->mv_decimal = cv::Point2i(1000, 1000);
+
+        right->rightNode = new CollocatedMvTree();
+        right->rightNode->mv_integer = cv::Point2i(1000, 1000);
+        right->rightNode->mv_decimal = cv::Point2i(1000, 1000);
+        right->rightNode->leftNode = new CollocatedMvTree();
+        right->rightNode->leftNode->mv_integer = cv::Point2i(1000, 1000);
+        right->rightNode->leftNode->mv_decimal = cv::Point2i(1000, 1000);
+        right->rightNode->rightNode = new CollocatedMvTree();
+        right->rightNode->rightNode->mv_integer = cv::Point2i(1000, 1000);
+        right->rightNode->rightNode->mv_decimal = cv::Point2i(1000, 1000);
+        previousMvList[pic_num][i]->rightNode = right;
     }
+
+
+//    for(int i = 0 ; i < 10 ; i++) {
+//        constructPreviousCodingTree(trees[i], previousMvList[pic_num][i]);
+//    }
 }
 
 
