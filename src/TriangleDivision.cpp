@@ -1625,7 +1625,7 @@ std::vector<int> TriangleDivision::getSpatialTriangleList(int t_idx){
  * @param t_idx 三角パッチのインデックス
  * @return
  */
-std::pair<cv::Point2f, cv::Point2f> TriangleDivision::getCollocatedTriangleList(int t_idx, CodingTreeUnit* unit) {
+std::pair<cv::Point2f, cv::Point2f> TriangleDivision::getCollocatedTriangleList(CodingTreeUnit* unit) {
     CodingTreeUnit* tmp_unit = unit;
 
     while(tmp_unit->parentNode != nullptr) tmp_unit = tmp_unit->parentNode;

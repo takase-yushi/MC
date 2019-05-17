@@ -139,7 +139,7 @@ public:
     static SplitResult getSplitTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type);
     bool split(cv::Mat& gaussRefImage, CodingTreeUnit* ctu, Point3Vec triangle, int triangle_index, int type, int steps);
     std::vector<int> getSpatialTriangleList(int t_idx);
-    std::pair<cv::Point2f, cv::Point2f> getCollocatedTriangleList(int t_idx, CodingTreeUnit* unit);
+    std::pair<cv::Point2f, cv::Point2f> getCollocatedTriangleList(CodingTreeUnit* unit);
 
     std::vector<Point3Vec> getAllTriangleCoordinateList();
     std::vector<Triangle> getAllTriangleIndexList();
