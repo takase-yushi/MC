@@ -372,10 +372,14 @@ std::vector<cv::Point2f> GaussNewton(cv::Mat ref_image, cv::Mat target_image, cv
     double max_PSNR_warping = -1, max_PSNR_parallel = -1;
 
     cv::Point2f p0, p1, p2;
+    std::vector<cv::Point2f> max_v_warping;
+    cv::Point2f max_v_parallel;
 
     std::vector<std::pair<std::vector<cv::Point2f>,double>> v_stack_warping;
-    std::vector<std::pair<std::vector<cv::Point2f>,double>> v_stack_parallel;
+    std::vector<std::pair<cv::Point2f,double>> v_stack_parallel;
     std::vector<cv::Point2f> pixels_in_triangle;
+
+    bool parallel_flag = true;
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
         std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(0.0, 0.0));
         cv::Point2f tmp_mv_parallel(0.0, 0.0);
