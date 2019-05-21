@@ -452,12 +452,12 @@ std::tuple<std::vector<cv::Point2f>, double, int> GaussNewton(cv::Mat ref_image,
 
                 // ワーピング
                 double magnification = 2.0;
-                while ( (p0.x + tmp_mv_warping[0].x * 2 < 0 && p0.x + tmp_mv_warping[0].x * 2 > current_target_image.cols - 1) &&
-                        (p1.x + tmp_mv_warping[1].x * 2 < 0 && p1.x + tmp_mv_warping[1].x * 2 > current_target_image.cols - 1) &&
-                        (p2.x + tmp_mv_warping[2].x * 2 < 0 && p2.x + tmp_mv_warping[2].x * 2 > current_target_image.cols - 1) &&
-                        (p0.y + tmp_mv_warping[0].y * 2 < 0 && p0.y + tmp_mv_warping[0].y * 2 > current_target_image.rows - 1) &&
-                        (p1.y + tmp_mv_warping[1].y * 2 < 0 && p1.y + tmp_mv_warping[1].y * 2 > current_target_image.rows - 1) &&
-                        (p2.y + tmp_mv_warping[2].y * 2 < 0 && p2.y + tmp_mv_warping[2].y * 2 > current_target_image.rows - 1) ) {
+                while ( (p0.x + tmp_mv_warping[0].x * magnification < 0 && p0.x + tmp_mv_warping[0].x * magnification > current_target_image.cols - 1) &&
+                        (p1.x + tmp_mv_warping[1].x * magnification < 0 && p1.x + tmp_mv_warping[1].x * magnification > current_target_image.cols - 1) &&
+                        (p2.x + tmp_mv_warping[2].x * magnification < 0 && p2.x + tmp_mv_warping[2].x * magnification > current_target_image.cols - 1) &&
+                        (p0.y + tmp_mv_warping[0].y * magnification < 0 && p0.y + tmp_mv_warping[0].y * magnification > current_target_image.rows - 1) &&
+                        (p1.y + tmp_mv_warping[1].y * magnification < 0 && p1.y + tmp_mv_warping[1].y * magnification > current_target_image.rows - 1) &&
+                        (p2.y + tmp_mv_warping[2].y * magnification < 0 && p2.y + tmp_mv_warping[2].y * magnification > current_target_image.rows - 1) ) {
                     if(magnification <= 1)break;
                     magnification -= 0.1;
                 }
@@ -465,12 +465,12 @@ std::tuple<std::vector<cv::Point2f>, double, int> GaussNewton(cv::Mat ref_image,
 
                 // 平行移動
                 magnification = 2.0;
-                while ( (p0.x + tmp_mv_parallel[0].x * 2 < 0 && p0.x + tmp_mv_parallel[0].x * 2 > current_target_image.cols - 1) &&
-                        (p1.x + tmp_mv_parallel[1].x * 2 < 0 && p1.x + tmp_mv_parallel[1].x * 2 > current_target_image.cols - 1) &&
-                        (p2.x + tmp_mv_parallel[2].x * 2 < 0 && p2.x + tmp_mv_parallel[2].x * 2 > current_target_image.cols - 1) &&
-                        (p0.y + tmp_mv_parallel[0].y * 2 < 0 && p0.y + tmp_mv_parallel[0].y * 2 > current_target_image.rows - 1) &&
-                        (p1.y + tmp_mv_parallel[1].y * 2 < 0 && p1.y + tmp_mv_parallel[1].y * 2 > current_target_image.rows - 1) &&
-                        (p2.y + tmp_mv_parallel[2].y * 2 < 0 && p2.y + tmp_mv_parallel[2].y * 2 > current_target_image.rows - 1) ) {
+                while ( (p0.x + tmp_mv_parallel.x * magnification < 0 && p0.x + tmp_mv_parallel.x * magnification > current_target_image.cols - 1) &&
+                        (p1.x + tmp_mv_parallel.x * magnification < 0 && p1.x + tmp_mv_parallel.x * magnification > current_target_image.cols - 1) &&
+                        (p2.x + tmp_mv_parallel.x * magnification < 0 && p2.x + tmp_mv_parallel.x * magnification > current_target_image.cols - 1) &&
+                        (p0.y + tmp_mv_parallel.y * magnification < 0 && p0.y + tmp_mv_parallel.y * magnification > current_target_image.rows - 1) &&
+                        (p1.y + tmp_mv_parallel.y * magnification < 0 && p1.y + tmp_mv_parallel.y * magnification > current_target_image.rows - 1) &&
+                        (p2.y + tmp_mv_parallel.y * magnification < 0 && p2.y + tmp_mv_parallel.y * magnification > current_target_image.rows - 1) ) {
                     if(magnification <= 1)break;
                     magnification -= 0.1;
                 }
