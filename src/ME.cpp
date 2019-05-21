@@ -293,7 +293,7 @@ std::vector<cv::Point2f> warping(const cv::Mat& prev_color, const cv::Mat& curre
 }
 
 /**
- * @fn std::tuple<std::vector<cv::Point2f>, double, int> GaussNewton(cv::Mat ref_image, cv::Mat target_mage, cv::Mat gauss_ref_image, Point3Vec target_corners)
+ * @fn std::vector<cv::Point2f> GaussNewton(cv::Mat ref_image, cv::Mat target_mage, cv::Mat gauss_ref_image, Point3Vec target_corners)
  * @brief ガウス・ニュートン法を行い、動きベクトル・予測残差・面積を返す
  * @param[in] ref_image 参照画像（QPは変動）
  * @param[in] target_mage 対象画像
@@ -301,7 +301,7 @@ std::vector<cv::Point2f> warping(const cv::Mat& prev_color, const cv::Mat& curre
  * @param[in] target_corners 対象画像上の三角パッチの座標
  * @return 動きベクトル・予測残差・面積のtuple
  */
-std::tuple<std::vector<cv::Point2f>, double, int> GaussNewton(cv::Mat ref_image, cv::Mat target_image, cv::Mat gauss_ref_image, Point3Vec target_corners){
+std::vector<cv::Point2f> GaussNewton(cv::Mat ref_image, cv::Mat target_image, cv::Mat gauss_ref_image, Point3Vec target_corners){
     // 画像の初期化 vector[filter][picture_number]
     std::vector<std::vector<cv::Mat>> ref_images;
     std::vector<std::vector<cv::Mat>> target_images;
