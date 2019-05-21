@@ -373,6 +373,9 @@ std::tuple<std::vector<cv::Point2f>, double, int> GaussNewton(cv::Mat ref_image,
 
     cv::Point2f p0, p1, p2;
 
+    std::vector<std::pair<std::vector<cv::Point2f>,double>> v_stack_warping;
+    std::vector<std::pair<std::vector<cv::Point2f>,double>> v_stack_parallel;
+    std::vector<cv::Point2f> pixels_in_triangle;
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
         std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(0.0, 0.0));
         cv::Point2f tmp_mv_parallel(0.0, 0.0);
@@ -472,6 +475,26 @@ std::tuple<std::vector<cv::Point2f>, double, int> GaussNewton(cv::Mat ref_image,
                     magnification -= 0.1;
                 }
                 tmp_mv_parallel *= magnification;
+            }
+            v_stack_parallel.clear();
+            v_stack_warping.clear();
+
+            Point3Vec current_triangle_coordinates(p0, p1, p2);
+            double sx = std::min({(int) p0.x, (int) p1.x, (int) p2.x});
+            double lx = std::max({(int) p0.x, (int) p1.x, (int) p2.x});
+            double sy = std::min({(int) p0.y, (int) p1.y, (int) p2.y});
+            double ly = std::max({(int) p0.y, (int) p1.y, (int) p2.y});
+
+            pixels_in_triangle.clear();
+            cv::Point2f xp;
+            for (int j = (int) (round(sy) - 1); j <= round(ly) + 1; j++) {
+                for (int i = (int) (round(sx) - 1); i <= round(lx) + 1; i++) {
+                    xp.x = (float) i;
+                    xp.y = (float) j;
+                    if (isInTriangle(current_triangle_coordinates, xp) == 1) {
+                        pixels_in_triangle.emplace_back(xp);//三角形の内部のピクセルを格納
+                    }
+                }
             }
         }
     }
