@@ -377,10 +377,6 @@ std::tuple<std::vector<cv::Point2f>, double, int> GaussNewton(cv::Mat ref_image,
         std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(0.0, 0.0));
         cv::Point2f tmp_mv_parallel(0.0, 0.0);
 
-        p0 = target_corners.p1;
-        p1 = target_corners.p2;
-        p2 = target_corners.p3;
-
         for(int step = 0 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
             double scale = pow(2, 3 - step);
             cv::Mat current_ref_image = mv_filter(ref_images[filter_num][step]);
@@ -429,6 +425,53 @@ std::tuple<std::vector<cv::Point2f>, double, int> GaussNewton(cv::Mat ref_image,
                     current_ref_expand[i][-j] = current_ref_expand[i][j];
                     current_ref_expand[i][target_image.rows - 1 + j] = current_ref_expand[i][target_image.rows - 1 - j];
                 }
+            }
+
+
+            p0 = target_corners.p1 / scale;
+            p1 = target_corners.p2 / scale;
+            p2 = target_corners.p3 / scale;
+
+            // 端の頂点の調整
+            if (target_corners.p1.x == target_images[0][3].cols - 1) p0.x = target_images[0][step].cols - 1;
+            if (target_corners.p1.y == target_images[0][3].rows - 1) p0.y = target_images[0][step].rows - 1;
+            if (target_corners.p2.x == target_images[0][3].cols - 1) p1.x = target_images[0][step].cols - 1;
+            if (target_corners.p2.y == target_images[0][3].rows - 1) p1.y = target_images[0][step].rows - 1;
+            if (target_corners.p3.x == target_images[0][3].cols - 1) p2.x = target_images[0][step].cols - 1;
+            if (target_corners.p3.y == target_images[0][3].rows - 1) p2.y = target_images[0][step].rows - 1;
+
+            if(fabs((p2 - p0).x * (p1 - p0).y - (p2 - p0).y * (p1 - p0).x) <= 0) break;
+
+            std::vector<cv::Point2f> scaled_coordinates{p0, p1, p2};
+
+            if(step != 0) {
+                // 画面外にはみ出してる場合、２倍からだんだん小さく縮小していく
+
+                // ワーピング
+                double magnification = 2.0;
+                while ( (p0.x + tmp_mv_warping[0].x * 2 < 0 && p0.x + tmp_mv_warping[0].x * 2 > current_target_image.cols - 1) &&
+                        (p1.x + tmp_mv_warping[1].x * 2 < 0 && p1.x + tmp_mv_warping[1].x * 2 > current_target_image.cols - 1) &&
+                        (p2.x + tmp_mv_warping[2].x * 2 < 0 && p2.x + tmp_mv_warping[2].x * 2 > current_target_image.cols - 1) &&
+                        (p0.y + tmp_mv_warping[0].y * 2 < 0 && p0.y + tmp_mv_warping[0].y * 2 > current_target_image.rows - 1) &&
+                        (p1.y + tmp_mv_warping[1].y * 2 < 0 && p1.y + tmp_mv_warping[1].y * 2 > current_target_image.rows - 1) &&
+                        (p2.y + tmp_mv_warping[2].y * 2 < 0 && p2.y + tmp_mv_warping[2].y * 2 > current_target_image.rows - 1) ) {
+                    if(magnification <= 1)break;
+                    magnification -= 0.1;
+                }
+                for (int s = 0; s < 3; s++) tmp_mv_warping[s] *= magnification;
+
+                // 平行移動
+                magnification = 2.0;
+                while ( (p0.x + tmp_mv_parallel[0].x * 2 < 0 && p0.x + tmp_mv_parallel[0].x * 2 > current_target_image.cols - 1) &&
+                        (p1.x + tmp_mv_parallel[1].x * 2 < 0 && p1.x + tmp_mv_parallel[1].x * 2 > current_target_image.cols - 1) &&
+                        (p2.x + tmp_mv_parallel[2].x * 2 < 0 && p2.x + tmp_mv_parallel[2].x * 2 > current_target_image.cols - 1) &&
+                        (p0.y + tmp_mv_parallel[0].y * 2 < 0 && p0.y + tmp_mv_parallel[0].y * 2 > current_target_image.rows - 1) &&
+                        (p1.y + tmp_mv_parallel[1].y * 2 < 0 && p1.y + tmp_mv_parallel[1].y * 2 > current_target_image.rows - 1) &&
+                        (p2.y + tmp_mv_parallel[2].y * 2 < 0 && p2.y + tmp_mv_parallel[2].y * 2 > current_target_image.rows - 1) ) {
+                    if(magnification <= 1)break;
+                    magnification -= 0.1;
+                }
+                tmp_mv_parallel *= magnification;
             }
         }
     }
