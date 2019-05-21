@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <fstream>
+#include <memory>
 #include "../includes/DelaunayTriangulation.hpp"
 #include "../includes/Utils.h"
 #include <algorithm>
@@ -289,6 +290,149 @@ std::vector<cv::Point2f> warping(const cv::Mat& prev_color, const cv::Mat& curre
     error_warp = error_tmp;
 
     return prev_corners;
+}
+
+/**
+ * @fn std::tuple<std::vector<cv::Point2f>, double, int> GaussNewton(cv::Mat ref_image, cv::Mat target_mage, cv::Mat gauss_ref_image, Point3Vec target_corners)
+ * @brief ガウス・ニュートン法を行い、動きベクトル・予測残差・面積を返す
+ * @param[in] ref_image 参照画像（QPは変動）
+ * @param[in] target_mage 対象画像
+ * @param[in] gauss_ref_image ガウス・ニュートン法で使用する参照画像（常にQP=22の参照画像）
+ * @param[in] target_corners 対象画像上の三角パッチの座標
+ * @return 動きベクトル・予測残差・面積のtuple
+ */
+std::tuple<std::vector<cv::Point2f>, double, int> GaussNewton(cv::Mat ref_image, cv::Mat target_image, cv::Mat gauss_ref_image, Point3Vec target_corners){
+    // 画像の初期化 vector[filter][picture_number]
+    std::vector<std::vector<cv::Mat>> ref_images;
+    std::vector<std::vector<cv::Mat>> target_images;
+
+    // 参照画像のフィルタ処理（１）
+    std::vector<cv::Mat> ref1_levels;
+    cv::Mat ref_level_1, ref_level_2, ref_level_3, ref_level_4;
+    ref_level_1 = gauss_ref_image;
+    ref_level_2 = half(ref_level_1, 2);
+    ref_level_3 = half(ref_level_2, 2);
+    ref_level_4 = half(ref_level_3, 2);
+    ref1_levels.emplace_back(ref_level_4);
+    ref1_levels.emplace_back(ref_level_3);
+    ref1_levels.emplace_back(ref_level_2);
+    ref1_levels.emplace_back(ref_image);
+
+    // 対象画像のフィルタ処理（１）
+    std::vector<cv::Mat> target1_levels;
+    cv::Mat target_level_1, target_level_2, target_level_3, target_level_4;
+    target_level_1 = target_image;
+    target_level_2 = half(target_level_1, 2);
+    target_level_3 = half(target_level_2, 2);
+    target_level_4 = half(target_level_3, 2);
+    target1_levels.emplace_back(target_level_4);
+    target1_levels.emplace_back(target_level_3);
+    target1_levels.emplace_back(target_level_2);
+    target1_levels.emplace_back(target_level_1);
+
+    // 参照画像のフィルタ処理（２）
+    std::vector<cv::Mat> ref2_levels;
+    ref_level_1 = gauss_ref_image;
+    ref_level_2 = half(ref_level_1, 2);
+    ref_level_3 = half(ref_level_2, 1);
+    ref_level_4 = half(ref_level_3, 1);
+    ref2_levels.emplace_back(ref_level_4);
+    ref2_levels.emplace_back(ref_level_3);
+    ref2_levels.emplace_back(ref_level_2);
+    ref2_levels.emplace_back(ref_image);
+
+    // 対象画像のフィルタ処理（２）
+    std::vector<cv::Mat> target2_levels;
+    target_level_1 = target_image;
+    target_level_2 = half(target_level_1, 2);
+    target_level_3 = half(target_level_2, 1);
+    target_level_4 = half(target_level_3, 1);
+    target2_levels.emplace_back(target_level_4);
+    target2_levels.emplace_back(target_level_3);
+    target2_levels.emplace_back(target_level_2);
+    target2_levels.emplace_back(target_level_1);
+
+    ref_images.emplace_back(ref1_levels);
+    ref_images.emplace_back(ref2_levels);
+    target_images.emplace_back(target1_levels);
+    target_images.emplace_back(target2_levels);
+
+
+    const int warping_matrix_dim = 6; // 方程式の次元
+    const int parallel_matrix_dim = 2;
+    cv::Mat gg_warping = cv::Mat::zeros(warping_matrix_dim, warping_matrix_dim, CV_64F); // 式(45)の左辺6×6行列
+    cv::Mat gg_parallel = cv::Mat::zeros(parallel_matrix_dim, parallel_matrix_dim, CV_64F); // 式(52)の左辺2×2行列
+    cv::Mat B_warping = cv::Mat::zeros(warping_matrix_dim, 1, CV_64F); // 式(45)の右辺
+    cv::Mat B_parallel = cv::Mat::zeros(parallel_matrix_dim, 1, CV_64F); // 式(52)の右辺
+    cv::Mat delta_uv_warping = cv::Mat::zeros(warping_matrix_dim, 1, CV_64F); // 式(45)の左辺 delta
+    cv::Mat delta_uv_parallel = cv::Mat::zeros(parallel_matrix_dim, 1, CV_64F); // 式(52)の右辺 delta
+
+    double MSE_warping, MSE_parallel;
+    double min_error_warping = 1E6, min_error_parallel = 1E6;
+    double max_PSNR_warping = -1, max_PSNR_parallel = -1;
+
+    cv::Point2f p0, p1, p2;
+
+    for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
+        std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(0.0, 0.0));
+        cv::Point2f tmp_mv_parallel(0.0, 0.0);
+
+        p0 = target_corners.p1;
+        p1 = target_corners.p2;
+        p2 = target_corners.p3;
+
+        for(int step = 0 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
+            double scale = pow(2, 3 - step);
+            cv::Mat current_ref_image = mv_filter(ref_images[filter_num][step]);
+            cv::Mat current_target_image = mv_filter(target_images[filter_num][step]);
+
+            const int expand = 500;
+            unsigned char **current_target_expand; //画像の周りに500ピクセルだけ黒の領域を設ける(念のため)
+            unsigned char **current_ref_expand;    //f_expandと同様
+            current_target_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (target_image.cols + expand * 2));
+            current_target_expand += expand;
+            for (int j = -expand; j < target_image.cols + expand; j++) {
+                current_target_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (target_image.rows + expand * 2));
+                current_target_expand[j] += expand;
+            }
+            current_ref_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (target_image.cols + expand * 2));
+            current_ref_expand += expand;
+            for (int j = -expand; j < ref_image.cols + expand; j++) {
+                if ((current_ref_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (target_image.rows + expand * 2))) == NULL) {
+                }
+                current_ref_expand[j] += expand;
+            }
+            for (int j = -expand; j < target_image.rows + expand; j++) {
+                for (int i = -expand; i < target_image.cols + expand; i++) {
+                    if (j >= 0 && j < target_image.rows && i >= 0 && i < target_image.cols) {
+                        current_target_expand[i][j] = M(target_image, i, j);
+                        current_ref_expand[i][j] = M(ref_image, i, j);
+                    } else {
+                        current_target_expand[i][j] = 0;
+                        current_ref_expand[i][j] = 0;
+                    }
+                }
+            }
+            int k = 2;//画像の周り2ピクセルだけ折り返し
+            for (int j = 0; j < target_image.rows; j++) {
+                for (int i = 1; i <= k; i++) {
+                    current_target_expand[-i][j] = current_target_expand[i][j];
+                    current_target_expand[target_image.cols - 1 + i][j] = current_target_expand[target_image.cols - 1 - i][j];
+                    current_ref_expand[-i][j] = current_ref_expand[i][j];
+                    current_ref_expand[target_image.cols - 1 + i][j] = current_ref_expand[target_image.cols - 1 - i][j];
+                }
+            }
+            for (int i = -k; i < target_image.cols + k; i++) {
+                for (int j = 1; j <= k; j++) {
+                    current_target_expand[i][-j] = current_target_expand[i][j];
+                    current_target_expand[i][target_image.rows - 1 + j] = current_target_expand[i][target_image.rows - 1 - j];
+                    current_ref_expand[i][-j] = current_ref_expand[i][j];
+                    current_ref_expand[i][target_image.rows - 1 + j] = current_ref_expand[i][target_image.rows - 1 - j];
+                }
+            }
+        }
+    }
+
 }
 
 /**
