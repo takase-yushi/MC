@@ -796,6 +796,20 @@ std::vector<cv::Point2f> GaussNewton(cv::Mat ref_image, cv::Mat target_image, cv
         }
     }
 
+    // 量子化
+    max_v_parallel.x = ((int)((max_v_parallel.x + 0.125) * 4) / 4);
+    max_v_parallel.y = ((int)((max_v_parallel.y + 0.125) * 4) / 4);
+
+    for(int i = 0 ; i < 3 ; i++){
+        max_v_warping[i].x = ((int)((max_v_warping[i].x + 0.125) * 4) / 4);
+        max_v_warping[i].y = ((int)((max_v_warping[i].y + 0.125) * 4) / 4);
+    }
+
+    if(!parallel_flag) {
+        return std::vector<cv::Point2f>{max_v_warping[0], max_v_warping[1], max_v_warping[2]};
+    }else{
+        return std::vector<cv::Point2f>{max_v_parallel, max_v_parallel, max_v_parallel};
+    }
 }
 
 /**
