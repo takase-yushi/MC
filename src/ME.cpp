@@ -402,8 +402,8 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
     double PSNR,PSNR_max = 0,PSNR_para,PSNR_para_max = 0;
 
     float delta_x, delta_y;//頂点を動かしたときのパッチ内の変動量x軸y軸独立に計算(delta_gを求めるために必要)
-    std::vector<cv::Point2f> triangle, triangle_later,triangle_later_para;//三角形の頂点を格納
-    std::vector<cv::Point2f> in_triangle_pixel, in_triangle_later,in_triangle_later_para;//三角形の内部の座標を格納
+    std::vector<cv::Point2f> triangle, triangle_later, triangle_later_para;//三角形の頂点を格納
+    std::vector<cv::Point2f> in_triangle_pixels, in_triangle_pixels_later;//三角形の内部の座標を格納
     cv::Point2f xp(0.0, 0.0), p, p0, p1, p2;
     std::vector<cv::Point2i> mv,mv_diff;
     cv::Point2f v_para,v_para_max;//平行移動の動きベクトルを格納
@@ -422,6 +422,8 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
         std::vector<cv::Point2f> v(3, cv::Point2f(0.0, 0.0));
         v_para.x = 0; // 平行移動の動きベクトル(x要素)
         v_para.y = 0; // 平行移動の動きベクトル(y要素)
+        v_para_max.x = 0;
+        v_para_max.y = 0;
 
         p0 = target_corners.p1;
         p1 = target_corners.p2;
@@ -430,7 +432,6 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
             double scale = pow(2, 3-z);//各階層のスケーリングの値
             cv::Mat f_img = mv_filter(f_[blare][z], 2);//対照画像
             cv::Mat g_img = mv_filter(g_[blare][z], 2);//参照画像
-            cv::Mat point;
             const int expand = 500;
             unsigned char **f_expand;//画像の周りに500ピクセルだけ黒の領域を設ける(念のため)
             unsigned char **g_expand;//f_expandと同様
@@ -478,49 +479,56 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
             p0 = target_corners.p1 / scale;//三角形の頂点をスケーリング
             p1 = target_corners.p2 / scale;
             p2 = target_corners.p3 / scale;
-            //////////////ここからは頂点の距離が近い場合にバグってたときに迷走してました(近い距離に頂点を取らないようにしてバグを回避したため頂点を分割していく場合またバグが発生する可能性大)
-            cv::Point2f a_,b_;
-            double S_prev,S_later;//パッチの面積(デバッグ変数)
-            a_.x = p2.x - p0.x;
-            a_.y = p2.y - p0.y;
-            b_.x = p1.x - p0.x;
-            b_.y = p1.y - p0.y;
-            S_prev = a_.x * b_.y - a_.y * b_.x;
-            if(fabs((int)a_.x * (int)b_.y - (int)a_.y * (int)b_.x) <= 4){//パッチの面積が小さすぎる場合は動きベクトルをゼロにする
-                for (int s = 0; s < 3; s++) {
-                    v[s].x = 0;
-                    v[s].y = 0;
-                }
-                v_para.x = 0;
-                v_para.y = 0;
-                continue;
-            }
-            a_.x = p2.x - p1.x;
-            a_.y = p2.y - p1.y;
-            b_.x = p0.x - p1.x;
-            b_.y = p0.y - p1.y;
-            if(fabs((int)a_.x * (int)b_.y - (int)a_.y * (int)b_.x) <= 4){//パッチの面積が小さすぎる場合は動きベクトルをゼロにする
-                for (int s = 0; s < 3; s++) {
-                    v[s].x = 0;
-                    v[s].y = 0;
-                }
-                v_para.x = 0;
-                v_para.y = 0;
-                continue;
-            }
-            a_.x = (p2.x + v[2].x) - (p0.x + v[0].x);
-            a_.y = (p2.y + v[2].y) - (p0.y + v[0].y);
-            b_.x = (p1.x + v[1].x) - (p0.x + v[0].x);
-            b_.y = (p1.y + v[1].y) - (p0.y + v[0].y);
-            S_later = a_.x * b_.y - a_.y * b_.x;
 
-            ///////////迷走終わり
+//            //////////////ここからは頂点の距離が近い場合にバグってたときに迷走してました(近い距離に頂点を取らないようにしてバグを回避したため頂点を分割していく場合またバグが発生する可能性大)
+//            cv::Point2f a_,b_;
+//            double S_prev,S_later;//パッチの面積(デバッグ変数)
+//            a_.x = p2.x - p0.x;
+//            a_.y = p2.y - p0.y;
+//            b_.x = p1.x - p0.x;
+//            b_.y = p1.y - p0.y;
+//            S_prev = a_.x * b_.y - a_.y * b_.x;
+//            if(fabs((int)a_.x * (int)b_.y - (int)a_.y * (int)b_.x) <= 4){//パッチの面積が小さすぎる場合は動きベクトルをゼロにする
+//                for (int s = 0; s < 3; s++) {
+//                    v[s].x = 0;
+//                    v[s].y = 0;
+//                }
+//                v_para.x = 0;
+//                v_para.y = 0;
+//                continue;
+//            }
+//            a_.x = p2.x - p1.x;
+//            a_.y = p2.y - p1.y;
+//            b_.x = p0.x - p1.x;
+//            b_.y = p0.y - p1.y;
+//            if(fabs((int)a_.x * (int)b_.y - (int)a_.y * (int)b_.x) <= 4){//パッチの面積が小さすぎる場合は動きベクトルをゼロにする
+//                for (int s = 0; s < 3; s++) {
+//                    v[s].x = 0;
+//                    v[s].y = 0;
+//                }
+//                v_para.x = 0;
+//                v_para.y = 0;
+//                continue;
+//            }
+//            a_.x = (p2.x + v[2].x) - (p0.x + v[0].x);
+//            a_.y = (p2.y + v[2].y) - (p0.y + v[0].y);
+//            b_.x = (p1.x + v[1].x) - (p0.x + v[0].x);
+//            b_.y = (p1.y + v[1].y) - (p0.y + v[0].y);
+//            S_later = a_.x * b_.y - a_.y * b_.x;
+//
+//            ///////////迷走終わり
             if (target_corners.p1.x == f_[0][3].cols - 1)p0.x = f_[0][z].cols - 1;//端の頂点の調整
             if (target_corners.p1.y == f_[0][3].rows - 1)p0.y = f_[0][z].rows - 1;
             if (target_corners.p2.x == f_[0][3].cols - 1)p1.x = f_[0][z].cols - 1;
             if (target_corners.p2.y == f_[0][3].rows - 1)p1.y = f_[0][z].rows - 1;
             if (target_corners.p3.x == f_[0][3].cols - 1)p2.x = f_[0][z].cols - 1;
             if (target_corners.p3.y == f_[0][3].rows - 1)p2.y = f_[0][z].rows - 1;
+            cv::Point2f a_,b_;
+            a_.x = p2.x - p0.x;
+            a_.y = p2.y - p0.y;
+            b_.x = p1.x - p0.x;
+            b_.y = p1.y - p0.y;
+            if(fabs(a_.x * b_.y - a_.y * b_.x) <= 0)break;
             triangle.clear();
             triangle.emplace_back(p0);
             triangle.emplace_back(p1);
@@ -555,6 +563,25 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
 
             v_stack.clear();
             v_stack_para.clear();
+
+            Point3Vec triangleVec = Point3Vec(p0, p1, p2);
+            double sx = std::min({(int) p0.x, (int) p1.x, (int) p2.x});
+            double lx = std::max({(int) p0.x, (int) p1.x, (int) p2.x});
+            double sy = std::min({(int) p0.y, (int) p1.y, (int) p2.y});
+            double ly = std::max({(int) p0.y, (int) p1.y, (int) p2.y});
+            if(lx - sx == 0 || ly - sy == 0){
+                std::cout << "baund = 0" << std::endl;
+            }
+            in_triangle_pixels.clear();
+            for (int j = (int) (round(sy) - 1); j <= round(ly) + 1; j++) {
+                for (int i = (int) (round(sx) - 1); i <= round(lx) + 1; i++) {
+                    xp.x = (float) i;
+                    xp.y = (float) j;
+                    if (isInTriangle(triangleVec, xp) == 1) {
+                        in_triangle_pixels.emplace_back(xp);//三角形の内部のピクセルを格納
+                    }
+                }
+            }
             for (int q = 0; q < 11; q++) {//ガウスニュートン法を11回繰り返す
                 if (q == 10 && z == 3) {//11回目は動きベクトルをゼロにする
                     for (int i = 0; i < 3; i++) {
@@ -575,26 +602,7 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
                 if (target_corners.p3.x == f_[0][3].cols - 1)p2.x = f_[0][z].cols - 1;
                 if (target_corners.p3.y == f_[0][3].rows - 1)p2.y = f_[0][z].rows - 1;
 
-                Point3Vec triangleVec = Point3Vec(p0, p1, p2);
-                double sx = std::min({(int) p0.x, (int) p1.x, (int) p2.x});
-                double lx = std::max({(int) p0.x, (int) p1.x, (int) p2.x});
-                double sy = std::min({(int) p0.y, (int) p1.y, (int) p2.y});
-                double ly = std::max({(int) p0.y, (int) p1.y, (int) p2.y});
-                if(lx - sx == 0 || ly - sy == 0){
-                    std::cout << "baund = 0" << std::endl;
-                }
-                in_triangle_pixel.clear();
-                for (int j = (int) (round(sy) - 1); j <= round(ly) + 1; j++) {
-                    for (int i = (int) (round(sx) - 1); i <= round(lx) + 1; i++) {
-                        xp.x = (float) i;
-                        xp.y = (float) j;
-                        if (isInTriangle(triangleVec, xp) == 1) {
-                            in_triangle_pixel.emplace_back(xp);//三角形の内部のピクセルを格納
-                        }
-                    }
-                }
-
-                cv::Point2f a, b, X,c,d;
+                cv::Point2f a, b, X, c, d;
                 cv::Point2f a_later, b_later, X_later, a_later_para, b_later_para, X_later_para;
                 std::vector<cv::Point2f> pp,pp_para;//移動後の座標を格納
                 pp.clear();
@@ -640,9 +648,9 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
                     }
                     B_para.at<double>(k, 0) = 0;
                 }
-                for (int m = 0; m < (int) in_triangle_pixel.size(); m++) {//パッチ内の画素ごとに
-                    X.x = in_triangle_pixel[m].x - p0.x;
-                    X.y = in_triangle_pixel[m].y - p0.y;
+                for (int m = 0; m < (int) in_triangle_pixels.size(); m++) {//パッチ内の画素ごとに
+                    X.x = in_triangle_pixels[m].x - p0.x;
+                    X.y = in_triangle_pixels[m].y - p0.y;
                     alpha = (X.x * b.y - X.y * b.x) / det;
                     beta = (a.x * X.y - a.y * X.x) / det;
 
@@ -654,12 +662,9 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
                     d_y = X.y - y0;
 
                     for (int i = 0; i < 6; i++) {
-                        pp[0].x = p0.x + v[0].x;
-                        pp[0].y = p0.y + v[0].y;
-                        pp[1].x = p1.x + v[1].x;
-                        pp[1].y = p1.y + v[1].y;
-                        pp[2].x = p2.x + v[2].x;
-                        pp[2].y = p2.y + v[2].y;
+                        pp[0] = p0 + v[0];
+                        pp[1] = p1 + v[1];
+                        pp[2] = p2 + v[2];
                         triangle_later.clear();
                         triangle_later.emplace_back(pp[0]);//移動後の頂点を格納
                         triangle_later.emplace_back(pp[1]);
@@ -671,6 +676,29 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
                         triangle_later_para.emplace_back(pp_para[0]);
                         triangle_later_para.emplace_back(pp_para[1]);
                         triangle_later_para.emplace_back(pp_para[2]);
+
+                        a_later.x = triangle_later[2].x - triangle_later[0].x;
+                        a_later.y = triangle_later[2].y - triangle_later[0].y;
+                        a_later_para = triangle_later_para[2] - triangle_later_para[0];
+                        b_later.x = triangle_later[1].x - triangle_later[0].x;
+                        b_later.y = triangle_later[1].y - triangle_later[0].y;
+                        b_later_para = triangle_later_para[1] - triangle_later_para[0];
+                        X_later.x = alpha * a_later.x + beta * b_later.x + triangle_later[0].x;
+                        X_later.y = alpha * a_later.y + beta * b_later.y + triangle_later[0].y;
+                        X_later_para = alpha * a_later_para + beta * b_later_para + triangle_later_para[0];
+
+                        if (X_later.x >= g_img.cols - 1) {
+                            X_later.x = g_img.cols - 1.001;
+                        }
+                        if (X_later.y >= g_img.rows - 1) {
+                            X_later.y = g_img.rows - 1.001;
+                        }
+                        if(X_later.x < 0) {
+                            X_later.x = 0;
+                        }
+                        if(X_later.y < 0) {
+                            X_later.y = 0;
+                        }
                         switch (i) {//頂点ごとにxy軸独立に偏微分
                             case 0:
                                 delta_x = 1 - alpha - beta;
@@ -707,29 +735,7 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
                     }
                     delta_g_para[0] = g_x_para;
                     delta_g_para[1] = g_y_para;
-                    a_later.x = triangle_later[2].x - triangle_later[0].x;
-                    a_later.y = triangle_later[2].y - triangle_later[0].y;
-                    a_later_para = triangle_later_para[2] - triangle_later_para[0];
 
-                    b_later.x = triangle_later[1].x - triangle_later[0].x;
-                    b_later.y = triangle_later[1].y - triangle_later[0].y;
-                    b_later_para = triangle_later_para[1] - triangle_later_para[0];
-                    X_later.x = alpha * a_later.x + beta * b_later.x + triangle_later[0].x;
-                    X_later.y = alpha * a_later.y + beta * b_later.y + triangle_later[0].y;
-                    X_later_para = alpha * a_later_para + beta * b_later_para + triangle_later_para[0];
-
-                    if (X_later.x >= g_img.cols - 1) {
-                        X_later.x = g_img.cols - 1.001;
-                    }
-                    if (X_later.y >= g_img.rows - 1) {
-                        X_later.y = g_img.rows - 1.001;
-                    }
-                    if(X_later.x < 0) {
-                        X_later.x = 0;
-                    }
-                    if(X_later.y < 0) {
-                        X_later.y = 0;
-                    }
 
                     x0_later = (int) floor(X_later.x);
                     y0_later = (int) floor(X_later.y);
@@ -786,14 +792,14 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
                 }
                 Error = MSE;//パッチ全体の予測残差の和
                 Error_para = MSE_para;
-                triangle_size = (int)in_triangle_pixel.size();
-                MSE = (in_triangle_pixel.size() == 0 ? MSE : MSE / in_triangle_pixel.size());//パッチ内の平均2乗誤差
-                MSE_para = (in_triangle_pixel.size() == 0 ? MSE_para : MSE_para / in_triangle_pixel.size());
+                triangle_size = (int)in_triangle_pixels.size();
+                MSE = (in_triangle_pixels.size() == 0 ? MSE : MSE / in_triangle_pixels.size());//パッチ内の平均2乗誤差
+                MSE_para = (in_triangle_pixels.size() == 0 ? MSE_para : MSE_para / in_triangle_pixels.size());
                 PSNR = 10 * log10((255 * 255) / MSE);//パッチ内のPSNR
                 PSNR_para = 10 * log10((255 * 255) / MSE_para);
 
                 cv::solve(gg, B, delta_uv);//6x6の連立方程式を解いてdelta_uvに格納
-                cv::solve(gg_para,B_para,delta_uv_para);
+                cv::solve(gg_para, B_para, delta_uv_para);
                 v_pair.first = v;//動きベクトルと予測残差のpairをスタックに格納
                 v_pair.second = Error;
                 v_stack.emplace_back(v_pair);
@@ -848,14 +854,16 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
             std::sort(v_stack_para.begin(), v_stack_para.end(), [](std::pair<cv::Point2f,double> a, std::pair<cv::Point2f,double> b){
                 return a.second < b.second;
             });
-
+//            for(int i = 0;i < (int)v_stack_para.size();i++){
+//                std::cout << "Gauss_newton1_v_stack_para[" << i << "][blur=" << blare << "]:[z=" << z << "]:"  << v_stack_para[i].first << " Error:" << v_stack_para[i].second << std::endl;
+//            }
 
             v = v_stack[0].first;//一番良い動きベクトルを採用
             Error = v_stack[0].second;
             v_para = v_stack_para[0].first;
             Error_para = v_stack_para[0].second;
-            MSE = Error / (double)in_triangle_pixel.size();
-            MSE_para = Error_para / (double)in_triangle_pixel.size();
+            MSE = Error / (double)in_triangle_pixels.size();
+            MSE_para = Error_para / (double)in_triangle_pixels.size();
             PSNR = 10 * log10((255 * 255) / MSE);
             PSNR_para = 10 * log10((255 * 255) / MSE_para);
 
@@ -873,11 +881,12 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
                     v_max = v;
                     flag_blare = true;
                 }
-                if (fabs(PSNR_max - PSNR_para_max) <= th || PSNR_para_max > PSNR_max) {//ワーピングと平行移動でRDのようなことをする
-                    parallel_flag = true;//平行移動を採用
-                } else{
-                    parallel_flag = false;//ワーピングを採用
-                }
+                parallel_flag = true;
+//                if (fabs(PSNR_max - PSNR_para_max) <= th || PSNR_para_max > PSNR_max) {//ワーピングと平行移動でRDのようなことをする
+//                    parallel_flag = true;//平行移動を採用
+//                } else{
+//                    parallel_flag = false;//ワーピングを採用
+//                }
             }
             //ここからは画像の生成と動きベクトルの処理(この関数内では使ってないので無視してください)
             double alpha, beta, det;
@@ -915,10 +924,8 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
             if(z == 3) {
                 ave_v.x = (v_max[0].x + v_max[1].x + v_max[2].x) / 3;
                 ave_v.y = (v_max[0].y + v_max[1].y + v_max[2].y) / 3;
-                //ave_v *= Quant;
                 ave_v.x = (int) floor(ave_v.x + 0.5);
                 ave_v.y = (int) floor(ave_v.y + 0.5);
-                //ave_v /= Quant;
                 cv::Point2f v0, v1, v2;
                 v0.x = floor(ref_corners.p1.x / 2 + 0.5) - p0.x;
                 v0.y = floor(ref_corners.p1.y / 2 + 0.5) - p0.y;
@@ -944,6 +951,7 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
                 mv.emplace_back(v[0]);
                 mv.emplace_back(v[1]);
                 mv.emplace_back(v[2]);
+                mv3.clear();
                 mv3.emplace_back(v_max[0]);
                 mv3.emplace_back(v_max[1]);
                 mv3.emplace_back(v_max[2]);
@@ -990,8 +998,8 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
                     mv4[0] /= 2;
                     x0 = (int)mv4[0].x;
                     y0 = (int)mv4[0].y;
-                    d_x = mv4[0].x - x0; // ハーフペル相当になっている
-                    d_y = mv4[0].y - y0;
+                    d_x = (mv4[0].x - x0)*2; // ハーフペル相当になっている
+                    d_y = (mv4[0].y - y0)*2;
                     mv[0].x = x0; mv[0].y = y0;
                     mv[1].x = x0; mv[1].y = y0;
                     mv[2].x = x0; mv[2].y = y0;
@@ -999,6 +1007,7 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
                     mv.emplace_back(dv); // 安全のために小数部を3つ追加
                     mv.emplace_back(dv);
                     mv.emplace_back(dv);
+                    std::cout << "Gauss_newton1_mv:" << mv << std::endl;
                 }
 
 
@@ -1044,14 +1053,14 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
             det = a.x * b.y - a.y * b.x;
 
             if(blare == 0) {
-                warp = (unsigned char *) malloc(sizeof(unsigned char) * (int) in_triangle_pixel.size());
-                para = (unsigned char *) malloc(sizeof(unsigned char) * (int) in_triangle_pixel.size());
+                warp = (unsigned char *) malloc(sizeof(unsigned char) * (int) in_triangle_pixels.size());
+                para = (unsigned char *) malloc(sizeof(unsigned char) * (int) in_triangle_pixels.size());
             }
-            for (int i = 0; i < (int) in_triangle_pixel.size(); i++) {
+            for (int i = 0; i < (int) in_triangle_pixels.size(); i++) {
                 double d_x, d_y, d_x_para, d_y_para;
                 int x0, y0, x0_para, y0_para;
-                X.x = in_triangle_pixel[i].x - triangle[0].x;
-                X.y = in_triangle_pixel[i].y - triangle[0].y;
+                X.x = in_triangle_pixels[i].x - triangle[0].x;
+                X.y = in_triangle_pixels[i].y - triangle[0].y;
                 alpha = (X.x * b.y - X.y * b.x) / det;
                 beta = (a.x * X.y - a.y * X.x) / det;
                 X.x += triangle[0].x;
@@ -1140,7 +1149,7 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
         }
     }
     double squaredError = 0.0;
-    for (int i = 0; i < (int) in_triangle_pixel.size(); i++) {
+    for (int i = 0; i < (int) in_triangle_pixels.size(); i++) {
         unsigned char y;
         if (parallel_flag == true) {
             y = para[i];
@@ -1148,13 +1157,14 @@ double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,cons
         else{
             y = warp[i];
         }
-        cv::Point2f X = in_triangle_pixel[i];
+        cv::Point2f X = in_triangle_pixels[i];
         squaredError += (M(current_color,(int)X.x,(int)X.y) - y) * (M(current_color,(int)X.x,(int)X.y) - y);
     }
 
     //if(parallel_flag) return Error_para_min;
 
     //return Error_min;
+    std::cout << "Gauss1:" << mv[0] << std::endl;
     return squaredError;
 }
 
@@ -1245,7 +1255,7 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
     g_.emplace_back(g_2);
     cv::Point2f v0(0.0, 0.0), v1(0.0, 0.0), v2(0.0, 0.0);
     const int dim = 6;
-    double f, g, g1, g2,g3, ek_tmp, ek, delta_ek[dim],g_para;
+    double f, g, g1, g2, ek_tmp, ek, delta_ek[dim],g_para;
     cv::Mat gg = cv::Mat_<double>(dim, dim);
     cv::Mat gg_para = cv::Mat_<double>(2,2);
     cv::Mat B = cv::Mat_<double>(dim, 1);
@@ -1262,13 +1272,12 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
     const double th = 0.5;
     double MSE,MSE_para,Error,Error_para,Error_min = 1E06,Error_para_min = 1E06,MSE_min = 1E06,MSE_para_min = 1E06;
     double PSNR,PSNR_max = 0,PSNR_para,PSNR_para_max = 0;
-    int blare_max = 0;
     int img_ip(unsigned char **img, int xs, int ys, double x, double y, int mode);
     double w(double x);
-    std::string str;
+
     float delta_x, delta_y;
     std::vector<cv::Point2f> triangle, triangle_later, triangle_delta,triangle_later_para;
-    std::vector<cv::Point2f> in_triangle_pixels, in_triangle_later,in_triangle_later_para;
+    std::vector<cv::Point2f> in_triangle_pixels, in_triangle_pixels_later;
     cv::Point2f xp(0.0, 0.0), p0, p1, p2, p;
     std::vector<cv::Point2f> corners, corners_org;
     std::vector<cv::Point2i> mv,mv_diff;
@@ -1335,7 +1344,6 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
             int scale = pow(2, 3-z),scale_x = scale,scale_y = scale;
             cv::Mat f_img = f_[blare][z].clone();//対照画像
             cv::Mat g_img = g_[blare][z].clone();//参照画像
-            cv::Mat point;
             f_img = mv_filter(f_img,2);
             g_img = mv_filter(g_img,2);
             const int expand = 500;
@@ -1437,19 +1445,6 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
 
             v_stack.clear();
             v_stack_para.clear();
-            p0.x = target_corners.p1.x / scale_x;
-            p0.y = target_corners.p1.y / scale_y;
-            p1.x = target_corners.p2.x / scale_x;
-            p1.y = target_corners.p2.y / scale_y;
-            p2.x = target_corners.p3.x / scale_x;
-            p2.y = target_corners.p3.y / scale_y;
-
-            if (target_corners.p1.x == f_[0][3].cols - 1)p0.x = f_[0][z].cols - 1;
-            if (target_corners.p1.y == f_[0][3].rows - 1)p0.y = f_[0][z].rows - 1;
-            if (target_corners.p2.x == f_[0][3].cols - 1)p1.x = f_[0][z].cols - 1;
-            if (target_corners.p2.y == f_[0][3].rows - 1)p1.y = f_[0][z].rows - 1;
-            if (target_corners.p3.x == f_[0][3].cols - 1)p2.x = f_[0][z].cols - 1;
-            if (target_corners.p3.y == f_[0][3].rows - 1)p2.y = f_[0][z].rows - 1;
 
             Point3Vec triangleVec = Point3Vec(p0, p1, p2);
             double sx = std::min({(int) p0.x, (int) p1.x, (int) p2.x});
@@ -1495,23 +1490,8 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                     if (target_corners.p2.y == f_[0][3].rows - 1)p1.y = f_[0][z].rows - 1;
                     if (target_corners.p3.x == f_[0][3].cols - 1)p2.x = f_[0][z].cols - 1;
                     if (target_corners.p3.y == f_[0][3].rows - 1)p2.y = f_[0][z].rows - 1;
-                    Point3Vec triangleVec = Point3Vec(p0, p1, p2);
-                    double sx = std::min({(int) p0.x, (int) p1.x, (int) p2.x});
-                    double lx = std::max({(int) p0.x, (int) p1.x, (int) p2.x});
-                    double sy = std::min({(int) p0.y, (int) p1.y, (int) p2.y});
-                    double ly = std::max({(int) p0.y, (int) p1.y, (int) p2.y});
-                    in_triangle_pixels.clear();
-                    for (int j = (int) (round(sy) - 1); j <= round(ly) + 1; j++) {
-                        for (int i = (int) (round(sx) - 1); i <= round(lx) + 1; i++) {
-                            xp.x = (float) i;
-                            xp.y = (float) j;
-                            if (isInTriangle(triangleVec, xp) == 1) {
-                                in_triangle_pixels.emplace_back(xp);
-                            }
-                        }
-                    }
 
-                    cv::Point2f a, b, X,c,d;
+                    cv::Point2f a, b, X, c, d;
                     cv::Point2f a_later, b_later, X_later, a_later_para, b_later_para, X_later_para;
                     cv::Point2f a_later_delta, b_later_delta, X_later_delta;
                     std::vector<cv::Point2f> pp, pp_delta, pp_para;
@@ -1584,27 +1564,29 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
 
                         ek_tmp = 0;
                         for (int i = 0; i < 6; i++) {
-                            pp[0].x = p0.x + v[0].x;
-                            pp[0].y = p0.y + v[0].y;
-                            pp[1].x = p1.x + v[1].x;
-                            pp[1].y = p1.y + v[1].y;
-                            pp[2].x = p2.x + v[2].x;
-                            pp[2].y = p2.y + v[2].y;
-
+                            pp[0] = p0 + v[0];
+                            pp[1] = p1 + v[1];
+                            pp[2] = p2 + v[2];
                             triangle_later.clear();
                             triangle_later.emplace_back(pp[0]);
                             triangle_later.emplace_back(pp[1]);
                             triangle_later.emplace_back(pp[2]);
-
                             pp_para[0] = p0 + v_para;
                             pp_para[1] = p1 + v_para;
                             pp_para[2] = p2 + v_para;
-
                             triangle_later_para.clear();
                             triangle_later_para.emplace_back(pp_para[0]);
                             triangle_later_para.emplace_back(pp_para[1]);
                             triangle_later_para.emplace_back(pp_para[2]);
-
+                            a_later.x = triangle_later[2].x - triangle_later[0].x;
+                            a_later.y = triangle_later[2].y - triangle_later[0].y;
+                            a_later_para = triangle_later_para[2] - triangle_later_para[0];
+                            b_later.x = triangle_later[1].x - triangle_later[0].x;
+                            b_later.y = triangle_later[1].y - triangle_later[0].y;
+                            b_later_para = triangle_later_para[1] - triangle_later_para[0];
+                            X_later.x = alpha * a_later.x + beta * b_later.x + triangle_later[0].x;
+                            X_later.y = alpha * a_later.y + beta * b_later.y + triangle_later[0].y;
+                            X_later_para = alpha * a_later_para + beta * b_later_para + triangle_later_para[0];
                             switch (i) {
                                 case 0:
                                     pp[0].x += delta;
@@ -1668,25 +1650,12 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                         }
                         delta_g_para[0] = g_x_para;
                         delta_g_para[1] = g_y_para;
-                        //if(t >= 32 && t <= 33)std::cout << "check 20" << std::endl;
-                        a_later.x = triangle_later[2].x - triangle_later[0].x;
-                        a_later.y = triangle_later[2].y - triangle_later[0].y;
-                        a_later_para = triangle_later_para[2] - triangle_later_para[0];
-                        //if(t >= 32 && t <= 33)  std::cout << "check 21" << std::endl;
-                        //std::cout << "a_later = " << a_later.x << std::endl;
-                        b_later.x = triangle_later[1].x - triangle_later[0].x;
-                        b_later.y = triangle_later[1].y - triangle_later[0].y;
-                        b_later_para = triangle_later_para[1] - triangle_later_para[0];
-                        //if(t >= 32 && t <= 33) std::cout << "check 22" << std::endl;
-                        X_later.x = alpha * a_later.x + beta * b_later.x + triangle_later[0].x;
-                        X_later.y = alpha * a_later.y + beta * b_later.y + triangle_later[0].y;
-                        X_later_para = alpha * a_later_para + beta * b_later_para + triangle_later_para[0];
+
 
                         x0_later = (int) floor(X_later.x);
                         y0_later = (int) floor(X_later.y);
                         x0_later_para = (int) floor(X_later_para.x);
                         y0_later_para = (int) floor(X_later_para.y);
-                        //if(t >= 32 && t <= 33)  std::cout << "check 24" << std::endl;
                         d_x_later = X_later.x - x0_later;
                         d_y_later = X_later.y - y0_later;
                         d_x_later_para = X_later_para.x - x0_later_para;
@@ -1720,10 +1689,6 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                              delta_g[2] * delta_uv.at<double>(2, 0) +
                              delta_g[3] * delta_uv.at<double>(3, 0) + delta_g[4] * delta_uv.at<double>(4, 0) +
                              delta_g[5] * delta_uv.at<double>(5, 0);
-                        g3 = g_expand[x0_later_para][y0_later_para] * (1 - d_x_later_para) * (1 - d_y_later_para) +
-                             g_expand[x0_later_para + 1][y0_later_para] * d_x_later_para * (1 - d_y_later_para) +
-                             g_expand[x0_later_para][y0_later_para + 1] * (1 - d_x_later_para) * d_y_later_para +
-                             g_expand[x0_later_para + 1][y0_later_para + 1] * d_x_later_para * d_y_later_para;
                         for (int t = 0; t < dim; t++) {
                             delta_ek[t] += (f - g2) * delta_g[t];
                         }
@@ -1738,7 +1703,7 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                             for (int j = 0; j < 2; j++) {
                                 gg_para.at<double>(k, j) += delta_g_para[k] * delta_g_para[j];
                             }
-                            B_para.at<double>(k, 0) += (f - g3) * delta_g_para[k];
+                            B_para.at<double>(k, 0) += (f - g_para) * delta_g_para[k];
                         }
                         //if(t >= 32 && t <= 33) std::cout << "check 34" << std::endl;
                         current_error += (f - g1) * (f - g1);
@@ -1829,6 +1794,9 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                 std::sort(v_stack_para.begin(), v_stack_para.end(), [](std::pair<cv::Point2f,double> a, std::pair<cv::Point2f,double> b){
                     return a.second < b.second;
                 });
+//                for(int i = 0;i < (int)v_stack_para.size();i++){
+//                    std::cout << "Gauss_newton2_v_stack_para[" << i << "]:[blur=" << blare << "]:[z=" << z << "]:" << v_stack_para[i].first << " Error:" << v_stack_para[i].second << std::endl;
+//                }
 
                 v = v_stack[0].first;
                 Error = v_stack[0].second;
@@ -1972,8 +1940,8 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                     mv4[0] /= 2;
                     x0 = (int)mv4[0].x;
                     y0 = (int)mv4[0].y;
-                    d_x = mv4[0].x - x0; // ハーフペル相当になっている
-                    d_y = mv4[0].y - y0;
+                    d_x = (mv4[0].x - x0)*2; // ハーフペル相当になっている
+                    d_y = (mv4[0].y - y0)*2;
                     mv[0].x = x0; mv[0].y = y0;
                     mv[1].x = x0; mv[1].y = y0;
                     mv[2].x = x0; mv[2].y = y0;
@@ -1981,6 +1949,7 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                     mv.emplace_back(dv); // 安全のために小数部を3つ追加
                     mv.emplace_back(dv);
                     mv.emplace_back(dv);
+                    std::cout << "Gauss_newton2_mv:" << mv << std::endl;
                 }
                 for (int j = 0; j < 3; j++) {
                     if (pp[j].x < 0) {
@@ -2210,7 +2179,7 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
     }
 
     error_warp = squaredError;
-
+    std::cout << "Gauss2:" << mv[0] << std::endl;
     return mv;
 }
 
