@@ -2558,13 +2558,13 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                         int x0, y0;
                         double d_x, d_y;
                         mv3[j] *= Quant;
-                        mv3[j].x = (int)mv3[j].x;
-                        mv3[j].y = (int)mv3[j].y;
-                        mv3[j] /= 2;
+                        mv3[j].x = (int)(mv3[j].x + 0.5);
+                        mv3[j].y = (int)(mv3[j].y + 0.5);
+                        mv3[j] /= 2.0;
                         x0 = (int) mv3[j].x;
                         y0 = (int) mv3[j].y;
-                        d_x = mv3[j].x - x0;
-                        d_y = mv3[j].y - y0;
+                        d_x = (mv3[j].x - x0) * 2.0;
+                        d_y = (mv3[j].y - y0) * 2.0;
                         mv[j].x = x0;
                         mv[j].y = y0;
                         cv::Point2i dv(d_x, d_y);
@@ -2576,13 +2576,13 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                     int x0,y0;
                     double d_x,d_y;
                     mv4[0] *= Quant;
-                    mv4[0].x = (int)mv4[0].x;
-                    mv4[0].y = (int)mv4[0].y;
-                    mv4[0] /= 2;
+                    mv4[0].x = (int)(mv4[0].x + 0.5);
+                    mv4[0].y = (int)(mv4[0].y + 0.5);
+                    mv4[0] /= 2.0;
                     x0 = (int)mv4[0].x;
                     y0 = (int)mv4[0].y;
-                    d_x = (mv4[0].x - x0)*2; // ハーフペル相当になっている
-                    d_y = (mv4[0].y - y0)*2;
+                    d_x = (mv4[0].x - x0)*2.0; // ハーフペル相当になっている
+                    d_y = (mv4[0].y - y0)*2.0;
                     mv[0].x = x0; mv[0].y = y0;
                     mv[1].x = x0; mv[1].y = y0;
                     mv[2].x = x0; mv[2].y = y0;
@@ -2590,7 +2590,6 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                     mv.emplace_back(dv); // 安全のために小数部を3つ追加
                     mv.emplace_back(dv);
                     mv.emplace_back(dv);
-                    std::cout << "Gauss_newton2_mv:" << mv << std::endl;
                 }
                 for (int j = 0; j < 3; j++) {
                     if (pp[j].x < 0) {
