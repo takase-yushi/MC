@@ -745,10 +745,10 @@ std::pair<std::vector<cv::Point2f>, cv::Point2f> GaussNewton(cv::Mat ref_image, 
                         }
 
                         // 参照フレームの前進差分を計算
-                        double g_x = current_ref_expand[(int) X_later_warping.x + 1][(int) X_later_warping.y] - current_ref_expand[(int) X_later_warping.x][(int) X_later_warping.y];//前進差分
-                        double g_y = current_ref_expand[(int) X_later_warping.x][(int) X_later_warping.y + 1] - current_ref_expand[(int) X_later_warping.x][(int) X_later_warping.y];
-                        g_x_parallel = current_ref_expand[(int) X_later_parallel.x + 1][(int) X_later_parallel.y] - current_ref_expand[(int) X_later_parallel.x][(int) X_later_parallel.y];
-                        g_y_parallel = current_ref_expand[(int) X_later_parallel.x][(int) X_later_parallel.y + 1] - current_ref_expand[(int) X_later_parallel.x][(int) X_later_parallel.y];
+                        double g_x   = current_ref_expand[(int) X_later_warping.x  + 1][(int) X_later_warping.y     ] - current_ref_expand[(int) X_later_warping.x ][(int) X_later_warping.y ];//前進差分
+                        double g_y   = current_ref_expand[(int) X_later_warping.x     ][(int) X_later_warping.y  + 1] - current_ref_expand[(int) X_later_warping.x ][(int) X_later_warping.y ];
+                        g_x_parallel = current_ref_expand[(int) X_later_parallel.x + 1][(int) X_later_parallel.y    ] - current_ref_expand[(int) X_later_parallel.x][(int) X_later_parallel.y];
+                        g_y_parallel = current_ref_expand[(int) X_later_parallel.x    ][(int) X_later_parallel.y + 1] - current_ref_expand[(int) X_later_parallel.x][(int) X_later_parallel.y];
 
                         delta_g_warping[i] = g_x * delta_x + g_y * delta_y;
                     }
@@ -759,23 +759,23 @@ std::pair<std::vector<cv::Point2f>, cv::Point2f> GaussNewton(cv::Mat ref_image, 
                     int y0_later_warping_integer = (int)floor(X_later_warping.y);
                     int x0_later_parallel_integer = (int)floor(X_later_parallel.x);
                     int y0_later_parallel_integer = (int)floor(X_later_parallel.y);
-                    int x0_later_warping_decimal = X_later_warping.x - x0_later_warping_integer;
-                    int y0_later_warping_decimal = X_later_warping.y - y0_later_warping_integer;
-                    int x0_later_parallel_decimal = X_later_parallel.x - x0_later_parallel_integer;
-                    int y0_later_parallel_decimal = X_later_parallel.y - y0_later_parallel_integer;
+                    double x0_later_warping_decimal = X_later_warping.x - x0_later_warping_integer;
+                    double y0_later_warping_decimal = X_later_warping.y - y0_later_warping_integer;
+                    double x0_later_parallel_decimal = X_later_parallel.x - x0_later_parallel_integer;
+                    double y0_later_parallel_decimal = X_later_parallel.y - y0_later_parallel_integer;
 
-                    double f = current_target_expand[x_integer][y_integer] * (1 - x_decimal) * (1 - y_decimal) + current_target_expand[x_integer + 1][y_integer] * x_decimal * (1 - y_decimal) +
-                        current_target_expand[x_integer][y_integer + 1] * (1 - x_decimal) * y_decimal + current_target_expand[x_integer + 1][y_integer + 1] * x_decimal * y_decimal;
+                    double f = current_target_expand[x_integer][y_integer    ] * (1 - x_decimal) * (1 - y_decimal) + current_target_expand[x_integer + 1][y_integer    ] * x_decimal * (1 - y_decimal) +
+                               current_target_expand[x_integer][y_integer + 1] * (1 - x_decimal) * y_decimal       + current_target_expand[x_integer + 1][y_integer + 1] * x_decimal * y_decimal;
 
-                    double g_warping = current_ref_expand[x0_later_warping_integer][y0_later_warping_integer] * (1 - x0_later_warping_decimal) * (1 - y0_later_warping_decimal) +
-                        current_ref_expand[x0_later_warping_integer + 1][y0_later_warping_integer] * x0_later_warping_decimal * (1 - y0_later_warping_decimal) +
-                        current_ref_expand[x0_later_warping_integer][y0_later_warping_integer + 1] * (1 - x0_later_warping_decimal) * y0_later_warping_decimal +
-                        current_ref_expand[x0_later_warping_integer + 1][y0_later_warping_integer + 1] * x0_later_warping_decimal * y0_later_warping_decimal;//頂点を移動させた後のワーピングの参照フレームの輝度値
+                    double g_warping = current_ref_expand[x0_later_warping_integer    ][y0_later_warping_integer    ] * (1 - x0_later_warping_decimal) * (1 - y0_later_warping_decimal) +
+                                       current_ref_expand[x0_later_warping_integer + 1][y0_later_warping_integer    ] * x0_later_warping_decimal       * (1 - y0_later_warping_decimal) +
+                                       current_ref_expand[x0_later_warping_integer    ][y0_later_warping_integer + 1] * (1 - x0_later_warping_decimal) * y0_later_warping_decimal       +
+                                       current_ref_expand[x0_later_warping_integer + 1][y0_later_warping_integer + 1] * x0_later_warping_decimal       * y0_later_warping_decimal;//頂点を移動させた後のワーピングの参照フレームの輝度値
 
-                    double g_parallel = current_ref_expand[x0_later_parallel_integer][y0_later_parallel_integer] * (1 - x0_later_parallel_decimal) * (1 - y0_later_parallel_decimal) +
-                             current_ref_expand[x0_later_parallel_integer + 1][y0_later_parallel_integer] * x0_later_parallel_decimal * (1 - y0_later_parallel_decimal) +
-                             current_ref_expand[x0_later_parallel_integer][y0_later_parallel_integer + 1] * (1 - x0_later_parallel_decimal) * y0_later_parallel_decimal +
-                             current_ref_expand[x0_later_parallel_integer + 1][y0_later_parallel_integer + 1] * x0_later_parallel_decimal * y0_later_parallel_decimal;//頂点を移動させた後の平行移動の参照フレームの輝度値
+                    double g_parallel = current_ref_expand[x0_later_parallel_integer    ][y0_later_parallel_integer    ] * (1 - x0_later_parallel_decimal) * (1 - y0_later_parallel_decimal) +
+                                        current_ref_expand[x0_later_parallel_integer + 1][y0_later_parallel_integer    ] * x0_later_parallel_decimal       * (1 - y0_later_parallel_decimal) +
+                                        current_ref_expand[x0_later_parallel_integer    ][y0_later_parallel_integer + 1] * (1 - x0_later_parallel_decimal) * y0_later_parallel_decimal       +
+                                        current_ref_expand[x0_later_parallel_integer + 1][y0_later_parallel_integer + 1] * x0_later_parallel_decimal       * y0_later_parallel_decimal;//頂点を移動させた後の平行移動の参照フレームの輝度値
 
                     for (int row = 0; row < warping_matrix_dim; row++) {
                         for (int col = 0; col < warping_matrix_dim; col++) {
