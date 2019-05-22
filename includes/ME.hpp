@@ -63,5 +63,7 @@ std::pair<std::vector<cv::Point2f>, std::priority_queue<int>> getReferenceImageC
                                                                                            const std::vector<cv::Point2f> &target_corners,
                                                                                            cv::Mat &debug);
 
+double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& output_image, Point3Vec& triangle, std::vector<cv::Point2f>& mv, bool parallel_flag);
+std::pair<std::vector<cv::Point2f>, cv::Point2f> GaussNewton(cv::Mat ref_image, cv::Mat target_image, cv::Mat gauss_ref_image, Point3Vec target_corners);
 
 #endif //ENCODER_ME_H

@@ -293,6 +293,110 @@ std::vector<cv::Point2f> warping(const cv::Mat& prev_color, const cv::Mat& curre
 }
 
 /**
+ * @fn void getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& output_image, std::vector<cv::Point2f>& mv)
+ * @brief 動きベクトルをもらって、out_imageに画像を書き込む
+ * @param[in] ref_image
+ * @param[in] target_image
+ * @param[out] output_image
+ * @param[in] triangle
+ * @param[in] mv
+ * @param[in] parallel_flag
+ * @return 2乗誤差
+ */
+double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& output_image, Point3Vec& triangle, std::vector<cv::Point2f>& mv, bool parallel_flag) {
+    cv::Point2f pp0, pp1, pp2;
+
+    if(parallel_flag) {
+        pp0.x = triangle.p1.x + mv[0].x;
+        pp0.y = triangle.p1.y + mv[0].y;
+        pp1.x = triangle.p2.x + mv[1].x;
+        pp1.y = triangle.p2.y + mv[1].y;
+        pp2.x = triangle.p3.x + mv[2].x;
+        pp2.y = triangle.p3.y + mv[2].y;
+    }else {
+        pp0.x = triangle.p1.x + mv[0].x;
+        pp0.y = triangle.p1.y + mv[0].y;
+        pp1.x = triangle.p2.x + mv[1].x;
+        pp1.y = triangle.p2.y + mv[1].y;
+        pp2.x = triangle.p3.x + mv[2].x;
+        pp2.y = triangle.p3.y + mv[2].y;
+    }
+
+    double quantize_step = 4.0;
+
+    std::vector<cv::Point2f> moved_coordinates{pp0, pp1, pp2};
+
+    double sx = std::min({(int) triangle.p1.x, (int) triangle.p2.x, (int) triangle.p3.x});
+    double lx = std::max({(int) triangle.p1.x, (int) triangle.p2.x, (int) triangle.p3.x});
+    double sy = std::min({(int) triangle.p1.y, (int) triangle.p2.y, (int) triangle.p3.y});
+    double ly = std::max({(int) triangle.p1.y, (int) triangle.p2.y, (int) triangle.p3.y});
+    if(lx - sx == 0 || ly - sy == 0){
+        std::cout << "baund = 0" << std::endl;
+    }
+    std::vector<cv::Point2f> in_triangle_pixels;
+    cv::Point2f xp;
+    for (int j = (int) (round(sy) - 1); j <= round(ly) + 1; j++) {
+        for (int i = (int) (round(sx) - 1); i <= round(lx) + 1; i++) {
+            xp.x = (float) i;
+            xp.y = (float) j;
+            if (isInTriangle(triangle, xp) == 1) {
+                in_triangle_pixels.emplace_back(xp);//三角形の内部のピクセルを格納
+            }
+        }
+    }
+    cv::Point2f X,a,b,a_later,b_later,X_later;
+    double alpha,beta,det;
+
+    double squared_error = 0.0;
+    for(auto pixel : in_triangle_pixels) {
+//    for (int i = 0; i < (int) in_triangle_pixels.size(); i++) {
+        double d_x, d_y, d_x_para, d_y_para;
+        int x0, y0, x0_para, y0_para;
+        X.x = pixel.x - triangle.p1.x;
+        X.y = pixel.y - triangle.p1.y;
+        alpha = (X.x * b.y - X.y * b.x) / det;
+        beta = (a.x * X.y - a.y * X.x) / det;
+        X.x += triangle.p1.x;
+        X.y += triangle.p1.y;
+
+        a_later = pp2 - pp0;
+        b_later = pp1 - pp0;
+        X_later = alpha * a_later + beta * b_later + pp0;
+
+        if (X_later.x >= ref_image.cols - 1) {
+            X_later.x = ref_image.cols - 1.001;
+        }
+        if (X_later.y >= ref_image.rows - 1) {
+            X_later.y = ref_image.rows - 1.001;
+        }
+
+        if (X_later.x < 0) {
+            X_later.x = 0;
+        }
+        if (X_later.y < 0) {
+            X_later.y = 0;
+        }
+        x0 = floor(X_later.x);
+        d_x = X_later.x - x0;
+        y0 = floor(X_later.y);
+        d_y = X_later.y - y0;
+        int y;
+
+        y = (int) floor((M(ref_image, (int) x0, (int) y0) * (1 - d_x) * (1 - d_y) +
+                         M(ref_image, (int) x0 + 1, (int) y0) * d_x * (1 - d_y)
+                         + M(ref_image, (int) x0, (int) y0 + 1) * (1 - d_x) * d_y +
+                         M(ref_image, (int) x0 + 1, (int) y0 + 1) * d_x * d_y) + 0.5);
+
+        R(output_image, (int)pixel.x, (int)pixel.y) = y;
+        G(output_image, (int)pixel.x, (int)pixel.y) = y;
+        B(output_image, (int)pixel.x, (int)pixel.y) = y;
+        squared_error += pow((M(target_image, (int)pixel.x, (int)pixel.y) - y ), 2);
+    }
+
+    return squared_error;
+}
+
+/**
  * @fn std::vector<cv::Point2f> GaussNewton(cv::Mat ref_image, cv::Mat target_mage, cv::Mat gauss_ref_image, Point3Vec target_corners)
  * @brief ガウス・ニュートン法を行い、動きベクトル・予測残差・面積を返す
  * @param[in] ref_image 参照画像（QPは変動）
