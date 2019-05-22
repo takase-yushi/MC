@@ -484,36 +484,36 @@ std::pair<std::vector<cv::Point2f>, cv::Point2f> GaussNewton(cv::Mat ref_image, 
     std::vector<cv::Point2f> pixels_in_triangle;
 
     bool parallel_flag = true;
+    const int expand = 500;
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
         std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(0.0, 0.0));
         cv::Point2f tmp_mv_parallel(0.0, 0.0);
 
         for(int step = 0 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
             double scale = pow(2, 3 - step);
-            cv::Mat current_ref_image = mv_filter(ref_images[filter_num][step]);
-            cv::Mat current_target_image = mv_filter(target_images[filter_num][step]);
+            cv::Mat current_ref_image = mv_filter(ref_images[filter_num][step],2);
+            cv::Mat current_target_image = mv_filter(target_images[filter_num][step],2);
 
-            const int expand = 500;
             unsigned char **current_target_expand; //画像の周りに500ピクセルだけ黒の領域を設ける(念のため)
             unsigned char **current_ref_expand;    //f_expandと同様
-            current_target_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (target_image.cols + expand * 2));
+            current_target_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
             current_target_expand += expand;
-            for (int j = -expand; j < target_image.cols + expand; j++) {
-                current_target_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (target_image.rows + expand * 2));
+            for (int j = -expand; j < current_target_image.cols + expand; j++) {
+                current_target_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (current_target_image.rows + expand * 2));
                 current_target_expand[j] += expand;
             }
-            current_ref_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (target_image.cols + expand * 2));
+            current_ref_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
             current_ref_expand += expand;
-            for (int j = -expand; j < ref_image.cols + expand; j++) {
-                if ((current_ref_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (target_image.rows + expand * 2))) == NULL) {
+            for (int j = -expand; j < current_ref_image.cols + expand; j++) {
+                if ((current_ref_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (current_target_image.rows + expand * 2))) == NULL) {
                 }
                 current_ref_expand[j] += expand;
             }
-            for (int j = -expand; j < target_image.rows + expand; j++) {
-                for (int i = -expand; i < target_image.cols + expand; i++) {
-                    if (j >= 0 && j < target_image.rows && i >= 0 && i < target_image.cols) {
-                        current_target_expand[i][j] = M(target_image, i, j);
-                        current_ref_expand[i][j] = M(ref_image, i, j);
+            for (int j = -expand; j < current_target_image.rows + expand; j++) {
+                for (int i = -expand; i < current_target_image.cols + expand; i++) {
+                    if (j >= 0 && j < current_target_image.rows && i >= 0 && i < current_target_image.cols) {
+                        current_target_expand[i][j] = M(current_target_image, i, j);
+                        current_ref_expand[i][j] = M(current_ref_image, i, j);
                     } else {
                         current_target_expand[i][j] = 0;
                         current_ref_expand[i][j] = 0;
@@ -521,20 +521,20 @@ std::pair<std::vector<cv::Point2f>, cv::Point2f> GaussNewton(cv::Mat ref_image, 
                 }
             }
             int k = 2;//画像の周り2ピクセルだけ折り返し
-            for (int j = 0; j < target_image.rows; j++) {
+            for (int j = 0; j < current_target_image.rows; j++) {
                 for (int i = 1; i <= k; i++) {
                     current_target_expand[-i][j] = current_target_expand[i][j];
-                    current_target_expand[target_image.cols - 1 + i][j] = current_target_expand[target_image.cols - 1 - i][j];
+                    current_target_expand[current_target_image.cols - 1 + i][j] = current_target_expand[current_target_image.cols - 1 - i][j];
                     current_ref_expand[-i][j] = current_ref_expand[i][j];
-                    current_ref_expand[target_image.cols - 1 + i][j] = current_ref_expand[target_image.cols - 1 - i][j];
+                    current_ref_expand[current_target_image.cols - 1 + i][j] = current_ref_expand[current_target_image.cols - 1 - i][j];
                 }
             }
-            for (int i = -k; i < target_image.cols + k; i++) {
+            for (int i = -k; i < current_target_image.cols + k; i++) {
                 for (int j = 1; j <= k; j++) {
                     current_target_expand[i][-j] = current_target_expand[i][j];
-                    current_target_expand[i][target_image.rows - 1 + j] = current_target_expand[i][target_image.rows - 1 - j];
+                    current_target_expand[i][current_target_image.rows - 1 + j] = current_target_expand[i][current_target_image.rows - 1 - j];
                     current_ref_expand[i][-j] = current_ref_expand[i][j];
-                    current_ref_expand[i][target_image.rows - 1 + j] = current_ref_expand[i][target_image.rows - 1 - j];
+                    current_ref_expand[i][current_target_image.rows - 1 + j] = current_ref_expand[i][current_target_image.rows - 1 - j];
                 }
             }
 
