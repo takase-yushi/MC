@@ -261,9 +261,9 @@ cv::Mat half_2(cv::Mat &in);
 
 cv::Mat half_sharp(cv::Mat &in);
 
-cv::Mat mv_filter(cv::Mat &in);
+cv::Mat mv_filter(cv::Mat& in);
 
-cv::Mat mv_filter(cv::Mat &in,int k);
+cv::Mat mv_filter(cv::Mat& in,int k);
 
 cv::Mat sobel_filter(cv::Mat &in);
 
