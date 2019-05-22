@@ -917,12 +917,12 @@ std::pair<std::vector<cv::Point2f>, cv::Point2f> GaussNewton(cv::Mat ref_image, 
     }
 
     // 量子化
-    max_v_parallel.x = ((int)((max_v_parallel.x + 0.125) * 4) / 4);
-    max_v_parallel.y = ((int)((max_v_parallel.y + 0.125) * 4) / 4);
+    max_v_parallel.x = ((int)((max_v_parallel.x + 0.125) * 4) / 4.0);
+    max_v_parallel.y = ((int)((max_v_parallel.y + 0.125) * 4) / 4.0);
 
     for(int i = 0 ; i < 3 ; i++){
-        max_v_warping[i].x = ((int)((max_v_warping[i].x + 0.125) * 4) / 4);
-        max_v_warping[i].y = ((int)((max_v_warping[i].y + 0.125) * 4) / 4);
+        max_v_warping[i].x = ((int)((max_v_warping[i].x + 0.125) * 4) / 4.0);
+        max_v_warping[i].y = ((int)((max_v_warping[i].y + 0.125) * 4) / 4.0);
     }
 
     if(!parallel_flag) {
