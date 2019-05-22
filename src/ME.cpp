@@ -901,6 +901,18 @@ std::pair<std::vector<cv::Point2f>, cv::Point2f> GaussNewton(cv::Mat ref_image, 
 //                    parallel_flag = false;//ワーピングを採用
 //                }
             }
+
+            for(int d = -expand ;d < current_target_image.cols + expand;d++){
+                current_target_expand[d] -= expand;
+                current_ref_expand[d] -= expand;
+                free(current_ref_expand[d]);
+                free(current_target_expand[d]);
+            }
+            current_target_expand -= expand;
+            current_ref_expand -= expand;
+            free(current_target_expand);
+            free(current_ref_expand);
+
         }
     }
 
