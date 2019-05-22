@@ -1426,13 +1426,20 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
                                                             warp_p_image, parallel_p_image, error, targetTriangle, refTriangle,
                                                             &parallel_flag, num, residual_ref, triangle_size, 0);
 
+    std::vector<cv::Point2f> gauss_result_warping;
+    cv::Point2f gauss_result_parallel;
+    std::tie(gauss_result_warping, gauss_result_parallel) = GaussNewton(ref_image, target_image, gaussRefImage, targetTriangle);
+
+    std::cout << "Gauss_Newton2:" << mv_parallel[0]  << " " << mv_parallel[1] << " " << mv_parallel[2] << " decimal:" << mv_parallel[3] << std::endl;
+    std::cout << "GaussNewton:" << gauss_result_parallel << std::endl;
+
     RMSE_before_subdiv = error / triangle_size;
 
     ctu->mv_integer = mv_parallel[0]; // 整数部
     ctu->mv_decimal = mv_parallel[3]; // 小数部
 
     std::pair<cv::Point2f, cv::Point2f> ret = getCollocatedTriangleList(ctu);
-    std::cout << ret.first << " " << ret.second << std::endl;
+//    std::cout << ret.first << " " << ret.second << std::endl;
 
     SplitResult split_triangles = getSplitTriangle(p1, p2, p3, type);
 
