@@ -497,29 +497,46 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, bool> GaussNewton(cv::Mat ref_
             cv::Mat current_ref_image = mv_filter(ref_images[filter_num][step],2);
             cv::Mat current_target_image = mv_filter(target_images[filter_num][step],2);
 
-            unsigned char **current_target_expand; //画像の周りに500ピクセルだけ黒の領域を設ける(念のため)
-            unsigned char **current_ref_expand;    //f_expandと同様
+            unsigned char **current_target_expand, **current_target_org_expand; //画像の周りに500ピクセルだけ黒の領域を設ける(念のため)
+            unsigned char **current_ref_expand, **current_ref_org_expand;    //f_expandと同様
             current_target_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
             current_target_expand += expand;
+            current_target_org_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
+            current_target_org_expand += expand;
+
             for (int j = -expand; j < current_target_image.cols + expand; j++) {
                 current_target_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (current_target_image.rows + expand * 2));
                 current_target_expand[j] += expand;
+
+                current_target_org_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (current_target_image.rows + expand * 2));
+                current_target_org_expand[j] += expand;
             }
+
             current_ref_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
             current_ref_expand += expand;
+            current_ref_org_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
+            current_ref_org_expand += expand;
             for (int j = -expand; j < current_ref_image.cols + expand; j++) {
                 if ((current_ref_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (current_target_image.rows + expand * 2))) == NULL) {
                 }
                 current_ref_expand[j] += expand;
+
+                (current_ref_org_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (current_target_image.rows + expand * 2)));
+                current_ref_org_expand[j] += expand;
             }
             for (int j = -expand; j < current_target_image.rows + expand; j++) {
                 for (int i = -expand; i < current_target_image.cols + expand; i++) {
                     if (j >= 0 && j < current_target_image.rows && i >= 0 && i < current_target_image.cols) {
                         current_target_expand[i][j] = M(current_target_image, i, j);
                         current_ref_expand[i][j] = M(current_ref_image, i, j);
+
+                        current_target_org_expand[i][j] = M(target_images[filter_num][step], i, j);
+                        current_ref_org_expand[i][j] = M(ref_images[filter_num][step], i, j);
                     } else {
                         current_target_expand[i][j] = 0;
                         current_ref_expand[i][j] = 0;
+                        current_target_org_expand[i][j] = 0;
+                        current_ref_org_expand[i][j] = 0;
                     }
                 }
             }
@@ -530,6 +547,10 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, bool> GaussNewton(cv::Mat ref_
                     current_target_expand[current_target_image.cols - 1 + i][j] = current_target_expand[current_target_image.cols - 1 - i][j];
                     current_ref_expand[-i][j] = current_ref_expand[i][j];
                     current_ref_expand[current_target_image.cols - 1 + i][j] = current_ref_expand[current_target_image.cols - 1 - i][j];
+                    current_target_org_expand[-i][j] = current_target_org_expand[i][j];
+                    current_target_org_expand[current_target_image.cols - 1 + i][j] = current_target_org_expand[current_target_image.cols - 1 - i][j];
+                    current_ref_org_expand[-i][j] = current_ref_org_expand[i][j];
+                    current_ref_org_expand[current_target_image.cols - 1 + i][j] = current_ref_org_expand[current_target_image.cols - 1 - i][j];
                 }
             }
             for (int i = -k; i < current_target_image.cols + k; i++) {
@@ -538,6 +559,11 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, bool> GaussNewton(cv::Mat ref_
                     current_target_expand[i][current_target_image.rows - 1 + j] = current_target_expand[i][current_target_image.rows - 1 - j];
                     current_ref_expand[i][-j] = current_ref_expand[i][j];
                     current_ref_expand[i][current_target_image.rows - 1 + j] = current_ref_expand[i][current_target_image.rows - 1 - j];
+
+                    current_target_org_expand[i][-j] = current_target_org_expand[i][j];
+                    current_target_org_expand[i][current_target_image.rows - 1 + j] = current_target_org_expand[i][current_target_image.rows - 1 - j];
+                    current_ref_org_expand[i][-j] = current_ref_org_expand[i][j];
+                    current_ref_org_expand[i][current_target_image.rows - 1 + j] = current_ref_org_expand[i][current_target_image.rows - 1 - j];
                 }
             }
 
@@ -770,15 +796,29 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, bool> GaussNewton(cv::Mat ref_
                     double f = current_target_expand[x_integer][y_integer    ] * (1 - x_decimal) * (1 - y_decimal) + current_target_expand[x_integer + 1][y_integer    ] * x_decimal * (1 - y_decimal) +
                                current_target_expand[x_integer][y_integer + 1] * (1 - x_decimal) * y_decimal       + current_target_expand[x_integer + 1][y_integer + 1] * x_decimal * y_decimal;
 
+                    double f_org = current_target_org_expand[x_integer][y_integer    ] * (1 - x_decimal) * (1 - y_decimal) + current_target_org_expand[x_integer + 1][y_integer    ] * x_decimal * (1 - y_decimal) +
+                                   current_target_org_expand[x_integer][y_integer + 1] * (1 - x_decimal) * y_decimal       + current_target_org_expand[x_integer + 1][y_integer + 1] * x_decimal * y_decimal;
+
+
                     double g_warping = current_ref_expand[x0_later_warping_integer    ][y0_later_warping_integer    ] * (1 - x0_later_warping_decimal) * (1 - y0_later_warping_decimal) +
                                        current_ref_expand[x0_later_warping_integer + 1][y0_later_warping_integer    ] * x0_later_warping_decimal       * (1 - y0_later_warping_decimal) +
                                        current_ref_expand[x0_later_warping_integer    ][y0_later_warping_integer + 1] * (1 - x0_later_warping_decimal) * y0_later_warping_decimal       +
                                        current_ref_expand[x0_later_warping_integer + 1][y0_later_warping_integer + 1] * x0_later_warping_decimal       * y0_later_warping_decimal;//頂点を移動させた後のワーピングの参照フレームの輝度値
 
                     double g_parallel = current_ref_expand[x0_later_parallel_integer    ][y0_later_parallel_integer    ] * (1 - x0_later_parallel_decimal) * (1 - y0_later_parallel_decimal) +
-                                        current_ref_expand[x0_later_parallel_integer + 1][y0_later_parallel_integer    ] * x0_later_parallel_decimal       * (1 - y0_later_parallel_decimal) +
-                                        current_ref_expand[x0_later_parallel_integer    ][y0_later_parallel_integer + 1] * (1 - x0_later_parallel_decimal) * y0_later_parallel_decimal       +
-                                        current_ref_expand[x0_later_parallel_integer + 1][y0_later_parallel_integer + 1] * x0_later_parallel_decimal       * y0_later_parallel_decimal;//頂点を移動させた後の平行移動の参照フレームの輝度値
+                                        current_ref_expand[x0_later_parallel_integer + 1][y0_later_parallel_integer    ] *      x0_later_parallel_decimal  * (1 - y0_later_parallel_decimal) +
+                                        current_ref_expand[x0_later_parallel_integer    ][y0_later_parallel_integer + 1] * (1 - x0_later_parallel_decimal) * (    y0_later_parallel_decimal)  +
+                                        current_ref_expand[x0_later_parallel_integer + 1][y0_later_parallel_integer + 1] *      x0_later_parallel_decimal  * (    y0_later_parallel_decimal);//頂点を移動させた後の平行移動の参照フレームの輝度値
+
+                    double g_org_warping = current_ref_org_expand[x0_later_warping_integer    ][y0_later_warping_integer    ] * (1 - x0_later_warping_decimal) * (1 - y0_later_warping_decimal) +
+                                           current_ref_org_expand[x0_later_warping_integer + 1][y0_later_warping_integer    ] * x0_later_warping_decimal       * (1 - y0_later_warping_decimal) +
+                                           current_ref_org_expand[x0_later_warping_integer    ][y0_later_warping_integer + 1] * (1 - x0_later_warping_decimal) * y0_later_warping_decimal       +
+                                           current_ref_org_expand[x0_later_warping_integer + 1][y0_later_warping_integer + 1] * x0_later_warping_decimal       * y0_later_warping_decimal;//頂点を移動させた後のワーピングの参照フレームの輝度値
+
+                    double g_org_parallel = current_ref_org_expand[x0_later_parallel_integer    ][y0_later_parallel_integer    ] * (1 - x0_later_parallel_decimal) * (1 - y0_later_parallel_decimal) +
+                                            current_ref_org_expand[x0_later_parallel_integer + 1][y0_later_parallel_integer    ] *      x0_later_parallel_decimal  * (1 - y0_later_parallel_decimal) +
+                                            current_ref_org_expand[x0_later_parallel_integer    ][y0_later_parallel_integer + 1] * (1 - x0_later_parallel_decimal) * (    y0_later_parallel_decimal)  +
+                                            current_ref_org_expand[x0_later_parallel_integer + 1][y0_later_parallel_integer + 1] *      x0_later_parallel_decimal  * (    y0_later_parallel_decimal);//頂点を移動させた後の平行移動の参照フレームの輝度値
 
                     for (int row = 0; row < warping_matrix_dim; row++) {
                         for (int col = 0; col < warping_matrix_dim; col++) {
@@ -786,7 +826,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, bool> GaussNewton(cv::Mat ref_
                         }
                         B_warping.at<double>(row, 0) += (f - g_warping) * delta_g_warping[row];//bの行列を生成(右辺の6x1のベクトルに相当)
                     }
-
                     for (int row = 0; row < 2; row++) {
                         for (int col = 0; col < 2; col++) {
                             gg_parallel.at<double>(row, col) +=  delta_g_parallel[row] * delta_g_parallel[col];
@@ -794,8 +833,10 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, bool> GaussNewton(cv::Mat ref_
                         B_parallel.at<double>(row, 0) += (f - g_parallel) * delta_g_parallel[row];
                     }
 
-                    MSE_warping += (f - g_warping) * (f - g_warping);
-                    MSE_parallel += (f - g_parallel)*(f - g_parallel);
+                    MSE_warping += (f_org - g_warping) * (f_org - g_warping);
+                    MSE_parallel += (f_org - g_parallel) * (f_org - g_parallel);
+//                    MSE_warping  += (f - g_warping)  * (f - g_warping);
+//                    MSE_parallel += (f - g_parallel) * (f - g_parallel);
                 }
 
                 double mu = 10;
@@ -1988,29 +2029,42 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
             f_img = mv_filter(f_img,2);
             g_img = mv_filter(g_img,2);
             const int expand = 500;
-            unsigned char **f_expand;
-            unsigned char **g_expand;
+            unsigned char **f_expand,**f_org_expand;
+            unsigned char **g_expand,**g_org_expand;
             f_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (f_img.cols + expand * 2));
             f_expand += expand;
+            f_org_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (f_img.cols + expand * 2));
+            f_org_expand += expand;
             for (int j = -expand; j < f_img.cols + expand; j++) {
                 f_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (f_img.rows + expand * 2));
                 f_expand[j] += expand;
+                f_org_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (f_img.rows + expand * 2));
+                f_org_expand[j] += expand;
             }
             g_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (f_img.cols + expand * 2));
             g_expand += expand;
+            g_org_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (f_img.cols + expand * 2));
+            g_org_expand += expand;
             for (int j = -expand; j < g_img.cols + expand; j++) {
                 if ((g_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (f_img.rows + expand * 2))) == NULL) {
                 }
                 g_expand[j] += expand;
+                if ((g_org_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (f_img.rows + expand * 2))) == NULL) {
+                }
+                g_org_expand[j] += expand;
             }
             for (int j = -expand; j < f_img.rows + expand; j++) {
                 for (int i = -expand; i < f_img.cols + expand; i++) {
                     if (j >= 0 && j < f_img.rows && i >= 0 && i < f_img.cols) {
                         f_expand[i][j] = M(f_img, i, j);
                         g_expand[i][j] = M(g_img, i, j);
+                        f_org_expand[i][j] = M(f_[blare][z], i, j);
+                        g_org_expand[i][j] = M(g_[blare][z], i, j);
                     } else {
                         f_expand[i][j] = 0;
                         g_expand[i][j] = 0;
+                        f_org_expand[i][j] = 0;
+                        g_org_expand[i][j] = 0;
                     }
                 }
             }
@@ -2021,6 +2075,10 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                     f_expand[f_img.cols - 1 + i][j] = f_expand[f_img.cols - 1 - i][j];
                     g_expand[-i][j] = g_expand[i][j];
                     g_expand[f_img.cols - 1 + i][j] = g_expand[f_img.cols - 1 - i][j];
+                    f_org_expand[-i][j] = f_org_expand[i][j];
+                    f_org_expand[f_img.cols - 1 + i][j] = f_org_expand[f_img.cols - 1 - i][j];
+                    g_org_expand[-i][j] = g_org_expand[i][j];
+                    g_org_expand[f_img.cols - 1 + i][j] = g_org_expand[f_img.cols - 1 - i][j];
                 }
             }
             for (int i = -k; i < f_img.cols + k; i++) {
@@ -2029,6 +2087,10 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                     f_expand[i][f_img.rows - 1 + j] = f_expand[i][f_img.rows - 1 - j];
                     g_expand[i][-j] = g_expand[i][j];
                     g_expand[i][f_img.rows - 1 + j] = g_expand[i][f_img.rows - 1 - j];
+                    f_org_expand[i][-j] = f_org_expand[i][j];
+                    f_org_expand[i][f_img.rows - 1 + j] = f_org_expand[i][f_img.rows - 1 - j];
+                    g_org_expand[i][-j] = g_org_expand[i][j];
+                    g_org_expand[i][f_img.rows - 1 + j] = g_org_expand[i][f_img.rows - 1 - j];
                 }
             }
             p0.x = target_corners.p1.x / scale_x;
@@ -2313,6 +2375,9 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                         f = f_expand[x0][y0] * (1 - d_x) * (1 - d_y) + f_expand[x0 + 1][y0] * d_x * (1 - d_y) +
                             f_expand[x0][y0 + 1] * (1 - d_x) * d_y + f_expand[x0 + 1][y0 + 1] * d_x * d_y;
 
+                        double f_org = f_org_expand[x0][y0] * (1 - d_x) * (1 - d_y) + f_org_expand[x0 + 1][y0] * d_x * (1 - d_y) +
+                                       f_org_expand[x0][y0 + 1] * (1 - d_x) * d_y + f_org_expand[x0 + 1][y0 + 1] * d_x * d_y;
+
                         g1 = g_expand[x0_later][y0_later] * (1 - d_x_later) * (1 - d_y_later) +
                              g_expand[x0_later + 1][y0_later] * d_x_later * (1 - d_y_later) +
                              g_expand[x0_later][y0_later + 1] * (1 - d_x_later) * d_y_later +
@@ -2323,10 +2388,20 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                             g_expand[x0_later][y0_later + 1] * (1 - d_x_later) * d_y_later +
                             g_expand[x0_later + 1][y0_later + 1] * d_x_later * d_y_later;
 
-                        g_para = g_expand[x0_later_para][y0_later_para] * (1 - d_x_later_para) * (1 - d_y_later_para) +
-                                 g_expand[x0_later_para + 1][y0_later_para] * d_x_later_para * (1 - d_y_later_para) +
-                                 g_expand[x0_later_para][y0_later_para + 1] * (1 - d_x_later_para) * d_y_later_para +
-                                 g_expand[x0_later_para + 1][y0_later_para + 1] * d_x_later_para * d_y_later_para;
+                        double g_org = g_org_expand[x0_later][y0_later] * (1 - d_x_later) * (1 - d_y_later) +
+                               g_org_expand[x0_later + 1][y0_later] * d_x_later * (1 - d_y_later) +
+                               g_org_expand[x0_later][y0_later + 1] * (1 - d_x_later) * d_y_later +
+                               g_org_expand[x0_later + 1][y0_later + 1] * d_x_later * d_y_later;
+
+                        g_para = g_expand[x0_later_para    ][y0_later_para    ] * (1 - d_x_later_para) * (1 - d_y_later_para) +
+                                 g_expand[x0_later_para + 1][y0_later_para    ] * d_x_later_para       * (1 - d_y_later_para) +
+                                 g_expand[x0_later_para    ][y0_later_para + 1] * (1 - d_x_later_para) * d_y_later_para +
+                                 g_expand[x0_later_para + 1][y0_later_para + 1] * d_x_later_para       * d_y_later_para;
+
+                        double g_para_org = g_org_expand[x0_later_para    ][y0_later_para    ] * (1 - d_x_later_para) * (1 - d_y_later_para) +
+                                            g_org_expand[x0_later_para + 1][y0_later_para    ] * d_x_later_para       * (1 - d_y_later_para) +
+                                            g_org_expand[x0_later_para    ][y0_later_para + 1] * (1 - d_x_later_para) * d_y_later_para +
+                                            g_org_expand[x0_later_para + 1][y0_later_para + 1] * d_x_later_para       * d_y_later_para;
 
                         g2 = g + delta_g[0] * delta_uv.at<double>(0, 0) + delta_g[1] * delta_uv.at<double>(1, 0) +
                              delta_g[2] * delta_uv.at<double>(2, 0) +
@@ -2341,7 +2416,7 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                             }
                             B.at<double>(k, 0) += (f - g) * delta_g[k];
                         }
-                        //if(t >= 32 && t <= 33)  std::cout << "check 33" << std::endl;
+
                         for (int k = 0; k < 2; k++) {
                             for (int j = 0; j < 2; j++) {
                                 gg_para.at<double>(k, j) += delta_g_para[k] * delta_g_para[j];
@@ -2356,6 +2431,7 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                         MSE += (f - g) * (f - g);
                         MSE_para += (f - g_para) * (f - g_para);
 
+                        // TODO: 予測残差はホンモノの画像で撮ったほうがいいのでは？
                     }
 
                     for (int k = 0; k < dim; k++) {
