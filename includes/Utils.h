@@ -81,29 +81,29 @@
  * @brief 三点を保持する構造体
  */
 struct Point3Vec{
-  cv::Point2f p1; ///< 三角形の頂点1の座標
-  cv::Point2f p2; ///< 三角形の頂点2の座標
-  cv::Point2f p3; ///< 三角形の頂点3の座標
+    cv::Point2f p1; ///< 三角形の頂点1の座標
+    cv::Point2f p2; ///< 三角形の頂点2の座標
+    cv::Point2f p3; ///< 三角形の頂点3の座標
 
 
-  /**
-   * コンストラクタ
-   * @param p1 三角形の頂点1の座標
-   * @param p2 三角形の頂点2の座標
-   * @param p3 三角形の頂点3の座標
-   */
-  Point3Vec(const cv::Point2f &p1, const cv::Point2f &p2, const cv::Point2f &p3) : p1(p1), p2(p2), p3(p3) {}
+    /**
+     * コンストラクタ
+     * @param p1 三角形の頂点1の座標
+     * @param p2 三角形の頂点2の座標
+     * @param p3 三角形の頂点3の座標
+     */
+    Point3Vec(const cv::Point2f &p1, const cv::Point2f &p2, const cv::Point2f &p3) : p1(p1), p2(p2), p3(p3) {}
 
 
-  bool operator==(const Point3Vec &rhs) const {
-    return p1 == rhs.p1 &&
-           p2 == rhs.p2 &&
-           p3 == rhs.p3;
-  }
+    bool operator==(const Point3Vec &rhs) const {
+        return p1 == rhs.p1 &&
+               p2 == rhs.p2 &&
+               p3 == rhs.p3;
+    }
 
-  bool operator!=(const Point3Vec &rhs) const {
-    return !(rhs == *this);
-  }
+    bool operator!=(const Point3Vec &rhs) const {
+        return !(rhs == *this);
+    }
 };
 
 /**
@@ -111,29 +111,32 @@ struct Point3Vec{
  *   @brief 三角形の座標のインデックス3点を保存する構造体
  */
 struct Triangle{
-  int p1_idx; ///< 三角形の頂点1のインデックス
-  int p2_idx; ///< 三角形の頂点2のインデックス
-  int p3_idx; ///< 三角形の頂点3のインデックス
+    int p1_idx; ///< 三角形の頂点1のインデックス
+    int p2_idx; ///< 三角形の頂点2のインデックス
+    int p3_idx; ///< 三角形の頂点3のインデックス
+    int idx;
+    int depth;
 
-  /**
-   * コンストラクタ
-   * @param p1_idx 三角形の頂点1のインデックス
-   * @param p2_idx 三角形の頂点2のインデックス
-   * @param p3_idx 三角形の頂点3のインデックス
-   */
-  Triangle(int p1_idx, int p2_idx, int p3_idx) : p1_idx(p1_idx), p2_idx(p2_idx), p3_idx(p3_idx) {}
+    /**
+     * コンストラクタ
+     * @param p1_idx 三角形の頂点1のインデックス
+     * @param p2_idx 三角形の頂点2のインデックス
+     * @param p3_idx 三角形の頂点3のインデックス
+     */
+    Triangle(int p1_idx, int p2_idx, int p3_idx) : p1_idx(p1_idx), p2_idx(p2_idx), p3_idx(p3_idx) {}
+    Triangle(int p1_idx, int p2_idx, int p3_idx, int idx) : p1_idx(p1_idx), p2_idx(p2_idx), p3_idx(p3_idx), idx(idx) {}
 };
 class TRIANGLE{
-  int p1_idx; ///< 三角形の頂点1のインデックス
-  int p2_idx; ///< 三角形の頂点2のインデックス
-  int p3_idx; ///< 三角形の頂点3のインデックス
+    int p1_idx; ///< 三角形の頂点1のインデックス
+    int p2_idx; ///< 三角形の頂点2のインデックス
+    int p3_idx; ///< 三角形の頂点3のインデックス
 
-  /**
-   * コンストラクタ
-   * @param p1_idx 三角形の頂点1のインデックス
-   * @param p2_idx 三角形の頂点2のインデックス
-   * @param p3_idx 三角形の頂点3のインデックス
-   */
+    /**
+     * コンストラクタ
+     * @param p1_idx 三角形の頂点1のインデックス
+     * @param p2_idx 三角形の頂点2のインデックス
+     * @param p3_idx 三角形の頂点3のインデックス
+     */
 public: TRIANGLE(Triangle t) { p1_idx = t.p1_idx; p2_idx = t.p2_idx; p3_idx = t.p3_idx; }
 
 };
@@ -172,8 +175,8 @@ void storeGnuplotFile(const std::string& out_file_path, const std::string& xlabl
  *   imgの(x, y)画素のR値を返す. ただし, (i, j)が画像以外を刺した場合, 0が返る.
  */
 inline int RR(cv::Mat &img, int i, int j) {
-  if (i < 0 || img.cols <= i || j < 0 || img.rows <= j) return 0;
-  return (unsigned char) R(img, i, j);
+    if (i < 0 || img.cols <= i || j < 0 || img.rows <= j) return 0;
+    return (unsigned char) R(img, i, j);
 }
 
 /**
@@ -185,8 +188,8 @@ inline int RR(cv::Mat &img, int i, int j) {
  *   imgの(x, y)画素のG値を返す. ただし, (i, j)が画像以外を刺した場合, 0が返る.
  */
 inline int GG(cv::Mat &img, int i, int j) {
-  if (i < 0 || img.cols <= i || j < 0 || img.rows <= j) return 0;
-  return (unsigned char) G(img, i, j);
+    if (i < 0 || img.cols <= i || j < 0 || img.rows <= j) return 0;
+    return (unsigned char) G(img, i, j);
 }
 
 /**
@@ -198,8 +201,8 @@ inline int GG(cv::Mat &img, int i, int j) {
  *   imgの(x, y)画素のB値を返す. ただし, (i, j)が画像以外を刺した場合, 0が返る.
  */
 inline int BB(cv::Mat &img, int i, int j) {
-  if (i < 0 || img.cols <= i || j < 0 || img.rows <= j) return 0;
-  return (unsigned char) B(img, i, j);
+    if (i < 0 || img.cols <= i || j < 0 || img.rows <= j) return 0;
+    return (unsigned char) B(img, i, j);
 }
 
 /**
@@ -211,7 +214,7 @@ inline int BB(cv::Mat &img, int i, int j) {
  *   imgの(x, y)画素のB値を返す. ただし, (i, j)が画像以外を刺した場合, 0が返る.
  */
 inline double MM(cv::Mat &img, int i, int j) {
-  return 0.299 * RR(img, i, j) + 0.587 * GG(img, i, j) + 0.114 * BB(img, i, j);
+    return 0.299 * RR(img, i, j) + 0.587 * GG(img, i, j) + 0.114 * BB(img, i, j);
 }
 
 /**
@@ -222,24 +225,24 @@ inline double MM(cv::Mat &img, int i, int j) {
  * @return -1 外の点である
  */
 inline bool isInTriangle(const Point3Vec& trig, const cv::Point2d& p) {
-  cv::Point2f tp1, tp2, tp3;
+    cv::Point2f tp1, tp2, tp3;
 
-  tp1 = trig.p1;
-  tp2 = trig.p2;
-  tp3 = trig.p3;
+    tp1 = trig.p1;
+    tp2 = trig.p2;
+    tp3 = trig.p3;
 
-  if ((tp1.x - tp2.x) * (tp1.y - tp3.y) == (tp1.y - tp2.y) * (tp1.x - tp3.x)) return false;
+    if ((tp1.x - tp2.x) * (tp1.y - tp3.y) == (tp1.y - tp2.y) * (tp1.x - tp3.x)) return false;
 
-  cv::Point2f ret;
+    cv::Point2f ret;
 
-  ret.x = (float) ((tp1.x + tp2.x + tp3.x) / 3.0);
-  ret.y = (float) ((tp1.y + tp2.y + tp3.y) / 3.0);
+    ret.x = (float) ((tp1.x + tp2.x + tp3.x) / 3.0);
+    ret.y = (float) ((tp1.y + tp2.y + tp3.y) / 3.0);
 
-  return !(intersectM(tp1, tp2, p, ret) < 0 || intersectM(tp1, tp3, p, ret) < 0 || intersectM(tp2, tp3, p, ret) < 0);
+    return !(intersectM(tp1, tp2, p, ret) < 0 || intersectM(tp1, tp3, p, ret) < 0 || intersectM(tp2, tp3, p, ret) < 0);
 }
 
 inline int myRound(double x, int delta){
-  return static_cast<int>((x / delta) + (x > 0 ? 0.5 : -0.5));
+    return static_cast<int>((x / delta) + (x > 0 ? 0.5 : -0.5));
 }
 
 std::vector<std::string> splitString(const std::string &s, char delim);
@@ -258,9 +261,9 @@ cv::Mat half_2(cv::Mat &in);
 
 cv::Mat half_sharp(cv::Mat &in);
 
-cv::Mat mv_filter(cv::Mat &in);
+cv::Mat mv_filter(cv::Mat& in);
 
-cv::Mat mv_filter(cv::Mat &in,int k);
+cv::Mat mv_filter(cv::Mat& in,int k);
 
 cv::Mat sobel_filter(cv::Mat &in);
 
