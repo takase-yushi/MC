@@ -306,33 +306,20 @@ std::vector<cv::Point2f> warping(const cv::Mat& prev_color, const cv::Mat& curre
 double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& output_image, Point3Vec& triangle, std::vector<cv::Point2f>& mv, bool parallel_flag) {
     cv::Point2f pp0, pp1, pp2;
 
-    if(parallel_flag) {
-        pp0.x = triangle.p1.x + mv[0].x;
-        pp0.y = triangle.p1.y + mv[0].y;
-        pp1.x = triangle.p2.x + mv[1].x;
-        pp1.y = triangle.p2.y + mv[1].y;
-        pp2.x = triangle.p3.x + mv[2].x;
-        pp2.y = triangle.p3.y + mv[2].y;
-    }else {
-        pp0.x = triangle.p1.x + mv[0].x;
-        pp0.y = triangle.p1.y + mv[0].y;
-        pp1.x = triangle.p2.x + mv[1].x;
-        pp1.y = triangle.p2.y + mv[1].y;
-        pp2.x = triangle.p3.x + mv[2].x;
-        pp2.y = triangle.p3.y + mv[2].y;
-    }
+    pp0.x = triangle.p1.x + mv[0].x;
+    pp0.y = triangle.p1.y + mv[0].y;
+    pp1.x = triangle.p2.x + mv[1].x;
+    pp1.y = triangle.p2.y + mv[1].y;
+    pp2.x = triangle.p3.x + mv[2].x;
+    pp2.y = triangle.p3.y + mv[2].y;
 
     double quantize_step = 4.0;
-
-    std::vector<cv::Point2f> moved_coordinates{pp0, pp1, pp2};
 
     double sx = std::min({(int) triangle.p1.x, (int) triangle.p2.x, (int) triangle.p3.x});
     double lx = std::max({(int) triangle.p1.x, (int) triangle.p2.x, (int) triangle.p3.x});
     double sy = std::min({(int) triangle.p1.y, (int) triangle.p2.y, (int) triangle.p3.y});
     double ly = std::max({(int) triangle.p1.y, (int) triangle.p2.y, (int) triangle.p3.y});
-    if(lx - sx == 0 || ly - sy == 0){
-        std::cout << "baund = 0" << std::endl;
-    }
+
     std::vector<cv::Point2f> in_triangle_pixels;
     cv::Point2f xp;
     for (int j = (int) (round(sy) - 1); j <= round(ly) + 1; j++) {
@@ -348,13 +335,12 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
     double alpha,beta,det;
 
     double squared_error = 0.0;
-    for(auto pixel : in_triangle_pixels) {
-//    for (int i = 0; i < (int) in_triangle_pixels.size(); i++) {
-        double d_x, d_y, d_x_para, d_y_para;
-        int x0, y0, x0_para, y0_para;
-        a = triangle.p3 - triangle.p1;
-        b = triangle.p2 - triangle.p1;
-        det = a.x * b.y - a.y * b.x;
+
+    a = triangle.p3 - triangle.p1;
+    b = triangle.p2 - triangle.p1;
+    det = a.x * b.y - a.y * b.x;
+
+    for(const auto& pixel : in_triangle_pixels) {
         X.x = pixel.x - triangle.p1.x;
         X.y = pixel.y - triangle.p1.y;
         alpha = (X.x * b.y - X.y * b.x) / det;
@@ -379,21 +365,21 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
         if (X_later.y < 0) {
             X_later.y = 0;
         }
-        x0 = floor(X_later.x);
-        d_x = X_later.x - x0;
-        y0 = floor(X_later.y);
-        d_y = X_later.y - y0;
-        int y;
+        int x0 = floor(X_later.x);
+        double d_x = X_later.x - x0;
+        int y0 = floor(X_later.y);
+        double d_y = X_later.y - y0;
 
-        y = (int) floor((M(ref_image, (int) x0, (int) y0) * (1 - d_x) * (1 - d_y) +
-                         M(ref_image, (int) x0 + 1, (int) y0) * d_x * (1 - d_y)
-                         + M(ref_image, (int) x0, (int) y0 + 1) * (1 - d_x) * d_y +
-                         M(ref_image, (int) x0 + 1, (int) y0 + 1) * d_x * d_y) + 0.5);
+        int y = (int) floor((M(ref_image, (int) x0    , (int) y0    ) * (1 - d_x) * (1 - d_y)  +
+                             M(ref_image, (int) x0 + 1, (int) y0    ) * (    d_x) * (1 - d_y)  +
+                             M(ref_image, (int) x0    , (int) y0 + 1) * (1 - d_x) * (    d_y)  +
+                             M(ref_image, (int) x0 + 1, (int) y0 + 1) * (    d_x) * (    d_y)) + 0.5);
 
         R(output_image, (int)pixel.x, (int)pixel.y) = y;
         G(output_image, (int)pixel.x, (int)pixel.y) = y;
         B(output_image, (int)pixel.x, (int)pixel.y) = y;
-        squared_error += pow((M(target_image, (int)pixel.x, (int)pixel.y) - y ), 2);
+
+        squared_error += pow((M(target_image, (int)pixel.x, (int)pixel.y) - (0.299 * y + 0.587 * y + 0.114 * y)), 2);
     }
 
     return squared_error;
@@ -439,25 +425,25 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, bool> GaussNewton(cv::Mat ref_
 
     // 参照画像のフィルタ処理（２）
     std::vector<cv::Mat> ref2_levels;
-    ref_level_1 = gauss_ref_image;
-    ref_level_2 = half(ref_level_1, 2);
-    ref_level_3 = half(ref_level_2, 1);
-    ref_level_4 = half(ref_level_3, 1);
-    ref2_levels.emplace_back(ref_level_4);
-    ref2_levels.emplace_back(ref_level_3);
-    ref2_levels.emplace_back(ref_level_2);
+    cv::Mat ref2_level_1 = gauss_ref_image;
+    cv::Mat ref2_level_2 = half(ref2_level_1, 2);
+    cv::Mat ref2_level_3 = half(ref2_level_2, 1);
+    cv::Mat ref2_level_4 = half(ref2_level_3, 1);
+    ref2_levels.emplace_back(ref2_level_4);
+    ref2_levels.emplace_back(ref2_level_3);
+    ref2_levels.emplace_back(ref2_level_2);
     ref2_levels.emplace_back(ref_image);
 
     // 対象画像のフィルタ処理（２）
     std::vector<cv::Mat> target2_levels;
-    target_level_1 = target_image;
-    target_level_2 = half(target_level_1, 2);
-    target_level_3 = half(target_level_2, 1);
-    target_level_4 = half(target_level_3, 1);
-    target2_levels.emplace_back(target_level_4);
-    target2_levels.emplace_back(target_level_3);
-    target2_levels.emplace_back(target_level_2);
-    target2_levels.emplace_back(target_level_1);
+    cv::Mat target2_level_1 = target_image;
+    cv::Mat target2_level_2 = half(target2_level_1, 2);
+    cv::Mat target2_level_3 = half(target2_level_2, 1);
+    cv::Mat target2_level_4 = half(target2_level_3, 1);
+    target2_levels.emplace_back(target2_level_4);
+    target2_levels.emplace_back(target2_level_3);
+    target2_levels.emplace_back(target2_level_2);
+    target2_levels.emplace_back(target2_level_1);
 
     ref_images.emplace_back(ref1_levels);
     ref_images.emplace_back(ref2_levels);
@@ -488,11 +474,14 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, bool> GaussNewton(cv::Mat ref_
 
     bool parallel_flag = true;
     const int expand = 500;
+
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
         std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(0.0, 0.0));
         cv::Point2f tmp_mv_parallel(0.0, 0.0);
 
         for(int step = 0 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
+            bool yamada = true;
+
             double scale = pow(2, 3 - step);
             cv::Mat current_ref_image = mv_filter(ref_images[filter_num][step],2);
             cv::Mat current_target_image = mv_filter(target_images[filter_num][step],2);
@@ -862,6 +851,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, bool> GaussNewton(cv::Mat ref_
                 v_stack_parallel.emplace_back(v_pair_parallel);
 
                 for (int k = 0; k < 6; k++) {
+
                     if (k % 2 == 0) {
                         if ((0 <= scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0)) &&
                             (target_images[0][step].cols - 1 >=
@@ -876,6 +866,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, bool> GaussNewton(cv::Mat ref_
                         }
                     }
                 }
+
                 for (int k = 0; k < 2; k++) {
                     if (k % 2 == 0) {
                         if ((0 <= scaled_coordinates[0].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
@@ -933,7 +924,12 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, bool> GaussNewton(cv::Mat ref_
                     min_error_warping = Error_warping;
                     max_v_warping = tmp_mv_warping;
                 }
-                parallel_flag = true;
+
+                if (fabs(max_PSNR_warping - max_PSNR_parallel) <= 0.5 || max_PSNR_parallel > max_PSNR_warping) {//ワーピングと平行移動でRDのようなことをする
+                    parallel_flag = true;//平行移動を採用
+                } else{
+                    parallel_flag = false;//ワーピングを採用
+                }
             }
 
             for(int d = -expand ;d < current_target_image.cols + expand;d++){
@@ -941,12 +937,21 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, bool> GaussNewton(cv::Mat ref_
                 current_ref_expand[d] -= expand;
                 free(current_ref_expand[d]);
                 free(current_target_expand[d]);
+
+                current_target_org_expand[d] -= expand;
+                current_ref_org_expand[d] -= expand;
+                free(current_ref_org_expand[d]);
+                free(current_target_org_expand[d]);
             }
             current_target_expand -= expand;
             current_ref_expand -= expand;
             free(current_target_expand);
             free(current_ref_expand);
 
+            current_target_org_expand -= expand;
+            current_ref_org_expand -= expand;
+            free(current_target_org_expand);
+            free(current_ref_org_expand);
         }
     }
 
@@ -1883,27 +1888,39 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
     f0x2 = half(f0x1,2);
     f0x4 = half(f0x2,2);
     f0x8 = half(f0x4,2);
-    g0x1 = prev_color;
-    g0x2 = half(g0x1,2);
-    g0x4 = half(g0x2,2);
-    g0x8 = half(g0x4,2);
     f_0.emplace_back(f0x8);
     f_0.emplace_back(f0x4);
     f_0.emplace_back(f0x2);
     f_0.emplace_back(f0x1);
+
+    g0x1 = prev_color;
+    g0x2 = half(g0x1,2);
+    g0x4 = half(g0x2,2);
+    g0x8 = half(g0x4,2);
     g_0.emplace_back(g0x8);
     g_0.emplace_back(g0x4);
     g_0.emplace_back(g0x2);
     g_0.emplace_back(intra);
+
     cv::Mat fx1,fx2,fx4,fx8,gx1,gx2,gx4,gx8;
     fx1 = current_color;
     fx2 = half(fx1,2);
     fx4 = half(fx2,1);
     fx8 = half(fx4,1);
+    f_1.emplace_back(fx8);
+    f_1.emplace_back(fx4);
+    f_1.emplace_back(fx2);
+    f_1.emplace_back(fx1);
+
     gx1 = prev_color;
     gx2 = half(gx1,2);
     gx4 = half(gx2,1);
     gx8 = half(gx4,1);
+    g_1.emplace_back(gx8);
+    g_1.emplace_back(gx4);
+    g_1.emplace_back(gx2);
+    g_1.emplace_back(intra);
+
     cv::Mat f2x1,f2x2,f2x4,f2x8,g2x1,g2x2,g2x4,g2x8;
     f2x1 = current_color;
     f2x2 = half(f2x1,0);
@@ -1921,20 +1938,13 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
     g_2.emplace_back(g2x4);
     g_2.emplace_back(g2x2);
     g_2.emplace_back(intra);
-    f_1.emplace_back(fx8);
-    f_1.emplace_back(fx4);
-    f_1.emplace_back(fx2);
-    f_1.emplace_back(fx1);
-    g_1.emplace_back(gx8);
-    g_1.emplace_back(gx4);
-    g_1.emplace_back(gx2);
-    g_1.emplace_back(intra);
     f_.emplace_back(f_0);
     f_.emplace_back(f_1);
     f_.emplace_back(f_2);
     g_.emplace_back(g_0);
     g_.emplace_back(g_1);
     g_.emplace_back(g_2);
+
     cv::Point2f v0(0.0, 0.0), v1(0.0, 0.0), v2(0.0, 0.0);
     const int dim = 6;
     double f, g, g1, g2, ek_tmp, ek, delta_ek[dim],g_para;
@@ -2016,14 +2026,11 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
         v.emplace_back(v2);
         v_para.x = 0;
         v_para.y = 0;
-        v_para_max.x = 0;
-        v_para_max.y = 0;
         p0 = target_corners.p1;
         p1 = target_corners.p2;
         p2 = target_corners.p3;
         for (int z = 0; z < 4; z++) {
-
-            int scale = pow(2, 3-z),scale_x = scale,scale_y = scale;
+            double scale = pow(2, 3-z),scale_x = scale,scale_y = scale;
             cv::Mat f_img = f_[blare][z].clone();//対照画像
             cv::Mat g_img = g_[blare][z].clone();//参照画像
             f_img = mv_filter(f_img,2);
@@ -2453,10 +2460,7 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                     PSNR_para = 10 * log10((255 * 255) / MSE_para);
                     cv::solve(gg, B, delta_uv);
                     cv::solve(gg_para, B_para, delta_uv_para);
-                    /* if(prev_PSNR > PSNR){
-                         v = v_prev;
-                         break;
-                     }*/
+
                     v_pair.first = v;
                     v_pair.second = Error;
                     v_stack.emplace_back(v_pair);
@@ -2544,12 +2548,13 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                     flag_blare = true;
                     MSE_min = MSE;
                 }
-                *flag = true;
+//                *flag = true;
 //                if (fabs(PSNR_max - PSNR_para_max) <= th || PSNR_para_max > PSNR_max) {
 //                    *flag = true;
 //                } else{
 //                    *flag = false;
 //                }
+                *flag = true;
             }
 
             double alpha, beta, det;
