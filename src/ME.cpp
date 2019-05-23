@@ -352,6 +352,9 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
 //    for (int i = 0; i < (int) in_triangle_pixels.size(); i++) {
         double d_x, d_y, d_x_para, d_y_para;
         int x0, y0, x0_para, y0_para;
+        a = triangle.p3 - triangle.p1;
+        b = triangle.p2 - triangle.p1;
+        det = a.x * b.y - a.y * b.x;
         X.x = pixel.x - triangle.p1.x;
         X.y = pixel.y - triangle.p1.y;
         alpha = (X.x * b.y - X.y * b.x) / det;
