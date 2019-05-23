@@ -918,7 +918,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, bool> GaussNewton(cv::Mat ref_
         max_v_warping[i].y = ((int)((max_v_warping[i].y + 0.125) * 4) / 4.0);
     }
 
-    return std::make_pair(std::vector<cv::Point2f>{max_v_warping[0], max_v_warping[1], max_v_warping[2]}, max_v_parallel);
+    return std::make_tuple(std::vector<cv::Point2f>{max_v_warping[0], max_v_warping[1], max_v_warping[2]}, max_v_parallel, true);
 }
 
 /**
