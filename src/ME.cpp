@@ -2121,12 +2121,12 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
             bool length2_flag = false;
             if(z != 0) {
                 double length = 2;
-                while ( (p0.x + v[0].x * 2 < 0 && p0.x + v[0].x * 2 > f_img.cols - 1) &&
-                        (p1.x + v[1].x * 2 < 0 && p1.x + v[1].x * 2 > f_img.cols - 1) &&
-                        (p2.x + v[2].x * 2 < 0 && p2.x + v[2].x * 2 > f_img.cols - 1) &&
-                        (p0.y + v[0].y * 2 < 0 && p0.y + v[0].y * 2 > f_img.rows - 1) &&
-                        (p1.y + v[1].y * 2 < 0 && p1.y + v[1].y * 2 > f_img.rows - 1) &&
-                        (p2.y + v[2].y * 2 < 0 && p2.y + v[2].y * 2 > f_img.rows - 1) ) {
+                while ( (p0.x + v[0].x * length < 0 && p0.x + v[0].x * length > f_img.cols - 1) &&
+                        (p1.x + v[1].x * length < 0 && p1.x + v[1].x * length > f_img.cols - 1) &&
+                        (p2.x + v[2].x * length < 0 && p2.x + v[2].x * length > f_img.cols - 1) &&
+                        (p0.y + v[0].y * length < 0 && p0.y + v[0].y * length > f_img.rows - 1) &&
+                        (p1.y + v[1].y * length < 0 && p1.y + v[1].y * length > f_img.rows - 1) &&
+                        (p2.y + v[2].y * length < 0 && p2.y + v[2].y * length > f_img.rows - 1) ) {
                     if(length <= 1)break;
                     length -= 0.1;
                 }
