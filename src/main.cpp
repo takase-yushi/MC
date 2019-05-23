@@ -20,6 +20,7 @@
 #include "../includes/Golomb.hpp"
 #include "../includes/TriangleDivision.h"
 #include "../includes/Reconstruction.h"
+#include "ImageUtil.h"
 
 struct PredictedImageResult {
     cv::Mat out, mv_image;
@@ -253,25 +254,55 @@ int main(int argc, char *argv[]) {
         std::vector<cv::Point2f> warping_mv;
         cv::Point2f parallel_mv;
         cv::Mat new_gauss_output_image = cv::Mat::zeros(gaussRefImage.rows, gaussRefImage.cols, CV_8UC3);
-        int cnt = 0;
-        for(auto t : init_triangles) {
-            std::tie(warping_mv, parallel_mv) = GaussNewton(ref_image, target_image, gaussRefImage, t.first);
-            cnt++;
-            std::cout << cnt << std::endl;
 
-            std::vector<cv::Point2f> mv{parallel_mv, parallel_mv, parallel_mv};
+        std::vector<Triangle> tt = triangle_division.getTriangleIndexList();
+        corners = triangle_division.getCorners();
+
+        std::vector<cv::Point2f> tmp_ref_corners(corners.size()), add_corners;
+        int add_count;
+        cv::Mat r_ref = cv::Mat::zeros(target_image.rows, target_image.cols, CV_8UC1);
+        int tmp_mv_x, tmp_mv_y;
+        int p_flag;
+//        PredictedImageResult ret = getPredictedImage(gaussRefImage, target_image, ref_image, tt, tmp_ref_corners, corners, triangle_division, add_corners, add_count, r_ref, tmp_mv_x, tmp_mv_y, p_flag);
+//        cv::imwrite(img_directory + "/Gauss_Newton2_predicted_image.png", ret.out);
+//        std::cout << "PSNR:" << getPSNR(ret.out, target_image) << std::endl;
+//
+        int cnt = 0;
+#pragma omp parallel for
+        for(int i = 0 ; i < init_triangles.size() ; i++){
+            std::pair<Point3Vec, int> t = init_triangles[i];
+            bool parallel_flag;
+            std::tie(warping_mv, parallel_mv, parallel_flag) = GaussNewton(ref_image, target_image, gaussRefImage, t.first);
+
+            if(parallel_flag == true) {
+                std::cout << parallel_mv << " " << parallel_mv << " " << parallel_mv <<std::endl;
+            }else{
+                std::cout << warping_mv[0] << " " << warping_mv[1] << " " << warping_mv[2] << std::endl;
+            }
+
+            std::vector<cv::Point2f> mv;
+            if(parallel_flag == true) {
+                mv.emplace_back(parallel_mv);
+                mv.emplace_back(parallel_mv);
+                mv.emplace_back(parallel_mv);
+            }else{
+                mv = warping_mv;
+            }
+
             getPredictedImage(ref_image, target_image, new_gauss_output_image, t.first, mv, true);
         }
 
         cv::imwrite(img_directory + "/hogehoge.png", new_gauss_output_image);
+        cv::imwrite(img_directory + "/hogehoge_residual.png", getResidualImage(target_image, new_gauss_output_image));
+        std::cout << "PSNR:" << getPSNR(target_image, new_gauss_output_image) << std::endl;
         exit(0);
 
     //#pragma omp parallel for
 //        for(int i = 0 ; i < init_triangles.size() ; i++) {
         triangle_division.constructPreviousCodingTree(foo, 0);
-        for(int i = 0 ; i < 10 ; i++) {
+        for(int i = 0 ; i < init_triangles.size() ; i++) {
             std::pair<Point3Vec, int> triangle = init_triangles[i];
-            std::cout << "i:" << i << std::endl;
+//            std::cout << "i:" << i << std::endl;
             cv::Point2f p1 = triangle.first.p1;
             cv::Point2f p2 = triangle.first.p2;
             cv::Point2f p3 = triangle.first.p3;
@@ -1956,7 +1987,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
 
 #pragma omp parallel for
     // 基準ベクトル以外のベ   クトルを符号化
-    for (int t = 0; t < (int) triangles.size(); t++) { // NOLINT
+    for (int t = 0; t < (int)triangles.size(); t++) { // NOLINT
 
 //        tri_list << "triangle[" << t << "], ";
 
@@ -1986,9 +2017,22 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
         std::vector<cv::Point2i> mv = Gauss_Newton2(ref, target, intra, predict_buf, predict_warp, predict_para,
                                                     error_warp, triangleVec, prev_corners, &para_flag,
                                                     t, residual_ref, in_triangle_size, erase_th_global);
+        cv::Point2f a(mv[0].x, mv[0].y), b(mv[1].x, mv[1].y), c(mv[2].x, mv[2].y);
+
+        a.x *=2; a.y *= 2;
+        b.x *=2; b.y *= 2;
+        c.x *=2; c.y *= 2;
+        a.x += mv[3].x; a.y += mv[3].y;
+        b.x += mv[4].x; b.y += mv[4].y;
+        c.x += mv[5].x; c.y += mv[5].y;
+        a.x /= 4; a.y /=4;
+        b.x /= 4; b.y /=4;
+        c.x /= 4; c.y /=4;
+
+        std::cout <<     a << " " << b << " " << c << std::endl;
         double MSE_prev = error_warp / (double) in_triangle_size;
         numerator++;
-        std::cout << numerator << "/" << denominator << std::endl;
+//        std::cout << numerator << "/" << denominator << std::endl;
         continue;
 
 
@@ -2042,7 +2086,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
             double MSE_later = 0.0;
             int triangle_size_sum_later = 0;
             for (int t_idx = 0; t_idx < (int) triangles_around.size(); t_idx++) {
-                std::cout << "t_idx = " << t_idx << "/ " << triangles_around.size() << std::endl;
+//                std::cout << "t_idx = " << t_idx << "/ " << triangles_around.size() << std::endl;
                 Triangle triangle_later = triangles_around[t_idx];
                 Point3Vec triangleVec_later(add_corner_tmp[triangle_later.p1_idx],
                                             add_corner_tmp[triangle_later.p2_idx],
@@ -2147,7 +2191,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
         tb = triangleVec.p2;
         tc = triangleVec.p3;
 
-        std::cout << numerator++ << "/" << denominator << "\n";
+//        std::cout << numerator++ << "/" << denominator << "\n";
     }
 
     // 基準ベクトルの符号化
