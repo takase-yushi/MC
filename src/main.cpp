@@ -238,7 +238,7 @@ int main(int argc, char *argv[]) {
         std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
 
         std::vector<std::pair<Point3Vec, int> > init_triangles = triangle_division.getTriangles();
-        std::vector<CodingTreeUnit*> foo(init_triangles.size());
+                std::vector<CodingTreeUnit*> foo(init_triangles.size());
         for(int i = 0 ; i < init_triangles.size() ; i++) {
             foo[i] = new CodingTreeUnit();
             foo[i]->split_cu_flag1 = foo[i]->split_cu_flag2 = false;
@@ -248,6 +248,24 @@ int main(int argc, char *argv[]) {
 
         cv::Mat gaussRefImage = cv::imread(ref_file_path);
         cv::Mat spatialMvTestImage;
+
+
+        std::vector<cv::Point2f> warping_mv;
+        cv::Point2f parallel_mv;
+        cv::Mat new_gauss_output_image = cv::Mat::zeros(gaussRefImage.rows, gaussRefImage.cols, CV_8UC3);
+        int cnt = 0;
+        for(auto t : init_triangles) {
+            std::tie(warping_mv, parallel_mv) = GaussNewton(ref_image, target_image, gaussRefImage, t.first);
+            cnt++;
+            std::cout << cnt << std::endl;
+
+            std::vector<cv::Point2f> mv{parallel_mv, parallel_mv, parallel_mv};
+            getPredictedImage(ref_image, target_image, new_gauss_output_image, t.first, mv, true);
+        }
+
+        cv::imwrite(img_directory + "/hogehoge.png", new_gauss_output_image);
+        exit(0);
+
     //#pragma omp parallel for
 //        for(int i = 0 ; i < init_triangles.size() ; i++) {
         triangle_division.constructPreviousCodingTree(foo, 0);
