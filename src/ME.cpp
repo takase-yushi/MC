@@ -910,12 +910,28 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, bool> GaussNewton(cv::Mat ref_
     }
 
     // 量子化
-    max_v_parallel.x = ((int)((max_v_parallel.x + 0.125) * 4) / 4.0);
-    max_v_parallel.y = ((int)((max_v_parallel.y + 0.125) * 4) / 4.0);
+    double quantize_offset = 0.125;
+    if(max_v_parallel.x < 0) {
+        max_v_parallel.x = ((int)((max_v_parallel.x - quantize_offset) * 4) / 4.0);
+    }else{
+        max_v_parallel.x = ((int)((max_v_parallel.x + quantize_offset) * 4) / 4.0);
+    }
+
+    if(max_v_parallel.y < 0) {
+        max_v_parallel.y = ((int) ((max_v_parallel.y - quantize_offset) * 4) / 4.0);
+    }else{
+        max_v_parallel.y = ((int) ((max_v_parallel.y + quantize_offset) * 4) / 4.0);
+    }
 
     for(int i = 0 ; i < 3 ; i++){
-        max_v_warping[i].x = ((int)((max_v_warping[i].x + 0.125) * 4) / 4.0);
-        max_v_warping[i].y = ((int)((max_v_warping[i].y + 0.125) * 4) / 4.0);
+        if(max_v_warping[i].x < 0) max_v_warping[i].x -= quantize_offset;
+        else max_v_warping[i].x += quantize_offset;
+
+        if(max_v_warping[i].y < 0) max_v_warping[i].y -= quantize_offset;
+        else max_v_warping[i].y += quantize_offset;
+
+        max_v_warping[i].x = ((int)((max_v_warping[i].x) * 4) / 4.0);
+        max_v_warping[i].y = ((int)((max_v_warping[i].y) * 4) / 4.0);
     }
 
     return std::make_tuple(std::vector<cv::Point2f>{max_v_warping[0], max_v_warping[1], max_v_warping[2]}, max_v_parallel, true);
@@ -2543,9 +2559,13 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                         //mv3[j] -= ave_v;
                         int x0, y0;
                         double d_x, d_y;
+                        if(mv3[j].x < 0) mv3[j].x -= 0.125;
+                        else mv3[j].y += 0.125;
+                        if(mv3[0].y < 0) mv3[0].y -= 0.125;
+                        else mv3[0].y += 0.125;
                         mv3[j] *= Quant;
-                        mv3[j].x = (int)(mv3[j].x + 0.5);
-                        mv3[j].y = (int)(mv3[j].y + 0.5);
+                        mv3[j].x = (int)(mv3[j].x);
+                        mv3[j].y = (int)(mv3[j].y);
                         mv3[j] /= 2.0;
                         x0 = (int) mv3[j].x;
                         y0 = (int) mv3[j].y;
@@ -2561,9 +2581,13 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                     mv4[0] = v_para_max;
                     int x0,y0;
                     double d_x,d_y;
+                    if(mv4[0].x < 0) mv4[0].x -= 0.125;
+                    else mv4[0].x += 0.125;
+                    if(mv4[0].y < 0) mv4[0].y -= 0.125;
+                    else mv4[0].y += 0.125;
                     mv4[0] *= Quant;
-                    mv4[0].x = (int)(mv4[0].x + 0.5);
-                    mv4[0].y = (int)(mv4[0].y + 0.5);
+                    mv4[0].x = (int)(mv4[0].x);
+                    mv4[0].y = (int)(mv4[0].y);
                     mv4[0] /= 2.0;
                     x0 = (int)mv4[0].x;
                     y0 = (int)mv4[0].y;
