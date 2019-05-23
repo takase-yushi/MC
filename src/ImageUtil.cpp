@@ -4,6 +4,7 @@
 
 #include <opencv2/core/mat.hpp>
 #include <cassert>
+#include <iostream>
 #include "ImageUtil.h"
 #include "../includes/Utils.h"
 
@@ -21,9 +22,9 @@ cv::Mat getResidualImage(const cv::Mat &target_image, const cv::Mat &predict_ima
 
     for(int row = 0 ; row < target_image.rows ; row++){
         for(int col = 0 ; col < target_image.cols ; col++){
-            R(residual_image, row, col) = abs(R(target_image, row, col) - R(predict_image, row, col));
-            G(residual_image, row, col) = abs(G(target_image, row, col) - G(predict_image, row, col));
-            B(residual_image, row, col) = abs(B(target_image, row, col) - B(predict_image, row, col));
+            R(residual_image, col, row) = abs(R(target_image, col, row) - R(predict_image, col, row));
+            G(residual_image, col, row) = abs(G(target_image, col, row) - G(predict_image, col, row));
+            B(residual_image, col, row) = abs(B(target_image, col, row) - B(predict_image, col, row));
         }
     }
 
