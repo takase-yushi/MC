@@ -1426,13 +1426,31 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
                                                             warp_p_image, parallel_p_image, error, targetTriangle, refTriangle,
                                                             &parallel_flag, num, residual_ref, triangle_size, 0);
 
+    cv::Point2f a(mv_parallel[0].x, mv_parallel[0].y), b(mv_parallel[1].x, mv_parallel[1].y), c(mv_parallel[2].x, mv_parallel[2].y);
+
+    a.x *=2; a.y *= 2;
+    b.x *=2; b.y *= 2;
+    c.x *=2; c.y *= 2;
+    a.x += mv_parallel[3].x; a.y += mv_parallel[3].y;
+    b.x += mv_parallel[4].x; b.y += mv_parallel[4].y;
+    c.x += mv_parallel[5].x; c.y += mv_parallel[5].y;
+    a.x /= 4; a.y /=4;
+    b.x /= 4; b.y /=4;
+    c.x /= 4; c.y /=4;
+
     std::vector<cv::Point2f> gauss_result_warping;
     cv::Point2f gauss_result_parallel;
-    std::tie(gauss_result_warping, gauss_result_parallel) = GaussNewton(ref_image, target_image, gaussRefImage, targetTriangle);
+    std::tie(gauss_result_warping, gauss_result_parallel, parallel_flag) = GaussNewton(ref_image, target_image, gaussRefImage, targetTriangle);
 
-    std::cout << "Gauss_Newton2:" << mv_parallel[0]  << " " << mv_parallel[1] << " " << mv_parallel[2] << " decimal:" << mv_parallel[3] << std::endl;
-    std::cout << "GaussNewton:" << gauss_result_parallel << std::endl;
+    std::cout << "Gauss_Newton2:" << a << " " << b << " " << c << std::endl;
 
+//    std::cout << "Gauss_Newton2:" << mv_parallel[0]  << " " << mv_parallel[1] << " " << mv_parallel[2] << " decimal:" << mv_parallel[3] << std::endl;
+
+    std::cout << "GaussNewton(warping):" << gauss_result_warping[0] << " " << gauss_result_warping[1] << " " << gauss_result_warping[2] << std::endl;
+    std::cout << "GaussNewton(parallel):" << gauss_result_parallel << " " << gauss_result_parallel << " " << gauss_result_parallel << std::endl;
+
+
+    return false;
     RMSE_before_subdiv = error / triangle_size;
 
     ctu->mv_integer = mv_parallel[0]; // 整数部
