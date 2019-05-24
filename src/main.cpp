@@ -539,6 +539,7 @@ int main(int argc, char *argv[]) {
             double MSE = 0;
             double triangle_sum = 0;
             // 頂点削除のためのパラメタが欲しいので、1度全パッチ回していた
+#pragma omp parallel for
             for (int t = 0; t < (int)triangles_t.size(); t++) {
                 cv::Point2f p1(corners[triangles_t[t].p1_idx]), p2(corners[triangles_t[t].p2_idx]), p3(corners[triangles_t[t].p3_idx]);
                 // TODO: 要確認
@@ -683,9 +684,10 @@ int main(int argc, char *argv[]) {
                     int triangle_size_sum_prev = 0, triangle_size_sum_later = 0;
 
                     // 周りの頂点だけガウスニュートン法をやる（削除前のMSEを見る）
-                    for (auto triangle : triangles_around) {
-                        Point3Vec target_corners(corners[triangle.p1_idx], corners[triangle.p2_idx], corners[triangle.p3_idx]);
-                        Point3Vec prev_corners = Point3Vec(corners[triangle.p1_idx], corners[triangle.p2_idx], corners[triangle.p3_idx]);
+#pragma omp parallel for
+                    for (int i = 0;i <  (int)triangles_around.size();i++) {
+                        Point3Vec target_corners(corners[triangles_around[i].p1_idx], corners[triangles_around[i].p2_idx], corners[triangles_around[i].p3_idx]);
+                        Point3Vec prev_corners = Point3Vec(corners[triangles_around[i].p1_idx], corners[triangles_around[i].p2_idx], corners[triangles_around[i].p3_idx]);
 
                         std::vector<cv::Point2f>warping_mv;
                         cv::Point2f parallel_mv;
@@ -722,14 +724,26 @@ int main(int argc, char *argv[]) {
                     md_later.insert(corners_later);
                     std::vector<Triangle> triangles_later;
                     triangles_later = md_later.Get_triangles_later(md_later, idx, corners_later, flag_around);
+#pragma omp parallel for
+                    for (int i = 0; i < (int)triangles_later.size();i++) {
+                        Point3Vec target_corners(corners_later[triangles_later[i].p1_idx], corners_later[triangles_later[i].p2_idx], corners_later[triangles_later[i].p3_idx]);
 
-                    for (auto triangle : triangles_later) {
-                        double MSE_tmp = 0;
-                        int triangle_size;
-                        Point3Vec triangleVec(corners_later[triangle.p1_idx], corners_later[triangle.p2_idx], corners_later[triangle.p3_idx]);
-                        Point3Vec prev_corners = Point3Vec(corners[triangle.p1_idx], corners[triangle.p2_idx], corners[triangle.p3_idx]);
-
-                        MSE_tmp= Gauss_Newton(ref_gauss, target_image, ref_image, triangleVec, prev_corners, triangle_size);
+                        std::vector<cv::Point2f>warping_mv;
+                        cv::Point2f parallel_mv;
+                        bool parallel_flag;
+                        int triangle_size = getTriangleSize(target_corners);
+                        std::tie(warping_mv,parallel_mv,parallel_flag) = GaussNewton(ref_image, target_image, ref_gauss, target_corners);
+                        std::vector<cv::Point2f> mv;
+                        if(parallel_flag){
+                            mv.emplace_back(parallel_mv);
+                            mv.emplace_back(parallel_mv);
+                            mv.emplace_back(parallel_mv);
+                        }else{
+                            mv.emplace_back((warping_mv[0]));
+                            mv.emplace_back((warping_mv[1]));
+                            mv.emplace_back((warping_mv[2]));
+                        }
+                        double MSE_tmp = getSquaredError(ref_image,target_image,target_corners,mv);
                         MSE_later += MSE_tmp;
                         triangle_size_sum_later += triangle_size;
                         std::cout << "triangle_size = " << triangle_size <<  "MSE_later = " << MSE_tmp << std::endl;
@@ -1017,6 +1031,11 @@ int main(int argc, char *argv[]) {
 //*/
 
 //            corners = triangle_division.getCorners();
+
+            std::ofstream corner_list_later = std::ofstream("corner_list_" + corner_file_name + "_later.dat");
+            for(const cv::Point2f point : corners){
+                corner_list_later << point.x << " " << point.y << std::endl;
+            }
 
             std::cout << "corners's size :" << corners.size() << std::endl;
             std::cout << "ref_corners's size :" << ref_corners.size() << std::endl;
