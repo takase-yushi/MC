@@ -12,6 +12,7 @@
 #include <ctime>
 #include <utility>
 #include <numeric>
+#include "../includes/Encode.h"
 #include "../includes/config.h"
 #include "../includes/ME.hpp"
 #include "../includes/DelaunayTriangulation.hpp"
@@ -117,6 +118,17 @@ int block_size_y;
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
 int main(int argc, char *argv[]) {
+
+//    getGolombCodeLength(0, 3);
+    getExponentialGolombCodeLength(0, 0);
+    for(int i = 1 ; i < 10 ; i++){
+//        getGolombCodeLength(-i, 3);
+//        getGolombCodeLength(i, 3);
+        getExponentialGolombCodeLength(-i, 0);
+        getExponentialGolombCodeLength(i, 0);
+    }
+    exit(0);
+
     std::cout << "OpenCV_version : " << getVersionOfOpenCV() << std::endl;
 
     const std::string file_path = getProjectDirectory();
