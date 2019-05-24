@@ -2554,7 +2554,7 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                 } else{
                     *flag = false;
                 }
-                *flag = true;
+//                *flag = true;
             }
 
             double alpha, beta, det;
