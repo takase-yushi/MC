@@ -1542,7 +1542,7 @@ TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(cv::Point2f p1,
             c = a + x + y;
             d = p3;
 
-            return SplitResult(Point3Vec(a, b, c), Point3Vec(a, c, d), TYPE5, TYPE6);
+            return {Point3Vec(a, b, c), Point3Vec(a, c, d), TYPE5, TYPE6};
         }
         case DIVIDE::TYPE2:
         {
@@ -1554,7 +1554,7 @@ TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(cv::Point2f p1,
             c = p2;
             d = p3;
 
-            return SplitResult(Point3Vec(a, b, d), Point3Vec(b, c, d), TYPE8, TYPE7);
+            return {Point3Vec(a, b, d), Point3Vec(b, c, d), TYPE8, TYPE7};
         }
         case DIVIDE::TYPE3:
         {
@@ -1566,7 +1566,7 @@ TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(cv::Point2f p1,
             c = p2 + x + y;
             d = p3;
 
-            return SplitResult(Point3Vec(a, b, c), Point3Vec(b, c, d), TYPE5, TYPE8);
+            return {Point3Vec(a, b, c), Point3Vec(b, c, d), TYPE5, TYPE8};
         }
         case DIVIDE::TYPE4:
         {
@@ -1578,7 +1578,7 @@ TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(cv::Point2f p1,
             c = p2;
             d = p3;
 
-            return SplitResult(Point3Vec(a, b, c), Point3Vec(b, c, d), TYPE6, TYPE7);
+            return {Point3Vec(a, b, c), Point3Vec(b, c, d), TYPE6, TYPE7};
         }
         case DIVIDE::TYPE5:
         {
@@ -1589,7 +1589,7 @@ TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(cv::Point2f p1,
             c = p2;
             d = p3;
 
-            return SplitResult(Point3Vec(a, b, d), Point3Vec(b, c, d), TYPE3, TYPE1);
+            return {Point3Vec(a, b, d), Point3Vec(b, c, d), TYPE3, TYPE1};
         }
         case DIVIDE::TYPE6:
         {
@@ -1600,7 +1600,7 @@ TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(cv::Point2f p1,
             c = p2;
             d = p3;
 
-            return SplitResult(Point3Vec(a, b, c), Point3Vec(b, c, d), TYPE4, TYPE1);
+            return {Point3Vec(a, b, c), Point3Vec(b, c, d), TYPE4, TYPE1};
         }
         case DIVIDE::TYPE7:
         {
@@ -1611,7 +1611,7 @@ TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(cv::Point2f p1,
             c = p2 + x;
             d = p3;
 
-            return SplitResult(Point3Vec(a, b, c), Point3Vec(a, c, d), TYPE2, TYPE4);
+            return {Point3Vec(a, b, c), Point3Vec(a, c, d), TYPE2, TYPE4};
         }
         case DIVIDE::TYPE8:
         {
@@ -1622,7 +1622,7 @@ TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(cv::Point2f p1,
             c = p1 + y;
             d = p3;
 
-            return SplitResult(Point3Vec(a, b, c), Point3Vec(a, c, d), TYPE2, TYPE3);
+            return {Point3Vec(a, b, c), Point3Vec(a, c, d), TYPE2, TYPE3};
         }
         default:
             break;
