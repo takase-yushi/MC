@@ -251,8 +251,7 @@ int main(int argc, char *argv[]) {
         cv::Mat spatialMvTestImage;
 
 
-        std::vector<cv::Point2f> warping_mv;
-        cv::Point2f parallel_mv;
+
         cv::Mat new_gauss_output_image = cv::Mat::zeros(gaussRefImage.rows, gaussRefImage.cols, CV_8UC3);
 
         std::vector<Triangle> tt = triangle_division.getTriangleIndexList();
@@ -272,6 +271,8 @@ int main(int argc, char *argv[]) {
         for(int i = 0 ; i < init_triangles.size() ; i++){
             std::pair<Point3Vec, int> t = init_triangles[i];
             bool parallel_flag;
+            std::vector<cv::Point2f> warping_mv;
+            cv::Point2f parallel_mv;
             std::tie(warping_mv, parallel_mv, parallel_flag) = GaussNewton(ref_image, target_image, gaussRefImage, t.first);
 
             if(parallel_flag == true) {
