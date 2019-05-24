@@ -539,46 +539,46 @@ int main(int argc, char *argv[]) {
             double MSE = 0;
             double triangle_sum = 0;
             // 頂点削除のためのパラメタが欲しいので、1度全パッチ回していた
-#pragma omp parallel for
-            for (int t = 0; t < (int)triangles_t.size(); t++) {
-                cv::Point2f p1(corners[triangles_t[t].p1_idx]), p2(corners[triangles_t[t].p2_idx]), p3(corners[triangles_t[t].p3_idx]);
-                // TODO: 要確認
-                Point3Vec target_corners = Point3Vec(p1, p2, p3);
-                std::vector<cv::Point2f>warping_mv;
-                cv::Point2f parallel_mv;
-                bool parallel_flag;
-                int triangle_size = getTriangleSize(target_corners);
-                std::tie(warping_mv,parallel_mv,parallel_flag) = GaussNewton(ref_image, target_image, ref_gauss, target_corners);
-                std::vector<cv::Point2f> mv;
-                if(parallel_flag){
-                    mv.emplace_back(parallel_mv);
-                    mv.emplace_back(parallel_mv);
-                    mv.emplace_back(parallel_mv);
-                }else{
-                    mv.emplace_back((warping_mv[0]));
-                    mv.emplace_back((warping_mv[1]));
-                    mv.emplace_back((warping_mv[2]));
-                }
-                double MSE_tmp = getSquaredError(ref_image,target_image,target_corners,mv);
-
-                MSE += MSE_tmp;
-                triangle_sum += triangle_size;
-                sigma_tmp.emplace_back(MSE_tmp);
-
-                double RMSE = sqrt(MSE_tmp / triangle_size);
-                std::cout << "t = " << t << "/" << triangles_t.size()  << " RMSE = " << RMSE << std::endl;
-            }
-            double myu = sqrt(MSE / triangle_sum);
-            double sigma = 0;
-            for(const auto e : sigma_tmp){
-                sigma += (sqrt(e) - myu) * (sqrt(e) - myu);
-            }
-            sigma = sqrt(sigma/triangle_sum);
-            std::cout << "myu = "<< myu << "sigma = " << sigma << std::endl;
-
-            // ガウス分布と仮定すると、ここは変曲点（大嘘）
-            double erase_th = (myu + sigma) * (myu + sigma);
-            erase_th_global = erase_th;
+//#pragma omp parallel for
+//            for (int t = 0; t < (int)triangles_t.size(); t++) {
+//                cv::Point2f p1(corners[triangles_t[t].p1_idx]), p2(corners[triangles_t[t].p2_idx]), p3(corners[triangles_t[t].p3_idx]);
+//                // TODO: 要確認
+//                Point3Vec target_corners = Point3Vec(p1, p2, p3);
+//                std::vector<cv::Point2f>warping_mv;
+//                cv::Point2f parallel_mv;
+//                bool parallel_flag;
+//                int triangle_size = getTriangleSize(target_corners);
+//                std::tie(warping_mv,parallel_mv,parallel_flag) = GaussNewton(ref_image, target_image, ref_gauss, target_corners);
+//                std::vector<cv::Point2f> mv;
+//                if(parallel_flag){
+//                    mv.emplace_back(parallel_mv);
+//                    mv.emplace_back(parallel_mv);
+//                    mv.emplace_back(parallel_mv);
+//                }else{
+//                    mv.emplace_back((warping_mv[0]));
+//                    mv.emplace_back((warping_mv[1]));
+//                    mv.emplace_back((warping_mv[2]));
+//                }
+//                double MSE_tmp = getSquaredError(ref_image,target_image,target_corners,mv);
+//
+//                MSE += MSE_tmp;
+//                triangle_sum += triangle_size;
+//                sigma_tmp.emplace_back(MSE_tmp);
+//
+//                double RMSE = sqrt(MSE_tmp / triangle_size);
+//                std::cout << "t = " << t << "/" << triangles_t.size()  << " RMSE = " << RMSE << std::endl;
+//            }
+//            double myu = sqrt(MSE / triangle_sum);
+//            double sigma = 0;
+//            for(const auto e : sigma_tmp){
+//                sigma += (sqrt(e) - myu) * (sqrt(e) - myu);
+//            }
+//            sigma = sqrt(sigma/triangle_sum);
+//            std::cout << "myu = "<< myu << "sigma = " << sigma << std::endl;
+//
+//            // ガウス分布と仮定すると、ここは変曲点（大嘘）
+//            double erase_th = (myu + sigma) * (myu + sigma);
+//            erase_th_global = erase_th;
 
             for (int q = 0; q < 4; q++) {
                 md.insert(corners);
@@ -591,9 +591,10 @@ int main(int argc, char *argv[]) {
                 // 頂点の数が変化するたびに、変曲点を求めていたが計算量がそれなりに掛かる(全三角パッチに対してやると5分ぐらい)
                 // TODO: 並列化できそうでは？
                 sigma_tmp.clear();
-                for (auto & t : triangles_t) {
-                    cv::Point2f p1(corners[t.p1_idx]), p2(corners[t.p2_idx]), p3(
-                            corners[t.p3_idx]);
+#pragma omp parallel for
+                for (int i = 0;i <(int) triangles_t.size();i++) {
+                    cv::Point2f p1(corners[triangles_t[i].p1_idx]), p2(corners[triangles_t[i].p2_idx]), p3(
+                            corners[triangles_t[i].p3_idx]);
                     Point3Vec target_corners = Point3Vec(p1, p2, p3);
                     Point3Vec prev_corners = Point3Vec(p1, p2, p3);
                     std::vector<cv::Point2f>warping_mv;
@@ -616,6 +617,8 @@ int main(int argc, char *argv[]) {
                     triangle_sum += triangle_size;
                     sigma_tmp.emplace_back(MSE_tmp);
                 }
+                double myu = sqrt(MSE / triangle_sum);
+                double sigma = 0;
                 myu = sqrt(MSE / triangle_sum);
                 sigma = 0;
                 for(double i : sigma_tmp){
@@ -624,7 +627,7 @@ int main(int argc, char *argv[]) {
                 sigma = sqrt(sigma/triangle_sum);
                 std::cout << "myu = "<< myu << "sigma = " << sigma << std::endl;
 
-                erase_th = (myu + sigma) * (myu + sigma);
+                double erase_th = (myu + sigma) * (myu + sigma);
                 erase_th_global = erase_th;
                 std::cout << "erase_th = " << erase_th << std::endl;
 
