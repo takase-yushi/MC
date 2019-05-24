@@ -579,7 +579,7 @@ int main(int argc, char *argv[]) {
 //            // ガウス分布と仮定すると、ここは変曲点（大嘘）
 //            double erase_th = (myu + sigma) * (myu + sigma);
 //            erase_th_global = erase_th;
-
+/*
             for (int q = 0; q < 4; q++) {
                 md.insert(corners);
                 md.getTriangleList(triangles_mydelaunay);
@@ -780,6 +780,7 @@ int main(int argc, char *argv[]) {
                     }
                 }
             }
+            */
 //
 //            // 移動させて変化を見るやつ
 //            /*
@@ -1035,9 +1036,18 @@ int main(int argc, char *argv[]) {
 
 //            corners = triangle_division.getCorners();
 
-            std::ofstream corner_list_later = std::ofstream("corner_list_" + corner_file_name + "_later.dat");
-            for(const cv::Point2f point : corners){
-                corner_list_later << point.x << " " << point.y << std::endl;
+//            std::ofstream corner_list_later = std::ofstream("corner_list_" + corner_file_name + "_later.dat");
+//            for(const cv::Point2f point : corners){
+//                corner_list_later << point.x << " " << point.y << std::endl;
+//            }
+
+            std::ifstream in_corner_list = std::ifstream("corner_list_" + corner_file_name + ".dat");
+            std::string str1;
+            int point_x,point_y;
+            corners.clear();
+            while (getline(in_corner_list, str1)) {
+                sscanf(str1.data(), "%d %d", &point_x,&point_y);
+                corners.emplace_back(cv::Point2f(point_x,point_y));
             }
 
             std::cout << "corners's size :" << corners.size() << std::endl;
