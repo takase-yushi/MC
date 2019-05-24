@@ -1,20 +1,23 @@
+cmake_minimum_required(VERSION 3.6.2)
+
 project(dummy NONE)
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set(CMAKE_CXX_COMPILER clang++)
 endif()
-project(myproject CXX)
-
-set(OpenCV_DIR "C:\\opencv\\mingw")
-cmake_minimum_required(VERSION 3.6.2)
 project(Encoder)
 
-find_package(OpenCV REQUIRED)
-
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "-O2 -Wall")
+# enable C++11
+set(CMAKE_CXX_STANDARD, 17)
 
 find_package(OpenCV REQUIRED)
 
+message(STATUS "OpenCV library status:")
+message(STATUS "    config: ${OpenCV_DIR}")
+message(STATUS "    version: ${OpenCV_VERSION}")
+message(STATUS "    libraries: ${OpenCV_LIBS}")
+message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
+
+# OpenMP settings
 find_package( OpenMP )
 if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -26,4 +29,4 @@ add_executable(Encoder src/main.cpp src/psnr.cpp includes/psnr.h src/main.cpp in
 include_directories(${OpenCV_INCLUDE_DIRS})
 target_link_libraries(Encoder ${OpenCV_LIBS})
 
-add_definitions(-std=c++11)
+add_definitions(-std=c++1y)
