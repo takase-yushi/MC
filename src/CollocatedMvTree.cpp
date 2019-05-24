@@ -2,7 +2,7 @@
 // Created by kasph on 2019/05/15.
 //
 
-#include "CollocatedMvTree.h"
+#include "../includes/CollocatedMvTree.h"
 
 CollocatedMvTree::~CollocatedMvTree() {
     delete leftNode;

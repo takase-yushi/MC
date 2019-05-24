@@ -7,7 +7,7 @@
 
 #include "Utils.h"
 #include "CodingTreeUnit.h"
-#include "../src/CollocatedMvTree.h"
+#include "CollocatedMvTree.h"
 #include <set>
 #include <vector>
 

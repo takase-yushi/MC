@@ -20,7 +20,7 @@
 #include "../includes/Golomb.hpp"
 #include "../includes/TriangleDivision.h"
 #include "../includes/Reconstruction.h"
-#include "ImageUtil.h"
+#include "../includes/ImageUtil.h"
 
 struct PredictedImageResult {
     cv::Mat out, mv_image;
