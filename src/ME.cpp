@@ -2861,9 +2861,17 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                 g_expand[d] -= expand;
                 free(f_expand[d]);
                 free(g_expand[d]);
+                f_org_expand[d] -= expand;
+                g_org_expand[d] -= expand;
+                free(f_org_expand[d]);
+                free(g_org_expand[d]);
             }
             f_expand -= expand;
             g_expand -= expand;
+            free(f_expand);
+            free(g_expand);
+            f_org_expand -= expand;
+            g_org_expand -= expand;
             free(f_expand);
             free(g_expand);
         }
