@@ -85,7 +85,7 @@ std::vector<cv::Point2f> cornersQuantization(std::vector<cv::Point2f> &corners, 
 
 PredictedImageResult
 getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intra, std::vector<Triangle> &triangles, const std::vector<cv::Point2f> &ref_corners,
-                  std::vector<cv::Point2f> &corners, TriangleDivision triangle_division,std::vector<cv::Point2f> &add_corners,int &add_count,const cv::Mat& residual_ref,int &tmp_mv_x,int &tmp_mv_y,bool add_flag);
+                  std::vector<cv::Point2f> &corners, DelaunayTriangulation md,std::vector<cv::Point2f> &add_corners,int &add_count,const cv::Mat& residual_ref,int &tmp_mv_x,int &tmp_mv_y,bool add_flag);
 
 std::vector<cv::Point2f> uniqCoordinate(const std::vector<cv::Point2f> &corners);
 
@@ -233,125 +233,125 @@ int main(int argc, char *argv[]) {
         cv::imwrite(img_directory + "/crop_target.png", crop_target_image);
 
 
-        TriangleDivision triangle_division(ref_image, target_image);
-        int divide_steps = 8;
-        triangle_division.initTriangle(block_size_x, block_size_y, divide_steps, LEFT_DIVIDE);
-        std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
-
-        std::vector<std::pair<Point3Vec, int> > init_triangles = triangle_division.getTriangles();
-                std::vector<CodingTreeUnit*> foo(init_triangles.size());
-        for(int i = 0 ; i < init_triangles.size() ; i++) {
-            foo[i] = new CodingTreeUnit();
-            foo[i]->split_cu_flag1 = foo[i]->split_cu_flag2 = false;
-            foo[i]->leftNode = foo[i]->rightNode = nullptr;
-            foo[i]->triangle_index = i;
-        }
-
-        cv::Mat gaussRefImage = cv::imread(ref_file_path);
-        cv::Mat spatialMvTestImage;
-
-
-
-        cv::Mat new_gauss_output_image = cv::Mat::zeros(gaussRefImage.rows, gaussRefImage.cols, CV_8UC3);
-
-        std::vector<Triangle> tt = triangle_division.getTriangleIndexList();
-        corners = triangle_division.getCorners();
-
-        std::vector<cv::Point2f> tmp_ref_corners(corners.size()), add_corners;
-        int add_count;
-        cv::Mat r_ref = cv::Mat::zeros(target_image.rows, target_image.cols, CV_8UC1);
-        int tmp_mv_x, tmp_mv_y;
-        int p_flag;
+//        TriangleDivision triangle_division(ref_image, target_image);
+//        int divide_steps = 8;
+//        triangle_division.initTriangle(block_size_x, block_size_y, divide_steps, LEFT_DIVIDE);
+//        std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
+//
+//        std::vector<std::pair<Point3Vec, int> > init_triangles = triangle_division.getTriangles();
+//                std::vector<CodingTreeUnit*> foo(init_triangles.size());
+//        for(int i = 0 ; i < init_triangles.size() ; i++) {
+//            foo[i] = new CodingTreeUnit();
+//            foo[i]->split_cu_flag1 = foo[i]->split_cu_flag2 = false;
+//            foo[i]->leftNode = foo[i]->rightNode = nullptr;
+//            foo[i]->triangle_index = i;
+//        }
+//
+//        cv::Mat gaussRefImage = cv::imread(ref_file_path);
+//        cv::Mat spatialMvTestImage;
+//
+//
+//
+//        cv::Mat new_gauss_output_image = cv::Mat::zeros(gaussRefImage.rows, gaussRefImage.cols, CV_8UC3);
+//
+//        std::vector<Triangle> tt = triangle_division.getTriangleIndexList();
+//        corners = triangle_division.getCorners();
+//
+//        std::vector<cv::Point2f> tmp_ref_corners(corners.size()), add_corners;
+//        int add_count;
+//        cv::Mat r_ref = cv::Mat::zeros(target_image.rows, target_image.cols, CV_8UC1);
+//        int tmp_mv_x, tmp_mv_y;
+//        int p_flag;
 //        PredictedImageResult ret = getPredictedImage(gaussRefImage, target_image, ref_image, tt, tmp_ref_corners, corners, triangle_division, add_corners, add_count, r_ref, tmp_mv_x, tmp_mv_y, p_flag);
 //        cv::imwrite(img_directory + "/Gauss_Newton2_predicted_image.png", ret.out);
 //        std::cout << "PSNR:" << getPSNR(ret.out, target_image) << std::endl;
 //
-        int cnt = 0;
-#pragma omp parallel for
-        for(int i = 0 ; i < init_triangles.size() ; i++){
-            std::pair<Point3Vec, int> t = init_triangles[i];
-            bool parallel_flag;
-            std::vector<cv::Point2f> warping_mv;
-            cv::Point2f parallel_mv;
-            std::tie(warping_mv, parallel_mv, parallel_flag) = GaussNewton(ref_image, target_image, gaussRefImage, t.first);
-
-            if(parallel_flag == true) {
-                std::cout << parallel_mv << " " << parallel_mv << " " << parallel_mv <<std::endl;
-            }else{
-                std::cout << warping_mv[0] << " " << warping_mv[1] << " " << warping_mv[2] << std::endl;
-            }
-
-            std::vector<cv::Point2f> mv;
-            if(parallel_flag == true) {
-                mv.emplace_back(parallel_mv);
-                mv.emplace_back(parallel_mv);
-                mv.emplace_back(parallel_mv);
-            }else{
-                mv = warping_mv;
-            }
-
-            getPredictedImage(ref_image, target_image, new_gauss_output_image, t.first, mv, true);
-        }
-
-        cv::imwrite(img_directory + "/hogehoge.png", new_gauss_output_image);
-        cv::imwrite(img_directory + "/hogehoge_residual.png", getResidualImage(target_image, new_gauss_output_image));
-        std::cout << "PSNR:" << getPSNR(target_image, new_gauss_output_image) << std::endl;
-        exit(0);
-
-    //#pragma omp parallel for
+//        int cnt = 0;
+//#pragma omp parallel for
+//        for(int i = 0 ; i < init_triangles.size() ; i++){
+//            std::pair<Point3Vec, int> t = init_triangles[i];
+//            bool parallel_flag;
+//            std::vector<cv::Point2f> warping_mv;
+//            cv::Point2f parallel_mv;
+//            std::tie(warping_mv, parallel_mv, parallel_flag) = GaussNewton(ref_image, target_image, gaussRefImage, t.first);
+//
+//            if(parallel_flag == true) {
+//                std::cout << parallel_mv << " " << parallel_mv << " " << parallel_mv <<std::endl;
+//            }else{
+//                std::cout << warping_mv[0] << " " << warping_mv[1] << " " << warping_mv[2] << std::endl;
+//            }
+//
+//            std::vector<cv::Point2f> mv;
+//            if(parallel_flag == true) {
+//                mv.emplace_back(parallel_mv);
+//                mv.emplace_back(parallel_mv);
+//                mv.emplace_back(parallel_mv);
+//            }else{
+//                mv = warping_mv;
+//            }
+//
+//            getPredictedImage(ref_image, target_image, new_gauss_output_image, t.first, mv, true);
+//        }
+//
+//        cv::imwrite(img_directory + "/hogehoge.png", new_gauss_output_image);
+//        cv::imwrite(img_directory + "/hogehoge_residual.png", getResidualImage(target_image, new_gauss_output_image));
+//        std::cout << "PSNR:" << getPSNR(target_image, new_gauss_output_image) << std::endl;
+//        exit(0);
+//
+//    //#pragma omp parallel for
+////        for(int i = 0 ; i < init_triangles.size() ; i++) {
+//        triangle_division.constructPreviousCodingTree(foo, 0);
 //        for(int i = 0 ; i < init_triangles.size() ; i++) {
-        triangle_division.constructPreviousCodingTree(foo, 0);
-        for(int i = 0 ; i < init_triangles.size() ; i++) {
-            std::pair<Point3Vec, int> triangle = init_triangles[i];
-//            std::cout << "i:" << i << std::endl;
-            cv::Point2f p1 = triangle.first.p1;
-            cv::Point2f p2 = triangle.first.p2;
-            cv::Point2f p3 = triangle.first.p3;
-
-            triangle_division.split(gaussRefImage, foo[i], Point3Vec(p1, p2, p3), i, triangle.second, divide_steps);
-//            triangle_division.getSpatialTriangleList(triangles.size() - 1);
-//            int prev_triangles_max = triangles.size();
-//            triangles = triangle_division.getAllTriangleCoordinateList();
-//            corners = triangle_division.getCorners();
-//            if(prev_triangles_max < triangles.size()) {
-//                int draw_triangle_index = triangles.size() - 1;
-//                spatialMvTestImage = getReconstructionDivisionImage(gaussRefImage, foo);
-//                for(auto& t : triangle_division.getSpatialTriangleList(draw_triangle_index)) {
-//                    drawTriangle(spatialMvTestImage, triangles[t].p1, triangles[t].p2, triangles[t].p3, BLUE);
-//                }
-//                drawTriangle(spatialMvTestImage, triangles[draw_triangle_index].p1, triangles[draw_triangle_index].p2, triangles[draw_triangle_index].p3, RED);
-//                cv::imwrite(img_directory + "/spatialTriangle_" + std::to_string(draw_triangle_index) + ".png", spatialMvTestImage);
-            }
-
-        getReconstructionDivisionImage(gaussRefImage, foo);
-        triangle_division.constructPreviousCodingTree(foo, 0);
-
-        exit(0);
-        // 何回再帰的に分割を行うか
-        const int division_steps = 1;
-        triangle_division.subdivision(cv::imread(ref_file_path), division_steps);
-        triangles = triangle_division.getTriangleCoordinateList();
-        std::cout << "triangles.size():" << triangles.size() << std::endl;
-
-        corners = triangle_division.getCorners();
-        std::cout << "mid: " << corners.size() / 2 << std::endl;
-        for(int k = 0 ; k < 10 ; k++){
-          cv::Mat triangles_debug = crop_target_image.clone();
-          for(const auto& triangle : triangles) {
-            drawTriangle(triangles_debug, triangle.p1, triangle.p2, triangle.p3, cv::Scalar(255, 255, 255));
-          }
-          cv::imwrite(img_directory + "/triangles_step" + std::to_string(division_steps) + ".png", triangles_debug);
-
-          std::vector<Point3Vec> covered_triangles = triangle_division.getIdxCoveredTriangleCoordinateList(corners.size() / 2 + 100 + k);
-          for(const auto& triangle : covered_triangles) {
-            std::cout << triangle.p1 << " " << triangle.p2 << " " << triangle.p3 << std::endl;
-            drawTriangle(triangles_debug, triangle.p1, triangle.p2, triangle.p3, RED);
-          }
-          drawPoint(triangles_debug, corners[corners.size() / 2 + 100 + k], BLUE, 4);
-
-          cv::imwrite(img_directory + "/triangles_step" + std::to_string(division_steps) + "_" + std::to_string(100 + k) + ".png", triangles_debug);
-        }
-        exit(0);
+//            std::pair<Point3Vec, int> triangle = init_triangles[i];
+////            std::cout << "i:" << i << std::endl;
+//            cv::Point2f p1 = triangle.first.p1;
+//            cv::Point2f p2 = triangle.first.p2;
+//            cv::Point2f p3 = triangle.first.p3;
+//
+//            triangle_division.split(gaussRefImage, foo[i], Point3Vec(p1, p2, p3), i, triangle.second, divide_steps);
+////            triangle_division.getSpatialTriangleList(triangles.size() - 1);
+////            int prev_triangles_max = triangles.size();
+////            triangles = triangle_division.getAllTriangleCoordinateList();
+////            corners = triangle_division.getCorners();
+////            if(prev_triangles_max < triangles.size()) {
+////                int draw_triangle_index = triangles.size() - 1;
+////                spatialMvTestImage = getReconstructionDivisionImage(gaussRefImage, foo);
+////                for(auto& t : triangle_division.getSpatialTriangleList(draw_triangle_index)) {
+////                    drawTriangle(spatialMvTestImage, triangles[t].p1, triangles[t].p2, triangles[t].p3, BLUE);
+////                }
+////                drawTriangle(spatialMvTestImage, triangles[draw_triangle_index].p1, triangles[draw_triangle_index].p2, triangles[draw_triangle_index].p3, RED);
+////                cv::imwrite(img_directory + "/spatialTriangle_" + std::to_string(draw_triangle_index) + ".png", spatialMvTestImage);
+//            }
+//
+//        getReconstructionDivisionImage(gaussRefImage, foo);
+//        triangle_division.constructPreviousCodingTree(foo, 0);
+//
+//        exit(0);
+//        // 何回再帰的に分割を行うか
+//        const int division_steps = 1;
+//        triangle_division.subdivision(cv::imread(ref_file_path), division_steps);
+//        triangles = triangle_division.getTriangleCoordinateList();
+//        std::cout << "triangles.size():" << triangles.size() << std::endl;
+//
+//        corners = triangle_division.getCorners();
+//        std::cout << "mid: " << corners.size() / 2 << std::endl;
+//        for(int k = 0 ; k < 10 ; k++){
+//          cv::Mat triangles_debug = crop_target_image.clone();
+//          for(const auto& triangle : triangles) {
+//            drawTriangle(triangles_debug, triangle.p1, triangle.p2, triangle.p3, cv::Scalar(255, 255, 255));
+//          }
+//          cv::imwrite(img_directory + "/triangles_step" + std::to_string(division_steps) + ".png", triangles_debug);
+//
+//          std::vector<Point3Vec> covered_triangles = triangle_division.getIdxCoveredTriangleCoordinateList(corners.size() / 2 + 100 + k);
+//          for(const auto& triangle : covered_triangles) {
+//            std::cout << triangle.p1 << " " << triangle.p2 << " " << triangle.p3 << std::endl;
+//            drawTriangle(triangles_debug, triangle.p1, triangle.p2, triangle.p3, RED);
+//          }
+//          drawPoint(triangles_debug, corners[corners.size() / 2 + 100 + k], BLUE, 4);
+//
+//          cv::imwrite(img_directory + "/triangles_step" + std::to_string(division_steps) + "_" + std::to_string(100 + k) + ".png", triangles_debug);
+//        }
+//        exit(0);
 
         cv::Mat color = cv::Mat::zeros(target_image.size(),CV_8UC3);
         cv::Mat predict_img0 = cv::Mat::zeros(targetx8.size(), CV_8UC3);
@@ -539,189 +539,230 @@ int main(int argc, char *argv[]) {
             double MSE = 0;
             double triangle_sum = 0;
             // 頂点削除のためのパラメタが欲しいので、1度全パッチ回していた
-//            for (int t = 0; t < (int)triangles_t.size(); t++) {
-//                cv::Point2f p1(corners[triangles_t[t].p1_idx]), p2(corners[triangles_t[t].p2_idx]), p3(corners[triangles_t[t].p3_idx]);
-//                // TODO: 要確認
-//                Point3Vec target_corers = Point3Vec(p1, p2, p3);
-//                Point3Vec prev_corners = Point3Vec(p1, p2, p3);
-//
-//                int triangle_size;
-//                double MSE_tmp = Gauss_Newton(ref_gauss, target_image, ref_image, target_corers, prev_corners, triangle_size);
-//                MSE += MSE_tmp;
-//                triangle_sum += triangle_size;
-//                sigma_tmp.emplace_back(MSE_tmp);
-//
-//                double RMSE = sqrt(MSE_tmp / triangle_size);
-//                std::cout << "t = " << t << "/" << triangles_t.size()  << " RMSE = " << RMSE << std::endl;
-//            }
-//            double myu = sqrt(MSE / triangle_sum);
-//            double sigma = 0;
-//            for(const auto e : sigma_tmp){
-//                sigma += (sqrt(e) - myu) * (sqrt(e) - myu);
-//            }
-//            sigma = sqrt(sigma/triangle_sum);
-//            std::cout << "myu = "<< myu << "sigma = " << sigma << std::endl;
-//
-//            // ガウス分布と仮定すると、ここは変曲点（大嘘）
-//            double erase_th = (myu + sigma) * (myu + sigma);
-//            erase_th_global = erase_th;
+            for (int t = 0; t < (int)triangles_t.size(); t++) {
+                cv::Point2f p1(corners[triangles_t[t].p1_idx]), p2(corners[triangles_t[t].p2_idx]), p3(corners[triangles_t[t].p3_idx]);
+                // TODO: 要確認
+                Point3Vec target_corners = Point3Vec(p1, p2, p3);
+                std::vector<cv::Point2f>warping_mv;
+                cv::Point2f parallel_mv;
+                bool parallel_flag;
+                int triangle_size = getTriangleSize(target_corners);
+                std::tie(warping_mv,parallel_mv,parallel_flag) = GaussNewton(ref_image, target_image, ref_gauss, target_corners);
+                std::vector<cv::Point2f> mv;
+                if(parallel_flag){
+                    mv.emplace_back(parallel_mv);
+                    mv.emplace_back(parallel_mv);
+                    mv.emplace_back(parallel_mv);
+                }else{
+                    mv.emplace_back((warping_mv[0]));
+                    mv.emplace_back((warping_mv[1]));
+                    mv.emplace_back((warping_mv[2]));
+                }
+                double MSE_tmp = getSquaredError(ref_image,target_image,target_corners,mv);
 
-//            for (int q = 0; q < 4; q++) {
-//                md.insert(corners);
-//                md.getTriangleList(triangles_mydelaunay);
-//                md.Sort_Coners(corners);
-//                triangles_t = md.Get_triangles(corners);
-//                MSE = 0;
-//                triangle_sum = 0;
-//
-//                // 頂点の数が変化するたびに、変曲点を求めていたが計算量がそれなりに掛かる(全三角パッチに対してやると5分ぐらい)
-//                // TODO: 並列化できそうでは？
-//                sigma_tmp.clear();
-//                for (auto & t : triangles_t) {
-//                    int triangle_size;
-//                    cv::Point2f p1(corners[t.p1_idx]), p2(corners[t.p2_idx]), p3(
-//                            corners[t.p3_idx]);
-//                    Point3Vec target_corers = Point3Vec(p1, p2, p3);
-//                    Point3Vec prev_corners = Point3Vec(p1, p2, p3);
-//                    double MSE_tmp = Gauss_Newton(ref_gauss, target_image, ref_image, target_corers, prev_corners, triangle_size);
-//                    MSE += MSE_tmp;
-//                    triangle_sum += triangle_size;
-//                    sigma_tmp.emplace_back(MSE_tmp);
-//                }
-//                myu = sqrt(MSE / triangle_sum);
-//                sigma = 0;
-//                for(double i : sigma_tmp){
-//                    sigma += (sqrt(i) - myu) * (sqrt(i) - myu);
-//                }
-//                sigma = sqrt(sigma/triangle_sum);
-//                std::cout << "myu = "<< myu << "sigma = " << sigma << std::endl;
-//
-//                erase_th = (myu + sigma) * (myu + sigma);
-//                erase_th_global = erase_th;
-//                std::cout << "erase_th = " << erase_th << std::endl;
-//
-//
-//                for (int idx = 0; idx < (int) corners.size(); idx++) {
-//                    bool erase_flag = false;
-//                    int erase_count = 0;
-//
-//                    // 復元できるように、頂点を削除する前の分割形状を保存
-//                    DelaunayTriangulation md_prev(Rectangle(0, 0, target_image.cols, target_image.rows));
-//                    md_prev.insert(corners);
-//                    std::vector<cv::Vec6f> triangles_prev;
-//                    md_prev.getTriangleList(triangles_prev);
-//
-//                    // 頂点が減る様子を出力
-//                    cv::Mat corner_reduction = target_image.clone();
-//                    for (const cv::Vec6f& t : triangles_prev) {
-//                        cv::Point2f p1(t[0], t[1]), p2(t[2], t[3]), p3(t[4], t[5]);
-//                        drawTriangle(corner_reduction, p1, p2, p3, BLUE);
-//                    }
-//                    cv::imwrite(img_directory + "corner_reduction_" + std::to_string(idx) + ".png", corner_reduction);
-//
-//                    // 外周上に乗っている頂点を抜いたとき、黒い三角形ができる場合は抜かない
-//                    if (corners[idx].x <= 0.0 || corners[idx].y <= 0.0 || corners[idx].x >= target_image.cols - 1 ||
-//                        corners[idx].y >= target_image.rows - 1) {
-//                        // 頂点を抜いた状態で、ドロネー分割をし直す
-//                        std::vector<cv::Point2f> corners_later(corners);
-//                        corners_later.erase(corners_later.begin() + idx);
-//                        DelaunayTriangulation md_later(Rectangle(0, 0, target_image.cols, target_image.rows));
-//                        md_later.insert(corners_later);
-//                        std::vector<cv::Vec6f> triangles_tmp;
-//                        md_later.getTriangleList(triangles_tmp);
-//
-//                        bool skip_flag = false;
-//                        md_later.serch_wrong(corners_later, target_image, &skip_flag);
-//                        if (skip_flag) continue;
-//                    }
-//
-//                    std::vector<cv::Point2f> corners_later(corners);
-//
-//                    // 四隅はそもそも抜かない
-//                    if ((corners[idx].x == 0.0 && corners[idx].y == 0.0) ||
-//                        (corners[idx].x == target_image.cols - 1 && corners[idx].y == 0.0)
-//                        || (corners[idx].x == target_image.cols - 1 && corners[idx].y == target_image.rows - 1) ||
-//                        (corners[idx].x == 0.0 && corners[idx].y == target_image.rows - 1)) {
-//                        continue;
-//                    }
-//
-//                    std::cout << "idx = " << idx << "/ " << corners.size() << " q = " << q << "/ " << 4 << corners[idx]
-//                              << std::endl;
-//
-//                    // idx番目の頂点に隣接している頂点がtrueになった配列が返るアレ
-//                    std::vector<bool> flag_around = std::vector<bool>(corners.size(), false);
-//                    std::vector<Triangle> triangles_around = md_prev.Get_triangles_around(idx, corners, flag_around);
-//
-//                    double MSE_prev = 0, MSE_later = 0;
-//                    int triangle_size_sum_prev = 0, triangle_size_sum_later = 0;
-//
-//                    // 周りの頂点だけガウスニュートン法をやる（削除前のMSEを見る）
-//                    for (auto triangle : triangles_around) {
-//                        Point3Vec triangleVec(corners[triangle.p1_idx], corners[triangle.p2_idx], corners[triangle.p3_idx]);
-//                        Point3Vec prev_corners = Point3Vec(corners[triangle.p1_idx], corners[triangle.p2_idx], corners[triangle.p3_idx]);
-//
-//                        int triangle_size;
-//                        double MSE_tmp = Gauss_Newton(ref_gauss, target_image, ref_image, triangleVec, prev_corners, triangle_size);
-//                        std::cout << "triangle_size = " << triangle_size << "MSE_tmp = " << MSE_tmp << std::endl;
-//                        MSE_prev += MSE_tmp;
-//                        triangle_size_sum_prev += triangle_size;
-//                        if (MSE_tmp / (double) triangle_size >= erase_th) {
-//                            erase_count++; // 変曲点より後ろにいるやつ(3.40, 3.41式あたりを参照)
-//                        }
-//                    }
-//
-//                    MSE_prev /= triangle_size_sum_prev;
-//                    std::cout << "MSE_prev = " << MSE_prev << std::endl;
-//
-//                    corners_later.erase(corners_later.begin() + idx);
-//                    flag_around.erase(flag_around.begin() + idx);
-//
-//                    // 削除後のMSEを測る
-//                    DelaunayTriangulation md_later(Rectangle(0, 0, target_image.cols, target_image.rows));
-//                    md_later.insert(corners_later);
-//                    std::vector<Triangle> triangles_later;
-//                    triangles_later = md_later.Get_triangles_later(md_later, idx, corners_later, flag_around);
-//
-//                    for (auto triangle : triangles_later) {
-//                        double MSE_tmp = 0;
-//                        int triangle_size;
-//                        Point3Vec triangleVec(corners_later[triangle.p1_idx], corners_later[triangle.p2_idx], corners_later[triangle.p3_idx]);
-//                        Point3Vec prev_corners = Point3Vec(corners[triangle.p1_idx], corners[triangle.p2_idx], corners[triangle.p3_idx]);
-//
-//                        MSE_tmp= Gauss_Newton(ref_gauss, target_image, ref_image, triangleVec, prev_corners, triangle_size);
-//                        MSE_later += MSE_tmp;
-//                        triangle_size_sum_later += triangle_size;
-//                        std::cout << "triangle_size = " << triangle_size <<  "MSE_later = " << MSE_tmp << std::endl;
-//                    }
-//
-//                    MSE_later /= (double)triangle_size_sum_later;
-//                    std::cout << "MSE_later = " << MSE_later << std::endl;
-//
-//                    // 削除前と削除後のRMSEを計算し比較
-//                    double RMSE_prev = sqrt(MSE_prev);
-//                    double RMSE_later = sqrt(MSE_later);
-//
-//                    // サイズ比
-//                    double S_per = (double) triangle_size_sum_later / (double) triangle_size_sum_prev;
-//                    std::cout << "RMSE_prev = " << RMSE_prev << " RMSE_later = " << RMSE_later << " RMSE_per = "
-//                              << (MSE_later - MSE_prev) / MSE_prev << " S_per = "
-//                              << S_per
-//                              << " erase_count = " << erase_count << " / " << triangles_around.size()
-//                              << " erase_per = " << RMSE_later/RMSE_prev << std::endl;
-//                    std::cout << "MSE x S = " << (RMSE_later - RMSE_prev)*triangle_size_sum_later << std::endl;
-//                    // 式3.41の条件 & 抜いてもあまり劣化しないところは抜く
-//                    if ((double)erase_count / triangles_around.size() >= erase_th_per && RMSE_later/RMSE_prev < 1.5)
-//                        erase_flag = true;
-//
-//                    // 式3.39(抜いてもあまり劣化しないとき), 式3.42(影響のある三角形の面積の総和をかけて、小さいパッチを抜く）
-//                    if ((fabs(MSE_prev - MSE_later)/MSE_prev < 0.05 ) || MSE_prev > MSE_later ||
-//                        erase_flag || (RMSE_later - RMSE_prev)*triangle_size_sum_later < 1000) {//6 10000
-//                        std::cout << "erased" << std::endl;
-//                        corners.erase(corners.begin() + idx);
-//                        idx--;
-//                    }
-//                }
-//            }
+                MSE += MSE_tmp;
+                triangle_sum += triangle_size;
+                sigma_tmp.emplace_back(MSE_tmp);
+
+                double RMSE = sqrt(MSE_tmp / triangle_size);
+                std::cout << "t = " << t << "/" << triangles_t.size()  << " RMSE = " << RMSE << std::endl;
+            }
+            double myu = sqrt(MSE / triangle_sum);
+            double sigma = 0;
+            for(const auto e : sigma_tmp){
+                sigma += (sqrt(e) - myu) * (sqrt(e) - myu);
+            }
+            sigma = sqrt(sigma/triangle_sum);
+            std::cout << "myu = "<< myu << "sigma = " << sigma << std::endl;
+
+            // ガウス分布と仮定すると、ここは変曲点（大嘘）
+            double erase_th = (myu + sigma) * (myu + sigma);
+            erase_th_global = erase_th;
+
+            for (int q = 0; q < 4; q++) {
+                md.insert(corners);
+                md.getTriangleList(triangles_mydelaunay);
+                md.Sort_Coners(corners);
+                triangles_t = md.Get_triangles(corners);
+                MSE = 0;
+                triangle_sum = 0;
+
+                // 頂点の数が変化するたびに、変曲点を求めていたが計算量がそれなりに掛かる(全三角パッチに対してやると5分ぐらい)
+                // TODO: 並列化できそうでは？
+                sigma_tmp.clear();
+                for (auto & t : triangles_t) {
+                    cv::Point2f p1(corners[t.p1_idx]), p2(corners[t.p2_idx]), p3(
+                            corners[t.p3_idx]);
+                    Point3Vec target_corners = Point3Vec(p1, p2, p3);
+                    Point3Vec prev_corners = Point3Vec(p1, p2, p3);
+                    std::vector<cv::Point2f>warping_mv;
+                    cv::Point2f parallel_mv;
+                    bool parallel_flag;
+                    int triangle_size = getTriangleSize(target_corners);
+                    std::tie(warping_mv,parallel_mv,parallel_flag) = GaussNewton(ref_image, target_image, ref_gauss, target_corners);
+                    std::vector<cv::Point2f> mv;
+                    if(parallel_flag){
+                        mv.emplace_back(parallel_mv);
+                        mv.emplace_back(parallel_mv);
+                        mv.emplace_back(parallel_mv);
+                    }else{
+                        mv.emplace_back((warping_mv[0]));
+                        mv.emplace_back((warping_mv[1]));
+                        mv.emplace_back((warping_mv[2]));
+                    }
+                    double MSE_tmp = getSquaredError(ref_image,target_image,target_corners,mv);
+                    MSE += MSE_tmp;
+                    triangle_sum += triangle_size;
+                    sigma_tmp.emplace_back(MSE_tmp);
+                }
+                myu = sqrt(MSE / triangle_sum);
+                sigma = 0;
+                for(double i : sigma_tmp){
+                    sigma += (sqrt(i) - myu) * (sqrt(i) - myu);
+                }
+                sigma = sqrt(sigma/triangle_sum);
+                std::cout << "myu = "<< myu << "sigma = " << sigma << std::endl;
+
+                erase_th = (myu + sigma) * (myu + sigma);
+                erase_th_global = erase_th;
+                std::cout << "erase_th = " << erase_th << std::endl;
+
+
+                for (int idx = 0; idx < (int) corners.size(); idx++) {
+                    bool erase_flag = false;
+                    int erase_count = 0;
+
+                    // 復元できるように、頂点を削除する前の分割形状を保存
+                    DelaunayTriangulation md_prev(Rectangle(0, 0, target_image.cols, target_image.rows));
+                    md_prev.insert(corners);
+                    std::vector<cv::Vec6f> triangles_prev;
+                    md_prev.getTriangleList(triangles_prev);
+
+                    // 頂点が減る様子を出力
+                    cv::Mat corner_reduction = target_image.clone();
+                    for (const cv::Vec6f& t : triangles_prev) {
+                        cv::Point2f p1(t[0], t[1]), p2(t[2], t[3]), p3(t[4], t[5]);
+                        drawTriangle(corner_reduction, p1, p2, p3, BLUE);
+                    }
+                    cv::imwrite(img_directory + "corner_reduction_" + std::to_string(idx) + ".png", corner_reduction);
+
+                    // 外周上に乗っている頂点を抜いたとき、黒い三角形ができる場合は抜かない
+                    if (corners[idx].x <= 0.0 || corners[idx].y <= 0.0 || corners[idx].x >= target_image.cols - 1 ||
+                        corners[idx].y >= target_image.rows - 1) {
+                        // 頂点を抜いた状態で、ドロネー分割をし直す
+                        std::vector<cv::Point2f> corners_later(corners);
+                        corners_later.erase(corners_later.begin() + idx);
+                        DelaunayTriangulation md_later(Rectangle(0, 0, target_image.cols, target_image.rows));
+                        md_later.insert(corners_later);
+                        std::vector<cv::Vec6f> triangles_tmp;
+                        md_later.getTriangleList(triangles_tmp);
+
+                        bool skip_flag = false;
+                        md_later.serch_wrong(corners_later, target_image, &skip_flag);
+                        if (skip_flag) continue;
+                    }
+
+                    std::vector<cv::Point2f> corners_later(corners);
+
+                    // 四隅はそもそも抜かない
+                    if ((corners[idx].x == 0.0 && corners[idx].y == 0.0) ||
+                        (corners[idx].x == target_image.cols - 1 && corners[idx].y == 0.0)
+                        || (corners[idx].x == target_image.cols - 1 && corners[idx].y == target_image.rows - 1) ||
+                        (corners[idx].x == 0.0 && corners[idx].y == target_image.rows - 1)) {
+                        continue;
+                    }
+
+                    std::cout << "idx = " << idx << "/ " << corners.size() << " q = " << q << "/ " << 4 << corners[idx]
+                              << std::endl;
+
+                    // idx番目の頂点に隣接している頂点がtrueになった配列が返るアレ
+                    std::vector<bool> flag_around = std::vector<bool>(corners.size(), false);
+                    std::vector<Triangle> triangles_around = md_prev.Get_triangles_around(idx, corners, flag_around);
+
+                    double MSE_prev = 0, MSE_later = 0;
+                    int triangle_size_sum_prev = 0, triangle_size_sum_later = 0;
+
+                    // 周りの頂点だけガウスニュートン法をやる（削除前のMSEを見る）
+                    for (auto triangle : triangles_around) {
+                        Point3Vec target_corners(corners[triangle.p1_idx], corners[triangle.p2_idx], corners[triangle.p3_idx]);
+                        Point3Vec prev_corners = Point3Vec(corners[triangle.p1_idx], corners[triangle.p2_idx], corners[triangle.p3_idx]);
+
+                        std::vector<cv::Point2f>warping_mv;
+                        cv::Point2f parallel_mv;
+                        bool parallel_flag;
+                        int triangle_size = getTriangleSize(target_corners);
+                        std::tie(warping_mv,parallel_mv,parallel_flag) = GaussNewton(ref_image, target_image, ref_gauss, target_corners);
+                        std::vector<cv::Point2f> mv;
+                        if(parallel_flag){
+                            mv.emplace_back(parallel_mv);
+                            mv.emplace_back(parallel_mv);
+                            mv.emplace_back(parallel_mv);
+                        }else{
+                            mv.emplace_back((warping_mv[0]));
+                            mv.emplace_back((warping_mv[1]));
+                            mv.emplace_back((warping_mv[2]));
+                        }
+                        double MSE_tmp = getSquaredError(ref_image,target_image,target_corners,mv);
+                        std::cout << "triangle_size = " << triangle_size << "MSE_tmp = " << MSE_tmp << std::endl;
+                        MSE_prev += MSE_tmp;
+                        triangle_size_sum_prev += triangle_size;
+                        if (MSE_tmp / (double) triangle_size >= erase_th) {
+                            erase_count++; // 変曲点より後ろにいるやつ(3.40, 3.41式あたりを参照)
+                        }
+                    }
+
+                    MSE_prev /= triangle_size_sum_prev;
+                    std::cout << "MSE_prev = " << MSE_prev << std::endl;
+
+                    corners_later.erase(corners_later.begin() + idx);
+                    flag_around.erase(flag_around.begin() + idx);
+
+                    // 削除後のMSEを測る
+                    DelaunayTriangulation md_later(Rectangle(0, 0, target_image.cols, target_image.rows));
+                    md_later.insert(corners_later);
+                    std::vector<Triangle> triangles_later;
+                    triangles_later = md_later.Get_triangles_later(md_later, idx, corners_later, flag_around);
+
+                    for (auto triangle : triangles_later) {
+                        double MSE_tmp = 0;
+                        int triangle_size;
+                        Point3Vec triangleVec(corners_later[triangle.p1_idx], corners_later[triangle.p2_idx], corners_later[triangle.p3_idx]);
+                        Point3Vec prev_corners = Point3Vec(corners[triangle.p1_idx], corners[triangle.p2_idx], corners[triangle.p3_idx]);
+
+                        MSE_tmp= Gauss_Newton(ref_gauss, target_image, ref_image, triangleVec, prev_corners, triangle_size);
+                        MSE_later += MSE_tmp;
+                        triangle_size_sum_later += triangle_size;
+                        std::cout << "triangle_size = " << triangle_size <<  "MSE_later = " << MSE_tmp << std::endl;
+                    }
+
+                    MSE_later /= (double)triangle_size_sum_later;
+                    std::cout << "MSE_later = " << MSE_later << std::endl;
+
+                    // 削除前と削除後のRMSEを計算し比較
+                    double RMSE_prev = sqrt(MSE_prev);
+                    double RMSE_later = sqrt(MSE_later);
+
+                    // サイズ比
+                    double S_per = (double) triangle_size_sum_later / (double) triangle_size_sum_prev;
+                    std::cout << "RMSE_prev = " << RMSE_prev << " RMSE_later = " << RMSE_later << " RMSE_per = "
+                              << (MSE_later - MSE_prev) / MSE_prev << " S_per = "
+                              << S_per
+                              << " erase_count = " << erase_count << " / " << triangles_around.size()
+                              << " erase_per = " << RMSE_later/RMSE_prev << std::endl;
+                    std::cout << "MSE x S = " << (RMSE_later - RMSE_prev)*triangle_size_sum_later << std::endl;
+                    // 式3.41の条件 & 抜いてもあまり劣化しないところは抜く
+                    if ((double)erase_count / triangles_around.size() >= erase_th_per && RMSE_later/RMSE_prev < 1.5)
+                        erase_flag = true;
+
+                    // 式3.39(抜いてもあまり劣化しないとき), 式3.42(影響のある三角形の面積の総和をかけて、小さいパッチを抜く）
+                    if ((fabs(MSE_prev - MSE_later)/MSE_prev < 0.05 ) || MSE_prev > MSE_later ||
+                        erase_flag || (RMSE_later - RMSE_prev)*triangle_size_sum_later < 1000) {//6 10000
+                        std::cout << "erased" << std::endl;
+                        corners.erase(corners.begin() + idx);
+                        idx--;
+                    }
+                }
+            }
 //
 //            // 移動させて変化を見るやつ
 //            /*
@@ -975,7 +1016,7 @@ int main(int argc, char *argv[]) {
 //            }
 //*/
 
-            corners = triangle_division.getCorners();
+//            corners = triangle_division.getCorners();
 
             std::cout << "corners's size :" << corners.size() << std::endl;
             std::cout << "ref_corners's size :" << ref_corners.size() << std::endl;
@@ -1258,11 +1299,11 @@ int main(int argc, char *argv[]) {
 
             cv::Mat triangle_target = target_image.clone();
             cv::Mat mv_image = target_image.clone();
-            for(auto t : triangles) {
-                // 三角形を描画
-                drawTriangle(triangle_target, t.p1, t.p2, t.p3, cv::Scalar(255, 255, 255));
-                drawTriangle(mv_image, t.p1, t.p2, t.p3, cv::Scalar(255, 255, 255));
-            }
+//            for(auto t : triangles) {
+//                // 三角形を描画
+//                drawTriangle(triangle_target, t.p1, t.p2, t.p3, cv::Scalar(255, 255, 255));
+//                drawTriangle(mv_image, t.p1, t.p2, t.p3, cv::Scalar(255, 255, 255));
+//            }
 
             if(DIVIDE_MODE == LEFT_DIVIDE) {
                 cv::imwrite(file_path + img_path + "triangle_" + out_file[0] + "_" + std::to_string(block_size_x) + "_" + std::to_string(block_size_y) + "_LEFT.png", triangle_target);
@@ -1303,9 +1344,9 @@ int main(int argc, char *argv[]) {
             add_corners.clear();
             std::cout << "check point 3" << std::endl;
 
-            triangles = triangle_division.getTriangleIndexList();
+//            triangles = triangle_division.getTriangleIndexList();
 
-            PredictedImageResult result = getPredictedImage(ref_gauss, target_image, ref_image, triangles, ref_corners, corners, triangle_division,
+            PredictedImageResult result = getPredictedImage(ref_gauss, target_image, ref_image, triangles, ref_corners, corners, md,
                                                             add_corners, add_count, residual_ref,tmp_mv_x,tmp_mv_y,true);
             // 予測画像を得る
 
@@ -1536,9 +1577,9 @@ int main(int argc, char *argv[]) {
                 }
             }
             md.getTriangleList(triangles_mydelaunay);
-            for(const Point3Vec &t : triangle_division.getTriangleCoordinateList()){
-                drawTriangle(residual, t.p1, t.p2, t.p3, RED);
-            }
+//            for(const Point3Vec &t : triangle_division.getTriangleCoordinateList()){
+//                drawTriangle(residual, t.p1, t.p2, t.p3, RED);
+//            }
             cv::imwrite(file_path + img_path + "residual.png",residual);
             std::cout << "check point 4" << std::endl;
             double psnr_1;
@@ -1927,7 +1968,7 @@ std::vector<cv::Point2f> cornersQuantization(std::vector<cv::Point2f> &corners, 
  */
 PredictedImageResult
 getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intra,  std::vector<Triangle> &triangles,
-                  const std::vector<cv::Point2f> &ref_corners, std::vector<cv::Point2f> &corners, TriangleDivision triangle_division,std::vector<cv::Point2f> &add_corners,int &add_count,const cv::Mat& residual_ref,int &tmp_mv_x,int &tmp_mv_y ,bool add_flag) {
+                  const std::vector<cv::Point2f> &ref_corners, std::vector<cv::Point2f> &corners, DelaunayTriangulation md,std::vector<cv::Point2f> &add_corners,int &add_count,const cv::Mat& residual_ref,int &tmp_mv_x,int &tmp_mv_y ,bool add_flag) {
     cv::Mat out = cv::Mat::zeros(target.size(), CV_8UC3);
     cv::Mat color = cv::Mat::zeros(target.size(), CV_8UC3);
     cv::Mat expansion_ref = bilinearInterpolation(ref);
@@ -2220,7 +2261,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
 
             init_flag = true;
             // TODO: bug fix
-            std::vector<int> neighbor = triangle_division.getNeighborVertexIndexList(pt1_idx);
+            std::vector<int> neighbor = md.getNeighborVertexNum(pt1_idx);
 //            std::vector<int> neighbor = md.getNeighborVertexNum(std::get<0>(mv_basis[i][j])[1].second);
             for (int k = 0; k < (int) neighbor.size(); k++) {
                 Queue_neighbor.push(neighbor[k]);
@@ -2237,7 +2278,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
         Queue_neighbor.pop();
         // 取り出した頂点の隣接を入れる
         if (!(int)mv_basis_tuple[current_idx].empty()) {
-            std::vector<int> neighbor = triangle_division.getNeighborVertexIndexList(current_idx);
+            std::vector<int> neighbor = md.getNeighborVertexNum(current_idx);
 
             for(int k = 0;k < (int)neighbor.size();k++){
                 if(!mv_basis_tuple[neighbor[k]].empty()){
@@ -2298,14 +2339,14 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
                     double min_Distance = init_Distance;
                     int min_num = 0;
                     bool flag_arround = false;
-                    std::vector<int> neighbor = triangle_division.getNeighborVertexIndexList(
+                    std::vector<int> neighbor = md.getNeighborVertexNum(
                             std::get<0>(mv_basis_tuple[current_idx][j])[0].second);
-                    std::vector<cv::Point2f> neighbor_cood = triangle_division.getNeighborVertexCoordinateList(
+                    std::vector<cv::Point2f> neighbor_cood = md.getNeighborVertex(
                             std::get<0>(mv_basis_tuple[current_idx][j])[0].second);
                     for (int k = 0; k < (int) neighbor.size(); k++) {
                         if (!corded_mv[neighbor[k]].empty()) {
                             flag_arround = true;
-                            double Distance = triangle_division.getDistance(
+                            double Distance = md.getDistance(
                                     corners[std::get<0>(mv_basis_tuple[current_idx][j])[0].second], neighbor_cood[k]);
                             if (min_Distance > Distance) {
                                 min_Distance = Distance;
