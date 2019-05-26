@@ -92,6 +92,11 @@ enum DIVIDE {
     TYPE8
 };
 
+enum MV_CODE_METHOD {
+  SPATIAL,
+  Collocated
+};
+
 class TriangleDivision {
 
 public:
@@ -139,7 +144,7 @@ public:
     static SplitResult getSplitTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type);
     bool split(cv::Mat& gaussRefImage, CodingTreeUnit* ctu, Point3Vec triangle, int triangle_index, int type, int steps);
     std::vector<int> getSpatialTriangleList(int t_idx);
-    std::pair<cv::Point2f, cv::Point2f> getCollocatedTriangleList(CodingTreeUnit* unit);
+    cv::Point2f getCollocatedTriangleList(CodingTreeUnit* unit);
 
     std::vector<Point3Vec> getAllTriangleCoordinateList();
     std::vector<Triangle> getAllTriangleIndexList();
@@ -158,6 +163,7 @@ private:
     std::vector<std::vector<CollocatedMvTree*>> previousMvList;
     int coded_picture_num;
     std::vector<cv::Mat> predicted_buf;
+    std::vector<std::vector<cv::Point2f>> triangle_mvs;
 
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
     void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
@@ -169,6 +175,8 @@ private:
     bool isCTU(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3);
     std::vector<int> getDivideOrder(CodingTreeUnit* currentNode);
     void constructPreviousCodingTree(CodingTreeUnit* codingTree, CollocatedMvTree* constructedTree);
+
+    std::tuple<cv::Point2f, int, MV_CODE_METHOD> getMVD(int triangle_idx, CodingTreeUnit* ctu);
 
 };
 

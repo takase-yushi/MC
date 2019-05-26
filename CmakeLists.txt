@@ -1,20 +1,23 @@
+cmake_minimum_required(VERSION 3.6.2)
+
 project(dummy NONE)
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set(CMAKE_CXX_COMPILER clang++)
 endif()
-project(myproject CXX)
-
-set(OpenCV_DIR "C:\\opencv\\mingw")
-cmake_minimum_required(VERSION 3.6.2)
 project(Encoder)
 
-find_package(OpenCV REQUIRED)
-
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "-O2 -Wall")
+# enable C++11
+set(CMAKE_CXX_STANDARD, 17)
 
 find_package(OpenCV REQUIRED)
 
+message(STATUS "OpenCV library status:")
+message(STATUS "    config: ${OpenCV_DIR}")
+message(STATUS "    version: ${OpenCV_VERSION}")
+message(STATUS "    libraries: ${OpenCV_LIBS}")
+message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
+
+# OpenMP settings
 find_package( OpenMP )
 if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -22,8 +25,8 @@ if (OPENMP_FOUND)
 endif()
 
 set(SOURCE_FILES src/main.cpp)
-add_executable(Encoder src/main.cpp src/psnr.cpp includes/psnr.h src/main.cpp includes/config.h includes/Utils.h src/Utils.cpp src/ME.cpp includes/ME.hpp src/DelaunayTriangulation.cpp includes/DelaunayTriangulation.hpp src/Rectangle.cpp includes/Rectangle.hpp includes/Vector.hpp includes/Point.hpp includes/saturate.hpp src/GnuplotFileGenerator.cpp includes/GnuplotFileGenerator.hpp src/Golomb.cpp includes/Golomb.hpp src/TriangleDivision.cpp includes/TriangleDivision.h src/CodingTreeUnit.cpp includes/CodingTreeUnit.h src/Reconstruction.cpp includes/Reconstruction.h src/CollocatedMvTree.cpp includes/CollocatedMvTree.h src/ImageUtil.cpp includes/ImageUtil.h)
+add_executable(Encoder src/main.cpp src/psnr.cpp includes/psnr.h src/main.cpp includes/config.h includes/Utils.h src/Utils.cpp src/ME.cpp includes/ME.hpp src/DelaunayTriangulation.cpp includes/DelaunayTriangulation.hpp src/Rectangle.cpp includes/Rectangle.hpp includes/Vector.hpp includes/Point.hpp includes/saturate.hpp src/GnuplotFileGenerator.cpp includes/GnuplotFileGenerator.hpp src/Golomb.cpp includes/Golomb.hpp src/TriangleDivision.cpp includes/TriangleDivision.h src/CodingTreeUnit.cpp includes/CodingTreeUnit.h src/Reconstruction.cpp includes/Reconstruction.h src/CollocatedMvTree.cpp includes/CollocatedMvTree.h src/ImageUtil.cpp includes/ImageUtil.h src/Encode.cpp includes/Encode.h)
 include_directories(${OpenCV_INCLUDE_DIRS})
 target_link_libraries(Encoder ${OpenCV_LIBS})
 
-add_definitions(-std=c++11)
+add_definitions(-std=c++1y)
