@@ -64,9 +64,9 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
      *
      */
 
-    corner_flag.resize(ref_image.rows);
+    corner_flag.resize(static_cast<unsigned long>(ref_image.rows));
     for(int i = 0 ; i < ref_image.rows ; i++) {
-        corner_flag[i].resize(ref_image.cols);
+        corner_flag[i].resize(static_cast<unsigned long>(ref_image.cols));
     }
 
     for(int y = 0 ; y < ref_image.rows ; y++) {
@@ -87,7 +87,7 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
             if(ny < 0) ny = 0;
             if(target_image.rows <= ny) ny = target_image.rows - 1;
             corners.emplace_back(nx, ny);
-            corner_flag[ny][nx] = corners.size() - 1;
+            corner_flag[ny][nx] = static_cast<int>(corners.size() - 1);
             neighbor_vtx.emplace_back();
 
             // 前の動きベクトルを保持しておくやつ
@@ -257,10 +257,11 @@ int TriangleDivision::insertTriangle(int p1_idx, int p2_idx, int p3_idx, int typ
         }
     });
 
-    Triangle triangle(v[0].second, v[1].second, v[2].second, triangles.size());
+    Triangle triangle(v[0].second, v[1].second, v[2].second, static_cast<int>(triangles.size()));
 
     triangles.emplace_back(triangle, type);
     covered_triangle.emplace_back();
+    triangle_mvs.emplace_back();
     isCodedTriangle.emplace_back(true);
 
     return static_cast<int>(triangles.size() - 1);
@@ -322,7 +323,7 @@ double TriangleDivision::getDistance(const cv::Point2f &a, const cv::Point2f &b)
  */
 std::vector<int> TriangleDivision::getNeighborVertexIndexList(int idx) {
     std::set<int> s = neighbor_vtx[idx];
-    std::vector<int> v;
+    std::vector<int> v(s.size());
 
     for(const auto e : s) {
         v.emplace_back(e);
@@ -339,7 +340,7 @@ std::vector<int> TriangleDivision::getNeighborVertexIndexList(int idx) {
  */
 std::vector<cv::Point2f> TriangleDivision::getNeighborVertexCoordinateList(int idx) {
     std::set<int> s = neighbor_vtx[idx];
-    std::vector<cv::Point2f> v;
+    std::vector<cv::Point2f> v(s.size());
 
     for(const auto e : s) {
         v.emplace_back(corners[e]);
@@ -356,7 +357,7 @@ std::vector<cv::Point2f> TriangleDivision::getNeighborVertexCoordinateList(int i
  */
 std::vector<Point3Vec> TriangleDivision::getIdxCoveredTriangleCoordinateList(int target_vertex_idx) {
     std::set<int> s = covered_triangle[target_vertex_idx];
-    std::vector<Point3Vec> v;
+    std::vector<Point3Vec> v(s.size());
 
     for(auto triangle_idx : s) {
         Triangle triangle = triangles[triangle_idx].first;
@@ -374,7 +375,7 @@ std::vector<Point3Vec> TriangleDivision::getIdxCoveredTriangleCoordinateList(int
  */
 std::vector<int> TriangleDivision::getIdxCoveredTriangleIndexList(int target_vertex_idx) {
     std::set<int> s = covered_triangle[target_vertex_idx];
-    std::vector<int> v;
+    std::vector<int> v(s.size());
 
     for(auto triangle_idx : s) {
         v.emplace_back(triangle_idx);
@@ -1427,11 +1428,6 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
 
 //    std::cout << "Gauss_Newton2:" << mv_parallel[0]  << " " << mv_parallel[1] << " " << mv_parallel[2] << " decimal:" << mv_parallel[3] << std::endl;
 
-    std::cout << "GaussNewton(warping):" << gauss_result_warping[0] << " " << gauss_result_warping[1] << " " << gauss_result_warping[2] << std::endl;
-    std::cout << "GaussNewton(parallel):" << gauss_result_parallel << " " << gauss_result_parallel << " " << gauss_result_parallel << std::endl;
-
-
-    return false;
     RMSE_before_subdiv = error / triangle_size;
 
     std::vector<cv::Point2f> mv;
