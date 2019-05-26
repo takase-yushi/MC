@@ -1424,9 +1424,13 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
     cv::Point2f gauss_result_parallel;
     std::tie(gauss_result_warping, gauss_result_parallel, parallel_flag) = GaussNewton(ref_image, target_image, gaussRefImage, targetTriangle);
 
-    std::cout << "Gauss_Newton2:" << a << " " << b << " " << c << std::endl;
-
-//    std::cout << "Gauss_Newton2:" << mv_parallel[0]  << " " << mv_parallel[1] << " " << mv_parallel[2] << " decimal:" << mv_parallel[3] << std::endl;
+    if(parallel_flag) {
+        triangle_mvs[triangle_index].emplace_back(gauss_result_parallel);
+        triangle_mvs[triangle_index].emplace_back(gauss_result_parallel);
+        triangle_mvs[triangle_index].emplace_back(gauss_result_parallel);
+    }else{
+        triangle_mvs[triangle_index] = gauss_result_warping;
+    }
 
     RMSE_before_subdiv = error / triangle_size;
 
@@ -1442,7 +1446,7 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
     ctu->mv2 = mv[1];
     ctu->mv3 = mv[2];
 
-    std::pair<cv::Point2f, cv::Point2f> ret = getCollocatedTriangleList(ctu);
+    cv::Point2f ret = getCollocatedTriangleList(ctu);
 //    std::cout << ret.first << " " << ret.second << std::endl;
 
     SplitResult split_triangles = getSplitTriangle(p1, p2, p3, type);
@@ -1457,6 +1461,7 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
     int triangle_size_sum = 0;
 
     std::vector<std::vector<cv::Point2i> > split_mv_result;
+    std::vector<cv::Point2i> mv_parallel;
 #pragma omp parallel for
     for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
         mv_parallel = Gauss_Newton2(gaussRefImage, target_image, ref_image, predicted_buf, warp_p_image, warp_p_image, error, subdiv_target_triangles[j], subdiv_ref_triangles[j], &parallel_flag, num, residual_ref, triangle_size, 0.4);
@@ -1654,7 +1659,7 @@ std::vector<int> TriangleDivision::getSpatialTriangleList(int t_idx){
  * @param t_idx 三角パッチのインデックス
  * @return 整数の動きベクトルと小数部の動きベクトルのペア
  */
-std::pair<cv::Point2f, cv::Point2f> TriangleDivision::getCollocatedTriangleList(CodingTreeUnit* unit) {
+cv::Point2f TriangleDivision::getCollocatedTriangleList(CodingTreeUnit* unit) {
     CodingTreeUnit* tmp_unit = unit;
 
     if(tmp_unit == nullptr) {
