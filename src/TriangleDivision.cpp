@@ -1836,6 +1836,44 @@ void TriangleDivision::constructPreviousCodingTree(CodingTreeUnit* codingTree, C
 
 }
 
+/**
+ * @fn std::tuple<cv::Point2f, int, MV_CODE_METHOD> RD(int triangle_idx, CodingTreeUnit* ctu)
+ * @brief RDを行い，差分ベクトルを返す
+ * @param triangle_idx 三角パッチの番号
+ * @param ctu CodingTreeUnit
+ * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
+ */
+std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(int triangle_idx, CodingTreeUnit* ctu){
+    std::vector<int> spatial_triangles = getSpatialTriangleList(triangle_idx);
+    cv::Point2f collocated_vector = getCollocatedTriangleList(ctu);
+
+    int spatial_triangle_size = static_cast<int>(spatial_triangles.size());
+    std::vector<std::pair<cv::Point2f, int>> vectors(static_cast<unsigned long>(spatial_triangle_size + 1));
+
+    // すべてのベクトルを格納する．時間予測は後で
+    for(int i = 0 ; i < spatial_triangle_size ; i++) {
+        // とりあえず平行移動のみ考慮
+        vectors.emplace_back(triangle_mvs[spatial_triangles[i]][0], i);
+    }
+    vectors.emplace_back(collocated_vector, spatial_triangle_size);
+
+    std::vector<std::tuple<double, cv::Point2f, int> > results;
+    for(auto vector : vectors){
+        // TODO: 動きベクトル符号化
+        // TODO: 参照箇所符号化
+    }
+
+    // RDしたスコアが小さい順にソート
+    std::sort(results.begin(), results.end(), [](const std::tuple<double, cv::Point2f, int>& a, const std::tuple<double, cv::Point2f, int>& b){
+        return std::get<0>(a) < std::get<0>(b);
+    });
+
+    cv::Point2f mvd = std::get<1>(results[0]);
+    int selected_idx = std::get<2>(results[0]);
+    MV_CODE_METHOD method = selected_idx == spatial_triangle_size ? MV_CODE_METHOD::Collocated : MV_CODE_METHOD::SPATIAL;
+
+    return {mvd, selected_idx, method};
+}
 
 TriangleDivision::SplitResult::SplitResult(const Point3Vec &t1, const Point3Vec &t2, int t1Type, int t2Type) : t1(t1),
                                                                                                                t2(t2),
