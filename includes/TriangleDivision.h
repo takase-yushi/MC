@@ -158,6 +158,7 @@ private:
     std::vector<std::vector<CollocatedMvTree*>> previousMvList;
     int coded_picture_num;
     std::vector<cv::Mat> predicted_buf;
+    std::vector<std::vector<cv::Point2f>> triangle_mvs;
 
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
     void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx);

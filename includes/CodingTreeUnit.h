@@ -20,8 +20,7 @@ public:
     int depth;
     int position; // left or right
     int triangle_index;
-    cv::Point2i mv_integer;
-    cv::Point2i mv_decimal;
+    cv::Point2f mv1, mv2, mv3;
 };
 
 
