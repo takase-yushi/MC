@@ -1484,8 +1484,8 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
         ctu->leftNode = new CodingTreeUnit();
         ctu->leftNode->parentNode = ctu;
         int t1_idx = triangles.size() - 2;
-        bool ret = split(gaussRefImage, ctu->leftNode, split_triangles.t1, t1_idx,split_triangles.t1_type, steps - 1);
-        if(ret) {
+        bool result = split(gaussRefImage, ctu->leftNode, split_triangles.t1, t1_idx,split_triangles.t1_type, steps - 1);
+        if(result) {
             ctu->leftNode->split_cu_flag1 = true;
             ctu->leftNode->parentNode = ctu;
             ctu->leftNode->triangle_index = t1_idx;
@@ -1495,8 +1495,8 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
         ctu->rightNode = new CodingTreeUnit();
         ctu->rightNode->parentNode = ctu;
         int t2_idx = triangles.size() - 1;
-        ret = split(gaussRefImage, ctu->rightNode, split_triangles.t2, t2_idx, split_triangles.t2_type, steps - 1);
-        if(ret) {
+        result = split(gaussRefImage, ctu->rightNode, split_triangles.t2, t2_idx, split_triangles.t2_type, steps - 1);
+        if(result) {
             ctu->rightNode->split_cu_flag2 = true;
             ctu->rightNode->parentNode = ctu;
             ctu->rightNode->triangle_index = t2_idx;
@@ -1520,7 +1520,7 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
  * @param type 分割形状
  * @return 分割結果
  */
-TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type){
+TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, int type){
     cv::Point2f a, b, c, d;
     switch(type) {
         case DIVIDE::TYPE1:
@@ -1674,7 +1674,6 @@ cv::Point2f TriangleDivision::getCollocatedTriangleList(CodingTreeUnit* unit) {
     CollocatedMvTree* currentNode = previousMvList[0][root_triangle_idx];
     CollocatedMvTree* previousNode = currentNode;
 
-    cv::Point2f mv_integer, mv_decimal;
     int depth = 2;
 
     if(route.empty()) return currentNode->mv1;
