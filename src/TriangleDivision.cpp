@@ -11,6 +11,7 @@
 #include "../includes/ME.hpp"
 #include "../includes/CodingTreeUnit.h"
 #include "../includes/Reconstruction.h"
+#include "../includes/Encode.h"
 #include <set>
 #include <vector>
 #include <utility>
@@ -1861,7 +1862,7 @@ void TriangleDivision::constructPreviousCodingTree(CodingTreeUnit* codingTree, C
  * @param ctu CodingTreeUnit
  * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
  */
-std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(int triangle_idx, CodingTreeUnit* ctu){
+std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(cv::Point2f mv, int triangle_idx, CodingTreeUnit* ctu){
     std::vector<int> spatial_triangles = getSpatialTriangleList(triangle_idx);
     cv::Point2f collocated_vector = getCollocatedTriangleList(ctu);
 
@@ -1877,8 +1878,15 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(int triang
 
     std::vector<std::tuple<double, cv::Point2f, int> > results;
     for(auto vector : vectors){
+        cv::Point2f mvd = getQuantizedMv(vector.first - mv, 0);
+        mvd *= 4;
         // TODO: 動きベクトル符号化
+        int mvd_code_length = getExponentialGolombCodeLength((int)mvd.x, 0) + getExponentialGolombCodeLength((int)mvd.y, 0);
+
         // TODO: 参照箇所符号化
+        int reference_index_code_length = getUnaryCodeLength(vector.second);
+
+        
     }
 
     // RDしたスコアが小さい順にソート
