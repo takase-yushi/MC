@@ -480,7 +480,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
         cv::Point2f tmp_mv_parallel(0.0, 0.0);
 
         for(int step = 0 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
-            bool yamada = true;
 
             double scale = pow(2, 3 - step);
             cv::Mat current_ref_image = mv_filter(ref_images[filter_num][step],2);
@@ -822,8 +821,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                         B_parallel.at<double>(row, 0) += (f - g_parallel) * delta_g_parallel[row];
                     }
 
-                    MSE_warping += (f_org - g_warping) * (f_org - g_warping);
-                    MSE_parallel += (f_org - g_parallel) * (f_org - g_parallel);
+                    MSE_warping += (f_org - g_org_warping) * (f_org - g_org_warping);
+                    MSE_parallel += (f_org - g_org_parallel) * (f_org - g_org_parallel);
 //                    MSE_warping  += (f - g_warping)  * (f - g_warping);
 //                    MSE_parallel += (f - g_parallel) * (f - g_parallel);
                 }
@@ -955,6 +954,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
         }
     }
 
+    parallel_flag = true;
     // 量子化
     double quantize_offset = 0.125;
     if(max_v_parallel.x < 0) {
@@ -2442,8 +2442,8 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
                         current_error_2 += (f - g2) * (f - g2);
 
                         ek += (f - g - ek_tmp) * (f - g - ek_tmp);
-                        MSE += (f - g) * (f - g);
-                        MSE_para += (f - g_para) * (f - g_para);
+                        MSE += (f_org - g_org) * (f_org - g_org);
+                        MSE_para += (f_org - g_para_org) * (f_org - g_para_org);
 
                         // TODO: 予測残差はホンモノの画像で撮ったほうがいいのでは？
                     }
@@ -2916,7 +2916,7 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
         error_warp = Error_para_min;
     }
 
-    error_warp = squaredError;
+//    error_warp = squaredError;
     return mv;
 }
 
