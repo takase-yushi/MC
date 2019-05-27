@@ -394,7 +394,7 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
  * @param[in] target_corners 対象画像上の三角パッチの座標
  * @return 動きベクトル・予測残差・面積のtuple
  */
-std::tuple<std::vector<cv::Point2f>, cv::Point2f, bool> GaussNewton(cv::Mat ref_image, cv::Mat target_image, cv::Mat gauss_ref_image, Point3Vec target_corners){
+std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton(cv::Mat ref_image, cv::Mat target_image, cv::Mat gauss_ref_image, Point3Vec target_corners){
     // 画像の初期化 vector[filter][picture_number]
     std::vector<std::vector<cv::Mat>> ref_images;
     std::vector<std::vector<cv::Mat>> target_images;
@@ -980,7 +980,14 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, bool> GaussNewton(cv::Mat ref_
         max_v_warping[i].y = ((int)((max_v_warping[i].y) * 4) / 4.0);
     }
 
-    return std::make_tuple(std::vector<cv::Point2f>{max_v_warping[0], max_v_warping[1], max_v_warping[2]}, max_v_parallel, true);
+    double error = 0.0;
+    if(parallel_flag) {
+        error = min_error_parallel; // / (double)pixels_in_triangle.size();
+    }else{
+        error = min_error_warping; // / (double)pixels_in_triangle.size();
+    }
+//    std::cout << "min_error_parallel:" << min_error_parallel << " min_error_warping:" << min_error_warping << std::endl;
+    return std::make_tuple(std::vector<cv::Point2f>{max_v_warping[0], max_v_warping[1], max_v_warping[2]}, max_v_parallel, error, pixels_in_triangle.size(),true);
 }
 
 /**
