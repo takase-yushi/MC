@@ -177,7 +177,7 @@ private:
     void constructPreviousCodingTree(CodingTreeUnit* codingTree, CollocatedMvTree* constructedTree);
     cv::Point2f getQuantizedMv(cv::Point2f mv, int quantize_step);
 
-    std::tuple<cv::Point2f, int, MV_CODE_METHOD> getMVD(int triangle_idx, CodingTreeUnit* ctu);
+    std::tuple<cv::Point2f, int, MV_CODE_METHOD> getMVD(cv::Point2f mv, int triangle_idx, CodingTreeUnit* ctu);
 
 };
 
