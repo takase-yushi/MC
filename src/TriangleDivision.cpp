@@ -1398,13 +1398,14 @@ void TriangleDivision::subdivision(cv::Mat gaussRefImage, int steps) {
  * @details この関数は再帰的に呼び出され，そのたびに分割を行う
  * @param gaussRefImage ガウス・ニュートン法の参照画像
  * @param ctu CodingTreeUnitのrootノード
+ * @oaran cmt 時間予測用のCollocatedMvTreeのノード(collocatedmvtree→cmt)
  * @param triangle 三角形の各点の座標
  * @param triangle_index 三角形のindex
  * @param type 分割方向
  * @param steps 分割回数
  * @return 分割した場合はtrue, そうでない場合falseを返す
  */
-bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3Vec triangle, int triangle_index, int type, int steps) {
+bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point3Vec triangle, int triangle_index, int type, int steps) {
     if(steps == 0) return false;
 
     double RMSE_before_subdiv = 0.0;
@@ -1422,7 +1423,14 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
 
     std::vector<cv::Point2f> gauss_result_warping;
     cv::Point2f gauss_result_parallel;
-    std::tie(gauss_result_warping, gauss_result_parallel, parallel_flag) = GaussNewton(ref_image, target_image, gaussRefImage, targetTriangle);
+    std::tie(gauss_result_warping, gauss_result_parallel, RMSE_before_subdiv, triangle_size, parallel_flag) = GaussNewton(ref_image, target_image, gaussRefImage, targetTriangle);
+
+    std::vector<std::vector<cv::Point2f> > split_mv_result;
+    cv::Point2f mv_parallel;
+    warp_p_image = ref_image.clone();
+    residual_ref = cv::Mat::zeros(1920, 1024, CV_8UC1);
+
+    std::vector<cv::Point2i> ret_gauss2;
 
     if(parallel_flag) {
         triangle_mvs[triangle_index].emplace_back(gauss_result_parallel);
@@ -1432,7 +1440,7 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
         triangle_mvs[triangle_index] = gauss_result_warping;
     }
 
-    RMSE_before_subdiv = error / triangle_size;
+    RMSE_before_subdiv = RMSE_before_subdiv / triangle_size;
 
     std::vector<cv::Point2f> mv;
     if(parallel_flag){
@@ -1446,8 +1454,13 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
     ctu->mv2 = mv[1];
     ctu->mv3 = mv[2];
 
-    cv::Point2f ret = getCollocatedTriangleList(ctu);
-//    std::cout << ret.first << " " << ret.second << std::endl;
+//    cv::Point2f ret = getCollocatedTriangleList(ctu);
+
+    if(cmt == nullptr) {
+        cmt = previousMvList[0][triangle_index];
+    }
+    ctu->collocated_mv = cmt->mv1;
+    std::cout << ctu->collocated_mv << std::endl;
 
     SplitResult split_triangles = getSplitTriangle(p1, p2, p3, type);
 
@@ -1458,19 +1471,16 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
     subdiv_target_triangles.push_back(split_triangles.t2);
 
     double RMSE_after_subdiv = 0.0;
-    int triangle_size_sum = 0;
 
-    std::vector<std::vector<cv::Point2i> > split_mv_result;
-    std::vector<cv::Point2i> mv_parallel;
-#pragma omp parallel for
+    #pragma omp parallel for
     for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
-        mv_parallel = Gauss_Newton2(gaussRefImage, target_image, ref_image, predicted_buf, warp_p_image, warp_p_image, error, subdiv_target_triangles[j], subdiv_ref_triangles[j], &parallel_flag, num, residual_ref, triangle_size, 0.4);
-        split_mv_result.emplace_back(mv_parallel);
-        RMSE_after_subdiv += error;
-        triangle_size_sum += triangle_size;
+        double error_tmp;
+        std::tie(std::ignore, mv_parallel, error_tmp, std::ignore, std::ignore) = GaussNewton(ref_image, target_image, gaussRefImage, subdiv_target_triangles[j]);
+        split_mv_result.emplace_back(std::vector<cv::Point2f>{mv_parallel, mv_parallel, mv_parallel});
+        RMSE_after_subdiv += error_tmp;
     }
 
-    RMSE_after_subdiv /= (double) triangle_size_sum;
+    RMSE_after_subdiv /= (double) triangle_size;
 
     std::cout << "RMSE_before_subdiv:" << RMSE_before_subdiv << " RMSE_after_subdiv:" << RMSE_after_subdiv << std::endl;
 
@@ -1484,7 +1494,7 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
         ctu->leftNode = new CodingTreeUnit();
         ctu->leftNode->parentNode = ctu;
         int t1_idx = triangles.size() - 2;
-        bool result = split(gaussRefImage, ctu->leftNode, split_triangles.t1, t1_idx,split_triangles.t1_type, steps - 1);
+        bool result = split(gaussRefImage, ctu->leftNode, (cmt->leftNode != nullptr ? cmt->leftNode : cmt), split_triangles.t1, t1_idx,split_triangles.t1_type, steps - 1);
         if(result) {
             ctu->leftNode->split_cu_flag1 = true;
             ctu->leftNode->parentNode = ctu;
@@ -1495,7 +1505,7 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3
         ctu->rightNode = new CodingTreeUnit();
         ctu->rightNode->parentNode = ctu;
         int t2_idx = triangles.size() - 1;
-        result = split(gaussRefImage, ctu->rightNode, split_triangles.t2, t2_idx, split_triangles.t2_type, steps - 1);
+        result = split(gaussRefImage, ctu->rightNode, (cmt->rightNode != nullptr ? cmt->rightNode : cmt), split_triangles.t2, t2_idx, split_triangles.t2_type, steps - 1);
         if(result) {
             ctu->rightNode->split_cu_flag2 = true;
             ctu->rightNode->parentNode = ctu;
@@ -1746,6 +1756,10 @@ std::vector<int> TriangleDivision::getDivideOrder(CodingTreeUnit* currentNode){
 void TriangleDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num) {
 
     for(int i = 0 ; i < 10 ; i++) {
+        previousMvList[0][i]->mv1 = cv::Point2f(10000, 10000);
+        previousMvList[0][i]->mv2 = cv::Point2f(10000, 10000);
+        previousMvList[0][i]->mv3 = cv::Point2f(10000, 10000);
+
         auto* left = new CollocatedMvTree();
         left->mv1 = cv::Point2f(1000, 1000);
         left->mv2 = cv::Point2f(1000, 1000);
@@ -1755,27 +1769,27 @@ void TriangleDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> 
         left->leftNode->mv1 = cv::Point2f(100, 100);
         left->leftNode->mv2 = cv::Point2f(100, 100);
         left->leftNode->mv3 = cv::Point2f(100, 100);
-        left->leftNode->leftNode = new CollocatedMvTree();
-        left->leftNode->leftNode->mv1 = cv::Point2f(10, 10);
-        left->leftNode->leftNode->mv2 = cv::Point2f(10, 10);
-        left->leftNode->leftNode->mv3 = cv::Point2f(10, 10);
-        left->leftNode->rightNode = new CollocatedMvTree();
-        left->leftNode->rightNode->mv1 = cv::Point2f(1, 1);
-        left->leftNode->rightNode->mv2 = cv::Point2f(1, 1);
-        left->leftNode->rightNode->mv3 = cv::Point2f(1, 1);
+//        left->leftNode->leftNode = new CollocatedMvTree();
+//        left->leftNode->leftNode->mv1 = cv::Point2f(10, 10);
+//        left->leftNode->leftNode->mv2 = cv::Point2f(10, 10);
+//        left->leftNode->leftNode->mv3 = cv::Point2f(10, 10);
+//        left->leftNode->rightNode = new CollocatedMvTree();
+//        left->leftNode->rightNode->mv1 = cv::Point2f(1, 1);
+//        left->leftNode->rightNode->mv2 = cv::Point2f(1, 1);
+//        left->leftNode->rightNode->mv3 = cv::Point2f(1, 1);
 
         left->rightNode = new CollocatedMvTree();
         left->rightNode->mv1 = cv::Point2f(100, 100);
         left->rightNode->mv2 = cv::Point2f(100, 100);
         left->rightNode->mv3 = cv::Point2f(100, 100);
-        left->rightNode->leftNode = new CollocatedMvTree();
-        left->rightNode->leftNode->mv1 = cv::Point2f(10, 10);
-        left->rightNode->leftNode->mv2 = cv::Point2f(10, 10);
-        left->rightNode->leftNode->mv3 = cv::Point2f(10, 10);
-        left->rightNode->rightNode = new CollocatedMvTree();
-        left->rightNode->rightNode->mv1 = cv::Point2f(1, 1);
-        left->rightNode->rightNode->mv2 = cv::Point2f(1, 1);
-        left->rightNode->rightNode->mv3 = cv::Point2f(1, 1);
+//        left->rightNode->leftNode = new CollocatedMvTree();
+//        left->rightNode->leftNode->mv1 = cv::Point2f(10, 10);
+//        left->rightNode->leftNode->mv2 = cv::Point2f(10, 10);
+//        left->rightNode->leftNode->mv3 = cv::Point2f(10, 10);
+//        left->rightNode->rightNode = new CollocatedMvTree();
+//        left->rightNode->rightNode->mv1 = cv::Point2f(1, 1);
+//        left->rightNode->rightNode->mv2 = cv::Point2f(1, 1);
+//        left->rightNode->rightNode->mv3 = cv::Point2f(1, 1);
         previousMvList[pic_num][i]->leftNode = left;
 
         auto* right = new CollocatedMvTree();
@@ -1787,27 +1801,27 @@ void TriangleDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> 
         right->leftNode->mv1 = cv::Point2f(100, 100);
         right->leftNode->mv2 = cv::Point2f(100, 100);
         right->leftNode->mv3 = cv::Point2f(100, 100);
-        right->leftNode->leftNode = new CollocatedMvTree();
-        right->leftNode->leftNode->mv1 = cv::Point2f(10, 10);
-        right->leftNode->leftNode->mv2 = cv::Point2f(10, 10);
-        right->leftNode->leftNode->mv3 = cv::Point2f(10, 10);
-        right->leftNode->rightNode = new CollocatedMvTree();
-        right->leftNode->rightNode->mv1 = cv::Point2f(1, 1);
-        right->leftNode->rightNode->mv2 = cv::Point2f(1, 1);
-        right->leftNode->rightNode->mv3 = cv::Point2f(1, 1);
+//        right->leftNode->leftNode = new CollocatedMvTree();
+//        right->leftNode->leftNode->mv1 = cv::Point2f(10, 10);
+//        right->leftNode->leftNode->mv2 = cv::Point2f(10, 10);
+//        right->leftNode->leftNode->mv3 = cv::Point2f(10, 10);
+//        right->leftNode->rightNode = new CollocatedMvTree();
+//        right->leftNode->rightNode->mv1 = cv::Point2f(1, 1);
+//        right->leftNode->rightNode->mv2 = cv::Point2f(1, 1);
+//        right->leftNode->rightNode->mv3 = cv::Point2f(1, 1);
 
         right->rightNode = new CollocatedMvTree();
         right->rightNode->mv1 = cv::Point2f(100, 100);
         right->rightNode->mv2 = cv::Point2f(100, 100);
         right->rightNode->mv3 = cv::Point2f(100, 100);
-        right->rightNode->leftNode = new CollocatedMvTree();
-        right->rightNode->leftNode->mv1 = cv::Point2f(10, 10);
-        right->rightNode->leftNode->mv2 = cv::Point2f(10, 10);
-        right->rightNode->leftNode->mv3 = cv::Point2f(10, 10);
-        right->rightNode->rightNode = new CollocatedMvTree();
-        right->rightNode->rightNode->mv1 = cv::Point2f(1, 1);
-        right->rightNode->rightNode->mv2 = cv::Point2f(1, 1);
-        right->rightNode->rightNode->mv3 = cv::Point2f(1, 1);
+//        right->rightNode->leftNode = new CollocatedMvTree();
+//        right->rightNode->leftNode->mv1 = cv::Point2f(10, 10);
+//        right->rightNode->leftNode->mv2 = cv::Point2f(10, 10);
+//        right->rightNode->leftNode->mv3 = cv::Point2f(10, 10);
+//        right->rightNode->rightNode = new CollocatedMvTree();
+//        right->rightNode->rightNode->mv1 = cv::Point2f(1, 1);
+//        right->rightNode->rightNode->mv2 = cv::Point2f(1, 1);
+//        right->rightNode->rightNode->mv3 = cv::Point2f(1, 1);
         previousMvList[pic_num][i]->rightNode = right;
     }
 
