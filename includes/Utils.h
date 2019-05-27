@@ -94,6 +94,7 @@ struct Point3Vec{
      */
     Point3Vec(const cv::Point2f &p1, const cv::Point2f &p2, const cv::Point2f &p3) : p1(p1), p2(p2), p3(p3) {}
 
+    Point3Vec() {}
 
     bool operator==(const Point3Vec &rhs) const {
         return p1 == rhs.p1 &&
