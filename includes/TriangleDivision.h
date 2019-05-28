@@ -127,7 +127,7 @@ public:
     };
 
     TriangleDivision(const cv::Mat &refImage, const cv::Mat &targetImage);
-    void initTriangle(int block_size_x, int block_size_y, int _divide_steps, int divide_flag = LEFT_DIVIDE);
+    void initTriangle(int block_size_x, int block_size_y, int _divide_steps, int _qp, int divide_flag = LEFT_DIVIDE);
     std::vector<std::pair<Point3Vec, int> > getTriangles();
     std::vector<Point3Vec> getTriangleCoordinateList();
     std::vector<Triangle> getTriangleIndexList();
@@ -165,6 +165,7 @@ private:
     int coded_picture_num;
     std::vector<cv::Mat> predicted_buf;
     std::vector<std::vector<cv::Point2f>> triangle_mvs;
+    int qp;
 
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
     void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
