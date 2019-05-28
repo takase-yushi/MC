@@ -390,12 +390,20 @@ int main(int argc, char *argv[]) {
         // 差分画像（？）
         cv::Mat residual_ref = cv::Mat::zeros(target_image.size(),CV_8UC1);
         cv::Mat Maskx4 = cv::Mat::zeros(targetx4.size(),CV_8UC1);
+        cv::Mat Mask = cv::Mat::zeros(target_image.size(),CV_8UC1);
+
 
         // GFTTで周りに特徴点をとってほしくないので、8px内側だけ取るように
         int crop_W = 8,crop_H = 8;
         for (int j = crop_H;j < targetx4.rows - crop_H;j++){
             for(int i = crop_W;i < targetx4.cols - crop_W;i++){
                 Maskx4.at<unsigned char>(j,i) = 1;
+            }
+        }
+        crop_W = 8,crop_H = 8;
+        for (int j = crop_H;j < target_image.rows - crop_H;j++){
+            for(int i = crop_W;i < target_image.cols - crop_W;i++){
+                Mask.at<unsigned char>(j,i) = 1;
             }
         }
 
@@ -449,7 +457,7 @@ int main(int argc, char *argv[]) {
         // maxCorners – 出力されるコーナーの最大数．これより多い数のコーナーが検出された場合，より強いコーナーが出力されます．
         // qualityLevel – 許容される画像コーナーの最低品質を決定します．このパラメータ値を，最良のコーナーを示す測度（ cornerMinEigenVal() で述べた最小固有値や， cornerHarris() で述べた Harris 関数の応答）に乗じます．その掛け合わされた値よりも品質度が低いコーナーは，棄却されます．例えば，コーナーの最高品質度 = 1500， qualityLevel=0.01 である場合，品質度が15より小さいすべてのコーナーが棄却されます．
         // minDistance – 出力されるコーナー間で許容される，最小ユークリッド距離．
-        cv::goodFeaturesToTrack(residual_ref, corners_org, POINT_MAX, GFTT_QUAULITY, 24,residual_ref, 3);
+        cv::goodFeaturesToTrack(residual_ref, corners_org, POINT_MAX, GFTT_QUAULITY, 24,Mask, 3);
         cv::goodFeaturesToTrack(targetx4_Y, corners_target_Y, POINT_MAX, GFTT_QUAULITY, 16,Maskx4, 3);//8
 
         for(cv::Point2f &corner : corners_target_Y) corner *= 4;
