@@ -56,6 +56,30 @@ int getBinaryLength(int x){
 }
 
 /**
+ * @fn double getLambdaMode(int qp)
+ * @brief CUモード選択に使われるラムダをQPの値に応じて計算し返す
+ * @see H.265/HEVC教科書 P234
+ * @param qp QP
+ * @return ラムダの値
+ */
+double getLambdaMode(int qp){
+    double alpha = 1.0; // P picture
+    double wk = 0.578;  // Low-Delay P
+    return alpha * wk * std::pow(2, (qp - 12)/3.0);
+}
+
+/**
+ * @fn double getLambdaPred(int qp)
+ * @brief 予測モードのRDで使うQPに応じたラムダの値を返す
+ * @see H.265/HEVC教科書 P234
+ * @param qp 参照画像のQP
+ * @return lambdaの値
+ */
+double getLambdaPred(int qp){
+    return sqrt(getLambdaMode(qp));
+}
+
+/**
  * @fn int getGolombCodeLength(int data, int m)
  * @brief dataをパラメタmでゴロム符号化にした際の符号長を返す
  * @return ゴロム付号の符号長
