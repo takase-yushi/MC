@@ -21,6 +21,7 @@ public:
     int position; // left or right
     int triangle_index;
     cv::Point2f mv1, mv2, mv3;
+    cv::Point2f collocated_mv;
 };
 
 

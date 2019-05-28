@@ -142,13 +142,13 @@ public:
     void constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num = 0);
 
     static SplitResult getSplitTriangle(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, int type);
-    bool split(cv::Mat& gaussRefImage, CodingTreeUnit* ctu, Point3Vec triangle, int triangle_index, int type, int steps);
+    bool split(cv::Mat& gaussRefImage, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point3Vec triangle, int triangle_index, int type, int steps);
     std::vector<int> getSpatialTriangleList(int t_idx);
     cv::Point2f getCollocatedTriangleList(CodingTreeUnit* unit);
 
     std::vector<Point3Vec> getAllTriangleCoordinateList();
     std::vector<Triangle> getAllTriangleIndexList();
-    int divide_steps;
+    int divide_steps; // 分割回数
 
 private:
     std::vector<cv::Point2f> corners;
@@ -175,8 +175,9 @@ private:
     bool isCTU(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3);
     std::vector<int> getDivideOrder(CodingTreeUnit* currentNode);
     void constructPreviousCodingTree(CodingTreeUnit* codingTree, CollocatedMvTree* constructedTree);
+    cv::Point2f getQuantizedMv(cv::Point2f mv, int quantize_step);
 
-    std::tuple<cv::Point2f, int, MV_CODE_METHOD> getMVD(int triangle_idx, CodingTreeUnit* ctu);
+    std::tuple<cv::Point2f, int, MV_CODE_METHOD> getMVD(cv::Point2f mv, int triangle_idx, CodingTreeUnit* ctu);
 
 };
 

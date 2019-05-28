@@ -119,16 +119,6 @@ int block_size_y;
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
 int main(int argc, char *argv[]) {
 
-//    getGolombCodeLength(0, 3);
-    getExponentialGolombCodeLength(0, 0);
-    for(int i = 1 ; i < 10 ; i++){
-//        getGolombCodeLength(-i, 3);
-//        getGolombCodeLength(i, 3);
-        getExponentialGolombCodeLength(-i, 0);
-        getExponentialGolombCodeLength(i, 0);
-    }
-    exit(0);
-
     std::cout << "OpenCV_version : " << getVersionOfOpenCV() << std::endl;
 
     const std::string file_path = getProjectDirectory();
@@ -262,8 +252,6 @@ int main(int argc, char *argv[]) {
         cv::Mat gaussRefImage = cv::imread(ref_file_path);
         cv::Mat spatialMvTestImage;
 
-
-
         cv::Mat new_gauss_output_image = cv::Mat::zeros(gaussRefImage.rows, gaussRefImage.cols, CV_8UC3);
 
         std::vector<Triangle> tt = triangle_division.getTriangleIndexList();
@@ -277,50 +265,19 @@ int main(int argc, char *argv[]) {
 //        PredictedImageResult ret = getPredictedImage(gaussRefImage, target_image, ref_image, tt, tmp_ref_corners, corners, triangle_division, add_corners, add_count, r_ref, tmp_mv_x, tmp_mv_y, p_flag);
 //        cv::imwrite(img_directory + "/Gauss_Newton2_predicted_image.png", ret.out);
 //        std::cout << "PSNR:" << getPSNR(ret.out, target_image) << std::endl;
+//        exit(0);
 //
-        int cnt = 0;
-#pragma omp parallel for
-        for(int i = 0 ; i < init_triangles.size() ; i++){
-            std::pair<Point3Vec, int> t = init_triangles[i];
-            bool parallel_flag;
-            std::vector<cv::Point2f> warping_mv;
-            cv::Point2f parallel_mv;
-            std::tie(warping_mv, parallel_mv, parallel_flag) = GaussNewton(ref_image, target_image, gaussRefImage, t.first);
-
-            if(parallel_flag == true) {
-                std::cout << parallel_mv << " " << parallel_mv << " " << parallel_mv <<std::endl;
-            }else{
-                std::cout << warping_mv[0] << " " << warping_mv[1] << " " << warping_mv[2] << std::endl;
-            }
-
-            std::vector<cv::Point2f> mv;
-            if(parallel_flag == true) {
-                mv.emplace_back(parallel_mv);
-                mv.emplace_back(parallel_mv);
-                mv.emplace_back(parallel_mv);
-            }else{
-                mv = warping_mv;
-            }
-
-            getPredictedImage(ref_image, target_image, new_gauss_output_image, t.first, mv, true);
-        }
-
-        cv::imwrite(img_directory + "/hogehoge.png", new_gauss_output_image);
-        cv::imwrite(img_directory + "/hogehoge_residual.png", getResidualImage(target_image, new_gauss_output_image));
-        std::cout << "PSNR:" << getPSNR(target_image, new_gauss_output_image) << std::endl;
-        exit(0);
-
     //#pragma omp parallel for
 //        for(int i = 0 ; i < init_triangles.size() ; i++) {
         triangle_division.constructPreviousCodingTree(foo, 0);
-        for(int i = 0 ; i < init_triangles.size() ; i++) {
+        for(int i = 0 ; i < 10 ; i++) {
             std::pair<Point3Vec, int> triangle = init_triangles[i];
 //            std::cout << "i:" << i << std::endl;
             cv::Point2f p1 = triangle.first.p1;
             cv::Point2f p2 = triangle.first.p2;
             cv::Point2f p3 = triangle.first.p3;
 
-            triangle_division.split(gaussRefImage, foo[i], Point3Vec(p1, p2, p3), i, triangle.second, divide_steps);
+            triangle_division.split(gaussRefImage, foo[i], nullptr, Point3Vec(p1, p2, p3), i, triangle.second, divide_steps);
 //            triangle_division.getSpatialTriangleList(triangles.size() - 1);
 //            int prev_triangles_max = triangles.size();
 //            triangles = triangle_division.getAllTriangleCoordinateList();
@@ -1998,7 +1955,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
     // 平行移動とワーピングを塗り分ける用
     cv::Mat parallel_flag_img_color = target.clone();
 
-#pragma omp parallel for
+//#pragma omp parallel for
     // 基準ベクトル以外のベ   クトルを符号化
     for (int t = 0; t < (int)triangles.size(); t++) { // NOLINT
 
