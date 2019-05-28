@@ -1041,7 +1041,7 @@ int main(int argc, char *argv[]) {
 //                corner_list_later << point.x << " " << point.y << std::endl;
 //            }
 
-            std::ifstream in_corner_list = std::ifstream("corner_list_" + corner_file_name + ".dat");
+            std::ifstream in_corner_list = std::ifstream("corner_list_" + corner_file_name + "_later.dat");
             std::string str1;
             int point_x,point_y;
             corners.clear();
