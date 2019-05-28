@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <queue>
 #include <opencv2/imgcodecs.hpp>
+#include "../includes/ImageUtil.h"
 
 TriangleDivision::TriangleDivision(const cv::Mat &refImage, const cv::Mat &targetImage) : target_image(targetImage),
                                                                                           ref_image(refImage) {}
@@ -39,9 +40,10 @@ TriangleDivision::GaussResult::GaussResult(): triangle(Triangle(-1, -1, -1)) {}
  * @param[in] block_size_y
  * @param[in] divide_flag
  */
-void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _divide_steps, int divide_flag) {
+void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _divide_steps, int _qp, int divide_flag) {
     block_size_x = _block_size_x;
     block_size_y = _block_size_y;
+    qp = _qp;
     int block_num_x = target_image.cols / block_size_x;
     int block_num_y = target_image.rows / block_size_y;
     divide_steps = _divide_steps;
@@ -1473,7 +1475,7 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
 
     double RMSE_after_subdiv = 0.0;
 
-    #pragma omp parallel for
+//    #pragma omp parallel for
     for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
         double error_tmp;
         std::tie(std::ignore, mv_parallel, error_tmp, std::ignore, std::ignore) = GaussNewton(ref_image, target_image, gaussRefImage, subdiv_target_triangles[j]);
@@ -1857,40 +1859,65 @@ void TriangleDivision::constructPreviousCodingTree(CodingTreeUnit* codingTree, C
 
 /**
  * @fn std::tuple<cv::Point2f, int, MV_CODE_METHOD> RD(int triangle_idx, CodingTreeUnit* ctu)
- * @brief RDを行い，差分ベクトルを返す
- * @param triangle_idx 三角パッチの番号
- * @param ctu CodingTreeUnit
+ * @brief RDを行い，最適な差分ベクトルを返す
+ * @param[in] mv 動きベクトル
+ * @param[in] triangle_idx 三角パッチの番号
+ * @param[in] residual そのパッチの残差
+ * @param[in] ctu CodingTreeUnit 符号木
  * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
  */
-std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(cv::Point2f mv, int triangle_idx, CodingTreeUnit* ctu){
+std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, CodingTreeUnit* ctu){
+    // 空間予測と時間予測の候補を取り出す
     std::vector<int> spatial_triangles = getSpatialTriangleList(triangle_idx);
     cv::Point2f collocated_vector = getCollocatedTriangleList(ctu);
 
     int spatial_triangle_size = static_cast<int>(spatial_triangles.size());
-    std::vector<std::pair<cv::Point2f, int>> vectors(static_cast<unsigned long>(spatial_triangle_size + 1));
+    std::vector<std::tuple<cv::Point2f, int, MV_CODE_METHOD >> vectors(static_cast<unsigned long>(spatial_triangle_size + 1));
 
-    // すべてのベクトルを格納する．時間予測は後で
+    // すべてのベクトルを格納する．
     for(int i = 0 ; i < spatial_triangle_size ; i++) {
         // とりあえず平行移動のみ考慮
         vectors.emplace_back(triangle_mvs[spatial_triangles[i]][0], i);
     }
     vectors.emplace_back(collocated_vector, spatial_triangle_size);
 
-    std::vector<std::tuple<double, cv::Point2f, int> > results;
+    // TODO: ラムダを正しい値に置き換え
+    double lambda = 0.45;
+
+    //                      コスト, 差分ベクトル, 番号, タイプ
+    std::vector<std::tuple<double, cv::Point2f, int, MV_CODE_METHOD> > results;
     for(auto vector : vectors){
-        cv::Point2f mvd = getQuantizedMv(vector.first - mv, 0);
+        cv::Point2f current_mv = std::get<0>(vector);
+        cv::Point2f mvd = getQuantizedMv(current_mv - mv[0], 0);
         mvd *= 4;
-        // TODO: 動きベクトル符号化
+        // 動きベクトル符号化
         int mvd_code_length = getExponentialGolombCodeLength((int)mvd.x, 0) + getExponentialGolombCodeLength((int)mvd.y, 0);
 
-        // TODO: 参照箇所符号化
-        int reference_index_code_length = getUnaryCodeLength(vector.second);
+        // 参照箇所符号化
+        int reference_index = std::get<1>(vector);
+        int reference_index_code_length = getUnaryCodeLength(reference_index);
 
-        
+        double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
+
+        // 結果に入れる
+        results.emplace_back(rd, mvd, reference_index, std::get<2>(vector));
+    }
+
+    // マージ符号化
+    // マージで参照する動きベクトルを使って残差を求め直す
+    Triangle current_triangle_coordinate = triangles[triangle_idx].first;
+    cv::Point2f p1 = corners[current_triangle_coordinate.p1_idx];
+    cv::Point2f p2 = corners[current_triangle_coordinate.p2_idx];
+    cv::Point2f p3 = corners[current_triangle_coordinate.p3_idx];
+    Point3Vec coordinate = Point3Vec(p1, p2, p3);
+    for(int i = 0 ; i < spatial_triangle_size ; i++) {
+        double ret_residual = getTriangleResidual(ref_image, target_image, coordinate, mv);
+        double rd = ret_residual + lambda * (getUnaryCodeLength(i));
+        results.emplace_back(rd, cv::Point2f(0,0), i, MERGE);
     }
 
     // RDしたスコアが小さい順にソート
-    std::sort(results.begin(), results.end(), [](const std::tuple<double, cv::Point2f, int>& a, const std::tuple<double, cv::Point2f, int>& b){
+    std::sort(results.begin(), results.end(), [](const std::tuple<double, cv::Point2f, int, MV_CODE_METHOD >& a, const std::tuple<double, cv::Point2f, int, MV_CODE_METHOD>& b){
         return std::get<0>(a) < std::get<0>(b);
     });
 

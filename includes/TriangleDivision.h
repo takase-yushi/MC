@@ -94,7 +94,8 @@ enum DIVIDE {
 
 enum MV_CODE_METHOD {
   SPATIAL,
-  Collocated
+  Collocated,
+  MERGE
 };
 
 class TriangleDivision {
@@ -176,8 +177,7 @@ private:
     std::vector<int> getDivideOrder(CodingTreeUnit* currentNode);
     void constructPreviousCodingTree(CodingTreeUnit* codingTree, CollocatedMvTree* constructedTree);
     cv::Point2f getQuantizedMv(cv::Point2f mv, int quantize_step);
-
-    std::tuple<cv::Point2f, int, MV_CODE_METHOD> getMVD(cv::Point2f mv, int triangle_idx, CodingTreeUnit* ctu);
+    std::tuple<cv::Point2f, int, MV_CODE_METHOD> getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, CodingTreeUnit* ctu);
 
 };
 
