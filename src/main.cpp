@@ -739,8 +739,9 @@ int main(int argc, char *argv[]) {
                         std::vector<cv::Point2f>warping_mv;
                         cv::Point2f parallel_mv;
                         bool parallel_flag;
-                        int triangle_size = getTriangleSize(target_corners);
-                        std::tie(warping_mv,parallel_mv,parallel_flag) = GaussNewton(ref_image, target_image, ref_gauss, target_corners);
+                        int triangle_size;
+                        double MSE_tmp;
+                        std::tie(warping_mv,parallel_mv,MSE_tmp, triangle_size,parallel_flag) = GaussNewton(ref_image, target_image, ref_gauss, target_corners);
                         std::vector<cv::Point2f> mv;
                         if(parallel_flag){
                             mv.emplace_back(parallel_mv);
@@ -751,7 +752,6 @@ int main(int argc, char *argv[]) {
                             mv.emplace_back((warping_mv[1]));
                             mv.emplace_back((warping_mv[2]));
                         }
-                        double MSE_tmp = getSquaredError(ref_image,target_image,target_corners,mv);
                         MSE_later += MSE_tmp;
                         triangle_size_sum_later += triangle_size;
                         std::cout << "triangle_size = " << triangle_size <<  "MSE_later = " << MSE_tmp << std::endl;
@@ -2054,7 +2054,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
     // 平行移動とワーピングを塗り分ける用
     cv::Mat parallel_flag_img_color = target.clone();
 
-//#pragma omp parallel for
+#pragma omp parallel for
     // 基準ベクトル以外のベ   クトルを符号化
     for (int t = 0; t < (int)triangles.size(); t++) { // NOLINT
 
