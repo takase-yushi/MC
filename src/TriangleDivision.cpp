@@ -1935,7 +1935,7 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
  * @param quantize_step 量子化ステップ幅
  * @return 量子化済みの動きベクトル
  */
-cv::Point2f TriangleDivision::getQuantizedMv(cv::Point2f mv, double quantize_step){
+cv::Point2f TriangleDivision::getQuantizedMv(cv::Point2f &mv, double quantize_step){
     cv::Point2f ret(mv.x, mv.y);
 
     double half_quantize_step = 1.0 / quantize_step / 2.0;
