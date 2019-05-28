@@ -1882,7 +1882,8 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
     vectors.emplace_back(collocated_vector, spatial_triangle_size);
 
     // TODO: ラムダを正しい値に置き換え
-    double lambda = 0.45;
+    double lambda = getLambdaPred(qp);
+    std::cout << "lambda:" << lambda << std::endl;
 
     //                      コスト, 差分ベクトル, 番号, タイプ
     std::vector<std::tuple<double, cv::Point2f, int, MV_CODE_METHOD> > results;
