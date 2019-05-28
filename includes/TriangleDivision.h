@@ -177,7 +177,7 @@ private:
     bool isCTU(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3);
     std::vector<int> getDivideOrder(CodingTreeUnit* currentNode);
     void constructPreviousCodingTree(CodingTreeUnit* codingTree, CollocatedMvTree* constructedTree);
-    cv::Point2f getQuantizedMv(cv::Point2f mv, int quantize_step);
+    cv::Point2f getQuantizedMv(cv::Point2f mv, double quantize_step);
     std::tuple<cv::Point2f, int, MV_CODE_METHOD> getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, CodingTreeUnit* ctu);
 
 };
