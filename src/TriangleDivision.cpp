@@ -1877,9 +1877,9 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
     // すべてのベクトルを格納する．
     for(int i = 0 ; i < spatial_triangle_size ; i++) {
         // とりあえず平行移動のみ考慮
-        vectors.emplace_back(triangle_mvs[spatial_triangles[i]][0], i);
+        vectors.emplace_back(triangle_mvs[spatial_triangles[i]][0], i, SPATIAL);
     }
-    vectors.emplace_back(collocated_vector, spatial_triangle_size);
+    vectors.emplace_back(collocated_vector, spatial_triangle_size, SPATIAL);
 
     // TODO: ラムダを正しい値に置き換え
     double lambda = getLambdaPred(qp);
@@ -1889,7 +1889,8 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
     std::vector<std::tuple<double, cv::Point2f, int, MV_CODE_METHOD> > results;
     for(auto vector : vectors){
         cv::Point2f current_mv = std::get<0>(vector);
-        cv::Point2f mvd = getQuantizedMv(current_mv - mv[0], 0);
+        cv::Point2f mvd = current_mv - mv[0];
+        mvd = getQuantizedMv(mvd, 0);
         mvd *= 4;
         // 動きベクトル符号化
         int mvd_code_length = getExponentialGolombCodeLength((int)mvd.x, 0) + getExponentialGolombCodeLength((int)mvd.y, 0);

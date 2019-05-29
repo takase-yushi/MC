@@ -96,6 +96,7 @@ cv::Point2f getDifferenceVector(const Triangle &triangle, const std::vector<cv::
                                 const std::vector<cv::Point2f> &corners_mv, const cv::Point2f &mv);
 
 cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit *> ctu);
+void run();
 
 // 問題は差分ベクトルどうするの…？って
 std::vector<int> count_all_diff_x_mv(1001, 0);
@@ -117,7 +118,16 @@ int block_size_y;
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
-int main(int argc, char *argv[]) {
+
+int main(int argc, char *argv[]){
+    // Write test codes below
+    // test1();
+
+    // exec ME
+    run();
+}
+
+void run() {
 
     std::cout << "OpenCV_version : " << getVersionOfOpenCV() << std::endl;
 
