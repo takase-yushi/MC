@@ -1858,6 +1858,22 @@ void TriangleDivision::constructPreviousCodingTree(CodingTreeUnit* codingTree, C
 }
 
 /**
+ * @fn bool isVectorExists(const std::vector<std::tuple<cv::Point2f, int, MV_CODE_METHOD>> &vectors, const cv::Point2f &mv)
+ * @brief mvがvectorsに含まれるか判定する
+ * @param vectors なんかやばめのtupleを持ってるvector
+ * @param mv 動きベクトル
+ * @return vectorsにmvが含まれていればtrue, 存在しなければfalse
+ */
+bool TriangleDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> &vectors, const cv::Point2f &mv){
+    for(auto vector : vectors) {
+        if(std::get<0>(vector) == mv) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
  * @fn std::tuple<cv::Point2f, int, MV_CODE_METHOD> RD(int triangle_idx, CodingTreeUnit* ctu)
  * @brief RDを行い，最適な差分ベクトルを返す
  * @param[in] mv 動きベクトル
@@ -1876,12 +1892,14 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
 
     // すべてのベクトルを格納する．
     for(int i = 0 ; i < spatial_triangle_size ; i++) {
-        // とりあえず平行移動のみ考慮
-        vectors.emplace_back(triangle_mvs[spatial_triangles[i]][0], i, SPATIAL);
+        // TODO: これ平行移動のみしか対応してないがどうする…？
+        if(!isMvExists(vectors, triangle_mvs[spatial_triangles[i]][0])) {
+            // とりあえず平行移動のみ考慮
+            vectors.emplace_back(triangle_mvs[spatial_triangles[i]][0], SPATIAL);
+        }
     }
     vectors.emplace_back(collocated_vector, spatial_triangle_size, SPATIAL);
 
-    // TODO: ラムダを正しい値に置き換え
     double lambda = getLambdaPred(qp);
     std::cout << "lambda:" << lambda << std::endl;
 
@@ -1913,9 +1931,13 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
     cv::Point2f p3 = corners[current_triangle_coordinate.p3_idx];
     Point3Vec coordinate = Point3Vec(p1, p2, p3);
     for(int i = 0 ; i < spatial_triangle_size ; i++) {
-        double ret_residual = getTriangleResidual(ref_image, target_image, coordinate, mv);
-        double rd = ret_residual + lambda * (getUnaryCodeLength(i));
-        results.emplace_back(rd, cv::Point2f(0,0), i, MERGE);
+        // TODO: これ平行移動のみしか対応してないがどうする…？
+        if(!isMvExists(vectors, mv[0])) {
+            vectors.emplace_back(mv[0], MERGE);
+            double ret_residual = getTriangleResidual(ref_image, target_image, coordinate, mv);
+            double rd = ret_residual + lambda * (getUnaryCodeLength(i));
+            results.emplace_back(rd, cv::Point2f(0, 0), i, MERGE);
+        }
     }
 
     // RDしたスコアが小さい順にソート
