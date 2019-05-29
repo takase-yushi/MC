@@ -1882,13 +1882,13 @@ bool TriangleDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CO
  * @param[in] ctu CodingTreeUnit 符号木
  * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
  */
-std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, CodingTreeUnit* ctu){
+std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv){
     // 空間予測と時間予測の候補を取り出す
     std::vector<int> spatial_triangles = getSpatialTriangleList(triangle_idx);
-    cv::Point2f collocated_vector = getCollocatedTriangleList(ctu);
+    cv::Point2f collocated_vector {collocated_mv};
 
     int spatial_triangle_size = static_cast<int>(spatial_triangles.size());
-    std::vector<std::tuple<cv::Point2f, int, MV_CODE_METHOD >> vectors(static_cast<unsigned long>(spatial_triangle_size + 1));
+    std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors(static_cast<unsigned long>(spatial_triangle_size + 1));
 
     // すべてのベクトルを格納する．
     for(int i = 0 ; i < spatial_triangle_size ; i++) {
@@ -1920,7 +1920,7 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
         double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
 
         // 結果に入れる
-        results.emplace_back(rd, mvd, reference_index, std::get<2>(vector));
+        results.emplace_back(rd, mvd, reference_index, vector.first);
     }
 
     // マージ符号化
@@ -1930,6 +1930,8 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
     cv::Point2f p2 = corners[current_triangle_coordinate.p2_idx];
     cv::Point2f p3 = corners[current_triangle_coordinate.p3_idx];
     Point3Vec coordinate = Point3Vec(p1, p2, p3);
+
+    vectors.clear();
     for(int i = 0 ; i < spatial_triangle_size ; i++) {
         // TODO: これ平行移動のみしか対応してないがどうする…？
         if(!isMvExists(vectors, mv[0])) {
