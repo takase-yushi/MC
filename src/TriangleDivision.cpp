@@ -1877,9 +1877,9 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
     // すべてのベクトルを格納する．
     for(int i = 0 ; i < spatial_triangle_size ; i++) {
         // とりあえず平行移動のみ考慮
-        vectors.emplace_back(triangle_mvs[spatial_triangles[i]][0], i);
+        vectors.emplace_back(triangle_mvs[spatial_triangles[i]][0], i, SPATIAL);
     }
-    vectors.emplace_back(collocated_vector, spatial_triangle_size);
+    vectors.emplace_back(collocated_vector, spatial_triangle_size, SPATIAL);
 
     // TODO: ラムダを正しい値に置き換え
     double lambda = getLambdaPred(qp);
