@@ -1977,7 +1977,7 @@ cv::Point2f TriangleDivision::getQuantizedMv(cv::Point2f &mv, double quantize_st
     }
 
     ret.x = (int)(ret.x * quantize_step);
-    ret.x = (int)(ret.y * quantize_step);
+    ret.y = (int)(ret.y * quantize_step);
 
     ret.x /= quantize_step;
     ret.y /= quantize_step;
