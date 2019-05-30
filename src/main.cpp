@@ -2129,6 +2129,7 @@ getPredictedImage(cv::Mat &ref,cv::Mat &target,cv::Mat &intra,  std::vector<Tria
             mv.emplace_back((warping_mv[1]));
             mv.emplace_back((warping_mv[2]));
         }
+        getPredictedImage(intra,target,out,triangleVec,mv,parallel_flag);
         cv::Point2f a(mv[0].x, mv[0].y), b(mv[1].x, mv[1].y), c(mv[2].x, mv[2].y);
 
         std::cout <<     a << " " << b << " " << c << std::endl;
@@ -2545,7 +2546,7 @@ getPredictedImage(cv::Mat &ref,cv::Mat &target,cv::Mat &intra,  std::vector<Tria
     }
 
     std::cout << "check point 5" << std::endl;
-    return PredictedImageResult(predict_buf[3], mv_image, freq_block, freq_warp, block_matching_pixel_nums, warping_pixel_nums,
+    return PredictedImageResult(out, mv_image, freq_block, freq_warp, block_matching_pixel_nums, warping_pixel_nums,
                                 x_bits, y_bits, block_matching_pixel_errors, warping_pixel_errors);
 
 }
