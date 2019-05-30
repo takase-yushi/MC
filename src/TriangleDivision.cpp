@@ -1483,12 +1483,13 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
     subdiv_target_triangles.push_back(split_triangles.t2);
 
     double RMSE_after_subdiv = 0.0;
+    std::vector<std::vector<cv::Point2f> > split_mv_result(2);
 
 //    #pragma omp parallel for
     for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
         double error_tmp;
         std::tie(std::ignore, mv_parallel, error_tmp, std::ignore, std::ignore) = GaussNewton(ref_image, target_image, gaussRefImage, subdiv_target_triangles[j]);
-        split_mv_result.emplace_back(std::vector<cv::Point2f>{mv_parallel, mv_parallel, mv_parallel});
+        split_mv_result[j] = std::vector<cv::Point2f>{mv_parallel, mv_parallel, mv_parallel};
         RMSE_after_subdiv += error_tmp;
     }
 
