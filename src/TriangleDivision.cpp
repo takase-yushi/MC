@@ -265,7 +265,7 @@ int TriangleDivision::insertTriangle(int p1_idx, int p2_idx, int p3_idx, int typ
     triangles.emplace_back(triangle, type);
     covered_triangle.emplace_back();
     triangle_mvs.emplace_back();
-    isCodedTriangle.emplace_back(true);
+    isCodedTriangle.emplace_back(false);
 
     return static_cast<int>(triangles.size() - 1);
 }
