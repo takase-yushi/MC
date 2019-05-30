@@ -394,7 +394,6 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
  * @param[in] target_corners 対象画像上の三角パッチの座標
  * @return ワーピングの動きベクトル・平行移動の動きベクトル・予測残差・面積・平行移動のフラグのtuple
  */
- */
 std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton(cv::Mat ref_image, cv::Mat target_image, cv::Mat gauss_ref_image, Point3Vec target_corners){
     // 画像の初期化 vector[filter][picture_number]
     std::vector<std::vector<cv::Mat>> ref_images;
