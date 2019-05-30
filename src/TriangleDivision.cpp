@@ -1661,9 +1661,9 @@ std::vector<int> TriangleDivision::getSpatialTriangleList(int t_idx){
 
     std::set<int> mutualIndexSet1, mutualIndexSet2, mutualIndexSet3;
 
-    for(auto idx : list1) if(isCodedTriangle[idx]) mutualIndexSet1.emplace(idx);
-    for(auto idx : list2) if(isCodedTriangle[idx]) mutualIndexSet2.emplace(idx);
-    for(auto idx : list3) if(isCodedTriangle[idx]) mutualIndexSet3.emplace(idx);
+    for(auto idx : list1) if(isCodedTriangle[idx] && idx != t_idx) mutualIndexSet1.emplace(idx);
+    for(auto idx : list2) if(isCodedTriangle[idx] && idx != t_idx) mutualIndexSet2.emplace(idx);
+    for(auto idx : list3) if(isCodedTriangle[idx] && idx != t_idx) mutualIndexSet3.emplace(idx);
 
     for(auto idx : mutualIndexSet1) spatialTriangles.emplace(idx);
     for(auto idx : mutualIndexSet2) spatialTriangles.emplace(idx);
