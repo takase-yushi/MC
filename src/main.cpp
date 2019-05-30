@@ -2112,7 +2112,6 @@ getPredictedImage(cv::Mat &ref,cv::Mat &target,cv::Mat &intra,  std::vector<Tria
         // add_corner: 追加候補の頂点
 //        Gauss_Newton(ref, target, intra, triangleVec, prev_corners, in_triangle_size);
 //        std::vector<cv::Point2i> mv;
-        bool para_flag = false;
         cv::Point2f parallel_mv;
         std::vector<cv::Point2f> warping_mv;
         bool parallel_flag;
@@ -2140,7 +2139,7 @@ getPredictedImage(cv::Mat &ref,cv::Mat &target,cv::Mat &intra,  std::vector<Tria
 
 
         // 並行移動のみ塗る
-        if(para_flag) {
+        if(parallel_flag) {
             double sx = std::min({(int)triangleVec.p1.x, (int)triangleVec.p2.x, (int)triangleVec.p3.x});
             double lx = std::max({(int)triangleVec.p1.x, (int)triangleVec.p2.x, (int)triangleVec.p3.x});
             double sy = std::min({(int)triangleVec.p1.y, (int)triangleVec.p2.y, (int)triangleVec.p3.y});
@@ -2198,7 +2197,7 @@ getPredictedImage(cv::Mat &ref,cv::Mat &target,cv::Mat &intra,  std::vector<Tria
                 int triangle_later_size;
                 // add_countは足した頂点の数らしい(ループで共有)
                 Gauss_Newton2(ref, target, intra, predict_buf_dummy, predict_warp, predict_para, error_warp,
-                         triangleVec_later, prev_corners, &para_flag, t,
+                         triangleVec_later, prev_corners, &parallel_flag, t,
                               residual_ref, triangle_later_size,erase_th_global);
                 MSE_later += error_warp;
                 triangle_size_sum_later += triangle_later_size;
@@ -2247,7 +2246,7 @@ getPredictedImage(cv::Mat &ref,cv::Mat &target,cv::Mat &intra,  std::vector<Tria
 
         // para_flag: ガウスニュートン法が返すやつ
         // 平行移動のほうが良い場合はpara_flag=true
-        if (!para_flag) {
+        if (!parallel_flag) {
             add_mv_original.emplace_back(mv[0] + mv[1], triangle.p2_idx);
             add_mv_original.emplace_back(mv[0] + mv[2], triangle.p3_idx);
         } else {
@@ -2265,7 +2264,7 @@ getPredictedImage(cv::Mat &ref,cv::Mat &target,cv::Mat &intra,  std::vector<Tria
 
         mv_basis_tuple[triangle.p1_idx].emplace_back(add_mv_tuple);
 
-        if (para_flag) {
+        if (parallel_flag) {
             cnt++;
         } else {
             for (int q = 1; q <= 2; q++) {
