@@ -1906,7 +1906,10 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
             vectors.emplace_back(triangle_mvs[spatial_triangles[i]][0], SPATIAL);
         }
     }
-    vectors.emplace_back(collocated_vector, spatial_triangle_size, SPATIAL);
+
+    if(!isMvExists(vectors, collocated_mv)) vectors.emplace_back(collocated_mv, SPATIAL);
+
+    if(vectors.size() < 2) vectors.emplace_back(cv::Point2f(0.0, 0.0), Collocated);
 
     double lambda = getLambdaPred(qp);
     std::cout << "lambda:" << lambda << std::endl;
