@@ -1505,6 +1505,8 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
         ctu->leftNode = new CodingTreeUnit();
         ctu->leftNode->parentNode = ctu;
         int t1_idx = triangles.size() - 2;
+        triangle_mvs[t1_idx] = split_mv_result[0]; // TODO: warping対応
+        isCodedTriangle[t1_idx] = true;
         bool result = split(gaussRefImage, ctu->leftNode, (cmt->leftNode != nullptr ? cmt->leftNode : cmt), split_triangles.t1, t1_idx,split_triangles.t1_type, steps - 1);
         if(result) {
             ctu->leftNode->split_cu_flag1 = true;
@@ -1516,6 +1518,8 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
         ctu->rightNode = new CodingTreeUnit();
         ctu->rightNode->parentNode = ctu;
         int t2_idx = triangles.size() - 1;
+        triangle_mvs[t2_idx] = split_mv_result[1];
+        isCodedTriangle[t2_idx] = true;
         result = split(gaussRefImage, ctu->rightNode, (cmt->rightNode != nullptr ? cmt->rightNode : cmt), split_triangles.t2, t2_idx, split_triangles.t2_type, steps - 1);
         if(result) {
             ctu->rightNode->split_cu_flag2 = true;
