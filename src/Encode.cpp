@@ -141,6 +141,5 @@ int getExponentialGolombCodeLength(int data, int k){
         p_length += bits * 2 - 1;
     }
 
-    std::cout << "data:" << data << " length:" << p_length + q_length << std::endl;
     return p_length + q_length;
 }
