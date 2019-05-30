@@ -85,7 +85,7 @@ int addSideCorners(cv::Mat img, std::vector<cv::Point2f> &corners);
 std::vector<cv::Point2f> cornersQuantization(std::vector<cv::Point2f> &corners, const cv::Mat &target);
 
 PredictedImageResult
-getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intra, std::vector<Triangle> &triangles, const std::vector<cv::Point2f> &ref_corners,
+getPredictedImage(cv::Mat &ref,cv::Mat &target,cv::Mat &intra, std::vector<Triangle> &triangles, const std::vector<cv::Point2f> &ref_corners,
                   std::vector<cv::Point2f> &corners, DelaunayTriangulation md,std::vector<cv::Point2f> &add_corners,int &add_count,const cv::Mat& residual_ref,int &tmp_mv_x,int &tmp_mv_y,bool add_flag);
 
 std::vector<cv::Point2f> uniqCoordinate(const std::vector<cv::Point2f> &corners);
@@ -2024,7 +2024,7 @@ std::vector<cv::Point2f> cornersQuantization(std::vector<cv::Point2f> &corners, 
  * @return cv::Mat型の予測画像
  */
 PredictedImageResult
-getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intra,  std::vector<Triangle> &triangles,
+getPredictedImage(cv::Mat &ref,cv::Mat &target,cv::Mat &intra,  std::vector<Triangle> &triangles,
                   const std::vector<cv::Point2f> &ref_corners, std::vector<cv::Point2f> &corners, DelaunayTriangulation md,std::vector<cv::Point2f> &add_corners,int &add_count,const cv::Mat& residual_ref,int &tmp_mv_x,int &tmp_mv_y ,bool add_flag) {
     cv::Mat out = cv::Mat::zeros(target.size(), CV_8UC3);
     cv::Mat color = cv::Mat::zeros(target.size(), CV_8UC3);
@@ -2113,20 +2113,24 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
 //        Gauss_Newton(ref, target, intra, triangleVec, prev_corners, in_triangle_size);
 //        std::vector<cv::Point2i> mv;
         bool para_flag = false;
-        std::vector<cv::Point2i> mv = Gauss_Newton2(ref, target, intra, predict_buf, predict_warp, predict_para,
-                                                    error_warp, triangleVec, prev_corners, &para_flag,
-                                                    t, residual_ref, in_triangle_size, erase_th_global);
+        cv::Point2f parallel_mv;
+        std::vector<cv::Point2f> warping_mv;
+        bool parallel_flag;
+        int triangle_size;
+        double MSE_tmp;
+        std::tie(warping_mv, parallel_mv, MSE_tmp, triangle_size, parallel_flag) = GaussNewton(
+                intra, target, ref, triangleVec);
+        std::vector<cv::Point2f> mv;
+        if (parallel_flag) {
+            mv.emplace_back(parallel_mv);
+            mv.emplace_back(parallel_mv);
+            mv.emplace_back(parallel_mv);
+        } else {
+            mv.emplace_back((warping_mv[0]));
+            mv.emplace_back((warping_mv[1]));
+            mv.emplace_back((warping_mv[2]));
+        }
         cv::Point2f a(mv[0].x, mv[0].y), b(mv[1].x, mv[1].y), c(mv[2].x, mv[2].y);
-
-        a.x *=2; a.y *= 2;
-        b.x *=2; b.y *= 2;
-        c.x *=2; c.y *= 2;
-        a.x += mv[3].x; a.y += mv[3].y;
-        b.x += mv[4].x; b.y += mv[4].y;
-        c.x += mv[5].x; c.y += mv[5].y;
-        a.x /= 4; a.y /=4;
-        b.x /= 4; b.y /=4;
-        c.x /= 4; c.y /=4;
 
         std::cout <<     a << " " << b << " " << c << std::endl;
         double MSE_prev = error_warp / (double) in_triangle_size;
