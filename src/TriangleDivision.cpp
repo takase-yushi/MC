@@ -1920,7 +1920,8 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
     for(auto vector : vectors){
         cv::Point2f current_mv = std::get<0>(vector);
         cv::Point2f mvd = current_mv - mv[0];
-        mvd = getQuantizedMv(mvd, 0);
+
+        mvd = getQuantizedMv(mvd, 4);
         mvd *= 4;
         // 動きベクトル符号化
         int mvd_code_length = getExponentialGolombCodeLength((int)mvd.x, 0) + getExponentialGolombCodeLength((int)mvd.y, 0);
