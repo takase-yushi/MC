@@ -2258,7 +2258,7 @@ getPredictedImage(cv::Mat &ref,cv::Mat &target,cv::Mat &intra,  std::vector<Tria
         //pair<3つの動きベクトル,頂点番号>, 基準ベクトルが存在するか表すフラグ, 平行移動を表すフラグ,実際に符号化する基準ベクトル(差分をとったもの),スタックを遡る個数,スタックの一番上の参照するベクトル
         std::tuple<std::vector<std::pair<cv::Point2i, int>>, bool, bool, cv::Point2f, int, cv::Point2f> add_mv_tuple(add_mv_original,
                                                                                                                     false,
-                                                                                                                    para_flag,
+                                                                                                                    parallel_flag,
                                                                                                                     cv::Point2f(0,
                                                                                                                                 0),
                                                                                                                     0,cv::Point2f(0,0));
