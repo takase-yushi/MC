@@ -1428,7 +1428,19 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
     cv::Point2f gauss_result_parallel;
     std::tie(gauss_result_warping, gauss_result_parallel, RMSE_before_subdiv, triangle_size, parallel_flag) = GaussNewton(ref_image, target_image, gaussRefImage, targetTriangle);
 
-    std::vector<std::vector<cv::Point2f> > split_mv_result;
+    cv::Point2f mvd;
+    int selected_index;
+    MV_CODE_METHOD method_flag;
+
+    if(cmt == nullptr) {
+        cmt = previousMvList[0][triangle_index];
+    }
+
+    std::cout << gauss_result_parallel << std::endl;
+    std::tie(mvd, selected_index, method_flag) = getMVD({gauss_result_parallel,gauss_result_parallel,gauss_result_parallel}, RMSE_before_subdiv, triangle_index, cmt->mv1);
+
+    std::cout << "mvd result:" << mvd << std::endl;
+
     cv::Point2f mv_parallel;
     warp_p_image = ref_image.clone();
     residual_ref = cv::Mat::zeros(1920, 1024, CV_8UC1);
