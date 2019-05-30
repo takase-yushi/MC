@@ -1499,7 +1499,6 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
     if((RMSE_before_subdiv - RMSE_after_subdiv) / RMSE_before_subdiv >= 0.04) {
         addCornerAndTriangle(Triangle(corner_flag[(int) p1.y][(int) p1.x], corner_flag[(int) p2.y][(int) p2.x],
                                       corner_flag[(int) p3.y][(int) p3.x]), triangle_index, type);
-
         ctu->split_cu_flag1 = true;
         ctu->split_cu_flag2 = true;
 
@@ -1914,12 +1913,15 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
 
     //                      コスト, 差分ベクトル, 番号, タイプ
     std::vector<std::tuple<double, cv::Point2f, int, MV_CODE_METHOD> > results;
-    for(auto vector : vectors){
-        cv::Point2f current_mv = std::get<0>(vector);
+    for(int i = 0 ; i < vectors.size() ; i++) {
+        std::pair<cv::Point2f, MV_CODE_METHOD> vector = vectors[i];
+        cv::Point2f current_mv = vector.first;
+        std::cout << "current_mv:" << current_mv << std::endl;
         cv::Point2f mvd = current_mv - mv[0];
 
         mvd = getQuantizedMv(mvd, 4);
         mvd *= 4;
+
         // 動きベクトル符号化
         int mvd_code_length = getExponentialGolombCodeLength((int)mvd.x, 0) + getExponentialGolombCodeLength((int)mvd.y, 0);
 
@@ -1930,7 +1932,7 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
         double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
 
         // 結果に入れる
-        results.emplace_back(rd, mvd, reference_index, vector.first);
+        results.emplace_back(rd, mvd, i, vector.second);
     }
 
     // マージ符号化
@@ -1948,7 +1950,7 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
             vectors.emplace_back(mv[0], MERGE);
             double ret_residual = getTriangleResidual(ref_image, target_image, coordinate, mv);
             double rd = ret_residual + lambda * (getUnaryCodeLength(i));
-            results.emplace_back(rd, cv::Point2f(0, 0), i, MERGE);
+            results.emplace_back(rd, cv::Point2f(0, 0), results.size(), MERGE);
         }
     }
 
