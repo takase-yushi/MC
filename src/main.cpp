@@ -286,7 +286,7 @@ void run() {
             cv::Point2f p1 = triangle.first.p1;
             cv::Point2f p2 = triangle.first.p2;
             cv::Point2f p3 = triangle.first.p3;
-
+            std::cout << "================== step:" << i << " ================== " << std::endl;
             triangle_division.split(gaussRefImage, foo[i], nullptr, Point3Vec(p1, p2, p3), i, triangle.second, divide_steps);
 //            triangle_division.getSpatialTriangleList(triangles.size() - 1);
 //            int prev_triangles_max = triangles.size();
