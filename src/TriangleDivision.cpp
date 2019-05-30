@@ -1471,9 +1471,6 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
 
 //    cv::Point2f ret = getCollocatedTriangleList(ctu);
 
-    if(cmt == nullptr) {
-        cmt = previousMvList[0][triangle_index];
-    }
     ctu->collocated_mv = cmt->mv1;
     std::cout << ctu->collocated_mv << std::endl;
 
