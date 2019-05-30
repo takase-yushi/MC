@@ -1896,12 +1896,12 @@ bool TriangleDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CO
  * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
  */
 std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv){
+    std::cout << "triangle_index(getMVD):" << triangle_idx << std::endl;
     // 空間予測と時間予測の候補を取り出す
     std::vector<int> spatial_triangles = getSpatialTriangleList(triangle_idx);
-    cv::Point2f collocated_vector {collocated_mv};
 
     int spatial_triangle_size = static_cast<int>(spatial_triangles.size());
-    std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors(static_cast<unsigned long>(spatial_triangle_size + 1));
+    std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors;
 
     // すべてのベクトルを格納する．
     for(int i = 0 ; i < spatial_triangle_size ; i++) {
@@ -1917,8 +1917,9 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
     if(vectors.size() < 2) vectors.emplace_back(cv::Point2f(0.0, 0.0), Collocated);
 
     double lambda = getLambdaPred(qp);
-    std::cout << "lambda:" << lambda << std::endl;
 
+    std::cout << "lambda:" << lambda << std::endl;
+    std::cout << "vectors.size():" << vectors.size() << std::endl;
     //                      コスト, 差分ベクトル, 番号, タイプ
     std::vector<std::tuple<double, cv::Point2f, int, MV_CODE_METHOD> > results;
     for(int i = 0 ; i < vectors.size() ; i++) {
