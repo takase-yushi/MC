@@ -25,14 +25,6 @@ TriangleDivision::TriangleDivision(const cv::Mat &refImage, const cv::Mat &targe
 
 
 
-TriangleDivision::GaussResult::GaussResult(int triangleIndex, const Triangle &triangle, int type,
-                                           double rmseBeforeSubdiv, double rmseAfterSubdiv) : triangle_index(
-        triangleIndex), triangle(triangle), type(type), RMSE_before_subdiv(rmseBeforeSubdiv), RMSE_after_subdiv(
-        rmseAfterSubdiv) {}
-
-TriangleDivision::GaussResult::GaussResult(): triangle(Triangle(-1, -1, -1)) {}
-
-
 /**
  * @fn void TriangleDivision::initTriangle(int block_size_x, int block_size_y, int _divide_steps, int _qp, int divide_flag)
  * @brief 三角形を初期化する
@@ -266,8 +258,9 @@ int TriangleDivision::insertTriangle(int p1_idx, int p2_idx, int p3_idx, int typ
 
     triangles.emplace_back(triangle, type);
     covered_triangle.emplace_back();
-    triangle_mvs.emplace_back();
     isCodedTriangle.emplace_back(false);
+    triangle_gauss_results.emplace_back();
+    triangle_gauss_results[triangle_gauss_results.size() - 1].residual = -1.0;
 
     return static_cast<int>(triangles.size() - 1);
 }
@@ -755,7 +748,25 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
 
     std::vector<cv::Point2f> gauss_result_warping;
     cv::Point2f gauss_result_parallel;
-    std::tie(gauss_result_warping, gauss_result_parallel, RMSE_before_subdiv, triangle_size, parallel_flag) = GaussNewton(ref_image, target_image, gaussRefImage, targetTriangle);
+
+    if(triangle_gauss_results[triangle_index].residual > 0) {
+        std::cout << "cache hit! triangle_index:" << triangle_index << std::endl;
+        GaussResult result_before = triangle_gauss_results[triangle_index];
+        gauss_result_warping = result_before.mv_warping;
+        gauss_result_parallel = result_before.mv_parallel;
+        RMSE_before_subdiv = result_before.residual;
+        triangle_size = result_before.triangle_size;
+        parallel_flag = result_before.parallel_flag;
+    }else {
+        std::tie(gauss_result_warping, gauss_result_parallel, RMSE_before_subdiv, triangle_size,
+                 parallel_flag) = GaussNewton(ref_image, target_image, gaussRefImage, targetTriangle);
+
+        triangle_gauss_results[triangle_index].mv_warping = gauss_result_warping;
+        triangle_gauss_results[triangle_index].mv_parallel = gauss_result_parallel;
+        triangle_gauss_results[triangle_index].triangle_size = triangle_size;
+        triangle_gauss_results[triangle_index].residual = RMSE_before_subdiv;
+        triangle_gauss_results[triangle_index].parallel_flag = parallel_flag;
+    }
 
     cv::Point2f mvd;
     int selected_index;
@@ -765,24 +776,16 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
         cmt = previousMvList[0][triangle_index];
     }
 
-    std::cout << gauss_result_parallel << std::endl;
+//    std::cout << "gauss_result_parallel:" << gauss_result_parallel << std::endl;
+
     std::tie(mvd, selected_index, method_flag) = getMVD({gauss_result_parallel,gauss_result_parallel,gauss_result_parallel}, RMSE_before_subdiv, triangle_index, cmt->mv1);
 
-    std::cout << "mvd result:" << mvd << std::endl;
+//    std::cout << "mvd result:" << mvd << std::endl;
 
-    cv::Point2f mv_parallel;
     warp_p_image = ref_image.clone();
     residual_ref = cv::Mat::zeros(1920, 1024, CV_8UC1);
 
     std::vector<cv::Point2i> ret_gauss2;
-
-    if(parallel_flag) {
-        triangle_mvs[triangle_index].emplace_back(gauss_result_parallel);
-        triangle_mvs[triangle_index].emplace_back(gauss_result_parallel);
-        triangle_mvs[triangle_index].emplace_back(gauss_result_parallel);
-    }else{
-        triangle_mvs[triangle_index] = gauss_result_warping;
-    }
 
     RMSE_before_subdiv = RMSE_before_subdiv / triangle_size;
 
@@ -798,10 +801,8 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
     ctu->mv2 = mv[1];
     ctu->mv3 = mv[2];
 
-//    cv::Point2f ret = getCollocatedTriangleList(ctu);
-
     ctu->collocated_mv = cmt->mv1;
-    std::cout << ctu->collocated_mv << std::endl;
+//    std::cout << ctu->collocated_mv << std::endl;
 
     SplitResult split_triangles = getSplitTriangle(p1, p2, p3, type);
 
@@ -812,13 +813,17 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
     subdiv_target_triangles.push_back(split_triangles.t2);
 
     double RMSE_after_subdiv = 0.0;
-    std::vector<std::vector<cv::Point2f> > split_mv_result(2);
+    std::vector<GaussResult> split_mv_result(2);
 
-//    #pragma omp parallel for
+    #pragma omp parallel for
     for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
         double error_tmp;
-        std::tie(std::ignore, mv_parallel, error_tmp, std::ignore, std::ignore) = GaussNewton(ref_image, target_image, gaussRefImage, subdiv_target_triangles[j]);
-        split_mv_result[j] = std::vector<cv::Point2f>{mv_parallel, mv_parallel, mv_parallel};
+        bool flag_tmp;
+        int triangle_size_tmp;
+        cv::Point2f mv_parallel_tmp;
+        std::vector<cv::Point2f> mv_warping_tmp;
+        std::tie(mv_warping_tmp, mv_parallel_tmp, error_tmp, triangle_size_tmp, flag_tmp) = GaussNewton(ref_image, target_image, gaussRefImage, subdiv_target_triangles[j]);
+        split_mv_result[j] = GaussResult(mv_warping_tmp, mv_parallel_tmp, error_tmp, triangle_size_tmp, flag_tmp);
         RMSE_after_subdiv += error_tmp;
     }
 
@@ -835,7 +840,8 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
         ctu->leftNode = new CodingTreeUnit();
         ctu->leftNode->parentNode = ctu;
         int t1_idx = triangles.size() - 2;
-        triangle_mvs[t1_idx] = split_mv_result[0]; // TODO: warping対応
+        triangle_gauss_results[t1_idx] = split_mv_result[0]; // TODO: warping対応
+
         isCodedTriangle[t1_idx] = true;
         bool result = split(gaussRefImage, ctu->leftNode, (cmt->leftNode != nullptr ? cmt->leftNode : cmt), split_triangles.t1, t1_idx,split_triangles.t1_type, steps - 1);
         if(result) {
@@ -848,7 +854,7 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
         ctu->rightNode = new CodingTreeUnit();
         ctu->rightNode->parentNode = ctu;
         int t2_idx = triangles.size() - 1;
-        triangle_mvs[t2_idx] = split_mv_result[1];
+        triangle_gauss_results[t2_idx] = split_mv_result[1];
         isCodedTriangle[t2_idx] = true;
         result = split(gaussRefImage, ctu->rightNode, (cmt->rightNode != nullptr ? cmt->rightNode : cmt), split_triangles.t2, t2_idx, split_triangles.t2_type, steps - 1);
         if(result) {
@@ -1235,9 +1241,9 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
     // すべてのベクトルを格納する．
     for(int i = 0 ; i < spatial_triangle_size ; i++) {
         // TODO: これ平行移動のみしか対応してないがどうする…？
-        if(!isMvExists(vectors, triangle_mvs[spatial_triangles[i]][0])) {
+        if(!isMvExists(vectors, triangle_gauss_results[spatial_triangles[i]].mv_parallel)) {
             // とりあえず平行移動のみ考慮
-            vectors.emplace_back(triangle_mvs[spatial_triangles[i]][0], SPATIAL);
+            vectors.emplace_back(triangle_gauss_results[spatial_triangles[i]].mv_parallel, SPATIAL);
         }
     }
 
@@ -1247,8 +1253,6 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
 
     double lambda = getLambdaPred(qp);
 
-    std::cout << "lambda:" << lambda << std::endl;
-    std::cout << "vectors.size():" << vectors.size() << std::endl;
     //                      コスト, 差分ベクトル, 番号, タイプ
     std::vector<std::tuple<double, cv::Point2f, int, MV_CODE_METHOD> > results;
     for(int i = 0 ; i < vectors.size() ; i++) {
@@ -1339,3 +1343,10 @@ TriangleDivision::SplitResult::SplitResult(const Point3Vec &t1, const Point3Vec 
                                                                                                                t2(t2),
                                                                                                                t1_type(t1Type),
                                                                                                                t2_type(t2Type) {}
+
+TriangleDivision::GaussResult::GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvParallel,
+                                           double residual, int triangleSize, bool parallelFlag) : mv_warping(
+        mvWarping), mv_parallel(mvParallel), residual(residual), triangle_size(triangleSize), parallel_flag(
+        parallelFlag) {}
+
+TriangleDivision::GaussResult::GaussResult() {}
