@@ -1264,14 +1264,32 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
         mvd = getQuantizedMv(mvd, 4);
         mvd *= 4;
 
-        // 動きベクトル符号化
-        int mvd_code_length = getExponentialGolombCodeLength((int)mvd.x, 0) + getExponentialGolombCodeLength((int)mvd.y, 0);
+        /* 動きベクトル符号化 */
+
+        // 動きベクトル差分の絶対値が0より大きいのか？
+        bool is_x_greater_than_zero = mvd.x > 0 ? true : false;
+        bool is_y_greater_than_zero = mvd.y > 0 ? true : false;
+
+        // 動きベクトル差分の絶対値が1より大きいのか？
+        bool is_x_greater_than_one = mvd.x > 1 ? true : false;
+        bool is_y_greater_than_one = mvd.y > 1 ? true : false;
+
+        // 正負の判定
+        bool is_x_minus = mvd.x < 0 ? true : false;
+        bool is_y_minus = mvd.y < 0 ? true : false;
+
+        // 動きベクトル差分から2を引いたろ！
+        int mvd_x_minus_2 = mvd.x - 2;
+        int mvd_y_minus_2 = mvd.y - 2;
+
+        int mvd_code_length = getExponentialGolombCodeLength((int)mvd_x_minus_2, 0) + getExponentialGolombCodeLength((int)mvd_y_minus_2, 0);
 
         // 参照箇所符号化
         int reference_index = std::get<1>(vector);
         int reference_index_code_length = getUnaryCodeLength(reference_index);
 
-        double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
+        // 各種フラグ分を(3*2)bit足してます
+        double rd = residual + lambda * (mvd_code_length + reference_index_code_length + 6);
 
         // 結果に入れる
         results.emplace_back(rd, mvd, i, vector.second);
