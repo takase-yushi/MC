@@ -153,94 +153,94 @@ void runAdaptive() {
         cv::imwrite(img_directory + "/crop_target.png", crop_target_image);
 
 
-        TriangleDivision triangle_division(ref_image, target_image);
-        int divide_steps = 8;
-        triangle_division.initTriangle(block_size_x, block_size_y, divide_steps, LEFT_DIVIDE);
-        std::vector <Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
-
-        std::vector <std::pair<Point3Vec, int>> init_triangles = triangle_division.getTriangles();
-        std::vector < CodingTreeUnit * > foo(init_triangles.size());
-        for (int i = 0; i < init_triangles.size(); i++) {
-            foo[i] = new CodingTreeUnit();
-            foo[i]->split_cu_flag1 = foo[i]->split_cu_flag2 = false;
-            foo[i]->leftNode = foo[i]->rightNode = nullptr;
-            foo[i]->triangle_index = i;
-        }
-
-        cv::Mat gaussRefImage = cv::imread(ref_file_path);
-        cv::Mat spatialMvTestImage;
-
-        cv::Mat new_gauss_output_image = cv::Mat::zeros(gaussRefImage.rows, gaussRefImage.cols, CV_8UC3);
-
-        std::vector <Triangle> tt = triangle_division.getTriangleIndexList();
-        corners = triangle_division.getCorners();
-
-        std::vector <cv::Point2f> tmp_ref_corners(corners.size()), add_corners;
-        int add_count;
-        cv::Mat r_ref = cv::Mat::zeros(target_image.rows, target_image.cols, CV_8UC1);
-        int tmp_mv_x, tmp_mv_y;
-        int p_flag;
-//        PredictedImageResult ret = getPredictedImage(gaussRefImage, target_image, ref_image, tt, tmp_ref_corners, corners, triangle_division, add_corners, add_count, r_ref, tmp_mv_x, tmp_mv_y, p_flag);
-//        cv::imwrite(img_directory + "/Gauss_Newton2_predicted_image.png", ret.out);
-//        std::cout << "PSNR:" << getPSNR(ret.out, target_image) << std::endl;
-//        exit(0);
+//        TriangleDivision triangle_division(ref_image, target_image);
+//        int divide_steps = 8;
+//        triangle_division.initTriangle(block_size_x, block_size_y, divide_steps, LEFT_DIVIDE);
+//        std::vector <Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
 //
-        //#pragma omp parallel for
-//        for(int i = 0 ; i < init_triangles.size() ; i++) {
-        triangle_division.constructPreviousCodingTree(foo, 0);
-        for (int i = 0; i < 10; i++) {
-            std::pair<Point3Vec, int> triangle = init_triangles[i];
-//            std::cout << "i:" << i << std::endl;
-            cv::Point2f p1 = triangle.first.p1;
-            cv::Point2f p2 = triangle.first.p2;
-            cv::Point2f p3 = triangle.first.p3;
-            std::cout << "================== step:" << i << " ================== " << std::endl;
-            triangle_division.split(gaussRefImage, foo[i], nullptr, Point3Vec(p1, p2, p3), i, triangle.second,
-                                    divide_steps);
-//            triangle_division.getSpatialTriangleList(triangles.size() - 1);
-//            int prev_triangles_max = triangles.size();
-//            triangles = triangle_division.getAllTriangleCoordinateList();
-//            corners = triangle_division.getCorners();
-//            if(prev_triangles_max < triangles.size()) {
-//                int draw_triangle_index = triangles.size() - 1;
-//                spatialMvTestImage = getReconstructionDivisionImage(gaussRefImage, foo);
-//                for(auto& t : triangle_division.getSpatialTriangleList(draw_triangle_index)) {
-//                    drawTriangle(spatialMvTestImage, triangles[t].p1, triangles[t].p2, triangles[t].p3, BLUE);
-//                }
-//                drawTriangle(spatialMvTestImage, triangles[draw_triangle_index].p1, triangles[draw_triangle_index].p2, triangles[draw_triangle_index].p3, RED);
-//                cv::imwrite(img_directory + "/spatialTriangle_" + std::to_string(draw_triangle_index) + ".png", spatialMvTestImage);
-        }
-        triangle_division.constructPreviousCodingTree(foo, 0);
-
-        exit(0);
-        // 何回再帰的に分割を行うか
-        const int division_steps = 1;
-        triangle_division.subdivision(cv::imread(ref_file_path), division_steps);
-        triangles = triangle_division.getTriangleCoordinateList();
-        std::cout << "triangles.size():" << triangles.size() << std::endl;
-
-        corners = triangle_division.getCorners();
-        std::cout << "mid: " << corners.size() / 2 << std::endl;
-        for (int k = 0; k < 10; k++) {
-            cv::Mat triangles_debug = crop_target_image.clone();
-            for (const auto &triangle : triangles) {
-                drawTriangle(triangles_debug, triangle.p1, triangle.p2, triangle.p3, cv::Scalar(255, 255, 255));
-            }
-            cv::imwrite(img_directory + "/triangles_step" + std::to_string(division_steps) + ".png", triangles_debug);
-
-            std::vector <Point3Vec> covered_triangles = triangle_division.getIdxCoveredTriangleCoordinateList(
-                    corners.size() / 2 + 100 + k);
-            for (const auto &triangle : covered_triangles) {
-                std::cout << triangle.p1 << " " << triangle.p2 << " " << triangle.p3 << std::endl;
-                drawTriangle(triangles_debug, triangle.p1, triangle.p2, triangle.p3, RED);
-            }
-            drawPoint(triangles_debug, corners[corners.size() / 2 + 100 + k], BLUE, 4);
-
-            cv::imwrite(
-                    img_directory + "/triangles_step" + std::to_string(division_steps) + "_" + std::to_string(100 + k) +
-                    ".png", triangles_debug);
-        }
-        exit(0);
+//        std::vector <std::pair<Point3Vec, int>> init_triangles = triangle_division.getTriangles();
+//        std::vector < CodingTreeUnit * > foo(init_triangles.size());
+//        for (int i = 0; i < init_triangles.size(); i++) {
+//            foo[i] = new CodingTreeUnit();
+//            foo[i]->split_cu_flag1 = foo[i]->split_cu_flag2 = false;
+//            foo[i]->leftNode = foo[i]->rightNode = nullptr;
+//            foo[i]->triangle_index = i;
+//        }
+//
+//        cv::Mat gaussRefImage = cv::imread(ref_file_path);
+//        cv::Mat spatialMvTestImage;
+//
+//        cv::Mat new_gauss_output_image = cv::Mat::zeros(gaussRefImage.rows, gaussRefImage.cols, CV_8UC3);
+//
+//        std::vector <Triangle> tt = triangle_division.getTriangleIndexList();
+//        corners = triangle_division.getCorners();
+//
+//        std::vector <cv::Point2f> tmp_ref_corners(corners.size()), add_corners;
+//        int add_count;
+//        cv::Mat r_ref = cv::Mat::zeros(target_image.rows, target_image.cols, CV_8UC1);
+//        int tmp_mv_x, tmp_mv_y;
+//        int p_flag;
+////        PredictedImageResult ret = getPredictedImage(gaussRefImage, target_image, ref_image, tt, tmp_ref_corners, corners, triangle_division, add_corners, add_count, r_ref, tmp_mv_x, tmp_mv_y, p_flag);
+////        cv::imwrite(img_directory + "/Gauss_Newton2_predicted_image.png", ret.out);
+////        std::cout << "PSNR:" << getPSNR(ret.out, target_image) << std::endl;
+////        exit(0);
+////
+//        //#pragma omp parallel for
+////        for(int i = 0 ; i < init_triangles.size() ; i++) {
+//        triangle_division.constructPreviousCodingTree(foo, 0);
+//        for (int i = 0; i < 10; i++) {
+//            std::pair<Point3Vec, int> triangle = init_triangles[i];
+////            std::cout << "i:" << i << std::endl;
+//            cv::Point2f p1 = triangle.first.p1;
+//            cv::Point2f p2 = triangle.first.p2;
+//            cv::Point2f p3 = triangle.first.p3;
+//            std::cout << "================== step:" << i << " ================== " << std::endl;
+//            triangle_division.split(gaussRefImage, foo[i], nullptr, Point3Vec(p1, p2, p3), i, triangle.second,
+//                                    divide_steps);
+////            triangle_division.getSpatialTriangleList(triangles.size() - 1);
+////            int prev_triangles_max = triangles.size();
+////            triangles = triangle_division.getAllTriangleCoordinateList();
+////            corners = triangle_division.getCorners();
+////            if(prev_triangles_max < triangles.size()) {
+////                int draw_triangle_index = triangles.size() - 1;
+////                spatialMvTestImage = getReconstructionDivisionImage(gaussRefImage, foo);
+////                for(auto& t : triangle_division.getSpatialTriangleList(draw_triangle_index)) {
+////                    drawTriangle(spatialMvTestImage, triangles[t].p1, triangles[t].p2, triangles[t].p3, BLUE);
+////                }
+////                drawTriangle(spatialMvTestImage, triangles[draw_triangle_index].p1, triangles[draw_triangle_index].p2, triangles[draw_triangle_index].p3, RED);
+////                cv::imwrite(img_directory + "/spatialTriangle_" + std::to_string(draw_triangle_index) + ".png", spatialMvTestImage);
+//        }
+//        triangle_division.constructPreviousCodingTree(foo, 0);
+//
+//        exit(0);
+//        // 何回再帰的に分割を行うか
+//        const int division_steps = 1;
+//        triangle_division.subdivision(cv::imread(ref_file_path), division_steps);
+//        triangles = triangle_division.getTriangleCoordinateList();
+//        std::cout << "triangles.size():" << triangles.size() << std::endl;
+//
+//        corners = triangle_division.getCorners();
+//        std::cout << "mid: " << corners.size() / 2 << std::endl;
+//        for (int k = 0; k < 10; k++) {
+//            cv::Mat triangles_debug = crop_target_image.clone();
+//            for (const auto &triangle : triangles) {
+//                drawTriangle(triangles_debug, triangle.p1, triangle.p2, triangle.p3, cv::Scalar(255, 255, 255));
+//            }
+//            cv::imwrite(img_directory + "/triangles_step" + std::to_string(division_steps) + ".png", triangles_debug);
+//
+//            std::vector <Point3Vec> covered_triangles = triangle_division.getIdxCoveredTriangleCoordinateList(
+//                    corners.size() / 2 + 100 + k);
+//            for (const auto &triangle : covered_triangles) {
+//                std::cout << triangle.p1 << " " << triangle.p2 << " " << triangle.p3 << std::endl;
+//                drawTriangle(triangles_debug, triangle.p1, triangle.p2, triangle.p3, RED);
+//            }
+//            drawPoint(triangles_debug, corners[corners.size() / 2 + 100 + k], BLUE, 4);
+//
+//            cv::imwrite(
+//                    img_directory + "/triangles_step" + std::to_string(division_steps) + "_" + std::to_string(100 + k) +
+//                    ".png", triangles_debug);
+//        }
+//        exit(0);
 
         cv::Mat color = cv::Mat::zeros(target_image.size(), CV_8UC3);
         cv::Mat predict_img0 = cv::Mat::zeros(targetx8.size(), CV_8UC3);
@@ -865,7 +865,7 @@ void runAdaptive() {
 //            }
 //*/
 
-            corners = triangle_division.getCorners();
+//            corners = triangle_division.getCorners();
 
             std::cout << "corners's size :" << corners.size() << std::endl;
             std::cout << "ref_corners's size :" << ref_corners.size() << std::endl;
@@ -1150,11 +1150,11 @@ void runAdaptive() {
 
             cv::Mat triangle_target = target_image.clone();
             cv::Mat mv_image = target_image.clone();
-            for (auto t : triangles) {
-                // 三角形を描画
-                drawTriangle(triangle_target, t.p1, t.p2, t.p3, cv::Scalar(255, 255, 255));
-                drawTriangle(mv_image, t.p1, t.p2, t.p3, cv::Scalar(255, 255, 255));
-            }
+//            for (auto t : triangles) {
+//                // 三角形を描画
+//                drawTriangle(triangle_target, t.p1, t.p2, t.p3, cv::Scalar(255, 255, 255));
+//                drawTriangle(mv_image, t.p1, t.p2, t.p3, cv::Scalar(255, 255, 255));
+//            }
 
             if (DIVIDE_MODE == LEFT_DIVIDE) {
                 cv::imwrite(
@@ -1198,10 +1198,10 @@ void runAdaptive() {
             add_corners.clear();
             std::cout << "check point 3" << std::endl;
 
-            triangles = triangle_division.getTriangleIndexList();
+//            triangles = triangle_division.getTriangleIndexList();
 
             PredictedImageResult result = getPredictedImage(ref_gauss, target_image, ref_image, triangles, ref_corners,
-                                                            corners, triangle_division,
+                                                            corners, md,
                                                             add_corners, add_count, residual_ref, tmp_mv_x, tmp_mv_y,
                                                             true);
             // 予測画像を得る
@@ -1442,8 +1442,10 @@ void runAdaptive() {
                 }
             }
             md.getTriangleList(triangles_mydelaunay);
-            for (const Point3Vec &t : triangle_division.getTriangleCoordinateList()) {
-                drawTriangle(residual, t.p1, t.p2, t.p3, RED);
+            std::vector<cv::Vec6f> md_tri_list;
+            md.getTriangleList(md_tri_list);
+            for (const cv::Vec6f &t : md_tri_list) {
+                drawTriangle(residual, cv::Point2f(t[0], t[1]),cv::Point2f(t[2],t[3]),cv::Point2f(t[4],t[5]), RED);
             }
             cv::imwrite(file_path + img_path + "residual.png", residual);
             std::cout << "check point 4" << std::endl;

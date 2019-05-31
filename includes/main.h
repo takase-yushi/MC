@@ -82,7 +82,7 @@ std::vector<cv::Point2f> cornersQuantization(std::vector<cv::Point2f> &corners, 
 
 PredictedImageResult
 getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intra, std::vector<Triangle> &triangles, const std::vector<cv::Point2f> &ref_corners,
-                  std::vector<cv::Point2f> &corners, TriangleDivision triangle_division,std::vector<cv::Point2f> &add_corners,int &add_count,const cv::Mat& residual_ref,int &tmp_mv_x,int &tmp_mv_y,bool add_flag);
+                  std::vector<cv::Point2f> &corners, DelaunayTriangulation md,std::vector<cv::Point2f> &add_corners,int &add_count,const cv::Mat& residual_ref,int &tmp_mv_x,int &tmp_mv_y,bool add_flag);
 
 std::vector<cv::Point2f> uniqCoordinate(const std::vector<cv::Point2f> &corners);
 

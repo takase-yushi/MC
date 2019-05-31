@@ -39,7 +39,8 @@ int main(int argc, char *argv[]){
     // test1();
 
     // exec ME
-    run();
+//    run();
+    runAdaptive();
 }
 
 void run() {
@@ -1199,7 +1200,7 @@ void run() {
 
             triangles = triangle_division.getTriangleIndexList();
 
-            PredictedImageResult result = getPredictedImage(ref_gauss, target_image, ref_image, triangles, ref_corners, corners, triangle_division,
+            PredictedImageResult result = getPredictedImage(ref_gauss, target_image, ref_image, triangles, ref_corners, corners, md,
                                                             add_corners, add_count, residual_ref,tmp_mv_x,tmp_mv_y,true);
             // 予測画像を得る
 
@@ -1821,7 +1822,7 @@ std::vector<cv::Point2f> cornersQuantization(std::vector<cv::Point2f> &corners, 
  */
 PredictedImageResult
 getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intra,  std::vector<Triangle> &triangles,
-                  const std::vector<cv::Point2f> &ref_corners, std::vector<cv::Point2f> &corners, TriangleDivision triangle_division,std::vector<cv::Point2f> &add_corners,int &add_count,const cv::Mat& residual_ref,int &tmp_mv_x,int &tmp_mv_y ,bool add_flag) {
+                  const std::vector<cv::Point2f> &ref_corners, std::vector<cv::Point2f> &corners, DelaunayTriangulation md,std::vector<cv::Point2f> &add_corners,int &add_count,const cv::Mat& residual_ref,int &tmp_mv_x,int &tmp_mv_y ,bool add_flag) {
     cv::Mat out = cv::Mat::zeros(target.size(), CV_8UC3);
     cv::Mat color = cv::Mat::zeros(target.size(), CV_8UC3);
     cv::Mat expansion_ref = bilinearInterpolation(ref);
@@ -1880,7 +1881,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
     // 平行移動とワーピングを塗り分ける用
     cv::Mat parallel_flag_img_color = target.clone();
 
-//#pragma omp parallel for
+#pragma omp parallel for
     // 基準ベクトル以外のベ   クトルを符号化
     for (int t = 0; t < (int)triangles.size(); t++) { // NOLINT
 
@@ -2114,7 +2115,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
 
             init_flag = true;
             // TODO: bug fix
-            std::vector<int> neighbor = triangle_division.getNeighborVertexIndexList(pt1_idx);
+            std::vector<int> neighbor = md.getNeighborVertexNum(pt1_idx);
 //            std::vector<int> neighbor = md.getNeighborVertexNum(std::get<0>(mv_basis[i][j])[1].second);
             for (int k = 0; k < (int) neighbor.size(); k++) {
                 Queue_neighbor.push(neighbor[k]);
@@ -2131,7 +2132,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
         Queue_neighbor.pop();
         // 取り出した頂点の隣接を入れる
         if (!(int)mv_basis_tuple[current_idx].empty()) {
-            std::vector<int> neighbor = triangle_division.getNeighborVertexIndexList(current_idx);
+            std::vector<int> neighbor = md.getNeighborVertexNum(current_idx);
 
             for(int k = 0;k < (int)neighbor.size();k++){
                 if(!mv_basis_tuple[neighbor[k]].empty()){
@@ -2192,14 +2193,14 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
                     double min_Distance = init_Distance;
                     int min_num = 0;
                     bool flag_arround = false;
-                    std::vector<int> neighbor = triangle_division.getNeighborVertexIndexList(
+                    std::vector<int> neighbor = md.getNeighborVertexNum(
                             std::get<0>(mv_basis_tuple[current_idx][j])[0].second);
-                    std::vector<cv::Point2f> neighbor_cood = triangle_division.getNeighborVertexCoordinateList(
+                    std::vector<cv::Point2f> neighbor_cood = md.getNeighborVertex(
                             std::get<0>(mv_basis_tuple[current_idx][j])[0].second);
                     for (int k = 0; k < (int) neighbor.size(); k++) {
                         if (!corded_mv[neighbor[k]].empty()) {
                             flag_arround = true;
-                            double Distance = triangle_division.getDistance(
+                            double Distance = md.getDistance(
                                     corners[std::get<0>(mv_basis_tuple[current_idx][j])[0].second], neighbor_cood[k]);
                             if (min_Distance > Distance) {
                                 min_Distance = Distance;
