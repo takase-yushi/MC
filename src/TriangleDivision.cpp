@@ -34,11 +34,13 @@ TriangleDivision::GaussResult::GaussResult(): triangle(Triangle(-1, -1, -1)) {}
 
 
 /**
- * @fn void TriangleDivision::initTriangle(int block_size_x, int block_size_y, int _divide_steps, int divide_flag)
+ * @fn void TriangleDivision::initTriangle(int block_size_x, int block_size_y, int _divide_steps, int _qp, int divide_flag)
  * @brief 三角形を初期化する
- * @param[in] block_size_x
- * @param[in] block_size_y
- * @param[in] divide_flag
+ * @param[in] _block_size_x
+ * @param[in] _block_size_y
+ * @param[in] _divide_steps
+ * @param[in] _qp
+ * @param[in] _divide_flag
  */
 void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _divide_steps, int _qp, int divide_flag) {
     block_size_x = _block_size_x;

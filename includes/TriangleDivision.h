@@ -104,17 +104,16 @@ public:
 
     class GaussResult{
     public:
-        int triangle_index;
-
-        GaussResult(int triangleIndex, const Triangle &triangle, int type, double rmseBeforeSubdiv,
-                    double rmseAfterSubdiv);
-
         GaussResult();
 
-        Triangle triangle;
-        int type;
-        double RMSE_before_subdiv;
-        double RMSE_after_subdiv;
+        GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvParallel, double residual,
+                    int triangleSize, bool parallelFlag);
+
+        std::vector<cv::Point2f> mv_warping;
+        cv::Point2f mv_parallel;
+        double residual;
+        int triangle_size;
+        bool parallel_flag;
 
     };
 
@@ -163,7 +162,8 @@ private:
     std::vector<std::vector<CollocatedMvTree*>> previousMvList;
     int coded_picture_num;
     std::vector<cv::Mat> predicted_buf;
-    std::vector<std::vector<cv::Point2f>> triangle_mvs;
+    std::vector<GaussResult> triangle_gauss_results;
+
     int qp;
 
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
