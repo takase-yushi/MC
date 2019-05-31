@@ -1111,3 +1111,23 @@ std::vector<cv::Point2f> slide_corner_edge(std::vector<cv::Point2f> &corners,cv:
     }
     return ret_corners;
 }
+
+int getTriangleSize(Point3Vec& triangle){
+    double sx = std::min({(int) triangle.p1.x, (int) triangle.p2.x, (int) triangle.p3.x});
+    double lx = std::max({(int) triangle.p1.x, (int) triangle.p2.x, (int) triangle.p3.x});
+    double sy = std::min({(int) triangle.p1.y, (int) triangle.p2.y, (int) triangle.p3.y});
+    double ly = std::max({(int) triangle.p1.y, (int) triangle.p2.y, (int) triangle.p3.y});
+
+    std::vector<cv::Point2f> in_triangle_pixels;
+    cv::Point2f xp;
+    for (int j = (int) (round(sy) - 1); j <= round(ly) + 1; j++) {
+        for (int i = (int) (round(sx) - 1); i <= round(lx) + 1; i++) {
+            xp.x = (float) i;
+            xp.y = (float) j;
+            if (isInTriangle(triangle, xp) == 1) {
+                in_triangle_pixels.emplace_back(xp);//三角形の内部のピクセルを格納
+            }
+        }
+    }
+    return in_triangle_pixels.size();
+}
