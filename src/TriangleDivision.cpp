@@ -265,7 +265,7 @@ int TriangleDivision::insertTriangle(int p1_idx, int p2_idx, int p3_idx, int typ
     triangles.emplace_back(triangle, type);
     covered_triangle.emplace_back();
     triangle_mvs.emplace_back();
-    isCodedTriangle.emplace_back(true);
+    isCodedTriangle.emplace_back(false);
 
     return static_cast<int>(triangles.size() - 1);
 }
@@ -1428,7 +1428,19 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
     cv::Point2f gauss_result_parallel;
     std::tie(gauss_result_warping, gauss_result_parallel, RMSE_before_subdiv, triangle_size, parallel_flag) = GaussNewton(ref_image, target_image, gaussRefImage, targetTriangle);
 
-    std::vector<std::vector<cv::Point2f> > split_mv_result;
+    cv::Point2f mvd;
+    int selected_index;
+    MV_CODE_METHOD method_flag;
+
+    if(cmt == nullptr) {
+        cmt = previousMvList[0][triangle_index];
+    }
+
+    std::cout << gauss_result_parallel << std::endl;
+    std::tie(mvd, selected_index, method_flag) = getMVD({gauss_result_parallel,gauss_result_parallel,gauss_result_parallel}, RMSE_before_subdiv, triangle_index, cmt->mv1);
+
+    std::cout << "mvd result:" << mvd << std::endl;
+
     cv::Point2f mv_parallel;
     warp_p_image = ref_image.clone();
     residual_ref = cv::Mat::zeros(1920, 1024, CV_8UC1);
@@ -1459,9 +1471,6 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
 
 //    cv::Point2f ret = getCollocatedTriangleList(ctu);
 
-    if(cmt == nullptr) {
-        cmt = previousMvList[0][triangle_index];
-    }
     ctu->collocated_mv = cmt->mv1;
     std::cout << ctu->collocated_mv << std::endl;
 
@@ -1474,12 +1483,13 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
     subdiv_target_triangles.push_back(split_triangles.t2);
 
     double RMSE_after_subdiv = 0.0;
+    std::vector<std::vector<cv::Point2f> > split_mv_result(2);
 
 //    #pragma omp parallel for
     for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
         double error_tmp;
         std::tie(std::ignore, mv_parallel, error_tmp, std::ignore, std::ignore) = GaussNewton(ref_image, target_image, gaussRefImage, subdiv_target_triangles[j]);
-        split_mv_result.emplace_back(std::vector<cv::Point2f>{mv_parallel, mv_parallel, mv_parallel});
+        split_mv_result[j] = std::vector<cv::Point2f>{mv_parallel, mv_parallel, mv_parallel};
         RMSE_after_subdiv += error_tmp;
     }
 
@@ -1490,13 +1500,14 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
     if((RMSE_before_subdiv - RMSE_after_subdiv) / RMSE_before_subdiv >= 0.04) {
         addCornerAndTriangle(Triangle(corner_flag[(int) p1.y][(int) p1.x], corner_flag[(int) p2.y][(int) p2.x],
                                       corner_flag[(int) p3.y][(int) p3.x]), triangle_index, type);
-
         ctu->split_cu_flag1 = true;
         ctu->split_cu_flag2 = true;
 
         ctu->leftNode = new CodingTreeUnit();
         ctu->leftNode->parentNode = ctu;
         int t1_idx = triangles.size() - 2;
+        triangle_mvs[t1_idx] = split_mv_result[0]; // TODO: warping対応
+        isCodedTriangle[t1_idx] = true;
         bool result = split(gaussRefImage, ctu->leftNode, (cmt->leftNode != nullptr ? cmt->leftNode : cmt), split_triangles.t1, t1_idx,split_triangles.t1_type, steps - 1);
         if(result) {
             ctu->leftNode->split_cu_flag1 = true;
@@ -1508,6 +1519,8 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
         ctu->rightNode = new CodingTreeUnit();
         ctu->rightNode->parentNode = ctu;
         int t2_idx = triangles.size() - 1;
+        triangle_mvs[t2_idx] = split_mv_result[1];
+        isCodedTriangle[t2_idx] = true;
         result = split(gaussRefImage, ctu->rightNode, (cmt->rightNode != nullptr ? cmt->rightNode : cmt), split_triangles.t2, t2_idx, split_triangles.t2_type, steps - 1);
         if(result) {
             ctu->rightNode->split_cu_flag2 = true;
@@ -1649,9 +1662,9 @@ std::vector<int> TriangleDivision::getSpatialTriangleList(int t_idx){
 
     std::set<int> mutualIndexSet1, mutualIndexSet2, mutualIndexSet3;
 
-    for(auto idx : list1) if(isCodedTriangle[idx]) mutualIndexSet1.emplace(idx);
-    for(auto idx : list2) if(isCodedTriangle[idx]) mutualIndexSet2.emplace(idx);
-    for(auto idx : list3) if(isCodedTriangle[idx]) mutualIndexSet3.emplace(idx);
+    for(auto idx : list1) if(isCodedTriangle[idx] && idx != t_idx) mutualIndexSet1.emplace(idx);
+    for(auto idx : list2) if(isCodedTriangle[idx] && idx != t_idx) mutualIndexSet2.emplace(idx);
+    for(auto idx : list3) if(isCodedTriangle[idx] && idx != t_idx) mutualIndexSet3.emplace(idx);
 
     for(auto idx : mutualIndexSet1) spatialTriangles.emplace(idx);
     for(auto idx : mutualIndexSet2) spatialTriangles.emplace(idx);
@@ -1883,12 +1896,12 @@ bool TriangleDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CO
  * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
  */
 std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv){
+    std::cout << "triangle_index(getMVD):" << triangle_idx << std::endl;
     // 空間予測と時間予測の候補を取り出す
     std::vector<int> spatial_triangles = getSpatialTriangleList(triangle_idx);
-    cv::Point2f collocated_vector {collocated_mv};
 
     int spatial_triangle_size = static_cast<int>(spatial_triangles.size());
-    std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors(static_cast<unsigned long>(spatial_triangle_size + 1));
+    std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors;
 
     // すべてのベクトルを格納する．
     for(int i = 0 ; i < spatial_triangle_size ; i++) {
@@ -1898,18 +1911,26 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
             vectors.emplace_back(triangle_mvs[spatial_triangles[i]][0], SPATIAL);
         }
     }
-    vectors.emplace_back(collocated_vector, spatial_triangle_size, SPATIAL);
+
+    if(!isMvExists(vectors, collocated_mv)) vectors.emplace_back(collocated_mv, SPATIAL);
+
+    if(vectors.size() < 2) vectors.emplace_back(cv::Point2f(0.0, 0.0), Collocated);
 
     double lambda = getLambdaPred(qp);
-    std::cout << "lambda:" << lambda << std::endl;
 
+    std::cout << "lambda:" << lambda << std::endl;
+    std::cout << "vectors.size():" << vectors.size() << std::endl;
     //                      コスト, 差分ベクトル, 番号, タイプ
     std::vector<std::tuple<double, cv::Point2f, int, MV_CODE_METHOD> > results;
-    for(auto vector : vectors){
-        cv::Point2f current_mv = std::get<0>(vector);
+    for(int i = 0 ; i < vectors.size() ; i++) {
+        std::pair<cv::Point2f, MV_CODE_METHOD> vector = vectors[i];
+        cv::Point2f current_mv = vector.first;
+        std::cout << "current_mv:" << current_mv << std::endl;
         cv::Point2f mvd = current_mv - mv[0];
-        mvd = getQuantizedMv(mvd, 0);
+
+        mvd = getQuantizedMv(mvd, 4);
         mvd *= 4;
+
         // 動きベクトル符号化
         int mvd_code_length = getExponentialGolombCodeLength((int)mvd.x, 0) + getExponentialGolombCodeLength((int)mvd.y, 0);
 
@@ -1920,7 +1941,7 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
         double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
 
         // 結果に入れる
-        results.emplace_back(rd, mvd, reference_index, vector.first);
+        results.emplace_back(rd, mvd, i, vector.second);
     }
 
     // マージ符号化
@@ -1938,7 +1959,7 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
             vectors.emplace_back(mv[0], MERGE);
             double ret_residual = getTriangleResidual(ref_image, target_image, coordinate, mv);
             double rd = ret_residual + lambda * (getUnaryCodeLength(i));
-            results.emplace_back(rd, cv::Point2f(0, 0), i, MERGE);
+            results.emplace_back(rd, cv::Point2f(0, 0), results.size(), MERGE);
         }
     }
 
@@ -1977,7 +1998,7 @@ cv::Point2f TriangleDivision::getQuantizedMv(cv::Point2f &mv, double quantize_st
     }
 
     ret.x = (int)(ret.x * quantize_step);
-    ret.x = (int)(ret.y * quantize_step);
+    ret.y = (int)(ret.y * quantize_step);
 
     ret.x /= quantize_step;
     ret.y /= quantize_step;
