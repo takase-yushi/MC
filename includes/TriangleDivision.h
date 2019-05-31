@@ -139,7 +139,6 @@ public:
     std::vector<Point3Vec> getIdxCoveredTriangleCoordinateList(int target_vertex_idx);
     std::vector<int> getIdxCoveredTriangleIndexList(int idx);
 
-    void subdivision(cv::Mat gaussRefImage, int steps);
     void constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num = 0);
 
     static SplitResult getSplitTriangle(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, int type);
