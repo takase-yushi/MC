@@ -880,6 +880,8 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
         return true;
     }else{
         isCodedTriangle[triangle_index] = true;
+        eraseTriangle(triangles.size() - 1);
+        eraseTriangle(triangles.size() - 1);
         return false;
     }
 
