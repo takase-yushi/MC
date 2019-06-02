@@ -1243,7 +1243,7 @@ bool TriangleDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CO
  * @param[in] ctu CodingTreeUnit 符号木
  * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
  */
-std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv){
+std::tuple<double, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv){
     std::cout << "triangle_index(getMVD):" << triangle_idx << std::endl;
     // 空間予測と時間予測の候補を取り出す
     std::vector<int> spatial_triangles = getSpatialTriangleList(triangle_idx);
@@ -1332,11 +1332,12 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
         return std::get<0>(a) < std::get<0>(b);
     });
 
+    double cost = std::get<0>(results[0]);
     cv::Point2f mvd = std::get<1>(results[0]);
     int selected_idx = std::get<2>(results[0]);
-    MV_CODE_METHOD method = selected_idx == spatial_triangle_size ? MV_CODE_METHOD::Collocated : MV_CODE_METHOD::SPATIAL;
+    MV_CODE_METHOD method = std::get<3>(results[0]);
 
-    return {mvd, selected_idx, method};
+    return {cost, mvd, selected_idx, method};
 }
 
 /**
