@@ -1119,20 +1119,20 @@ std::vector<int> TriangleDivision::getDivideOrder(CodingTreeUnit* currentNode){
  */
 void TriangleDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num) {
 
-    for(int i = 0 ; i < 10 ; i++) {
-        previousMvList[0][i]->mv1 = cv::Point2f(10000, 10000);
-        previousMvList[0][i]->mv2 = cv::Point2f(10000, 10000);
-        previousMvList[0][i]->mv3 = cv::Point2f(10000, 10000);
+    for(int i = 0 ; i < triangles.size() ; i++) {
+        previousMvList[0][i]->mv1 = cv::Point2f(0, 0);
+        previousMvList[0][i]->mv2 = cv::Point2f(0, 0);
+        previousMvList[0][i]->mv3 = cv::Point2f(0, 0);
 
         auto* left = new CollocatedMvTree();
-        left->mv1 = cv::Point2f(1000, 1000);
-        left->mv2 = cv::Point2f(1000, 1000);
-        left->mv3 = cv::Point2f(1000, 1000);
+        left->mv1 = cv::Point2f(0, 0);
+        left->mv2 = cv::Point2f(0, 0);
+        left->mv3 = cv::Point2f(0, 0);
 
         left->leftNode = new CollocatedMvTree();
-        left->leftNode->mv1 = cv::Point2f(100, 100);
-        left->leftNode->mv2 = cv::Point2f(100, 100);
-        left->leftNode->mv3 = cv::Point2f(100, 100);
+        left->leftNode->mv1 = cv::Point2f(0, 0);
+        left->leftNode->mv2 = cv::Point2f(0, 0);
+        left->leftNode->mv3 = cv::Point2f(0, 0);
 //        left->leftNode->leftNode = new CollocatedMvTree();
 //        left->leftNode->leftNode->mv1 = cv::Point2f(10, 10);
 //        left->leftNode->leftNode->mv2 = cv::Point2f(10, 10);
@@ -1143,9 +1143,9 @@ void TriangleDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> 
 //        left->leftNode->rightNode->mv3 = cv::Point2f(1, 1);
 
         left->rightNode = new CollocatedMvTree();
-        left->rightNode->mv1 = cv::Point2f(100, 100);
-        left->rightNode->mv2 = cv::Point2f(100, 100);
-        left->rightNode->mv3 = cv::Point2f(100, 100);
+        left->rightNode->mv1 = cv::Point2f(0, 0);
+        left->rightNode->mv2 = cv::Point2f(0, 0);
+        left->rightNode->mv3 = cv::Point2f(0, 0);
 //        left->rightNode->leftNode = new CollocatedMvTree();
 //        left->rightNode->leftNode->mv1 = cv::Point2f(10, 10);
 //        left->rightNode->leftNode->mv2 = cv::Point2f(10, 10);
@@ -1157,14 +1157,14 @@ void TriangleDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> 
         previousMvList[pic_num][i]->leftNode = left;
 
         auto* right = new CollocatedMvTree();
-        right->mv1 = cv::Point2f(1000, 1000);
-        right->mv2 = cv::Point2f(1000, 1000);
-        right->mv3 = cv::Point2f(1000, 1000);
+        right->mv1 = cv::Point2f(0, 0);
+        right->mv2 = cv::Point2f(0, 0);
+        right->mv3 = cv::Point2f(0, 0);
 
         right->leftNode = new CollocatedMvTree();
-        right->leftNode->mv1 = cv::Point2f(100, 100);
-        right->leftNode->mv2 = cv::Point2f(100, 100);
-        right->leftNode->mv3 = cv::Point2f(100, 100);
+        right->leftNode->mv1 = cv::Point2f(0, 0);
+        right->leftNode->mv2 = cv::Point2f(0, 0);
+        right->leftNode->mv3 = cv::Point2f(0, 0);
 //        right->leftNode->leftNode = new CollocatedMvTree();
 //        right->leftNode->leftNode->mv1 = cv::Point2f(10, 10);
 //        right->leftNode->leftNode->mv2 = cv::Point2f(10, 10);
@@ -1175,9 +1175,9 @@ void TriangleDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> 
 //        right->leftNode->rightNode->mv3 = cv::Point2f(1, 1);
 
         right->rightNode = new CollocatedMvTree();
-        right->rightNode->mv1 = cv::Point2f(100, 100);
-        right->rightNode->mv2 = cv::Point2f(100, 100);
-        right->rightNode->mv3 = cv::Point2f(100, 100);
+        right->rightNode->mv1 = cv::Point2f(0, 0);
+        right->rightNode->mv2 = cv::Point2f(0, 0);
+        right->rightNode->mv3 = cv::Point2f(0, 0);
 //        right->rightNode->leftNode = new CollocatedMvTree();
 //        right->rightNode->leftNode->mv1 = cv::Point2f(10, 10);
 //        right->rightNode->leftNode->mv2 = cv::Point2f(10, 10);
