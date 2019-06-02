@@ -280,7 +280,7 @@ void run() {
     //#pragma omp parallel for
 //        for(int i = 0 ; i < init_triangles.size() ; i++) {
         triangle_division.constructPreviousCodingTree(foo, 0);
-        for(int i = 0 ; i < 10 ; i++) {
+        for(int i = 0 ; i < init_triangles.size() ; i++) {
             std::pair<Point3Vec, int> triangle = init_triangles[i];
 //            std::cout << "i:" << i << std::endl;
             cv::Point2f p1 = triangle.first.p1;

@@ -782,6 +782,15 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
         triangle_gauss_results[triangle_index].parallel_flag = parallel_flag;
     }
 
+//    cv::Mat output_image = target_image.clone();
+//    for(auto p : getTriangleCoordinateList()) drawTriangle(output_image, p.p1, p.p2, p.p3, cv::Scalar(255, 255, 255));
+//    cv::imwrite(getProjectDirectory() + "\\minato\\", output_image);
+//
+//    Triangle t = triangles[triangle_index].first;
+//    cv::Mat output2 = output_image.clone();
+//    drawTriangle(output_image, corners[t.p1_idx], corners[t.p2_idx], corners[t.p3_idx], RED);
+//    cv::imwrite(getProjectDirectory() + "\\minato\\", output2);
+
     cv::Point2f mvd;
     int selected_index;
     MV_CODE_METHOD method_flag;
@@ -870,7 +879,6 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
         ctu->leftNode->parentNode = ctu;
         int t1_idx = triangles.size() - 2;
         triangle_gauss_results[t1_idx] = split_mv_result[0]; // TODO: warping対応
-
         isCodedTriangle[t1_idx] = true;
         bool result = split(gaussRefImage, ctu->leftNode, (cmt->leftNode != nullptr ? cmt->leftNode : cmt), split_triangles.t1, t1_idx,split_triangles.t1_type, steps - 1);
         if(result) {
@@ -1206,7 +1214,6 @@ void TriangleDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> 
 //        right->rightNode->rightNode->mv3 = cv::Point2f(1, 1);
         previousMvList[pic_num][i]->rightNode = right;
     }
-
 
 //    for(int i = 0 ; i < 10 ; i++) {
 //        constructPreviousCodingTree(trees[i], previousMvList[pic_num][i]);
