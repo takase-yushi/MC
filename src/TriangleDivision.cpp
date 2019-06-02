@@ -266,6 +266,19 @@ int TriangleDivision::insertTriangle(int p1_idx, int p2_idx, int p3_idx, int typ
 }
 
 /**
+ * @fn void TriangleDivision::eraseTriangle(int t_idx)
+ * @brief 三角パッチに関わる情報を削除する
+ * @param t_idx 三角パッチの番号
+ */
+void TriangleDivision::eraseTriangle(int t_idx){
+    isCodedTriangle.erase(isCodedTriangle.begin() + t_idx);
+    triangles.erase(triangles.begin() + t_idx);
+    covered_triangle.erase(covered_triangle.begin() + t_idx);
+    isCodedTriangle.erase(isCodedTriangle.begin() + t_idx);
+    triangle_gauss_results.erase(triangle_gauss_results.begin() + t_idx);
+}
+
+/**
  * @fn void TriangleDivision::addNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int divide_flag)
  * @brief p1, p2, p3の隣接頂点情報を更新する
  * @param[in] p1_idx 頂点1の座標のインデックス
