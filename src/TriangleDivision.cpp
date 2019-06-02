@@ -791,7 +791,8 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
 
 //    std::cout << "gauss_result_parallel:" << gauss_result_parallel << std::endl;
 
-    std::tie(mvd, selected_index, method_flag) = getMVD({gauss_result_parallel,gauss_result_parallel,gauss_result_parallel}, RMSE_before_subdiv, triangle_index, cmt->mv1);
+    double cost_before_subdiv;
+    std::tie(cost_before_subdiv, mvd, selected_index, method_flag) = getMVD({gauss_result_parallel,gauss_result_parallel,gauss_result_parallel}, RMSE_before_subdiv, triangle_index, cmt->mv1);
 
 //    std::cout << "mvd result:" << mvd << std::endl;
 
@@ -828,6 +829,9 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
     double RMSE_after_subdiv = 0.0;
     std::vector<GaussResult> split_mv_result(2);
 
+    addCornerAndTriangle(Triangle(corner_flag[(int) p1.y][(int) p1.x], corner_flag[(int) p2.y][(int) p2.x],
+                                  corner_flag[(int) p3.y][(int) p3.x]), triangle_index, type);
+
     #pragma omp parallel for
     for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
         double error_tmp;
@@ -840,13 +844,24 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
         RMSE_after_subdiv += error_tmp;
     }
 
+    int triangle_indexes[] = {(int)triangles.size() - 2, (int)triangles.size() - 1};
+
+    double cost_after_subdiv1;
+    std::tie(cost_after_subdiv1, mvd, selected_index, method_flag) = getMVD(
+            {split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel}, split_mv_result[0].residual,
+            triangle_indexes[0], (cmt->leftNode != nullptr ? cmt->leftNode->mv1 : cmt->mv1));
+
+    double cost_after_subdiv2;
+    std::tie(cost_after_subdiv2, mvd, selected_index, method_flag) = getMVD(
+            {split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel}, split_mv_result[1].residual,
+            triangle_indexes[1], (cmt->rightNode != nullptr ? cmt->rightNode->mv1 : cmt->mv1));
+
     RMSE_after_subdiv /= (double) triangle_size;
 
-    std::cout << "RMSE_before_subdiv:" << RMSE_before_subdiv << " RMSE_after_subdiv:" << RMSE_after_subdiv << std::endl;
-
-    if((RMSE_before_subdiv - RMSE_after_subdiv) / RMSE_before_subdiv >= 0.04) {
-        addCornerAndTriangle(Triangle(corner_flag[(int) p1.y][(int) p1.x], corner_flag[(int) p2.y][(int) p2.x],
-                                      corner_flag[(int) p3.y][(int) p3.x]), triangle_index, type);
+    std::cout << "before:" << cost_before_subdiv << " after:" << (cost_after_subdiv1 + cost_after_subdiv2) << std::endl;
+    if(cost_before_subdiv > (cost_after_subdiv1 + cost_after_subdiv2)) {
+//        addCornerAndTriangle(Triangle(corner_flag[(int) p1.y][(int) p1.x], corner_flag[(int) p2.y][(int) p2.x],
+//                                      corner_flag[(int) p3.y][(int) p3.x]), triangle_index, type);
         ctu->split_cu_flag1 = true;
         ctu->split_cu_flag2 = true;
 
