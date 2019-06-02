@@ -89,6 +89,7 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
 
             // 前の動きベクトルを保持しておくやつ
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
+            previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
         }
     }
 
