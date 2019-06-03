@@ -821,8 +821,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                         B_parallel.at<double>(row, 0) += (f - g_parallel) * delta_g_parallel[row];
                     }
 
-                    MSE_warping += (f_org - g_org_warping) * (f_org - g_org_warping);
-                    MSE_parallel += (f_org - g_org_parallel) * (f_org - g_org_parallel);
+                    MSE_warping += fabs(f_org - g_org_warping);   // * (f_org - g_org_warping);
+                    MSE_parallel += fabs(f_org - g_org_parallel); // * (f_org - g_org_parallel);
 //                    MSE_warping  += (f - g_warping)  * (f - g_warping);
 //                    MSE_parallel += (f - g_parallel) * (f - g_parallel);
                 }
