@@ -252,7 +252,7 @@ void run() {
 
         std::vector<std::pair<Point3Vec, int> > init_triangles = triangle_division.getTriangles();
                 std::vector<CodingTreeUnit*> foo(init_triangles.size());
-        for(int i = 0 ; i < init_triangles.size() ; i++) {
+        for(int i = 0 ; i < 40 ; i++) {
             foo[i] = new CodingTreeUnit();
             foo[i]->split_cu_flag1 = foo[i]->split_cu_flag2 = false;
             foo[i]->leftNode = foo[i]->rightNode = nullptr;
