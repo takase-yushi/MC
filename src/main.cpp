@@ -301,9 +301,8 @@ void run() {
 //                drawTriangle(spatialMvTestImage, triangles[draw_triangle_index].p1, triangles[draw_triangle_index].p2, triangles[draw_triangle_index].p3, RED);
 //                cv::imwrite(img_directory + "/spatialTriangle_" + std::to_string(draw_triangle_index) + ".png", spatialMvTestImage);
             }
-
+        std::cout << "split finished" << std::endl;
         getReconstructionDivisionImage(gaussRefImage, foo);
-        triangle_division.constructPreviousCodingTree(foo, 0);
 
         exit(0);
         // 何回再帰的に分割を行うか
