@@ -272,10 +272,12 @@ int TriangleDivision::insertTriangle(int p1_idx, int p2_idx, int p3_idx, int typ
  * @param t_idx 三角パッチの番号
  */
 void TriangleDivision::eraseTriangle(int t_idx){
+    Triangle triangle = triangles[t_idx].first;
+    removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
+    removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, t_idx);
     isCodedTriangle.erase(isCodedTriangle.begin() + t_idx);
     triangles.erase(triangles.begin() + t_idx);
     covered_triangle.erase(covered_triangle.begin() + t_idx);
-    isCodedTriangle.erase(isCodedTriangle.begin() + t_idx);
     triangle_gauss_results.erase(triangle_gauss_results.begin() + t_idx);
 }
 
