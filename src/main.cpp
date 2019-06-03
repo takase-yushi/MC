@@ -246,11 +246,12 @@ void run() {
 
 
         TriangleDivision triangle_division(ref_image, target_image);
-        int divide_steps = 8;
+        int divide_steps = 1;
         triangle_division.initTriangle(block_size_x, block_size_y, divide_steps, LEFT_DIVIDE);
         std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
 
         std::vector<std::pair<Point3Vec, int> > init_triangles = triangle_division.getTriangles();
+        std::cout << init_triangles.size() << std::endl;
                 std::vector<CodingTreeUnit*> foo(init_triangles.size());
         for(int i = 0 ; i < init_triangles.size() ; i++) {
             foo[i] = new CodingTreeUnit();
@@ -280,7 +281,7 @@ void run() {
     //#pragma omp parallel for
 //        for(int i = 0 ; i < init_triangles.size() ; i++) {
         triangle_division.constructPreviousCodingTree(foo, 0);
-        for(int i = 0 ; i < 10 ; i++) {
+        for(int i = 0 ; i < init_triangles.size() ; i++) {
             std::pair<Point3Vec, int> triangle = init_triangles[i];
 //            std::cout << "i:" << i << std::endl;
             cv::Point2f p1 = triangle.first.p1;
@@ -301,9 +302,8 @@ void run() {
 //                drawTriangle(spatialMvTestImage, triangles[draw_triangle_index].p1, triangles[draw_triangle_index].p2, triangles[draw_triangle_index].p3, RED);
 //                cv::imwrite(img_directory + "/spatialTriangle_" + std::to_string(draw_triangle_index) + ".png", spatialMvTestImage);
             }
-
+        std::cout << "split finished" << std::endl;
         getReconstructionDivisionImage(gaussRefImage, foo);
-        triangle_division.constructPreviousCodingTree(foo, 0);
 
         exit(0);
         // 何回再帰的に分割を行うか
