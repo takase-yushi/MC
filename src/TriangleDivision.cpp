@@ -906,6 +906,8 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
         isCodedTriangle[triangle_index] = true;
         eraseTriangle(triangles.size() - 1);
         eraseTriangle(triangles.size() - 1);
+        addNeighborVertex(triangles[triangle_index].first.p1_idx,triangles[triangle_index].first.p2_idx,triangles[triangle_index].first.p3_idx);
+        addCoveredTriangle(triangles[triangle_index].first.p1_idx,triangles[triangle_index].first.p2_idx,triangles[triangle_index].first.p3_idx, triangle_index);
         return false;
     }
 
