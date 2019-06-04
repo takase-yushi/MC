@@ -7066,3 +7066,65 @@ prev_id flag ---------------------
 golomb code      : 2021
 golomb code full : 6872
 
+/mnt/workspace/MC/img/minato/minato_QP22_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/06/04 Tue 06:05:42
+PSNR : 29.110801
+code amount : 6872[bit]
+freq_block:0(-nan%)
+freq_warp:0(-nan%)
+BlockMatching's PSNR : -nan
+Warping's PSNR : -nan
+89m23sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 475
+triangles.size() : 927
+block_size_x     : 128
+block_size_y     : 128
+qp               : 37
+coordinate vector ---------------------
+golomb code(x)   : 2483
+golomb code(y)   : 2368
+motion vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 2021
+golomb code full : 6872
+
+/mnt/workspace/MC/img/minato/minato_QP22_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/06/04 Tue 07:40:17
+PSNR : 29.761584
+code amount : 6909[bit]
+freq_block:0(-nan%)
+freq_warp:0(-nan%)
+BlockMatching's PSNR : -nan
+Warping's PSNR : -nan
+88m59sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 475
+triangles.size() : 928
+block_size_x     : 128
+block_size_y     : 128
+qp               : 37
+coordinate vector ---------------------
+golomb code(x)   : 2475
+golomb code(y)   : 2376
+motion vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 2058
+golomb code full : 6909
+
