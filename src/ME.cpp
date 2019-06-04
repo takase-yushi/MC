@@ -555,7 +555,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                 }
             }
 
-
+            int scaled_spread = spread / scale;
             p0 = target_corners.p1 / scale;
             p1 = target_corners.p2 / scale;
             p2 = target_corners.p3 / scale;
@@ -577,12 +577,12 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
 
                 // ワーピング
                 double magnification = 2.0;
-                while ( (p0.x + tmp_mv_warping[0].x * magnification < 0 && p0.x + tmp_mv_warping[0].x * magnification > current_target_image.cols - 1) &&
-                        (p1.x + tmp_mv_warping[1].x * magnification < 0 && p1.x + tmp_mv_warping[1].x * magnification > current_target_image.cols - 1) &&
-                        (p2.x + tmp_mv_warping[2].x * magnification < 0 && p2.x + tmp_mv_warping[2].x * magnification > current_target_image.cols - 1) &&
-                        (p0.y + tmp_mv_warping[0].y * magnification < 0 && p0.y + tmp_mv_warping[0].y * magnification > current_target_image.rows - 1) &&
-                        (p1.y + tmp_mv_warping[1].y * magnification < 0 && p1.y + tmp_mv_warping[1].y * magnification > current_target_image.rows - 1) &&
-                        (p2.y + tmp_mv_warping[2].y * magnification < 0 && p2.y + tmp_mv_warping[2].y * magnification > current_target_image.rows - 1) ) {
+                while ( (p0.x + tmp_mv_warping[0].x * magnification < -scaled_spread && p0.x + tmp_mv_warping[0].x * magnification > current_target_image.cols - 1 + scaled_spread) &&
+                        (p1.x + tmp_mv_warping[1].x * magnification < -scaled_spread && p1.x + tmp_mv_warping[1].x * magnification > current_target_image.cols - 1 + scaled_spread) &&
+                        (p2.x + tmp_mv_warping[2].x * magnification < -scaled_spread && p2.x + tmp_mv_warping[2].x * magnification > current_target_image.cols - 1 + scaled_spread) &&
+                        (p0.y + tmp_mv_warping[0].y * magnification < -scaled_spread && p0.y + tmp_mv_warping[0].y * magnification > current_target_image.rows - 1 + scaled_spread) &&
+                        (p1.y + tmp_mv_warping[1].y * magnification < -scaled_spread && p1.y + tmp_mv_warping[1].y * magnification > current_target_image.rows - 1 + scaled_spread) &&
+                        (p2.y + tmp_mv_warping[2].y * magnification < -scaled_spread && p2.y + tmp_mv_warping[2].y * magnification > current_target_image.rows - 1 + scaled_spread) ) {
                     if(magnification <= 1)break;
                     magnification -= 0.1;
                 }
@@ -590,12 +590,12 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
 
                 // 平行移動
                 magnification = 2.0;
-                while ( (p0.x + tmp_mv_parallel.x * magnification < 0 && p0.x + tmp_mv_parallel.x * magnification > current_target_image.cols - 1) &&
-                        (p1.x + tmp_mv_parallel.x * magnification < 0 && p1.x + tmp_mv_parallel.x * magnification > current_target_image.cols - 1) &&
-                        (p2.x + tmp_mv_parallel.x * magnification < 0 && p2.x + tmp_mv_parallel.x * magnification > current_target_image.cols - 1) &&
-                        (p0.y + tmp_mv_parallel.y * magnification < 0 && p0.y + tmp_mv_parallel.y * magnification > current_target_image.rows - 1) &&
-                        (p1.y + tmp_mv_parallel.y * magnification < 0 && p1.y + tmp_mv_parallel.y * magnification > current_target_image.rows - 1) &&
-                        (p2.y + tmp_mv_parallel.y * magnification < 0 && p2.y + tmp_mv_parallel.y * magnification > current_target_image.rows - 1) ) {
+                while ( (p0.x + tmp_mv_parallel.x * magnification < -scaled_spread && p0.x + tmp_mv_parallel.x * magnification > current_target_image.cols - 1 + scaled_spread) &&
+                        (p1.x + tmp_mv_parallel.x * magnification < -scaled_spread && p1.x + tmp_mv_parallel.x * magnification > current_target_image.cols - 1 + scaled_spread) &&
+                        (p2.x + tmp_mv_parallel.x * magnification < -scaled_spread && p2.x + tmp_mv_parallel.x * magnification > current_target_image.cols - 1 + scaled_spread) &&
+                        (p0.y + tmp_mv_parallel.y * magnification < -scaled_spread && p0.y + tmp_mv_parallel.y * magnification > current_target_image.rows - 1 + scaled_spread) &&
+                        (p1.y + tmp_mv_parallel.y * magnification < -scaled_spread && p1.y + tmp_mv_parallel.y * magnification > current_target_image.rows - 1 + scaled_spread) &&
+                        (p2.y + tmp_mv_parallel.y * magnification < -scaled_spread && p2.y + tmp_mv_parallel.y * magnification > current_target_image.rows - 1 + scaled_spread) ) {
                     if(magnification <= 1)break;
                     magnification -= 0.1;
                 }
@@ -725,10 +725,10 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                         X_later_warping.y = alpha * a_later_warping.y + beta * b_later_warping.y + triangle_later_warping[0].y;
                         X_later_parallel = alpha * a_later_parallel + beta * b_later_parallel + triangle_later_parallel[0];
 
-                        if (X_later_warping.x >= current_ref_image.cols - 1) X_later_warping.x = current_ref_image.cols - 1.001;
-                        if (X_later_warping.y >= current_ref_image.rows - 1) X_later_warping.y = current_ref_image.rows - 1.001;
-                        if(X_later_warping.x < 0) X_later_warping.x = 0;
-                        if(X_later_warping.y < 0) X_later_warping.y = 0;
+                        if (X_later_warping.x >= current_ref_image.cols - 1 + scaled_spread) X_later_warping.x = current_ref_image.cols - 1.001 + scaled_spread;
+                        if (X_later_warping.y >= current_ref_image.rows - 1 + scaled_spread) X_later_warping.y = current_ref_image.rows - 1.001 + scaled_spread;
+                        if(X_later_warping.x < -scaled_spread) X_later_warping.x = -scaled_spread;
+                        if(X_later_warping.y < -scaled_spread) X_later_warping.y = -scaled_spread;
 
                         // 頂点を動かしたときのパッチ内の変動量x軸y軸独立に計算(delta_gを求めるために必要)
                         double delta_x, delta_y;
@@ -852,14 +852,14 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                 for (int k = 0; k < 6; k++) {
 
                     if (k % 2 == 0) {
-                        if ((0 <= scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0)) &&
-                            (target_images[0][step].cols - 1 >=
+                        if ((-scaled_spread <= scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0)) &&
+                            (target_images[0][step].cols - 1 + scaled_spread >=
                              scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0))) {
                             tmp_mv_warping[(int) (k / 2)].x = tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0);//動きベクトルを更新(画像の外に出ないように)
                         }
                     } else {
-                        if ((0 <= scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0)) &&
-                            (target_images[0][step].rows - 1 >=
+                        if ((-scaled_spread <= scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0)) &&
+                            (target_images[0][step].rows - 1 + scaled_spread >=
                              scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0))) {
                             tmp_mv_warping[(int) (k / 2)].y = tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0);
                         }
@@ -868,26 +868,26 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
 
                 for (int k = 0; k < 2; k++) {
                     if (k % 2 == 0) {
-                        if ((0 <= scaled_coordinates[0].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
-                            (target_images[0][step].cols - 1 >=
+                        if ((-scaled_spread <= scaled_coordinates[0].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
+                            (target_images[0][step].cols - 1 + scaled_spread >=
                              scaled_coordinates[0].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
-                            (0 <= scaled_coordinates[1].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
-                            (target_images[0][step].cols - 1 >=
+                            (-scaled_spread <= scaled_coordinates[1].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
+                            (target_images[0][step].cols - 1 + scaled_spread >=
                              scaled_coordinates[1].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
-                            (0 <= scaled_coordinates[2].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
-                            (target_images[0][step].cols - 1 >=
+                            (-scaled_spread <= scaled_coordinates[2].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
+                            (target_images[0][step].cols - 1 + scaled_spread >=
                              scaled_coordinates[2].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0))) {
                             tmp_mv_parallel.x = tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0);
                         }
                     } else {
-                        if ((0 <= scaled_coordinates[0].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
-                            (target_images[0][step].rows - 1 >=
+                        if ((-scaled_spread <= scaled_coordinates[0].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
+                            (target_images[0][step].rows - 1 + scaled_spread >=
                              scaled_coordinates[0].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
-                            (0 <= scaled_coordinates[1].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
-                            (target_images[0][step].rows - 1 >=
+                            (-scaled_spread <= scaled_coordinates[1].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
+                            (target_images[0][step].rows - 1 + scaled_spread >=
                              scaled_coordinates[1].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
-                            (0 <= scaled_coordinates[2].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
-                            (target_images[0][step].rows - 1 >=
+                            (-scaled_spread <= scaled_coordinates[2].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
+                            (target_images[0][step].rows - 1 + scaled_spread >=
                              scaled_coordinates[2].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0))) {
                             tmp_mv_parallel.y = tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0);
                         }
