@@ -528,30 +528,30 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                     }
                 }
             }
-            int k = 2;//画像の周り2ピクセルだけ折り返し
+            int k = 20;//画像の周り20ピクセルだけ折り返し
             for (int j = 0; j < current_target_image.rows; j++) {
                 for (int i = 1; i <= k; i++) {
-                    current_target_expand[-i][j] = current_target_expand[i][j];
-                    current_target_expand[current_target_image.cols - 1 + i][j] = current_target_expand[current_target_image.cols - 1 - i][j];
-                    current_ref_expand[-i][j] = current_ref_expand[i][j];
-                    current_ref_expand[current_target_image.cols - 1 + i][j] = current_ref_expand[current_target_image.cols - 1 - i][j];
-                    current_target_org_expand[-i][j] = current_target_org_expand[i][j];
-                    current_target_org_expand[current_target_image.cols - 1 + i][j] = current_target_org_expand[current_target_image.cols - 1 - i][j];
-                    current_ref_org_expand[-i][j] = current_ref_org_expand[i][j];
-                    current_ref_org_expand[current_target_image.cols - 1 + i][j] = current_ref_org_expand[current_target_image.cols - 1 - i][j];
+                    current_target_expand[-i][j] = current_target_expand[0][j];
+                    current_target_expand[current_target_image.cols - 1 + i][j] = current_target_expand[current_target_image.cols - 1][j];
+                    current_ref_expand[-i][j] = current_ref_expand[0][j];
+                    current_ref_expand[current_target_image.cols - 1 + i][j] = current_ref_expand[current_target_image.cols - 1][j];
+                    current_target_org_expand[-i][j] = current_target_org_expand[0][j];
+                    current_target_org_expand[current_target_image.cols - 1 + i][j] = current_target_org_expand[current_target_image.cols - 1][j];
+                    current_ref_org_expand[-i][j] = current_ref_org_expand[0][j];
+                    current_ref_org_expand[current_target_image.cols - 1 + i][j] = current_ref_org_expand[current_target_image.cols - 1][j];
                 }
             }
             for (int i = -k; i < current_target_image.cols + k; i++) {
                 for (int j = 1; j <= k; j++) {
-                    current_target_expand[i][-j] = current_target_expand[i][j];
-                    current_target_expand[i][current_target_image.rows - 1 + j] = current_target_expand[i][current_target_image.rows - 1 - j];
-                    current_ref_expand[i][-j] = current_ref_expand[i][j];
-                    current_ref_expand[i][current_target_image.rows - 1 + j] = current_ref_expand[i][current_target_image.rows - 1 - j];
+                    current_target_expand[i][-j] = current_target_expand[i][0];
+                    current_target_expand[i][current_target_image.rows - 1 + j] = current_target_expand[i][current_target_image.rows - 1];
+                    current_ref_expand[i][-j] = current_ref_expand[i][0];
+                    current_ref_expand[i][current_target_image.rows - 1 + j] = current_ref_expand[i][current_target_image.rows - 1];
 
-                    current_target_org_expand[i][-j] = current_target_org_expand[i][j];
-                    current_target_org_expand[i][current_target_image.rows - 1 + j] = current_target_org_expand[i][current_target_image.rows - 1 - j];
-                    current_ref_org_expand[i][-j] = current_ref_org_expand[i][j];
-                    current_ref_org_expand[i][current_target_image.rows - 1 + j] = current_ref_org_expand[i][current_target_image.rows - 1 - j];
+                    current_target_org_expand[i][-j] = current_target_org_expand[i][0];
+                    current_target_org_expand[i][current_target_image.rows - 1 + j] = current_target_org_expand[i][current_target_image.rows - 1];
+                    current_ref_org_expand[i][-j] = current_ref_org_expand[i][0];
+                    current_ref_org_expand[i][current_target_image.rows - 1 + j] = current_ref_org_expand[i][current_target_image.rows - 1];
                 }
             }
 

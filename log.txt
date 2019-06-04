@@ -7035,3 +7035,34 @@ prev_id flag ---------------------
 golomb code      : 1187
 golomb code full : 3773
 
+/mnt/workspace/MC/img/minato/minato_QP22_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/06/03 Mon 09:27:30
+PSNR : 27.467605
+code amount : 6872[bit]
+freq_block:0(-nan%)
+freq_warp:0(-nan%)
+BlockMatching's PSNR : -nan
+Warping's PSNR : -nan
+91m14sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 475
+triangles.size() : 927
+block_size_x     : 128
+block_size_y     : 128
+qp               : 37
+coordinate vector ---------------------
+golomb code(x)   : 2483
+golomb code(y)   : 2368
+motion vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 2021
+golomb code full : 6872
+
