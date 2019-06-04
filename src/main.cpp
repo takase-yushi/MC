@@ -79,7 +79,8 @@ void run() {
     const std::string file_path = getProjectDirectory();
     std::cout << file_path << std::endl;
     FILE *img_list;
-    if ((img_list = fopen((file_path + "\\list.txt").c_str(), "r")) == NULL) {
+
+    if ((img_list = fopen((file_path + "/list.txt").c_str(), "r")) == NULL) {
         std::cerr << "Error : Can not open file" << std::endl;
         exit(1);
     }
