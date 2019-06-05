@@ -1,3 +1,5 @@
+#include <utility>
+
 /**
  * @file Utils.cpp
  * @brief 点を書いたり線を引いたり...
@@ -257,11 +259,27 @@ cv::Mat bilinearInterpolation(cv::Mat src){
  * @brief プロジェクトディレクトリを返す
  * @return cwd プロジェクトディレクトリを表す文字列(std::string)
  */
-std::string getProjectDirectory(){
+std::string getProjectDirectory(std::string os){
   char cwd[1024];
   getcwd(cwd, sizeof(cwd));
   std::string current_directory = std::string(cwd);
-  return current_directory.substr(0, current_directory.rfind('/'));
+  if(OS == "Win") {
+      return current_directory.substr(0, current_directory.rfind('\\'));
+  }else{
+      return current_directory.substr(0, current_directory.rfind('/'));
+  }
+
+}
+
+/**
+ * @fn std::string replaceBackslash(std::string str)
+ * @brief windowsようにバックスラッシュを置換する
+ * @param str バックスラッシュを含む文字列
+ * @return 置換後の文字列
+ */
+std::string replaceBackslash(std::string str){
+    std::replace(str.begin(), str.end(), '/', '\\');
+    return str;
 }
 
 /**
