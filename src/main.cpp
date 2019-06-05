@@ -134,7 +134,7 @@ void run() {
     const std::string file_path = getProjectDirectory();
     std::cout << file_path << std::endl;
     FILE *img_list;
-    if ((img_list = fopen((file_path + "\\list.txt").c_str(), "r")) == NULL) {
+    if ((img_list = fopen((file_path + "/list.txt").c_str(), "r")) == NULL) {
         std::cerr << "Error : Can not open file" << std::endl;
         exit(1);
     }
@@ -307,7 +307,7 @@ void run() {
 
         exit(0);
         // 何回再帰的に分割を行うか
-        const int division_steps = 1;
+        const int division_steps = 8;
 //        triangle_division.subdivision(cv::imread(ref_file_path), division_steps);
         triangles = triangle_division.getTriangleCoordinateList();
         std::cout << "triangles.size():" << triangles.size() << std::endl;
@@ -2541,7 +2541,7 @@ cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit
     rec.reconstructionTriangle(ctu);
     std::vector<Point3Vec> hoge = rec.getTriangleCoordinateList();
 
-    cv::Mat reconstructedImage = cv::imread(getProjectDirectory() + "/img/minato/minato_000413_limit.bmp ");
+    cv::Mat reconstructedImage = cv::imread(getProjectDirectory() + "/img/minato/minato_000413_limit.bmp");
     for(const auto foo : hoge) {
         drawTriangle(reconstructedImage, foo.p1, foo.p2, foo.p3, cv::Scalar(255, 255, 255));
     }

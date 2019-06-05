@@ -261,7 +261,7 @@ std::string getProjectDirectory(){
   char cwd[1024];
   getcwd(cwd, sizeof(cwd));
   std::string current_directory = std::string(cwd);
-  return current_directory.substr(0, current_directory.rfind('\\'));
+  return current_directory.substr(0, current_directory.rfind('/'));
 }
 
 /**

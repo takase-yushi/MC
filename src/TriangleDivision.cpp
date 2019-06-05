@@ -757,10 +757,8 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
     Point3Vec refTriangle(p1, p2, p3);
     Point3Vec targetTriangle(p1, p2, p3);
     int triangle_size = 0;
-    double error = 0.0;
     bool parallel_flag;
     int num;
-    cv::Mat warp_p_image, residual_ref, parallel_p_image;
 
     std::vector<cv::Point2f> gauss_result_warping;
     cv::Point2f gauss_result_parallel;
@@ -807,9 +805,6 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
     std::tie(cost_before_subdiv, mvd, selected_index, method_flag) = getMVD({gauss_result_parallel,gauss_result_parallel,gauss_result_parallel}, RMSE_before_subdiv, triangle_index, cmt->mv1);
 
 //    std::cout << "mvd result:" << mvd << std::endl;
-
-    warp_p_image = ref_image.clone();
-    residual_ref = cv::Mat::zeros(1920, 1024, CV_8UC1);
 
     std::vector<cv::Point2i> ret_gauss2;
 
@@ -867,8 +862,6 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
     std::tie(cost_after_subdiv2, mvd, selected_index, method_flag) = getMVD(
             {split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel}, split_mv_result[1].residual,
             triangle_indexes[1], (cmt->rightNode != nullptr ? cmt->rightNode->mv1 : cmt->mv1));
-
-    RMSE_after_subdiv /= (double) triangle_size;
 
     std::cout << "before:" << cost_before_subdiv << " after:" << (cost_after_subdiv1 + cost_after_subdiv2) << std::endl;
     if(cost_before_subdiv > (cost_after_subdiv1 + cost_after_subdiv2)) {
