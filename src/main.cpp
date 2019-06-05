@@ -115,7 +115,6 @@ int qp;
 int block_size_x;
 int block_size_y;
 
-
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
 
@@ -131,10 +130,11 @@ void run() {
 
     std::cout << "OpenCV_version : " << getVersionOfOpenCV() << std::endl;
 
-    const std::string file_path = getProjectDirectory();
-    std::cout << file_path << std::endl;
+    const std::string project_directory_path = getProjectDirectory(OS);
     FILE *img_list;
-    if ((img_list = fopen((file_path + "/list.txt").c_str(), "r")) == NULL) {
+
+    std::string list_path = (OS == "Win" ? replaceBackslash(project_directory_path + "/list.txt") : project_directory_path + "/list.txt");
+    if ((img_list = fopen((list_path).c_str(), "r")) == NULL) {
         std::cerr << "Error : Can not open file" << std::endl;
         exit(1);
     }
@@ -156,7 +156,7 @@ void run() {
 
     double point_nums = 0.0;
 
-    std::string graph_file_path = file_path + "\\graph\\";
+    std::string graph_file_path = project_directory_path + "\\graph\\";
     std::cout << "graph_file_path:" << graph_file_path << std::endl;
 
 
@@ -170,8 +170,8 @@ void run() {
         char t_file_name[256], r_file_name[256], o_file_name[256], i_file_path[256], csv_prefix[256],r_intra_file_name[256],target_color_file_name[256],c_file_name[256];
         sscanf(buf, "%s %s %s %s %s %s %s %d %d %d", i_file_path, r_file_name, t_file_name, o_file_name,r_intra_file_name,target_color_file_name,c_file_name, &qp, &block_size_x, &block_size_y);
 
-        std::string img_path = std::string(i_file_path);
-        std::string img_directory = file_path + img_path;
+        std::string img_path = ((OS == "Win") ? replaceBackslash(std::string(i_file_path)) : std::string(i_file_path));
+        std::string img_directory = project_directory_path + img_path;
         std::string target_file_name = std::string(t_file_name);
 
         std::string ref_file_name = std::string(r_file_name);
@@ -179,10 +179,10 @@ void run() {
         std::string corner_file_name = std::string(c_file_name);
         std::string csv_file_prefix = std::string("aaa");
 
-        std::string ref_file_path = file_path + img_path + ref_file_name;
-        std::string target_file_path = file_path + img_path + target_file_name;
-        std::string ref_intra_file_path = file_path + img_path + ref_intra_file_name;
-        std::string target_color_file_path = file_path + img_path + target_color_file_name;
+        std::string ref_file_path = project_directory_path + img_path + ref_file_name;
+        std::string target_file_path = project_directory_path + img_path + target_file_name;
+        std::string ref_intra_file_path = project_directory_path + img_path + ref_intra_file_name;
+        std::string target_color_file_path = project_directory_path + img_path + target_color_file_name;
 
         std::vector<std::string> out_file = splitString(std::string(o_file_name), '.');
 
@@ -246,7 +246,7 @@ void run() {
 
 
         TriangleDivision triangle_division(ref_image, target_image);
-        int divide_steps = 1;
+        int divide_steps = 8;
         triangle_division.initTriangle(block_size_x, block_size_y, divide_steps, LEFT_DIVIDE);
         std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
 
@@ -488,7 +488,7 @@ void run() {
                 drawPoint(points, cv::Point2d(ref_corners[i].x / 2.0, ref_corners[i].y / 2.0), BLUE, 4);
                 cv::line(points, corners[i], cv::Point2d(ref_corners[i].x / 2.0, ref_corners[i].y / 2.0), GREEN);
             }
-            cv::imwrite(file_path + img_path + "points.png", points);
+            cv::imwrite(project_directory_path + img_path + "points.png", points);
 
             puts("insert");
             // 点を追加
@@ -1073,9 +1073,9 @@ void run() {
             //
             // 頂点復号ベクトルのx成分の頻度
             //
-            FILE *fp = fopen((file_path + img_path + csv_file_prefix + "corner_decode_vector_x_freq.csv").c_str(), "w");
-            std::ofstream os(file_path + img_path + "gp\\corner_decode_vector_x_freq.txt");
-            storeGnuplotFile(file_path + img_path + "gp\\decode_x.gp", "length of x coordinate.", "Frequency",
+            FILE *fp = fopen((project_directory_path + img_path + csv_file_prefix + "corner_decode_vector_x_freq.csv").c_str(), "w");
+            std::ofstream os(project_directory_path + img_path + "gp\\corner_decode_vector_x_freq.txt");
+            storeGnuplotFile(project_directory_path + img_path + "gp\\decode_x.gp", "length of x coordinate.", "Frequency",
                              "corner_decode_vector_x_freq.txt");
             double mean = 0.0;
             std::cout << csv_file_prefix << std::endl;
@@ -1088,8 +1088,8 @@ void run() {
             fclose(fp);
             os.close();
             // 平均引いたやつをシフトするもの
-            os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_x_freq_mean.txt");
-            storeGnuplotFile(file_path + img_path + "gp\\decode_x_mean.gp", "length of x coordinate", "Frequency",
+            os = std::ofstream(project_directory_path + img_path + "gp\\corner_decode_vector_x_freq_mean.txt");
+            storeGnuplotFile(project_directory_path + img_path + "gp\\decode_x_mean.gp", "length of x coordinate", "Frequency",
                              "corner_decode_vector_x_freq_mean.txt");
             mean /= corners.size();
             for (int i = 0; i < (int) freq_coord_x.size(); i++) {
@@ -1098,8 +1098,8 @@ void run() {
             os.close();
             std::cout << "cehck4" << std::endl;
             // max分ずらすグラフ
-            os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_x_freq_max.txt");
-            storeGnuplotFile(file_path + img_path + "gp\\decode_x_max.gp", "length of x coordinate", "Frequency",
+            os = std::ofstream(project_directory_path + img_path + "gp\\corner_decode_vector_x_freq_max.txt");
+            storeGnuplotFile(project_directory_path + img_path + "gp\\decode_x_max.gp", "length of x coordinate", "Frequency",
                              "corner_decode_vector_x_freq_max.txt");
             mean /= corners.size();
             for (int i = 0; i < (int) freq_coord_x.size(); i++) {
@@ -1112,9 +1112,9 @@ void run() {
             //
             // 頂点復号ベクトルのy成分の頻度
             //
-            fp = fopen((file_path + img_path + csv_file_prefix + "corner_decode_vector_y_freq.csv").c_str(), "w");
-            os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_y_freq.txt");
-            storeGnuplotFile(file_path + img_path + "gp\\decode_y.gp", "length of y coordinate.", "Frequency",
+            fp = fopen((project_directory_path + img_path + csv_file_prefix + "corner_decode_vector_y_freq.csv").c_str(), "w");
+            os = std::ofstream(project_directory_path + img_path + "gp\\corner_decode_vector_y_freq.txt");
+            storeGnuplotFile(project_directory_path + img_path + "gp\\decode_y.gp", "length of y coordinate.", "Frequency",
                              "corner_decode_vector_y_freq.txt");
             mean = 0.0;
 
@@ -1127,8 +1127,8 @@ void run() {
             os.close();
 
             // 平均分ずらすやつ
-            os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_y_freq_mean.txt");
-            storeGnuplotFile(file_path + img_path + "gp\\decode_y_mean.gp", "length of y coordinate", "Frequency",
+            os = std::ofstream(project_directory_path + img_path + "gp\\corner_decode_vector_y_freq_mean.txt");
+            storeGnuplotFile(project_directory_path + img_path + "gp\\decode_y_mean.gp", "length of y coordinate", "Frequency",
                              "corner_decode_vector_y_freq_mean.txt");
             mean /= corners.size();
             for (int i = 0; i < (int) freq_coord_y.size(); i++) {
@@ -1137,8 +1137,8 @@ void run() {
             os.close();
 
             // 最大値ずらすやつ
-            os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_y_freq_max.txt");
-            storeGnuplotFile(file_path + img_path + "gp\\decode_y_max.gp", "length of y coordinate", "Frequency",
+            os = std::ofstream(project_directory_path + img_path + "gp\\corner_decode_vector_y_freq_max.txt");
+            storeGnuplotFile(project_directory_path + img_path + "gp\\decode_y_max.gp", "length of y coordinate", "Frequency",
                              "corner_decode_vector_y_freq_max.txt");
             mean /= corners.size();
             for (int i = 0; i < (int) freq_coord_y.size(); i++) {
@@ -1153,10 +1153,10 @@ void run() {
 
             if (HARRIS) {
                 cv::imwrite(
-                        file_path + img_path + "decoded_corner" + "_cornersize_" + std::to_string(corners.size()) + ".png",
+                        project_directory_path + img_path + "decoded_corner" + "_cornersize_" + std::to_string(corners.size()) + ".png",
                         decoded_corner);
             } else if (THRESHOLD) {
-                cv::imwrite(file_path + img_path + "decoded_corner_threshold_" + std::to_string(threshold) + "_lambda_" +
+                cv::imwrite(project_directory_path + img_path + "decoded_corner_threshold_" + std::to_string(threshold) + "_lambda_" +
                             std::to_string(LAMBDA) + ".png", decoded_corner);
             }
 
@@ -1188,9 +1188,9 @@ void run() {
             }
 
             // mvのxについて集計
-            fp = fopen((file_path + img_path + csv_file_prefix + "corner_mv_x_freq.csv").c_str(), "w");
-            os = std::ofstream(file_path + img_path + "gp\\corner_mv_x_freq.txt");
-            storeGnuplotFile(file_path + img_path + "gp\\corner_mv_x.gp", "length of x coordinate.", "Frequency",
+            fp = fopen((project_directory_path + img_path + csv_file_prefix + "corner_mv_x_freq.csv").c_str(), "w");
+            os = std::ofstream(project_directory_path + img_path + "gp\\corner_mv_x_freq.txt");
+            storeGnuplotFile(project_directory_path + img_path + "gp\\corner_mv_x.gp", "length of x coordinate.", "Frequency",
                              "corner_mv_x_freq.txt");
             for (int i = 0; i < (int) freq_x.size(); i++) {
                 fprintf(fp, "%d,%d\n", i - min_mv_x, freq_x[i]);
@@ -1205,9 +1205,9 @@ void run() {
             os.close();
 
             // mvのyについて集計
-            fp = fopen((file_path + img_path + csv_file_prefix + "corner_mv_y_freq.csv").c_str(), "w");
-            os = std::ofstream(file_path + img_path + "gp\\corner_mv_y_freq.txt");
-            storeGnuplotFile(file_path + img_path + "gp\\corner_mv_y.gp", "length of y coordinate.", "Frequency",
+            fp = fopen((project_directory_path + img_path + csv_file_prefix + "corner_mv_y_freq.csv").c_str(), "w");
+            os = std::ofstream(project_directory_path + img_path + "gp\\corner_mv_y_freq.txt");
+            storeGnuplotFile(project_directory_path + img_path + "gp\\corner_mv_y.gp", "length of y coordinate.", "Frequency",
                              "corner_mv_y_freq.txt");
             for (int i = 0; i < (int) freq_y.size(); i++) {
                 fprintf(fp, "%d,%d\n", i - min_mv_y, freq_y[i]);
@@ -1222,10 +1222,10 @@ void run() {
             os.close();
 
             if (HARRIS) {
-                cv::imwrite(file_path + img_path + "decoded_mv_corner_size_" + std::to_string(corners.size()) + ".png",
+                cv::imwrite(project_directory_path + img_path + "decoded_mv_corner_size_" + std::to_string(corners.size()) + ".png",
                             decoded_mv);
             } else if (THRESHOLD) {
-                cv::imwrite(file_path + img_path + "decoded_mv_threshold_" + std::to_string(threshold) + "_lambda_" +
+                cv::imwrite(project_directory_path + img_path + "decoded_mv_threshold_" + std::to_string(threshold) + "_lambda_" +
                             std::to_string(LAMBDA) + ".png", decoded_mv);
             }
 
@@ -1244,9 +1244,9 @@ void run() {
             }
 
             if(DIVIDE_MODE == LEFT_DIVIDE) {
-                cv::imwrite(file_path + img_path + "triangle_" + out_file[0] + "_" + std::to_string(block_size_x) + "_" + std::to_string(block_size_y) + "_LEFT.png", triangle_target);
+                cv::imwrite(project_directory_path + img_path + "triangle_" + out_file[0] + "_" + std::to_string(block_size_x) + "_" + std::to_string(block_size_y) + "_LEFT.png", triangle_target);
             }else{
-                cv::imwrite(file_path + img_path + "triangle_" + out_file[0] + "_" + std::to_string(block_size_x) + "_" + std::to_string(block_size_y) + "_RIGHT.png", triangle_target);
+                cv::imwrite(project_directory_path + img_path + "triangle_" + out_file[0] + "_" + std::to_string(block_size_x) + "_" + std::to_string(block_size_y) + "_RIGHT.png", triangle_target);
             }
 
             std::vector<Triangle> triangles;
@@ -1377,13 +1377,13 @@ void run() {
             //
             // 頂点復号ベクトルのx成分の頻度
             //
-            storeGnuplotFile(file_path + img_path + "gp\\decode_x.gp", "length of x coordinate.", "Frequency",
+            storeGnuplotFile(project_directory_path + img_path + "gp\\decode_x.gp", "length of x coordinate.", "Frequency",
                              "corner_decode_vector_x_freq.txt");
             std::cout << "cehck2" << std::endl;
             mean = 0.0;
-            fp = fopen((file_path + img_path + csv_file_prefix + "corner_mv_x_freq.csv").c_str(), "w");
-            os = std::ofstream(file_path + img_path + "gp\\corner_mv_x_freq.txt");
-            storeGnuplotFile(file_path + img_path + "gp\\corner_mv_x.gp", "length of x coordinate.", "Frequency",
+            fp = fopen((project_directory_path + img_path + csv_file_prefix + "corner_mv_x_freq.csv").c_str(), "w");
+            os = std::ofstream(project_directory_path + img_path + "gp\\corner_mv_x_freq.txt");
+            storeGnuplotFile(project_directory_path + img_path + "gp\\corner_mv_x.gp", "length of x coordinate.", "Frequency",
                              "corner_mv_x_freq.txt");
             for (int i = 0; i < (int) freq_coord_x_later.size(); i++) {
                 std::cout << i << " " << freq_coord_x_later[i] << std::endl;
@@ -1396,8 +1396,8 @@ void run() {
             os.close();
             std::cout << "cehck3" << std::endl;
             // 平均引いたやつをシフトするもの
-            os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_x_freq_mean.txt");
-            storeGnuplotFile(file_path + img_path + "gp\\decode_x_mean.gp", "length of x coordinate", "Frequency",
+            os = std::ofstream(project_directory_path + img_path + "gp\\corner_decode_vector_x_freq_mean.txt");
+            storeGnuplotFile(project_directory_path + img_path + "gp\\decode_x_mean.gp", "length of x coordinate", "Frequency",
                              "corner_decode_vector_x_freq_mean.txt");
             mean /= corners.size();
             for (int i = 0; i < (int) freq_coord_x_later.size(); i++) {
@@ -1406,8 +1406,8 @@ void run() {
             os.close();
             std::cout << "cehck4" << std::endl;
             // max分ずらすグラフ
-            os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_x_freq_max.txt");
-            storeGnuplotFile(file_path + img_path + "gp\\decode_x_max.gp", "length of x coordinate", "Frequency",
+            os = std::ofstream(project_directory_path + img_path + "gp\\corner_decode_vector_x_freq_max.txt");
+            storeGnuplotFile(project_directory_path + img_path + "gp\\decode_x_max.gp", "length of x coordinate", "Frequency",
                              "corner_decode_vector_x_freq_max.txt");
             mean /= corners.size();
             for (int i = 0; i < (int) freq_coord_x_later.size(); i++) {
@@ -1420,9 +1420,9 @@ void run() {
             //
             // 頂点復号ベクトルのy成分の頻度
             //
-            fp = fopen((file_path + img_path + csv_file_prefix + "corner_decode_vector_y_freq.csv").c_str(), "w");
-            os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_y_freq.txt");
-            storeGnuplotFile(file_path + img_path + "gp\\decode_y.gp", "length of y coordinate.", "Frequency",
+            fp = fopen((project_directory_path + img_path + csv_file_prefix + "corner_decode_vector_y_freq.csv").c_str(), "w");
+            os = std::ofstream(project_directory_path + img_path + "gp\\corner_decode_vector_y_freq.txt");
+            storeGnuplotFile(project_directory_path + img_path + "gp\\decode_y.gp", "length of y coordinate.", "Frequency",
                              "corner_decode_vector_y_freq.txt");
             mean = 0.0;
 
@@ -1435,8 +1435,8 @@ void run() {
             os.close();
 
             // 平均分ずらすやつ
-            os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_y_freq_mean.txt");
-            storeGnuplotFile(file_path + img_path + "gp\\decode_y_mean.gp", "length of y coordinate", "Frequency",
+            os = std::ofstream(project_directory_path + img_path + "gp\\corner_decode_vector_y_freq_mean.txt");
+            storeGnuplotFile(project_directory_path + img_path + "gp\\decode_y_mean.gp", "length of y coordinate", "Frequency",
                              "corner_decode_vector_y_freq_mean.txt");
             mean /= corners.size();
             for (int i = 0; i < (int) freq_coord_y_later.size(); i++) {
@@ -1445,8 +1445,8 @@ void run() {
             os.close();
 
             // 最大値ずらすやつ
-            os = std::ofstream(file_path + img_path + "gp\\corner_decode_vector_y_freq_max.txt");
-            storeGnuplotFile(file_path + img_path + "gp\\decode_y_max.gp", "length of y coordinate", "Frequency",
+            os = std::ofstream(project_directory_path + img_path + "gp\\corner_decode_vector_y_freq_max.txt");
+            storeGnuplotFile(project_directory_path + img_path + "gp\\decode_y_max.gp", "length of y coordinate", "Frequency",
                              "corner_decode_vector_y_freq_max.txt");
             mean /= corners.size();
             for (int i = 0; i < (int) freq_coord_y_later.size(); i++) {
@@ -1518,7 +1518,7 @@ void run() {
             for(const Point3Vec &t : triangle_division.getTriangleCoordinateList()){
                 drawTriangle(residual, t.p1, t.p2, t.p3, RED);
             }
-            cv::imwrite(file_path + img_path + "residual.png",residual);
+            cv::imwrite(project_directory_path + img_path + "residual.png",residual);
             std::cout << "check point 4" << std::endl;
             double psnr_1;
             printf("%s's PSNR:%f\n", outFilePath.c_str(), (psnr_1 = getPSNR(target_image, out)));
@@ -1529,10 +1529,10 @@ void run() {
             cv::Point2f p3 = cv::Point2f(target_image.cols - 151, target_image.rows - 101);
             cv::Point2f p4 = cv::Point2f(150, target_image.rows - 101);
             drawRectangle(out, p1, p2, p3, p4);
-            cv::imwrite(file_path + img_path + "rect.png", out);
+            cv::imwrite(project_directory_path + img_path + "rect.png", out);
             std::cout << "check point 6" << std::endl;
             // ログ -------------------------------------------------------------------------------
-            std::string logPath = getProjectDirectory() + "/log.txt";
+            std::string logPath = getProjectDirectory(OS) + "/log.txt";
             fp = fopen(logPath.c_str(), "a");
             time_t tt;
             time(&tt);
@@ -1606,10 +1606,10 @@ void run() {
             std::cout << "code amount: " << golomb_x + golomb_y + prev_id_code_amount + golomb_mv_x + golomb_mv_y << "[bit]" << std::endl;
 
             if (THRESHOLD)
-                cv::imwrite(file_path + img_path + "triangle_error_threshold_" + std::to_string(threshold) + ".png",
+                cv::imwrite(project_directory_path + img_path + "triangle_error_threshold_" + std::to_string(threshold) + ".png",
                             triangle_error_img);
             else if (HARRIS)
-                cv::imwrite(file_path + img_path + "triangle_error_corners_" + std::to_string(corners.size()) + ".png",
+                cv::imwrite(project_directory_path + img_path + "triangle_error_corners_" + std::to_string(corners.size()) + ".png",
                             triangle_error_img);
 
         }
@@ -2337,7 +2337,7 @@ getPredictedImage(const cv::Mat &ref, const cv::Mat &target, const cv::Mat &intr
         }
     }
 
-    cv::imwrite(getProjectDirectory() + "/img/minato/flag_img_" + std::to_string(block_size_x) + "_" + std::to_string(block_size_y) + "_QP" + std::to_string(qp) + "_RIGHT.png", parallel_flag_img_color);
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/flag_img_" + std::to_string(block_size_x) + "_" + std::to_string(block_size_y) + "_QP" + std::to_string(qp) + "_RIGHT.png", parallel_flag_img_color);
 
     int worth = 0;
     for(int i = 0;i < (int)mv_basis_tuple.size();i++) {
@@ -2541,11 +2541,11 @@ cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit
     rec.reconstructionTriangle(ctu);
     std::vector<Point3Vec> hoge = rec.getTriangleCoordinateList();
 
-    cv::Mat reconstructedImage = cv::imread(getProjectDirectory() + "/img/minato/minato_000413_limit.bmp");
+    cv::Mat reconstructedImage = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_000413_limit.bmp");
     for(const auto foo : hoge) {
         drawTriangle(reconstructedImage, foo.p1, foo.p2, foo.p3, cv::Scalar(255, 255, 255));
     }
-    cv::imwrite(getProjectDirectory() + "/img/minato/reconstruction.png", reconstructedImage);
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/reconstruction.png", reconstructedImage);
 
     return reconstructedImage;
 }
