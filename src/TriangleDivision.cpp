@@ -822,7 +822,8 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
     ctu->mv1 = mv[0];
     ctu->mv2 = mv[1];
     ctu->mv3 = mv[2];
-
+    ctu->triangle_index = triangle_index;
+    ctu->code_length = code_length;
     ctu->collocated_mv = cmt->mv1;
 //    std::cout << ctu->collocated_mv << std::endl;
 
@@ -870,12 +871,19 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
     if(cost_before_subdiv > (cost_after_subdiv1 + cost_after_subdiv2)) {
 //        addCornerAndTriangle(Triangle(corner_flag[(int) p1.y][(int) p1.x], corner_flag[(int) p2.y][(int) p2.x],
 //                                      corner_flag[(int) p3.y][(int) p3.x]), triangle_index, type);
-        ctu->split_cu_flag1 = true;
-        ctu->split_cu_flag2 = true;
+        ctu->split_cu_flag = true;
+
+        int t1_idx = triangles.size() - 2;
+        int t2_idx = triangles.size() - 1;
 
         ctu->leftNode = new CodingTreeUnit();
         ctu->leftNode->parentNode = ctu;
-        int t1_idx = triangles.size() - 2;
+        ctu->leftNode->triangle_index = t1_idx;
+        ctu->leftNode->mv1 = split_mv_result[0].mv_parallel;
+        ctu->leftNode->mv2 = split_mv_result[0].mv_parallel;
+        ctu->leftNode->mv3 = split_mv_result[0].mv_parallel;
+        ctu->code_length = code_length1;
+
         triangle_gauss_results[t1_idx] = split_mv_result[0]; // TODO: warping対応
         isCodedTriangle[t1_idx] = true;
         bool result = split(gaussRefImage, ctu->leftNode, (cmt->leftNode != nullptr ? cmt->leftNode : cmt), split_triangles.t1, t1_idx,split_triangles.t1_type, steps - 1);
@@ -886,7 +894,12 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
 
         ctu->rightNode = new CodingTreeUnit();
         ctu->rightNode->parentNode = ctu;
-        int t2_idx = triangles.size() - 1;
+        ctu->rightNode->triangle_index = t2_idx;
+        ctu->rightNode->mv1 = split_mv_result[1].mv_parallel;
+        ctu->rightNode->mv2 = split_mv_result[1].mv_parallel;
+        ctu->rightNode->mv3 = split_mv_result[1].mv_parallel;
+        ctu->code_length = code_length2;
+
         triangle_gauss_results[t2_idx] = split_mv_result[1];
         isCodedTriangle[t2_idx] = true;
         result = split(gaussRefImage, ctu->rightNode, (cmt->rightNode != nullptr ? cmt->rightNode : cmt), split_triangles.t2, t2_idx, split_triangles.t2_type, steps - 1);
@@ -898,6 +911,7 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
         return true;
     }else{
         isCodedTriangle[triangle_index] = true;
+        ctu->leftNode = ctu->rightNode = nullptr;
         eraseTriangle(triangles.size() - 1);
         eraseTriangle(triangles.size() - 1);
         addNeighborVertex(triangles[triangle_index].first.p1_idx,triangles[triangle_index].first.p2_idx,triangles[triangle_index].first.p3_idx);
