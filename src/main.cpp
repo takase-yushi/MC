@@ -321,7 +321,12 @@ void run(std::string config_path) {
             }
         std::cout << "split finished" << std::endl;
         getReconstructionDivisionImage(gaussRefImage, foo);
-
+        cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo);
+        int code_length = triangle_division.getCtuCodeLength(foo);
+        std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
+        cv::imwrite(img_directory + "p_image_" + std::to_string(qp) + "_divide_" +std::to_string(division_steps) + ".png", p_image);
+        cv::imwrite(img_directory + "p_residual_image_" + std::to_string(qp) + "_divide_" +std::to_string(division_steps) + ".png", getResidualImage(target_image, p_image));
+        std::cout << "PSNR:" << getPSNR(target_image, p_image) << " code_length:" << code_length << std::endl;
         exit(0);
         // 何回再帰的に分割を行うか
 
