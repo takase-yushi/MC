@@ -324,8 +324,8 @@ void run(std::string config_path) {
 
         exit(0);
         // 何回再帰的に分割を行うか
-        const int division_steps = 8;
-//        triangle_division.subdivision(cv::imread(ref_file_path), division_steps);
+
+        //        triangle_division.subdivision(cv::imread(ref_file_path), division_steps);
         triangles = triangle_division.getTriangleCoordinateList();
         std::cout << "triangles.size():" << triangles.size() << std::endl;
 
