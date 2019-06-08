@@ -340,6 +340,35 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
     b = triangle.p2 - triangle.p1;
     det = a.x * b.y - a.y * b.x;
 
+    unsigned char **expand_ref;
+    int offset = 32;
+    expand_ref = (unsigned char **)malloc((ref_image.rows + offset * 2) * sizeof(unsigned char *));
+    expand_ref += offset;
+    for(int i = -offset ; i < ref_image.cols + offset ; i++) {
+        expand_ref[i] = (unsigned char *)malloc((ref_image.cols + offset * 2) * sizeof(unsigned char));
+        expand_ref[i] += offset;
+    }
+
+    for(int y = -offset ; y < ref_image.rows + offset; y++){
+        for(int x = -offset ; x < ref_image.cols + offset; x++){
+            expand_ref[y][x] = M(ref_image, x, y);
+        }
+    }
+
+    for(int y = 0 ; y < ref_image.rows ; y++){
+        for(int x = -offset ; x < 0 ; x++){
+            expand_ref[y][x] = M(ref_image, 0, y);
+            expand_ref[y][ref_image.cols + offset + x] = M(ref_image, ref_image.cols - 1, y);
+        }
+    }
+
+    for(int y = -offset ; y < 0 ; y++){
+        for(int x = -offset ; x < ref_image.cols + offset ; x++){
+            expand_ref[y][x] = M(ref_image, x, 0);
+            expand_ref[ref_image.rows + offset + y][x] = M(ref_image, x, ref_image.rows - 1);
+        }
+    }
+
     for(const auto& pixel : in_triangle_pixels) {
         X.x = pixel.x - triangle.p1.x;
         X.y = pixel.y - triangle.p1.y;
@@ -381,6 +410,14 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
 
         squared_error += pow((M(target_image, (int)pixel.x, (int)pixel.y) - (0.299 * y + 0.587 * y + 0.114 * y)), 2);
     }
+
+    for(int i = -offset ; i < ref_image.rows + offset ; i++) {
+        expand_ref[i] -= offset;
+        free(expand_ref[i]);
+    }
+
+    expand_ref -= offset;
+    free(expand_ref);
 
     return squared_error;
 }
