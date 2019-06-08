@@ -802,7 +802,8 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
 //    std::cout << "gauss_result_parallel:" << gauss_result_parallel << std::endl;
 
     double cost_before_subdiv;
-    std::tie(cost_before_subdiv, mvd, selected_index, method_flag) = getMVD({gauss_result_parallel,gauss_result_parallel,gauss_result_parallel}, RMSE_before_subdiv, triangle_index, cmt->mv1);
+    int code_length;
+    std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD({gauss_result_parallel,gauss_result_parallel,gauss_result_parallel}, RMSE_before_subdiv, triangle_index, cmt->mv1);
 
 //    std::cout << "mvd result:" << mvd << std::endl;
 
@@ -854,12 +855,14 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
     int triangle_indexes[] = {(int)triangles.size() - 2, (int)triangles.size() - 1};
 
     double cost_after_subdiv1;
-    std::tie(cost_after_subdiv1, mvd, selected_index, method_flag) = getMVD(
+    int code_length1;
+    std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag) = getMVD(
             {split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel}, split_mv_result[0].residual,
             triangle_indexes[0], (cmt->leftNode != nullptr ? cmt->leftNode->mv1 : cmt->mv1));
 
     double cost_after_subdiv2;
-    std::tie(cost_after_subdiv2, mvd, selected_index, method_flag) = getMVD(
+    int code_length2;
+    std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag) = getMVD(
             {split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel}, split_mv_result[1].residual,
             triangle_indexes[1], (cmt->rightNode != nullptr ? cmt->rightNode->mv1 : cmt->mv1));
 
@@ -877,9 +880,7 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
         isCodedTriangle[t1_idx] = true;
         bool result = split(gaussRefImage, ctu->leftNode, (cmt->leftNode != nullptr ? cmt->leftNode : cmt), split_triangles.t1, t1_idx,split_triangles.t1_type, steps - 1);
         if(result) {
-            ctu->leftNode->split_cu_flag1 = true;
             ctu->leftNode->parentNode = ctu;
-            ctu->leftNode->triangle_index = t1_idx;
             ctu->depth = divide_steps - steps;
         }
 
@@ -890,9 +891,7 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
         isCodedTriangle[t2_idx] = true;
         result = split(gaussRefImage, ctu->rightNode, (cmt->rightNode != nullptr ? cmt->rightNode : cmt), split_triangles.t2, t2_idx, split_triangles.t2_type, steps - 1);
         if(result) {
-            ctu->rightNode->split_cu_flag2 = true;
             ctu->rightNode->parentNode = ctu;
-            ctu->rightNode->triangle_index = t2_idx;
             ctu->depth = divide_steps - steps;
         }
 
@@ -1265,7 +1264,7 @@ bool TriangleDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CO
  * @param[in] ctu CodingTreeUnit 符号木
  * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
  */
-std::tuple<double, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv){
+std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv){
     std::cout << "triangle_index(getMVD):" << triangle_idx << std::endl;
     // 空間予測と時間予測の候補を取り出す
     std::vector<int> spatial_triangles = getSpatialTriangleList(triangle_idx);
@@ -1290,7 +1289,7 @@ std::tuple<double, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(st
     double lambda = getLambdaPred(qp);
 
     //                      コスト, 差分ベクトル, 番号, タイプ
-    std::vector<std::tuple<double, cv::Point2f, int, MV_CODE_METHOD> > results;
+    std::vector<std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> > results;
     for(int i = 0 ; i < vectors.size() ; i++) {
         std::cout << "i:" << i << std::endl;
         std::pair<cv::Point2f, MV_CODE_METHOD> vector = vectors[i];
@@ -1329,9 +1328,9 @@ std::tuple<double, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(st
         double rd = residual + lambda * (mvd_code_length + reference_index_code_length + 6);
 
         // 結果に入れる
-        results.emplace_back(rd, mvd, i, vector.second);
+        results.emplace_back(rd, mvd_code_length + reference_index_code_length + 6, mvd, i, vector.second);
     }
-    std::cout << "foo1" << std::endl;
+
     // マージ符号化
     // マージで参照する動きベクトルを使って残差を求め直す
     Triangle current_triangle_coordinate = triangles[triangle_idx].first;
@@ -1339,29 +1338,28 @@ std::tuple<double, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(st
     cv::Point2f p2 = corners[current_triangle_coordinate.p2_idx];
     cv::Point2f p3 = corners[current_triangle_coordinate.p3_idx];
     Point3Vec coordinate = Point3Vec(p1, p2, p3);
-    std::cout << "foo2" << std::endl;
     vectors.clear();
     for(int i = 0 ; i < spatial_triangle_size ; i++) {
         // TODO: これ平行移動のみしか対応してないがどうする…？
         if(!isMvExists(vectors, mv[0])) {
             vectors.emplace_back(mv[0], MERGE);
             double ret_residual = getTriangleResidual(ref_image, target_image, coordinate, mv);
-            double rd = ret_residual + lambda * (getUnaryCodeLength(i));
-            results.emplace_back(rd, cv::Point2f(0, 0), results.size(), MERGE);
+            double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
+            results.emplace_back(rd, getUnaryCodeLength(i) + 1, cv::Point2f(0, 0), results.size(), MERGE);
         }
     }
 
     // RDしたスコアが小さい順にソート
-    std::sort(results.begin(), results.end(), [](const std::tuple<double, cv::Point2f, int, MV_CODE_METHOD >& a, const std::tuple<double, cv::Point2f, int, MV_CODE_METHOD>& b){
+    std::sort(results.begin(), results.end(), [](const std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD >& a, const std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD>& b){
         return std::get<0>(a) < std::get<0>(b);
     });
-    std::cout << "foo3" << std::endl;
     double cost = std::get<0>(results[0]);
-    cv::Point2f mvd = std::get<1>(results[0]);
-    int selected_idx = std::get<2>(results[0]);
-    MV_CODE_METHOD method = std::get<3>(results[0]);
+    int code_length = std::get<1>(results[0]);
+    cv::Point2f mvd = std::get<2>(results[0]);
+    int selected_idx = std::get<3>(results[0]);
+    MV_CODE_METHOD method = std::get<4>(results[0]);
 
-    return {cost, mvd, selected_idx, method};
+    return {cost, code_length, mvd, selected_idx, method};
 }
 
 /**
