@@ -96,7 +96,7 @@ cv::Point2f getDifferenceVector(const Triangle &triangle, const std::vector<cv::
                                 const std::vector<cv::Point2f> &corners_mv, const cv::Point2f &mv);
 
 cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit *> ctu);
-void run();
+void run(std::string config_path);
 
 // 問題は差分ベクトルどうするの…？って
 std::vector<int> count_all_diff_x_mv(1001, 0);
@@ -134,19 +134,22 @@ void storeResidualImage(){
 int main(int argc, char *argv[]){
     // Write test codes below
     // test1();
-
+//    storeResidualImage();
+//    std::cout << getPSNR(cv::imread(getProjectDirectory(OS)+ std::string(argv[1])), cv::imread(getProjectDirectory(OS) + std::string(argv[2]))) << std::endl;
+//    exit(0);
+    std::string config_path = std::string(argv[1]);
     // exec ME
-    run();
+    run(config_path);
 }
 
-void run() {
+void run(std::string config_path) {
 
     std::cout << "OpenCV_version : " << getVersionOfOpenCV() << std::endl;
 
     const std::string project_directory_path = getProjectDirectory(OS);
     FILE *img_list;
 
-    std::string list_path = (OS == "Win" ? replaceBackslash(project_directory_path + "/list.txt") : project_directory_path + "/list.txt");
+    std::string list_path = (OS == "Win" ? replaceBackslash(project_directory_path + config_path) : project_directory_path + config_path);
     if ((img_list = fopen((list_path).c_str(), "r")) == NULL) {
         std::cerr << "Error : Can not open file" << std::endl;
         exit(1);
