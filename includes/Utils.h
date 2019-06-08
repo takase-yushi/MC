@@ -76,7 +76,7 @@
  */
 #define SIDE_Y_MIN 400
 
-const std::string OS = "Win";
+const std::string OS = "Ubuntu";
 
 /**
  * @struct struct Point3Vec
