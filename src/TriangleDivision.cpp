@@ -1393,6 +1393,51 @@ cv::Point2f TriangleDivision::getQuantizedMv(cv::Point2f &mv, double quantize_st
     return ret;
 }
 
+cv::Mat TriangleDivision::getPredictedImageFromCtu(std::vector<CodingTreeUnit*> ctus){
+    cv::Mat out = cv::Mat::zeros(ref_image.size(), CV_8UC3);
+
+    for(int i = 0 ; i < ctus.size() ; i++) {
+        getPredictedImageFromCtu(ctus[i], out);
+    }
+
+    return out;
+}
+
+void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out){
+    if(ctu->leftNode == nullptr && ctu->rightNode == nullptr) {
+        int triangle_index = ctu->triangle_index;
+        cv::Point2f mv = ctu->mv1;
+        Triangle triangle_corner_idx = triangles[triangle_index].first;
+        Point3Vec triangle(corners[triangle_corner_idx.p1_idx], corners[triangle_corner_idx.p2_idx], corners[triangle_corner_idx.p3_idx]);
+
+        std::cout << "p1:" << triangle.p1 << " p2:" << triangle.p2 << " p3:" << triangle.p3 << " mv:" << mv << std::endl;
+        std::vector<cv::Point2f> mvs{mv, mv, mv};
+        getPredictedImage(ref_image, target_image, out, triangle, mvs, true);
+        return;
+    }
+
+    if(ctu->leftNode != nullptr) getPredictedImageFromCtu(ctu->leftNode, out);
+    if(ctu->leftNode != nullptr) getPredictedImageFromCtu(ctu->rightNode, out);
+}
+
+int TriangleDivision::getCtuCodeLength(std::vector<CodingTreeUnit*> ctus) {
+    int code_length_sum = 0;
+    for(int i = 0 ; i < ctus.size() ; i++){
+        code_length_sum += getCtuCodeLength(ctus[i]);
+    }
+    return code_length_sum;
+}
+
+int TriangleDivision::getCtuCodeLength(CodingTreeUnit *ctu){
+
+    if(ctu->leftNode == nullptr && ctu->rightNode == nullptr) {
+        return 1+ctu->code_length;
+    }
+
+    // ここで足している1はsplit_cu_flag分です
+    return 1 + getCtuCodeLength(ctu->leftNode) + getCtuCodeLength(ctu->rightNode);
+}
+
 TriangleDivision::SplitResult::SplitResult(const Point3Vec &t1, const Point3Vec &t2, int t1Type, int t2Type) : t1(t1),
                                                                                                                t2(t2),
                                                                                                                t1_type(t1Type),
