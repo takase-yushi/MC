@@ -64,7 +64,7 @@ void Reconstruction::reconstructionTriangle(std::vector<CodingTreeUnit*> ctu) {
 
 void Reconstruction::reconstructionTriangle(CodingTreeUnit* ctu, Point3Vec triangle, int type){
 
-    if(ctu->split_cu_flag1 == false && ctu->split_cu_flag2 == false) {
+    if(ctu->leftNode == nullptr && ctu->rightNode == nullptr) {
         // std::cout  <<  corner_flag[(int)triangle.p1.y][(int)triangle.p1.x] << " "  << corner_flag[(int)triangle.p2.y][(int)triangle.p2.x] <<  corner_flag[(int)triangle.p3.y][(int)triangle.p3.x] << std::endl;
         int p1_idx, p2_idx, p3_idx;
         if(isAdditionalPoint(triangle.p1)) {
@@ -97,8 +97,8 @@ void Reconstruction::reconstructionTriangle(CodingTreeUnit* ctu, Point3Vec trian
     triangle.p3 = ret[2].first;
     TriangleDivision::SplitResult result = TriangleDivision::getSplitTriangle(triangle.p1, triangle.p2, triangle.p3, type);
 
-    if(ctu->split_cu_flag1 != false) reconstructionTriangle(ctu->leftNode, result.t1, result.t1_type);
-    if(ctu->split_cu_flag2 != false) reconstructionTriangle(ctu->rightNode, result.t2, result.t2_type);
+    if(ctu->leftNode != nullptr) reconstructionTriangle(ctu->leftNode, result.t1, result.t1_type);
+    if(ctu->rightNode != nullptr) reconstructionTriangle(ctu->rightNode, result.t2, result.t2_type);
 }
 
 bool Reconstruction::isAdditionalPoint(cv::Point2f p){

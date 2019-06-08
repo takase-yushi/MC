@@ -272,7 +272,7 @@ void run(std::string config_path) {
                 std::vector<CodingTreeUnit*> foo(init_triangles.size());
         for(int i = 0 ; i < init_triangles.size() ; i++) {
             foo[i] = new CodingTreeUnit();
-            foo[i]->split_cu_flag1 = foo[i]->split_cu_flag2 = false;
+            foo[i]->split_cu_flag = false;
             foo[i]->leftNode = foo[i]->rightNode = nullptr;
             foo[i]->triangle_index = i;
         }
