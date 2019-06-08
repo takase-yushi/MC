@@ -114,6 +114,7 @@ cv::Mat triangle_error_img;
 int qp;
 int block_size_x;
 int block_size_y;
+int division_steps;
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
@@ -184,7 +185,7 @@ void run(std::string config_path) {
     while (fgets(buf, sizeof(buf), img_list) != nullptr) {
         if (buf[0] == '#') continue;
         char t_file_name[256], r_file_name[256], o_file_name[256], i_file_path[256], csv_prefix[256],r_intra_file_name[256],target_color_file_name[256],c_file_name[256];
-        sscanf(buf, "%s %s %s %s %s %s %s %d %d %d", i_file_path, r_file_name, t_file_name, o_file_name,r_intra_file_name,target_color_file_name,c_file_name, &qp, &block_size_x, &block_size_y);
+        sscanf(buf, "%s %s %s %s %s %s %s %d %d %d %d", i_file_path, r_file_name, t_file_name, o_file_name,r_intra_file_name,target_color_file_name,c_file_name, &qp, &block_size_x, &block_size_y, &division_steps);
 
         std::string img_path = ((OS == "Win") ? replaceBackslash(std::string(i_file_path)) : std::string(i_file_path));
         std::string img_directory = project_directory_path + img_path;
@@ -262,8 +263,8 @@ void run(std::string config_path) {
 
 
         TriangleDivision triangle_division(ref_image, target_image);
-        int divide_steps = 8;
-        triangle_division.initTriangle(block_size_x, block_size_y, divide_steps, LEFT_DIVIDE);
+
+        triangle_division.initTriangle(block_size_x, block_size_y, division_steps, LEFT_DIVIDE);
         std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
 
         std::vector<std::pair<Point3Vec, int> > init_triangles = triangle_division.getTriangles();
@@ -304,7 +305,7 @@ void run(std::string config_path) {
             cv::Point2f p2 = triangle.first.p2;
             cv::Point2f p3 = triangle.first.p3;
             std::cout << "================== step:" << i << " ================== " << std::endl;
-            triangle_division.split(gaussRefImage, foo[i], nullptr, Point3Vec(p1, p2, p3), i, triangle.second, divide_steps);
+            triangle_division.split(gaussRefImage, foo[i], nullptr, Point3Vec(p1, p2, p3), i, triangle.second, division_steps);
 //            triangle_division.getSpatialTriangleList(triangles.size() - 1);
 //            int prev_triangles_max = triangles.size();
 //            triangles = triangle_division.getAllTriangleCoordinateList();
@@ -2561,7 +2562,7 @@ cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit
     for(const auto foo : hoge) {
         drawTriangle(reconstructedImage, foo.p1, foo.p2, foo.p3, cv::Scalar(255, 255, 255));
     }
-    cv::imwrite(getProjectDirectory(OS) + "/img/minato/reconstruction.png", reconstructedImage);
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/reconstruction_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + ".png", reconstructedImage);
 
     return reconstructedImage;
 }
