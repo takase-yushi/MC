@@ -327,7 +327,7 @@ int bicubic_interpolation(unsigned char **img, double x, double y){
     double val = 0.0;
     for(int ny = -1 ; ny <= 2 ; ny++) {
         for(int nx = -1 ; nx <= 2 ; nx++) {
-            val += img[x0 + nx][y0 + ny] * bicubic_weight(nx - d_x) * bicubic_weight(ny - d_y);
+            val += img[y0 + ny][x0 + nx] * bicubic_weight(nx - d_x) * bicubic_weight(ny - d_y);
         }
     }
 
@@ -389,13 +389,13 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
     int offset = 32;
     expand_ref = (unsigned char **)malloc((ref_image.rows + offset * 2) * sizeof(unsigned char *));
     expand_ref += offset;
-    for(int i = -offset ; i < ref_image.cols + offset ; i++) {
+    for(int i = -offset ; i < ref_image.rows + offset ; i++) {
         expand_ref[i] = (unsigned char *)malloc((ref_image.cols + offset * 2) * sizeof(unsigned char));
         expand_ref[i] += offset;
     }
 
-    for(int y = -offset ; y < ref_image.rows + offset; y++){
-        for(int x = -offset ; x < ref_image.cols + offset; x++){
+    for(int y = 0 ; y < ref_image.rows ; y++){
+        for(int x = 0 ; x < ref_image.cols ; x++){
             expand_ref[y][x] = M(ref_image, x, y);
         }
     }
@@ -444,12 +444,12 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
         int y0 = floor(X_later.y);
         double d_y = X_later.y - y0;
 
-        int y = bicubic_interpolation(expand_ref, X_later.x, X_later.y);
+//        int y = bicubic_interpolation(expand_ref, X_later.x, X_later.y);
 
-//        int y = (int) floor((M(ref_image, (int) x0    , (int) y0    ) * (1 - d_x) * (1 - d_y)  +
-//                             M(ref_image, (int) x0 + 1, (int) y0    ) * (    d_x) * (1 - d_y)  +
-//                             M(ref_image, (int) x0    , (int) y0 + 1) * (1 - d_x) * (    d_y)  +
-//                             M(ref_image, (int) x0 + 1, (int) y0 + 1) * (    d_x) * (    d_y)) + 0.5);
+        int y = (int) floor((M(ref_image, (int) x0    , (int) y0    ) * (1 - d_x) * (1 - d_y)  +
+                             M(ref_image, (int) x0 + 1, (int) y0    ) * (    d_x) * (1 - d_y)  +
+                             M(ref_image, (int) x0    , (int) y0 + 1) * (1 - d_x) * (    d_y)  +
+                             M(ref_image, (int) x0 + 1, (int) y0 + 1) * (    d_x) * (    d_y)) + 0.5);
 
         R(output_image, (int)pixel.x, (int)pixel.y) = y;
         G(output_image, (int)pixel.x, (int)pixel.y) = y;
