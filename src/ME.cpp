@@ -293,6 +293,50 @@ std::vector<cv::Point2f> warping(const cv::Mat& prev_color, const cv::Mat& curre
 }
 
 /**
+ * @fn double bicubic_weight(double x)
+ * @brief bicubicフィルタの重みを計算する
+ * @param x 重み関数に渡すアレ
+ * @return 重み
+ */
+double bicubic_weight(double x){
+    double abs_x = fabs(x);
+
+    if (abs_x <= 1.0) {
+        return abs_x * abs_x * abs_x - 2 * abs_x * abs_x + 1;
+    } else if (abs_x <= 2.0) {
+        return - abs_x * abs_x * abs_x + 5 * abs_x * abs_x - 8 * abs_x + 4;
+    } else {
+        return 0.0;
+    }
+}
+
+/**
+ * @fn int bicubic_interpolation(unsigned char **img, double x, double y)
+ * @brief 与えられた座標を双三次補間を行い画素値を返す
+ * @param img 折返しなどで拡大した画像
+ * @param x 小数精度のx座標
+ * @param y 小数精度のy座標
+ * @return 補間した値
+ */
+int bicubic_interpolation(unsigned char **img, double x, double y){
+    int x0 = floor(x);
+    double d_x = x - x0;
+    int y0 = floor(y);
+    double d_y = y - y0;
+
+    double val = 0.0;
+    for(int ny = -1 ; ny <= 2 ; ny++) {
+        for(int nx = -1 ; nx <= 2 ; nx++) {
+            val += img[x0 + nx][y0 + ny] * bicubic_weight(nx - d_x) * bicubic_weight(ny - d_y);
+        }
+    }
+
+    if(val >= 255.5) return 255;
+    else if(val < -0.5) return 0;
+    else return (int)(val + 0.5);
+}
+
+/**
  * @fn void getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& output_image, std::vector<cv::Point2f>& mv)
  * @brief 動きベクトルをもらって、out_imageに画像を書き込む
  * @param[in] ref_image
@@ -340,6 +384,7 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
     b = triangle.p2 - triangle.p1;
     det = a.x * b.y - a.y * b.x;
 
+    // 拡大画像の取得
     unsigned char **expand_ref;
     int offset = 32;
     expand_ref = (unsigned char **)malloc((ref_image.rows + offset * 2) * sizeof(unsigned char *));
@@ -399,10 +444,12 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
         int y0 = floor(X_later.y);
         double d_y = X_later.y - y0;
 
-        int y = (int) floor((M(ref_image, (int) x0    , (int) y0    ) * (1 - d_x) * (1 - d_y)  +
-                             M(ref_image, (int) x0 + 1, (int) y0    ) * (    d_x) * (1 - d_y)  +
-                             M(ref_image, (int) x0    , (int) y0 + 1) * (1 - d_x) * (    d_y)  +
-                             M(ref_image, (int) x0 + 1, (int) y0 + 1) * (    d_x) * (    d_y)) + 0.5);
+        int y = bicubic_interpolation(expand_ref, X_later.x, X_later.y);
+
+//        int y = (int) floor((M(ref_image, (int) x0    , (int) y0    ) * (1 - d_x) * (1 - d_y)  +
+//                             M(ref_image, (int) x0 + 1, (int) y0    ) * (    d_x) * (1 - d_y)  +
+//                             M(ref_image, (int) x0    , (int) y0 + 1) * (1 - d_x) * (    d_y)  +
+//                             M(ref_image, (int) x0 + 1, (int) y0 + 1) * (    d_x) * (    d_y)) + 0.5);
 
         R(output_image, (int)pixel.x, (int)pixel.y) = y;
         G(output_image, (int)pixel.x, (int)pixel.y) = y;
@@ -411,6 +458,7 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
         squared_error += pow((M(target_image, (int)pixel.x, (int)pixel.y) - (0.299 * y + 0.587 * y + 0.114 * y)), 2);
     }
 
+    // メモリの開放
     for(int i = -offset ; i < ref_image.rows + offset ; i++) {
         expand_ref[i] -= offset;
         free(expand_ref[i]);
