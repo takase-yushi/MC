@@ -309,9 +309,6 @@ void TriangleDivision::addNeighborVertex(int p1_idx, int p2_idx, int p3_idx) {
  * @param[in] triangle_no 三角形のインデックス
  */
 void TriangleDivision::addCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_no) {
-    if(p1_idx == 329 || p2_idx == 329 || p3_idx == 329) {
-        std::cout << p1_idx << " " << p2_idx << " " << p3_idx << std::endl;
-    }
     covered_triangle[p1_idx].emplace(triangle_no);
     covered_triangle[p2_idx].emplace(triangle_no);
     covered_triangle[p3_idx].emplace(triangle_no);
@@ -764,7 +761,7 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
     cv::Point2f gauss_result_parallel;
 
     if(triangle_gauss_results[triangle_index].residual > 0) {
-        std::cout << "cache hit! triangle_index:" << triangle_index << std::endl;
+//        std::cout << "cache hit! triangle_index:" << triangle_index << std::endl;
         GaussResult result_before = triangle_gauss_results[triangle_index];
         gauss_result_warping = result_before.mv_warping;
         gauss_result_parallel = result_before.mv_parallel;
@@ -1279,16 +1276,16 @@ bool TriangleDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CO
  * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
  */
 std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv){
-    std::cout << "triangle_index(getMVD):" << triangle_idx << std::endl;
+//    std::cout << "triangle_index(getMVD):" << triangle_idx << std::endl;
     // 空間予測と時間予測の候補を取り出す
     std::vector<int> spatial_triangles = getSpatialTriangleList(triangle_idx);
-    std::cout << "spatial" << std::endl;
+//    std::cout << "spatial" << std::endl;
     int spatial_triangle_size = static_cast<int>(spatial_triangles.size());
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors;
 
     // すべてのベクトルを格納する．
     for(int i = 0 ; i < spatial_triangle_size ; i++) {
-        std::cout << "spatial_i:" << i << std::endl;
+//        std::cout << "spatial_i:" << i << std::endl;
         // TODO: これ平行移動のみしか対応してないがどうする…？
         if(!isMvExists(vectors, triangle_gauss_results[spatial_triangles[i]].mv_parallel)) {
             // とりあえず平行移動のみ考慮
@@ -1305,10 +1302,10 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
     //                      コスト, 差分ベクトル, 番号, タイプ
     std::vector<std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> > results;
     for(int i = 0 ; i < vectors.size() ; i++) {
-        std::cout << "i:" << i << std::endl;
+//        std::cout << "i:" << i << std::endl;
         std::pair<cv::Point2f, MV_CODE_METHOD> vector = vectors[i];
         cv::Point2f current_mv = vector.first;
-        std::cout << "current_mv:" << current_mv << std::endl;
+//        std::cout << "current_mv:" << current_mv << std::endl;
         cv::Point2f mvd = current_mv - mv[0];
 
         mvd = getQuantizedMv(mvd, 4);
@@ -1339,10 +1336,10 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
         int reference_index_code_length = getUnaryCodeLength(reference_index);
 
         // 各種フラグ分を(3*2)bit足してます
-        double rd = residual + lambda * (mvd_code_length + reference_index_code_length + 6);
+        double rd = residual + lambda * (mvd_code_length + reference_index_code_length + 6 + 1);
 
         // 結果に入れる
-        results.emplace_back(rd, mvd_code_length + reference_index_code_length + 6, mvd, i, vector.second);
+        results.emplace_back(rd, mvd_code_length + reference_index_code_length + 6 + 1, mvd, i, vector.second);
     }
 
     // マージ符号化
@@ -1424,7 +1421,7 @@ void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &ou
         Triangle triangle_corner_idx = triangles[triangle_index].first;
         Point3Vec triangle(corners[triangle_corner_idx.p1_idx], corners[triangle_corner_idx.p2_idx], corners[triangle_corner_idx.p3_idx]);
 
-        std::cout << "p1:" << triangle.p1 << " p2:" << triangle.p2 << " p3:" << triangle.p3 << " mv:" << mv << std::endl;
+//        std::cout << "p1:" << triangle.p1 << " p2:" << triangle.p2 << " p3:" << triangle.p3 << " mv:" << mv << std::endl;
         std::vector<cv::Point2f> mvs{mv, mv, mv};
         getPredictedImage(ref_image, target_image, out, triangle, mvs, true);
         return;
