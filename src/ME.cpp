@@ -613,7 +613,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                     }
                 }
             }
-            int spread = 17;// 双3次補間を行うために、画像の周り(16+1)=17ピクセルだけ折り返し
+            int spread = 18;// 双3次補間を行うために、画像の周り(16+2)=18ピクセルだけ折り返し
             for (int j = 0; j < current_target_image.rows; j++) {
                 for (int i = 1; i <= spread; i++) {
                     current_target_expand[-i][j] = current_target_expand[0][j];
