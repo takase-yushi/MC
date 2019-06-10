@@ -613,7 +613,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                     }
                 }
             }
-            int spread = 16;//画像の周り16ピクセルだけ折り返し
+            int spread = 18;// 双3次補間を行うために、画像の周り(16+2)=18ピクセルだけ折り返し
             for (int j = 0; j < current_target_image.rows; j++) {
                 for (int i = 1; i <= spread; i++) {
                     current_target_expand[-i][j] = current_target_expand[0][j];
@@ -639,6 +639,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                     current_ref_org_expand[i][current_target_image.rows - 1 + j] = current_ref_org_expand[i][current_target_image.rows - 1];
                 }
             }
+
+            spread = 16; // 探索範囲は16までなので16に戻す
 
             int scaled_spread = spread / scale;
             p0 = target_corners.p1 / scale;
@@ -866,32 +868,14 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                     double x0_later_parallel_decimal = X_later_parallel.x - x0_later_parallel_integer;
                     double y0_later_parallel_decimal = X_later_parallel.y - y0_later_parallel_integer;
 
-                    double f = current_target_expand[x_integer][y_integer    ] * (1 - x_decimal) * (1 - y_decimal) + current_target_expand[x_integer + 1][y_integer    ] * x_decimal * (1 - y_decimal) +
-                               current_target_expand[x_integer][y_integer + 1] * (1 - x_decimal) * y_decimal       + current_target_expand[x_integer + 1][y_integer + 1] * x_decimal * y_decimal;
+                    double f = bicubic_interpolation(current_target_expand, X.x, X.y);
+                    double f_org = bicubic_interpolation(current_target_org_expand, X.x, X.y);
 
-                    double f_org = current_target_org_expand[x_integer][y_integer    ] * (1 - x_decimal) * (1 - y_decimal) + current_target_org_expand[x_integer + 1][y_integer    ] * x_decimal * (1 - y_decimal) +
-                                   current_target_org_expand[x_integer][y_integer + 1] * (1 - x_decimal) * y_decimal       + current_target_org_expand[x_integer + 1][y_integer + 1] * x_decimal * y_decimal;
+                    double g_warping = bicubic_interpolation(current_ref_expand, X_later_warping.x, X_later_warping.y);
+                    double g_parallel = bicubic_interpolation(current_ref_expand, X_later_parallel.x, X_later_parallel.y);
 
-
-                    double g_warping = current_ref_expand[x0_later_warping_integer    ][y0_later_warping_integer    ] * (1 - x0_later_warping_decimal) * (1 - y0_later_warping_decimal) +
-                                       current_ref_expand[x0_later_warping_integer + 1][y0_later_warping_integer    ] * x0_later_warping_decimal       * (1 - y0_later_warping_decimal) +
-                                       current_ref_expand[x0_later_warping_integer    ][y0_later_warping_integer + 1] * (1 - x0_later_warping_decimal) * y0_later_warping_decimal       +
-                                       current_ref_expand[x0_later_warping_integer + 1][y0_later_warping_integer + 1] * x0_later_warping_decimal       * y0_later_warping_decimal;//頂点を移動させた後のワーピングの参照フレームの輝度値
-
-                    double g_parallel = current_ref_expand[x0_later_parallel_integer    ][y0_later_parallel_integer    ] * (1 - x0_later_parallel_decimal) * (1 - y0_later_parallel_decimal) +
-                                        current_ref_expand[x0_later_parallel_integer + 1][y0_later_parallel_integer    ] *      x0_later_parallel_decimal  * (1 - y0_later_parallel_decimal) +
-                                        current_ref_expand[x0_later_parallel_integer    ][y0_later_parallel_integer + 1] * (1 - x0_later_parallel_decimal) * (    y0_later_parallel_decimal)  +
-                                        current_ref_expand[x0_later_parallel_integer + 1][y0_later_parallel_integer + 1] *      x0_later_parallel_decimal  * (    y0_later_parallel_decimal);//頂点を移動させた後の平行移動の参照フレームの輝度値
-
-                    double g_org_warping = current_ref_org_expand[x0_later_warping_integer    ][y0_later_warping_integer    ] * (1 - x0_later_warping_decimal) * (1 - y0_later_warping_decimal) +
-                                           current_ref_org_expand[x0_later_warping_integer + 1][y0_later_warping_integer    ] * x0_later_warping_decimal       * (1 - y0_later_warping_decimal) +
-                                           current_ref_org_expand[x0_later_warping_integer    ][y0_later_warping_integer + 1] * (1 - x0_later_warping_decimal) * y0_later_warping_decimal       +
-                                           current_ref_org_expand[x0_later_warping_integer + 1][y0_later_warping_integer + 1] * x0_later_warping_decimal       * y0_later_warping_decimal;//頂点を移動させた後のワーピングの参照フレームの輝度値
-
-                    double g_org_parallel = current_ref_org_expand[x0_later_parallel_integer    ][y0_later_parallel_integer    ] * (1 - x0_later_parallel_decimal) * (1 - y0_later_parallel_decimal) +
-                                            current_ref_org_expand[x0_later_parallel_integer + 1][y0_later_parallel_integer    ] *      x0_later_parallel_decimal  * (1 - y0_later_parallel_decimal) +
-                                            current_ref_org_expand[x0_later_parallel_integer    ][y0_later_parallel_integer + 1] * (1 - x0_later_parallel_decimal) * (    y0_later_parallel_decimal)  +
-                                            current_ref_org_expand[x0_later_parallel_integer + 1][y0_later_parallel_integer + 1] *      x0_later_parallel_decimal  * (    y0_later_parallel_decimal);//頂点を移動させた後の平行移動の参照フレームの輝度値
+                    double g_org_warping = bicubic_interpolation(current_ref_org_expand, X_later_warping.x, X_later_warping.y);
+                    double g_org_parallel = bicubic_interpolation(current_ref_org_expand, X_later_parallel.x, X_later_parallel.y);
 
                     for (int row = 0; row < warping_matrix_dim; row++) {
                         for (int col = 0; col < warping_matrix_dim; col++) {
