@@ -104,17 +104,16 @@ public:
 
     class GaussResult{
     public:
-        int triangle_index;
-
-        GaussResult(int triangleIndex, const Triangle &triangle, int type, double rmseBeforeSubdiv,
-                    double rmseAfterSubdiv);
-
         GaussResult();
 
-        Triangle triangle;
-        int type;
-        double RMSE_before_subdiv;
-        double RMSE_after_subdiv;
+        GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvParallel, double residual,
+                    int triangleSize, bool parallelFlag);
+
+        std::vector<cv::Point2f> mv_warping;
+        cv::Point2f mv_parallel;
+        double residual;
+        int triangle_size;
+        bool parallel_flag;
 
     };
 
@@ -139,14 +138,15 @@ public:
     std::vector<Point3Vec> getIdxCoveredTriangleCoordinateList(int target_vertex_idx);
     std::vector<int> getIdxCoveredTriangleIndexList(int idx);
 
-    void subdivision(cv::Mat gaussRefImage, int steps);
     void constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num = 0);
 
     static SplitResult getSplitTriangle(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, int type);
     bool split(cv::Mat& gaussRefImage, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point3Vec triangle, int triangle_index, int type, int steps);
     std::vector<int> getSpatialTriangleList(int t_idx);
     cv::Point2f getCollocatedTriangleList(CodingTreeUnit* unit);
+    int getCtuCodeLength(std::vector<CodingTreeUnit*> ctus);
 
+    cv::Mat getPredictedImageFromCtu(std::vector<CodingTreeUnit*> ctus);
     std::vector<Point3Vec> getAllTriangleCoordinateList();
     std::vector<Triangle> getAllTriangleIndexList();
     int divide_steps; // 分割回数
@@ -164,7 +164,8 @@ private:
     std::vector<std::vector<CollocatedMvTree*>> previousMvList;
     int coded_picture_num;
     std::vector<cv::Mat> predicted_buf;
-    std::vector<std::vector<cv::Point2f>> triangle_mvs;
+    std::vector<GaussResult> triangle_gauss_results;
+
     int qp;
 
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
@@ -178,8 +179,11 @@ private:
     std::vector<int> getDivideOrder(CodingTreeUnit* currentNode);
     void constructPreviousCodingTree(CodingTreeUnit* codingTree, CollocatedMvTree* constructedTree);
     static cv::Point2f getQuantizedMv(cv::Point2f &mv, double quantize_step);
-    std::tuple<cv::Point2f, int, MV_CODE_METHOD> getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv);
+    std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv);
     bool isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> &vectors, const cv::Point2f &mv);
+    void eraseTriangle(int t_idx);
+    void getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out);
+    int getCtuCodeLength(CodingTreeUnit *ctu);
 
 };
 

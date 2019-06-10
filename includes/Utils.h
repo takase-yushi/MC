@@ -76,6 +76,8 @@
  */
 #define SIDE_Y_MIN 400
 
+const std::string OS = "Ubuntu";
+
 /**
  * @struct struct Point3Vec
  * @brief 三点を保持する構造体
@@ -161,7 +163,9 @@ double round2(double dIn, int nLen);
 
 cv::Mat bilinearInterpolation(cv::Mat src);
 
-std::string getProjectDirectory();
+std::string getProjectDirectory(std::string os);
+
+std::string replaceBackslash(std::string str);
 
 std::string getVersionOfOpenCV();
 

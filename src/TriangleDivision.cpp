@@ -25,20 +25,14 @@ TriangleDivision::TriangleDivision(const cv::Mat &refImage, const cv::Mat &targe
 
 
 
-TriangleDivision::GaussResult::GaussResult(int triangleIndex, const Triangle &triangle, int type,
-                                           double rmseBeforeSubdiv, double rmseAfterSubdiv) : triangle_index(
-        triangleIndex), triangle(triangle), type(type), RMSE_before_subdiv(rmseBeforeSubdiv), RMSE_after_subdiv(
-        rmseAfterSubdiv) {}
-
-TriangleDivision::GaussResult::GaussResult(): triangle(Triangle(-1, -1, -1)) {}
-
-
 /**
- * @fn void TriangleDivision::initTriangle(int block_size_x, int block_size_y, int _divide_steps, int divide_flag)
+ * @fn void TriangleDivision::initTriangle(int block_size_x, int block_size_y, int _divide_steps, int _qp, int divide_flag)
  * @brief 三角形を初期化する
- * @param[in] block_size_x
- * @param[in] block_size_y
- * @param[in] divide_flag
+ * @param[in] _block_size_x
+ * @param[in] _block_size_y
+ * @param[in] _divide_steps
+ * @param[in] _qp
+ * @param[in] _divide_flag
  */
 void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _divide_steps, int _qp, int divide_flag) {
     block_size_x = _block_size_x;
@@ -94,6 +88,7 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
             neighbor_vtx.emplace_back();
 
             // 前の動きベクトルを保持しておくやつ
+            previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
         }
     }
@@ -264,10 +259,26 @@ int TriangleDivision::insertTriangle(int p1_idx, int p2_idx, int p3_idx, int typ
 
     triangles.emplace_back(triangle, type);
     covered_triangle.emplace_back();
-    triangle_mvs.emplace_back();
     isCodedTriangle.emplace_back(false);
+    triangle_gauss_results.emplace_back();
+    triangle_gauss_results[triangle_gauss_results.size() - 1].residual = -1.0;
 
     return static_cast<int>(triangles.size() - 1);
+}
+
+/**
+ * @fn void TriangleDivision::eraseTriangle(int t_idx)
+ * @brief 三角パッチに関わる情報を削除する
+ * @param t_idx 三角パッチの番号
+ */
+void TriangleDivision::eraseTriangle(int t_idx){
+    Triangle triangle = triangles[t_idx].first;
+    removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
+    removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, t_idx);
+    isCodedTriangle.erase(isCodedTriangle.begin() + t_idx);
+    triangles.erase(triangles.begin() + t_idx);
+    covered_triangle.erase(covered_triangle.begin() + t_idx);
+    triangle_gauss_results.erase(triangle_gauss_results.begin() + t_idx);
 }
 
 /**
@@ -298,9 +309,6 @@ void TriangleDivision::addNeighborVertex(int p1_idx, int p2_idx, int p3_idx) {
  * @param[in] triangle_no 三角形のインデックス
  */
 void TriangleDivision::addCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_no) {
-    if(p1_idx == 329 || p2_idx == 329 || p3_idx == 329) {
-        std::cout << p1_idx << " " << p2_idx << " " << p3_idx << std::endl;
-    }
     covered_triangle[p1_idx].emplace(triangle_no);
     covered_triangle[p2_idx].emplace(triangle_no);
     covered_triangle[p3_idx].emplace(triangle_no);
@@ -723,679 +731,6 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
 }
 
 /**
- * @fn void TriangleDivision::subdivision()
- * @brief 三角パッチの再分割を行う
- * @param[in] gaussRefImage ガウスニュートン法の第1層目の画像
- * @param[in] steps 何回分割するかを示す値
- */
-void TriangleDivision::subdivision(cv::Mat gaussRefImage, int steps) {
-
-    if(steps == 0) return;
-
-    // 一つ前に分割されている場合、更に分割すればよいが
-    // 分割されていないのであればこれ以上分割する必要はない
-    std::vector<bool> previousDivideFlag(triangles.size(), true);
-
-    std::vector<CodingTreeUnit> ctu(triangles.size());
-
-    // ctuIndexMapper[index] := index番目の三角形のCTUを表す
-    std::vector<int> ctuIndexMapper(triangles.size());
-
-    for(int i = 0 ; i < triangles.size() ; i++) {
-        ctuIndexMapper[i] = i;
-    }
-
-    for(int step = 0 ; step < steps ; step++) {
-        std::vector<GaussResult> results(triangles.size());
-        previousDivideFlag.resize(triangles.size());
-        delete_flag.resize(triangles.size());
-
-        int denominator = triangles.size();
-        int numerator = 0;
-
-#pragma omp parallel for
-        for (int i = 0; i < (int) triangles.size(); i++) {
-            // 一つ前のステップで分割されてないならばやる必要はない
-            if(!previousDivideFlag[i]) continue;
-
-            std::pair<Triangle, int> triangle = triangles[i];
-
-            double RMSE_before_subdiv = 0.0;
-            cv::Point2f p1 = corners[triangle.first.p1_idx];
-            cv::Point2f p2 = corners[triangle.first.p2_idx];
-            cv::Point2f p3 = corners[triangle.first.p3_idx];
-
-            Point3Vec refTriangle(p1, p2, p3);
-            Point3Vec targetTriangle(p1, p2, p3);
-            int triangle_size = 0;
-
-            RMSE_before_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, targetTriangle, refTriangle,
-                                               triangle_size);
-            RMSE_before_subdiv /= triangle_size;
-
-            double RMSE_after_subdiv = 0.0;
-            triangle_size = 0;
-            int triangle_size_sum = 0;
-
-            switch(triangle.second) {
-                case DIVIDE::TYPE1:
-                {
-                    cv::Point2f p1 = corners[triangle.first.p1_idx];
-                    cv::Point2f p2 = corners[triangle.first.p2_idx];
-                    cv::Point2f p3 = corners[triangle.first.p3_idx];
-
-                    cv::Point2f x = (p2 - p1) / 2.0;
-                    cv::Point2f y = (p3 - p1) / 2.0;
-
-                    cv::Point2f a = p1;
-                    cv::Point2f b = p2;
-                    cv::Point2f c = a + x + y;
-                    cv::Point2f d = p3;
-
-                    std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
-                    subdiv_ref_triangles.emplace_back(a, b, c);
-                    subdiv_target_triangles.emplace_back(a, b, c);
-                    subdiv_ref_triangles.emplace_back(a, c, d);
-                    subdiv_target_triangles.emplace_back(a, c, d);
-
-                    for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
-                        RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
-                                                          subdiv_ref_triangles[j], triangle_size);
-                        triangle_size_sum += triangle_size;
-                    }
-
-                    RMSE_after_subdiv /= (double) triangle_size_sum;
-                    results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
-                }
-                    break;
-                case TYPE2:
-                {
-                    cv::Point2f p1 = corners[triangle.first.p1_idx];
-                    cv::Point2f p2 = corners[triangle.first.p2_idx];
-                    cv::Point2f p3 = corners[triangle.first.p3_idx];
-
-                    cv::Point2f x = (p2 - p3) / 2.0;
-                    cv::Point2f y = (p1 - p3) / 2.0;
-
-                    cv::Point2f a = p1;
-                    cv::Point2f b = p3 + x + y;
-                    cv::Point2f c = p2;
-                    cv::Point2f d = p3;
-
-                    std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
-                    subdiv_ref_triangles.emplace_back(a, b, d);
-                    subdiv_target_triangles.emplace_back(a, b, d);
-                    subdiv_ref_triangles.emplace_back(b, c, d);
-                    subdiv_target_triangles.emplace_back(b, c, d);
-
-                    for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
-                        RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
-                                                          subdiv_ref_triangles[j], triangle_size);
-                        triangle_size_sum += triangle_size;
-                    }
-
-                    RMSE_after_subdiv /= (double) triangle_size_sum;
-                    results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
-                }
-                    break;
-                case TYPE3:
-                {
-                    cv::Point2f p1 = corners[triangle.first.p1_idx];
-                    cv::Point2f p2 = corners[triangle.first.p2_idx];
-                    cv::Point2f p3 = corners[triangle.first.p3_idx];
-
-                    cv::Point2f x = (p1 - p2) / 2.0;
-                    cv::Point2f y = (p3 - p2) / 2.0;
-
-                    cv::Point2f a = p1;
-                    cv::Point2f b = p2;
-                    cv::Point2f c = p2 + x + y;
-                    cv::Point2f d = p3;
-
-                    std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
-                    subdiv_ref_triangles.emplace_back(a, b, c);
-                    subdiv_target_triangles.emplace_back(a, b, c);
-                    subdiv_ref_triangles.emplace_back(b, c, d);
-                    subdiv_target_triangles.emplace_back(b, c, d);
-
-                    for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
-                        RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
-                                                          subdiv_ref_triangles[j], triangle_size);
-                        triangle_size_sum += triangle_size;
-                    }
-
-                    RMSE_after_subdiv /= (double) triangle_size_sum;
-                    results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
-                }
-                    break;
-                case TYPE4:
-                {
-                    cv::Point2f p1 = corners[triangle.first.p1_idx];
-                    cv::Point2f p2 = corners[triangle.first.p2_idx];
-                    cv::Point2f p3 = corners[triangle.first.p3_idx];
-
-                    cv::Point2f x = (p3 - p2) / 2.0;
-                    cv::Point2f y = (p1 - p2) / 2.0;
-
-                    cv::Point2f a = p1;
-                    cv::Point2f b = p2 + x + y;
-                    cv::Point2f c = p2;
-                    cv::Point2f d = p3;
-
-                    std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
-                    subdiv_ref_triangles.emplace_back(a, b, c);
-                    subdiv_target_triangles.emplace_back(a, b, c);
-                    subdiv_ref_triangles.emplace_back(b, c, d);
-                    subdiv_target_triangles.emplace_back(b, c, d);
-
-                    for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
-                        RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
-                                                          subdiv_ref_triangles[j], triangle_size);
-                        triangle_size_sum += triangle_size;
-                    }
-
-                    RMSE_after_subdiv /= (double) triangle_size_sum;
-                    results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
-                }
-                    break;
-                case DIVIDE::TYPE5:
-                {
-                    cv::Point2f p1 = corners[triangle.first.p1_idx];
-                    cv::Point2f p2 = corners[triangle.first.p2_idx];
-                    cv::Point2f p3 = corners[triangle.first.p3_idx];
-
-                    cv::Point2f x = (p2 - p1) / 2.0;
-
-                    cv::Point2f a = p1;
-                    cv::Point2f b = p1 + x;
-                    cv::Point2f c = p2;
-                    cv::Point2f d = p3;
-
-                    std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
-                    subdiv_ref_triangles.emplace_back(a, b, d);
-                    subdiv_target_triangles.emplace_back(a, b, d);
-                    subdiv_ref_triangles.emplace_back(b, c, d);
-                    subdiv_target_triangles.emplace_back(b, c, d);
-
-                    for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
-                        RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
-                                                          subdiv_ref_triangles[j], triangle_size);
-                        triangle_size_sum += triangle_size;
-                    }
-
-                    RMSE_after_subdiv /= (double) triangle_size_sum;
-                    results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
-                }
-                    break;
-                case DIVIDE::TYPE6:
-                {
-                    cv::Point2f p1 = corners[triangle.first.p1_idx];
-                    cv::Point2f p2 = corners[triangle.first.p2_idx];
-                    cv::Point2f p3 = corners[triangle.first.p3_idx];
-
-                    cv::Point2f y = (p3 - p1) / 2.0;
-
-                    cv::Point2f a = p1;
-                    cv::Point2f b = p1 + y;
-                    cv::Point2f c = p2;
-                    cv::Point2f d = p3;
-
-                    std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
-                    subdiv_ref_triangles.emplace_back(a, b, c);
-                    subdiv_target_triangles.emplace_back(a, b, c);
-                    subdiv_ref_triangles.emplace_back(b, c, d);
-                    subdiv_target_triangles.emplace_back(b, c, d);
-
-                    for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
-                        RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
-                                                          subdiv_ref_triangles[j], triangle_size);
-                        triangle_size_sum += triangle_size;
-                    }
-
-                    RMSE_after_subdiv /= (double) triangle_size_sum;
-                    results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
-                }
-                    break;
-                case DIVIDE::TYPE7:
-                {
-                    cv::Point2f p1 = corners[triangle.first.p1_idx];
-                    cv::Point2f p2 = corners[triangle.first.p2_idx];
-                    cv::Point2f p3 = corners[triangle.first.p3_idx];
-
-                    cv::Point2f x = (p3 - p2) / 2.0;
-
-                    cv::Point2f a = p1;
-                    cv::Point2f b = p2;
-                    cv::Point2f c = p2 + x;
-                    cv::Point2f d = p3;
-
-                    std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
-                    subdiv_ref_triangles.emplace_back(a, b, c);
-                    subdiv_target_triangles.emplace_back(a, b, c);
-                    subdiv_ref_triangles.emplace_back(a, c, d);
-                    subdiv_target_triangles.emplace_back(a, c, d);
-
-                    for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
-                        RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
-                                                          subdiv_ref_triangles[j], triangle_size);
-                        triangle_size_sum += triangle_size;
-                    }
-
-                    RMSE_after_subdiv /= (double) triangle_size_sum;
-                    results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
-                }
-                    break;
-                case DIVIDE::TYPE8:
-                {
-                    cv::Point2f p1 = corners[triangle.first.p1_idx];
-                    cv::Point2f p2 = corners[triangle.first.p2_idx];
-                    cv::Point2f p3 = corners[triangle.first.p3_idx];
-
-                    cv::Point2f y = (p3 - p1) / 2.0;
-
-                    cv::Point2f a = p2;
-                    cv::Point2f b = p1;
-                    cv::Point2f c = p1 + y;
-                    cv::Point2f d = p3;
-
-                    std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
-                    subdiv_ref_triangles.emplace_back(a, b, c);
-                    subdiv_target_triangles.emplace_back(a, b, c);
-                    subdiv_ref_triangles.emplace_back(a, c, d);
-                    subdiv_target_triangles.emplace_back(a, c, d);
-
-                    for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
-                        RMSE_after_subdiv += Gauss_Newton(gaussRefImage, target_image, ref_image, subdiv_target_triangles[j],
-                                                          subdiv_ref_triangles[j], triangle_size);
-                        triangle_size_sum += triangle_size;
-                    }
-
-                    RMSE_after_subdiv /= (double) triangle_size_sum;
-                    results[i] = GaussResult(i, triangle.first, triangle.second, RMSE_before_subdiv, RMSE_after_subdiv);
-                }
-                    break;
-                default:
-                    break;
-            }
-
-            numerator++;
-            std::cout << numerator << "/" << denominator << std::endl;
-        }
-
-        numerator = 0;
-        const double divide_th = 0.04;
-
-        // Queueが空になるまで続ける
-        for (int i = 0; i < (int) results.size(); i++) {
-            // 一つ前のステップで分割されてないならばやる必要はない
-            if(!previousDivideFlag[i]) continue;
-
-            double diff = (results[i].RMSE_before_subdiv - results[i].RMSE_after_subdiv) / results[i].RMSE_before_subdiv;
-
-            // caseがなにの形に相当しているかはTriangleDivision.hを見るとわかります
-            if(diff > divide_th) {
-                switch(results[i].type) {
-                    case DIVIDE::TYPE1:
-                    {
-                        Triangle triangle = results[i].triangle;
-                        cv::Point2f p1 = corners[triangle.p1_idx];
-                        cv::Point2f p2 = corners[triangle.p2_idx];
-                        cv::Point2f p3 = corners[triangle.p3_idx];
-
-                        cv::Point2f x = (p2 - p1) / 2.0;
-                        cv::Point2f y = (p3 - p1) / 2.0;
-
-                        cv::Point2f a = p1;
-                        cv::Point2f b = p2;
-                        cv::Point2f c = a + x + y;
-                        cv::Point2f d = p3;
-
-                        int c_idx = addCorner(c);
-
-                        int a_idx = triangle.p1_idx;
-                        int b_idx = triangle.p2_idx;
-                        int d_idx = triangle.p3_idx;
-
-                        int t1_idx = insertTriangle(a_idx, b_idx, c_idx, TYPE5);
-                        int t2_idx = insertTriangle(a_idx, c_idx, d_idx, TYPE6);
-
-                        removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
-                        removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, results[i].triangle_index);
-
-                        addNeighborVertex(a_idx, b_idx, c_idx);
-                        addNeighborVertex(a_idx, c_idx, d_idx);
-
-                        covered_triangle.emplace_back();
-                        covered_triangle.emplace_back();
-                        addCoveredTriangle(a_idx, b_idx, c_idx, t1_idx);
-                        addCoveredTriangle(a_idx, c_idx, d_idx, t2_idx);
-
-                        previousDivideFlag[results[i].triangle_index] = false;
-                        previousDivideFlag.emplace_back(true);
-                        previousDivideFlag.emplace_back(true);
-
-                        ctuIndexMapper.emplace_back();
-                        ctuIndexMapper.emplace_back();
-                        ctuIndexMapper[t1_idx] = ctuIndexMapper[t2_idx] = ctuIndexMapper[results[i].triangle_index];
-
-                    }
-                        break;
-                    case DIVIDE::TYPE2:
-                    {
-                        Triangle triangle = results[i].triangle;
-                        cv::Point2f p1 = corners[triangle.p1_idx];
-                        cv::Point2f p2 = corners[triangle.p2_idx];
-                        cv::Point2f p3 = corners[triangle.p3_idx];
-
-                        cv::Point2f x = (p2 - p3) / 2.0;
-                        cv::Point2f y = (p1 - p3) / 2.0;
-
-                        cv::Point2f a = p1;
-                        cv::Point2f b = p3 + x + y;
-                        cv::Point2f c = p2;
-                        cv::Point2f d = p3;
-
-                        int b_idx = addCorner(b);
-
-                        int a_idx = triangle.p1_idx;
-                        int c_idx = triangle.p2_idx;
-                        int d_idx = triangle.p3_idx;
-
-                        int t1_idx = insertTriangle(a_idx, b_idx, d_idx, TYPE8);
-                        int t2_idx = insertTriangle(b_idx, c_idx, d_idx, TYPE7);
-
-                        removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
-                        removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, results[i].triangle_index);
-
-                        addNeighborVertex(a_idx, b_idx, d_idx);
-                        addNeighborVertex(b_idx, c_idx, d_idx);
-
-                        covered_triangle.emplace_back();
-                        covered_triangle.emplace_back();
-                        addCoveredTriangle(a_idx, b_idx, d_idx, t1_idx);
-                        addCoveredTriangle(b_idx, c_idx, d_idx, t2_idx);
-
-                        previousDivideFlag[results[i].triangle_index] = false;
-                        previousDivideFlag.emplace_back(true);
-                        previousDivideFlag.emplace_back(true);
-
-                        ctuIndexMapper.emplace_back();
-                        ctuIndexMapper.emplace_back();
-                        ctuIndexMapper[t1_idx] = ctuIndexMapper[t2_idx] = ctuIndexMapper[results[i].triangle_index];
-
-                    }
-                        break;
-                    case DIVIDE::TYPE3:
-                    {
-                        Triangle triangle = results[i].triangle;
-                        cv::Point2f p1 = corners[triangle.p1_idx];
-                        cv::Point2f p2 = corners[triangle.p2_idx];
-                        cv::Point2f p3 = corners[triangle.p3_idx];
-
-                        cv::Point2f x = (p1 - p2) / 2.0;
-                        cv::Point2f y = (p3 - p2) / 2.0;
-
-                        cv::Point2f a = p1;
-                        cv::Point2f b = p2;
-                        cv::Point2f c = p2 + x + y;
-                        cv::Point2f d = p3;
-
-                        int c_idx = addCorner(c);
-
-                        int a_idx = triangle.p1_idx;
-                        int b_idx = triangle.p2_idx;
-                        int d_idx = triangle.p3_idx;
-
-                        int t1_idx = insertTriangle(a_idx, b_idx, c_idx, TYPE5);
-                        int t2_idx = insertTriangle(b_idx, c_idx, d_idx, TYPE8);
-
-                        removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
-                        removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, results[i].triangle_index);
-
-                        addNeighborVertex(a_idx, b_idx, c_idx);
-                        addNeighborVertex(b_idx, c_idx, d_idx);
-
-                        covered_triangle.emplace_back();
-                        covered_triangle.emplace_back();
-                        addCoveredTriangle(a_idx, b_idx, c_idx, t1_idx);
-                        addCoveredTriangle(b_idx, c_idx, d_idx, t2_idx);
-
-                        previousDivideFlag[results[i].triangle_index] = false;
-                        previousDivideFlag.emplace_back(true);
-                        previousDivideFlag.emplace_back(true);
-
-                        ctuIndexMapper.emplace_back();
-                        ctuIndexMapper.emplace_back();
-                        ctuIndexMapper[t1_idx] = ctuIndexMapper[t2_idx] = ctuIndexMapper[results[i].triangle_index];
-
-                    }
-                        break;
-                    case DIVIDE::TYPE4:
-                    {
-                        Triangle triangle = results[i].triangle;
-                        cv::Point2f p1 = corners[triangle.p1_idx];
-                        cv::Point2f p2 = corners[triangle.p2_idx];
-                        cv::Point2f p3 = corners[triangle.p3_idx];
-
-                        cv::Point2f x = (p3 - p2) / 2.0;
-                        cv::Point2f y = (p1 - p2) / 2.0;
-
-                        cv::Point2f a = p1;
-                        cv::Point2f b = p2 + x + y;
-                        cv::Point2f c = p2;
-                        cv::Point2f d = p3;
-
-                        int b_idx = addCorner(b);
-
-                        int a_idx = triangle.p1_idx;
-                        int c_idx = triangle.p2_idx;
-                        int d_idx = triangle.p3_idx;
-
-                        int t1_idx = insertTriangle(a_idx, b_idx, c_idx, TYPE6);
-                        int t2_idx = insertTriangle(b_idx, c_idx, d_idx, TYPE7);
-
-                        removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
-                        removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, results[i].triangle_index);
-
-                        addNeighborVertex(a_idx, b_idx, c_idx);
-                        addNeighborVertex(b_idx, c_idx, d_idx);
-
-                        covered_triangle.emplace_back();
-                        covered_triangle.emplace_back();
-                        addCoveredTriangle(a_idx, b_idx, c_idx, t1_idx);
-                        addCoveredTriangle(b_idx, c_idx, d_idx, t2_idx);
-
-                        previousDivideFlag[results[i].triangle_index] = false;
-                        previousDivideFlag.emplace_back(true);
-                        previousDivideFlag.emplace_back(true);
-
-                        ctuIndexMapper.emplace_back();
-                        ctuIndexMapper.emplace_back();
-                        ctuIndexMapper[t1_idx] = ctuIndexMapper[t2_idx] = ctuIndexMapper[results[i].triangle_index];
-
-                    }
-                        break;
-                    case DIVIDE::TYPE5:
-                    {
-                        Triangle triangle = results[i].triangle;
-                        cv::Point2f p1 = corners[triangle.p1_idx];
-                        cv::Point2f p2 = corners[triangle.p2_idx];
-                        cv::Point2f p3 = corners[triangle.p3_idx];
-
-                        cv::Point2f x = (p2 - p1) / 2.0;
-
-                        cv::Point2f b = p1 + x;
-
-                        int b_idx = addCorner(b);
-
-                        int a_idx = triangle.p1_idx;
-                        int c_idx = triangle.p2_idx;
-                        int d_idx = triangle.p3_idx;
-
-                        int t1_idx = insertTriangle(a_idx, b_idx, d_idx, TYPE3);
-                        int t2_idx = insertTriangle(b_idx, c_idx, d_idx, TYPE1);
-
-                        removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
-                        removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, results[i].triangle_index);
-
-                        addNeighborVertex(a_idx, b_idx, d_idx);
-                        addNeighborVertex(b_idx, c_idx, d_idx);
-
-                        covered_triangle.emplace_back();
-                        covered_triangle.emplace_back();
-                        addCoveredTriangle(a_idx, b_idx, d_idx, t1_idx);
-                        addCoveredTriangle(b_idx, c_idx, d_idx, t2_idx);
-
-                        previousDivideFlag[results[i].triangle_index] = false;
-                        previousDivideFlag.emplace_back(true);
-                        previousDivideFlag.emplace_back(true);
-
-                        ctuIndexMapper.emplace_back();
-                        ctuIndexMapper.emplace_back();
-                        ctuIndexMapper[t1_idx] = ctuIndexMapper[t2_idx] = ctuIndexMapper[results[i].triangle_index];
-
-                    }
-                        break;
-                    case DIVIDE::TYPE6:
-                    {
-                        Triangle triangle = results[i].triangle;
-                        cv::Point2f p1 = corners[triangle.p1_idx];
-                        cv::Point2f p2 = corners[triangle.p2_idx];
-                        cv::Point2f p3 = corners[triangle.p3_idx];
-
-                        cv::Point2f y = (p3 - p1) / 2.0;
-
-                        cv::Point2f b = p1 + y;
-
-                        int b_idx = addCorner(b);
-
-                        int a_idx = triangle.p1_idx;
-                        int c_idx = triangle.p2_idx;
-                        int d_idx = triangle.p3_idx;
-
-                        int t1_idx = insertTriangle(a_idx, b_idx, c_idx, TYPE4);
-                        int t2_idx = insertTriangle(b_idx, c_idx, d_idx, TYPE1);
-
-                        removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
-                        removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, results[i].triangle_index);
-
-                        addNeighborVertex(a_idx, b_idx, c_idx);
-                        addNeighborVertex(b_idx, c_idx, d_idx);
-
-                        covered_triangle.emplace_back();
-                        covered_triangle.emplace_back();
-                        addCoveredTriangle(a_idx, b_idx, c_idx, t1_idx);
-                        addCoveredTriangle(b_idx, c_idx, d_idx, t2_idx);
-
-                        previousDivideFlag[results[i].triangle_index] = false;
-                        previousDivideFlag.emplace_back(true);
-                        previousDivideFlag.emplace_back(true);
-
-                        ctuIndexMapper.emplace_back();
-                        ctuIndexMapper.emplace_back();
-                        ctuIndexMapper[t1_idx] = ctuIndexMapper[t2_idx] = ctuIndexMapper[results[i].triangle_index];
-
-                    }
-                        break;
-                    case DIVIDE::TYPE7:
-                    {
-                        Triangle triangle = results[i].triangle;
-                        cv::Point2f p1 = corners[triangle.p1_idx];
-                        cv::Point2f p2 = corners[triangle.p2_idx];
-                        cv::Point2f p3 = corners[triangle.p3_idx];
-
-                        cv::Point2f x = (p3 - p2) / 2.0;
-
-                        cv::Point2f c = p2 + x;
-
-                        int c_idx = addCorner(c);
-
-                        int a_idx = triangle.p1_idx;
-                        int b_idx = triangle.p2_idx;
-                        int d_idx = triangle.p3_idx;
-
-                        int t1_idx = insertTriangle(a_idx, b_idx, c_idx, TYPE2);
-                        int t2_idx = insertTriangle(a_idx, c_idx, d_idx, TYPE4);
-
-                        removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
-                        removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, results[i].triangle_index);
-
-                        addNeighborVertex(a_idx, b_idx, c_idx);
-                        addNeighborVertex(a_idx, c_idx, d_idx);
-
-                        covered_triangle.emplace_back();
-                        covered_triangle.emplace_back();
-                        addCoveredTriangle(a_idx, b_idx, c_idx, t1_idx);
-                        addCoveredTriangle(a_idx, c_idx, d_idx, t2_idx);
-
-                        previousDivideFlag[results[i].triangle_index] = false;
-                        previousDivideFlag.emplace_back(true);
-                        previousDivideFlag.emplace_back(true);
-
-                        ctuIndexMapper.emplace_back();
-                        ctuIndexMapper.emplace_back();
-                        ctuIndexMapper[t1_idx] = ctuIndexMapper[t2_idx] = ctuIndexMapper[results[i].triangle_index];
-
-                    }
-                        break;
-                    case DIVIDE::TYPE8:
-                    {
-                        Triangle triangle = results[i].triangle;
-                        cv::Point2f p1 = corners[triangle.p1_idx];
-                        cv::Point2f p2 = corners[triangle.p2_idx];
-                        cv::Point2f p3 = corners[triangle.p3_idx];
-
-                        cv::Point2f y = (p3 - p1) / 2.0;
-
-                        cv::Point2f c = p1 + y;
-
-                        int c_idx = addCorner(c);
-
-                        int a_idx = triangle.p2_idx;
-                        int b_idx = triangle.p1_idx;
-                        int d_idx = triangle.p3_idx;
-
-                        int t1_idx = insertTriangle(a_idx, b_idx, c_idx, TYPE2);
-                        int t2_idx = insertTriangle(a_idx, c_idx, d_idx, TYPE3);
-
-                        removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
-                        removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, results[i].triangle_index);
-
-                        addNeighborVertex(a_idx, b_idx, c_idx);
-                        addNeighborVertex(a_idx, c_idx, d_idx);
-
-                        covered_triangle.emplace_back();
-                        covered_triangle.emplace_back();
-                        addCoveredTriangle(a_idx, b_idx, c_idx, t1_idx);
-                        addCoveredTriangle(a_idx, c_idx, d_idx, t2_idx);
-
-                        previousDivideFlag[results[i].triangle_index] = false;
-                        previousDivideFlag.emplace_back(true);
-                        previousDivideFlag.emplace_back(true);
-
-                        ctuIndexMapper.emplace_back();
-                        ctuIndexMapper.emplace_back();
-                        ctuIndexMapper[t1_idx] = ctuIndexMapper[t2_idx] = ctuIndexMapper[results[i].triangle_index];
-
-                    }
-                        break;
-                    default:
-                        break;
-                }
-
-                delete_flag[results[i].triangle_index] = true;
-            }else{
-                previousDivideFlag[results[i].triangle_index] = false;
-            }
-
-            numerator++;
-            std::cout << "subdiv: "<< numerator << "/" << denominator << std::endl;
-        }
-    }
-
-}
-
-/**
  * @fn bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3Vec triangle, int triangle_index, int type, int steps)
  * @brief 与えられたトライアングルを分割するか判定し，必要な場合は分割を行う
  * @details この関数は再帰的に呼び出され，そのたびに分割を行う
@@ -1419,14 +754,39 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
     Point3Vec refTriangle(p1, p2, p3);
     Point3Vec targetTriangle(p1, p2, p3);
     int triangle_size = 0;
-    double error = 0.0;
     bool parallel_flag;
     int num;
-    cv::Mat warp_p_image, residual_ref, parallel_p_image;
 
     std::vector<cv::Point2f> gauss_result_warping;
     cv::Point2f gauss_result_parallel;
-    std::tie(gauss_result_warping, gauss_result_parallel, RMSE_before_subdiv, triangle_size, parallel_flag) = GaussNewton(ref_image, target_image, gaussRefImage, targetTriangle);
+
+    if(triangle_gauss_results[triangle_index].residual > 0) {
+//        std::cout << "cache hit! triangle_index:" << triangle_index << std::endl;
+        GaussResult result_before = triangle_gauss_results[triangle_index];
+        gauss_result_warping = result_before.mv_warping;
+        gauss_result_parallel = result_before.mv_parallel;
+        RMSE_before_subdiv = result_before.residual;
+        triangle_size = result_before.triangle_size;
+        parallel_flag = result_before.parallel_flag;
+    }else {
+        std::tie(gauss_result_warping, gauss_result_parallel, RMSE_before_subdiv, triangle_size,
+                 parallel_flag) = GaussNewton(ref_image, target_image, gaussRefImage, targetTriangle);
+
+        triangle_gauss_results[triangle_index].mv_warping = gauss_result_warping;
+        triangle_gauss_results[triangle_index].mv_parallel = gauss_result_parallel;
+        triangle_gauss_results[triangle_index].triangle_size = triangle_size;
+        triangle_gauss_results[triangle_index].residual = RMSE_before_subdiv;
+        triangle_gauss_results[triangle_index].parallel_flag = parallel_flag;
+    }
+
+//    cv::Mat output_image = target_image.clone();
+//    for(auto p : getTriangleCoordinateList()) drawTriangle(output_image, p.p1, p.p2, p.p3, cv::Scalar(255, 255, 255));
+//    cv::imwrite(getProjectDirectory() + "\\minato\\", output_image);
+//
+//    Triangle t = triangles[triangle_index].first;
+//    cv::Mat output2 = output_image.clone();
+//    drawTriangle(output_image, corners[t.p1_idx], corners[t.p2_idx], corners[t.p3_idx], RED);
+//    cv::imwrite(getProjectDirectory() + "\\minato\\", output2);
 
     cv::Point2f mvd;
     int selected_index;
@@ -1436,24 +796,15 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
         cmt = previousMvList[0][triangle_index];
     }
 
-    std::cout << gauss_result_parallel << std::endl;
-    std::tie(mvd, selected_index, method_flag) = getMVD({gauss_result_parallel,gauss_result_parallel,gauss_result_parallel}, RMSE_before_subdiv, triangle_index, cmt->mv1);
+//    std::cout << "gauss_result_parallel:" << gauss_result_parallel << std::endl;
 
-    std::cout << "mvd result:" << mvd << std::endl;
+    double cost_before_subdiv;
+    int code_length;
+    std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD({gauss_result_parallel,gauss_result_parallel,gauss_result_parallel}, RMSE_before_subdiv, triangle_index, cmt->mv1);
 
-    cv::Point2f mv_parallel;
-    warp_p_image = ref_image.clone();
-    residual_ref = cv::Mat::zeros(1920, 1024, CV_8UC1);
+//    std::cout << "mvd result:" << mvd << std::endl;
 
     std::vector<cv::Point2i> ret_gauss2;
-
-    if(parallel_flag) {
-        triangle_mvs[triangle_index].emplace_back(gauss_result_parallel);
-        triangle_mvs[triangle_index].emplace_back(gauss_result_parallel);
-        triangle_mvs[triangle_index].emplace_back(gauss_result_parallel);
-    }else{
-        triangle_mvs[triangle_index] = gauss_result_warping;
-    }
 
     RMSE_before_subdiv = RMSE_before_subdiv / triangle_size;
 
@@ -1468,11 +819,10 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
     ctu->mv1 = mv[0];
     ctu->mv2 = mv[1];
     ctu->mv3 = mv[2];
-
-//    cv::Point2f ret = getCollocatedTriangleList(ctu);
-
+    ctu->triangle_index = triangle_index;
+    ctu->code_length = code_length;
     ctu->collocated_mv = cmt->mv1;
-    std::cout << ctu->collocated_mv << std::endl;
+//    std::cout << ctu->collocated_mv << std::endl;
 
     SplitResult split_triangles = getSplitTriangle(p1, p2, p3, type);
 
@@ -1483,55 +833,86 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
     subdiv_target_triangles.push_back(split_triangles.t2);
 
     double RMSE_after_subdiv = 0.0;
-    std::vector<std::vector<cv::Point2f> > split_mv_result(2);
+    std::vector<GaussResult> split_mv_result(2);
 
-//    #pragma omp parallel for
+    addCornerAndTriangle(Triangle(corner_flag[(int) p1.y][(int) p1.x], corner_flag[(int) p2.y][(int) p2.x],
+                                  corner_flag[(int) p3.y][(int) p3.x]), triangle_index, type);
+
+    #pragma omp parallel for
     for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
         double error_tmp;
-        std::tie(std::ignore, mv_parallel, error_tmp, std::ignore, std::ignore) = GaussNewton(ref_image, target_image, gaussRefImage, subdiv_target_triangles[j]);
-        split_mv_result[j] = std::vector<cv::Point2f>{mv_parallel, mv_parallel, mv_parallel};
+        bool flag_tmp;
+        int triangle_size_tmp;
+        cv::Point2f mv_parallel_tmp;
+        std::vector<cv::Point2f> mv_warping_tmp;
+        std::tie(mv_warping_tmp, mv_parallel_tmp, error_tmp, triangle_size_tmp, flag_tmp) = GaussNewton(ref_image, target_image, gaussRefImage, subdiv_target_triangles[j]);
+        split_mv_result[j] = GaussResult(mv_warping_tmp, mv_parallel_tmp, error_tmp, triangle_size_tmp, flag_tmp);
         RMSE_after_subdiv += error_tmp;
     }
 
-    RMSE_after_subdiv /= (double) triangle_size;
+    int triangle_indexes[] = {(int)triangles.size() - 2, (int)triangles.size() - 1};
 
-    std::cout << "RMSE_before_subdiv:" << RMSE_before_subdiv << " RMSE_after_subdiv:" << RMSE_after_subdiv << std::endl;
+    double cost_after_subdiv1;
+    int code_length1;
+    std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag) = getMVD(
+            {split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel}, split_mv_result[0].residual,
+            triangle_indexes[0], (cmt->leftNode != nullptr ? cmt->leftNode->mv1 : cmt->mv1));
 
-    if((RMSE_before_subdiv - RMSE_after_subdiv) / RMSE_before_subdiv >= 0.04) {
-        addCornerAndTriangle(Triangle(corner_flag[(int) p1.y][(int) p1.x], corner_flag[(int) p2.y][(int) p2.x],
-                                      corner_flag[(int) p3.y][(int) p3.x]), triangle_index, type);
-        ctu->split_cu_flag1 = true;
-        ctu->split_cu_flag2 = true;
+    double cost_after_subdiv2;
+    int code_length2;
+    std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag) = getMVD(
+            {split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel}, split_mv_result[1].residual,
+            triangle_indexes[1], (cmt->rightNode != nullptr ? cmt->rightNode->mv1 : cmt->mv1));
+
+    std::cout << "before:" << cost_before_subdiv << " after:" << (cost_after_subdiv1 + cost_after_subdiv2) << std::endl;
+    if(cost_before_subdiv > (cost_after_subdiv1 + cost_after_subdiv2)) {
+//        addCornerAndTriangle(Triangle(corner_flag[(int) p1.y][(int) p1.x], corner_flag[(int) p2.y][(int) p2.x],
+//                                      corner_flag[(int) p3.y][(int) p3.x]), triangle_index, type);
+        ctu->split_cu_flag = true;
+
+        int t1_idx = triangles.size() - 2;
+        int t2_idx = triangles.size() - 1;
 
         ctu->leftNode = new CodingTreeUnit();
         ctu->leftNode->parentNode = ctu;
-        int t1_idx = triangles.size() - 2;
-        triangle_mvs[t1_idx] = split_mv_result[0]; // TODO: warping対応
+        ctu->leftNode->triangle_index = t1_idx;
+        ctu->leftNode->mv1 = split_mv_result[0].mv_parallel;
+        ctu->leftNode->mv2 = split_mv_result[0].mv_parallel;
+        ctu->leftNode->mv3 = split_mv_result[0].mv_parallel;
+        ctu->code_length = code_length1;
+
+        triangle_gauss_results[t1_idx] = split_mv_result[0]; // TODO: warping対応
         isCodedTriangle[t1_idx] = true;
         bool result = split(gaussRefImage, ctu->leftNode, (cmt->leftNode != nullptr ? cmt->leftNode : cmt), split_triangles.t1, t1_idx,split_triangles.t1_type, steps - 1);
         if(result) {
-            ctu->leftNode->split_cu_flag1 = true;
             ctu->leftNode->parentNode = ctu;
-            ctu->leftNode->triangle_index = t1_idx;
             ctu->depth = divide_steps - steps;
         }
 
         ctu->rightNode = new CodingTreeUnit();
         ctu->rightNode->parentNode = ctu;
-        int t2_idx = triangles.size() - 1;
-        triangle_mvs[t2_idx] = split_mv_result[1];
+        ctu->rightNode->triangle_index = t2_idx;
+        ctu->rightNode->mv1 = split_mv_result[1].mv_parallel;
+        ctu->rightNode->mv2 = split_mv_result[1].mv_parallel;
+        ctu->rightNode->mv3 = split_mv_result[1].mv_parallel;
+        ctu->code_length = code_length2;
+
+        triangle_gauss_results[t2_idx] = split_mv_result[1];
         isCodedTriangle[t2_idx] = true;
         result = split(gaussRefImage, ctu->rightNode, (cmt->rightNode != nullptr ? cmt->rightNode : cmt), split_triangles.t2, t2_idx, split_triangles.t2_type, steps - 1);
         if(result) {
-            ctu->rightNode->split_cu_flag2 = true;
             ctu->rightNode->parentNode = ctu;
-            ctu->rightNode->triangle_index = t2_idx;
             ctu->depth = divide_steps - steps;
         }
 
         return true;
     }else{
         isCodedTriangle[triangle_index] = true;
+        ctu->leftNode = ctu->rightNode = nullptr;
+        eraseTriangle(triangles.size() - 1);
+        eraseTriangle(triangles.size() - 1);
+        addNeighborVertex(triangles[triangle_index].first.p1_idx,triangles[triangle_index].first.p2_idx,triangles[triangle_index].first.p3_idx);
+        addCoveredTriangle(triangles[triangle_index].first.p1_idx,triangles[triangle_index].first.p2_idx,triangles[triangle_index].first.p3_idx, triangle_index);
         return false;
     }
 
@@ -1771,20 +1152,20 @@ std::vector<int> TriangleDivision::getDivideOrder(CodingTreeUnit* currentNode){
  */
 void TriangleDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num) {
 
-    for(int i = 0 ; i < 10 ; i++) {
-        previousMvList[0][i]->mv1 = cv::Point2f(10000, 10000);
-        previousMvList[0][i]->mv2 = cv::Point2f(10000, 10000);
-        previousMvList[0][i]->mv3 = cv::Point2f(10000, 10000);
+    for(int i = 0 ; i < triangles.size() ; i++) {
+        previousMvList[0][i]->mv1 = cv::Point2f(0, 0);
+        previousMvList[0][i]->mv2 = cv::Point2f(0, 0);
+        previousMvList[0][i]->mv3 = cv::Point2f(0, 0);
 
         auto* left = new CollocatedMvTree();
-        left->mv1 = cv::Point2f(1000, 1000);
-        left->mv2 = cv::Point2f(1000, 1000);
-        left->mv3 = cv::Point2f(1000, 1000);
+        left->mv1 = cv::Point2f(0, 0);
+        left->mv2 = cv::Point2f(0, 0);
+        left->mv3 = cv::Point2f(0, 0);
 
         left->leftNode = new CollocatedMvTree();
-        left->leftNode->mv1 = cv::Point2f(100, 100);
-        left->leftNode->mv2 = cv::Point2f(100, 100);
-        left->leftNode->mv3 = cv::Point2f(100, 100);
+        left->leftNode->mv1 = cv::Point2f(0, 0);
+        left->leftNode->mv2 = cv::Point2f(0, 0);
+        left->leftNode->mv3 = cv::Point2f(0, 0);
 //        left->leftNode->leftNode = new CollocatedMvTree();
 //        left->leftNode->leftNode->mv1 = cv::Point2f(10, 10);
 //        left->leftNode->leftNode->mv2 = cv::Point2f(10, 10);
@@ -1795,9 +1176,9 @@ void TriangleDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> 
 //        left->leftNode->rightNode->mv3 = cv::Point2f(1, 1);
 
         left->rightNode = new CollocatedMvTree();
-        left->rightNode->mv1 = cv::Point2f(100, 100);
-        left->rightNode->mv2 = cv::Point2f(100, 100);
-        left->rightNode->mv3 = cv::Point2f(100, 100);
+        left->rightNode->mv1 = cv::Point2f(0, 0);
+        left->rightNode->mv2 = cv::Point2f(0, 0);
+        left->rightNode->mv3 = cv::Point2f(0, 0);
 //        left->rightNode->leftNode = new CollocatedMvTree();
 //        left->rightNode->leftNode->mv1 = cv::Point2f(10, 10);
 //        left->rightNode->leftNode->mv2 = cv::Point2f(10, 10);
@@ -1809,14 +1190,14 @@ void TriangleDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> 
         previousMvList[pic_num][i]->leftNode = left;
 
         auto* right = new CollocatedMvTree();
-        right->mv1 = cv::Point2f(1000, 1000);
-        right->mv2 = cv::Point2f(1000, 1000);
-        right->mv3 = cv::Point2f(1000, 1000);
+        right->mv1 = cv::Point2f(0, 0);
+        right->mv2 = cv::Point2f(0, 0);
+        right->mv3 = cv::Point2f(0, 0);
 
         right->leftNode = new CollocatedMvTree();
-        right->leftNode->mv1 = cv::Point2f(100, 100);
-        right->leftNode->mv2 = cv::Point2f(100, 100);
-        right->leftNode->mv3 = cv::Point2f(100, 100);
+        right->leftNode->mv1 = cv::Point2f(0, 0);
+        right->leftNode->mv2 = cv::Point2f(0, 0);
+        right->leftNode->mv3 = cv::Point2f(0, 0);
 //        right->leftNode->leftNode = new CollocatedMvTree();
 //        right->leftNode->leftNode->mv1 = cv::Point2f(10, 10);
 //        right->leftNode->leftNode->mv2 = cv::Point2f(10, 10);
@@ -1827,9 +1208,9 @@ void TriangleDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> 
 //        right->leftNode->rightNode->mv3 = cv::Point2f(1, 1);
 
         right->rightNode = new CollocatedMvTree();
-        right->rightNode->mv1 = cv::Point2f(100, 100);
-        right->rightNode->mv2 = cv::Point2f(100, 100);
-        right->rightNode->mv3 = cv::Point2f(100, 100);
+        right->rightNode->mv1 = cv::Point2f(0, 0);
+        right->rightNode->mv2 = cv::Point2f(0, 0);
+        right->rightNode->mv3 = cv::Point2f(0, 0);
 //        right->rightNode->leftNode = new CollocatedMvTree();
 //        right->rightNode->leftNode->mv1 = cv::Point2f(10, 10);
 //        right->rightNode->leftNode->mv2 = cv::Point2f(10, 10);
@@ -1840,7 +1221,6 @@ void TriangleDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> 
 //        right->rightNode->rightNode->mv3 = cv::Point2f(1, 1);
         previousMvList[pic_num][i]->rightNode = right;
     }
-
 
 //    for(int i = 0 ; i < 10 ; i++) {
 //        constructPreviousCodingTree(trees[i], previousMvList[pic_num][i]);
@@ -1895,20 +1275,21 @@ bool TriangleDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CO
  * @param[in] ctu CodingTreeUnit 符号木
  * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
  */
-std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv){
-    std::cout << "triangle_index(getMVD):" << triangle_idx << std::endl;
+std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv){
+//    std::cout << "triangle_index(getMVD):" << triangle_idx << std::endl;
     // 空間予測と時間予測の候補を取り出す
     std::vector<int> spatial_triangles = getSpatialTriangleList(triangle_idx);
-
+//    std::cout << "spatial" << std::endl;
     int spatial_triangle_size = static_cast<int>(spatial_triangles.size());
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors;
 
     // すべてのベクトルを格納する．
     for(int i = 0 ; i < spatial_triangle_size ; i++) {
+//        std::cout << "spatial_i:" << i << std::endl;
         // TODO: これ平行移動のみしか対応してないがどうする…？
-        if(!isMvExists(vectors, triangle_mvs[spatial_triangles[i]][0])) {
+        if(!isMvExists(vectors, triangle_gauss_results[spatial_triangles[i]].mv_parallel)) {
             // とりあえず平行移動のみ考慮
-            vectors.emplace_back(triangle_mvs[spatial_triangles[i]][0], SPATIAL);
+            vectors.emplace_back(triangle_gauss_results[spatial_triangles[i]].mv_parallel, SPATIAL);
         }
     }
 
@@ -1918,30 +1299,47 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
 
     double lambda = getLambdaPred(qp);
 
-    std::cout << "lambda:" << lambda << std::endl;
-    std::cout << "vectors.size():" << vectors.size() << std::endl;
     //                      コスト, 差分ベクトル, 番号, タイプ
-    std::vector<std::tuple<double, cv::Point2f, int, MV_CODE_METHOD> > results;
+    std::vector<std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> > results;
     for(int i = 0 ; i < vectors.size() ; i++) {
+//        std::cout << "i:" << i << std::endl;
         std::pair<cv::Point2f, MV_CODE_METHOD> vector = vectors[i];
         cv::Point2f current_mv = vector.first;
-        std::cout << "current_mv:" << current_mv << std::endl;
+//        std::cout << "current_mv:" << current_mv << std::endl;
         cv::Point2f mvd = current_mv - mv[0];
 
         mvd = getQuantizedMv(mvd, 4);
         mvd *= 4;
 
-        // 動きベクトル符号化
-        int mvd_code_length = getExponentialGolombCodeLength((int)mvd.x, 0) + getExponentialGolombCodeLength((int)mvd.y, 0);
+        /* 動きベクトル符号化 */
+
+        // 動きベクトル差分の絶対値が0より大きいのか？
+        bool is_x_greater_than_zero = mvd.x > 0 ? true : false;
+        bool is_y_greater_than_zero = mvd.y > 0 ? true : false;
+
+        // 動きベクトル差分の絶対値が1より大きいのか？
+        bool is_x_greater_than_one = mvd.x > 1 ? true : false;
+        bool is_y_greater_than_one = mvd.y > 1 ? true : false;
+
+        // 正負の判定
+        bool is_x_minus = mvd.x < 0 ? true : false;
+        bool is_y_minus = mvd.y < 0 ? true : false;
+
+        // 動きベクトル差分から2を引いたろ！
+        int mvd_x_minus_2 = mvd.x - 2;
+        int mvd_y_minus_2 = mvd.y - 2;
+
+        int mvd_code_length = getExponentialGolombCodeLength((int)mvd_x_minus_2, 0) + getExponentialGolombCodeLength((int)mvd_y_minus_2, 0);
 
         // 参照箇所符号化
         int reference_index = std::get<1>(vector);
         int reference_index_code_length = getUnaryCodeLength(reference_index);
 
-        double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
+        // 各種フラグ分を(3*2)bit足してます
+        double rd = residual + lambda * (mvd_code_length + reference_index_code_length + 6 + 1);
 
         // 結果に入れる
-        results.emplace_back(rd, mvd, i, vector.second);
+        results.emplace_back(rd, mvd_code_length + reference_index_code_length + 6 + 1, mvd, i, vector.second);
     }
 
     // マージ符号化
@@ -1951,28 +1349,28 @@ std::tuple<cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vecto
     cv::Point2f p2 = corners[current_triangle_coordinate.p2_idx];
     cv::Point2f p3 = corners[current_triangle_coordinate.p3_idx];
     Point3Vec coordinate = Point3Vec(p1, p2, p3);
-
     vectors.clear();
     for(int i = 0 ; i < spatial_triangle_size ; i++) {
         // TODO: これ平行移動のみしか対応してないがどうする…？
         if(!isMvExists(vectors, mv[0])) {
             vectors.emplace_back(mv[0], MERGE);
             double ret_residual = getTriangleResidual(ref_image, target_image, coordinate, mv);
-            double rd = ret_residual + lambda * (getUnaryCodeLength(i));
-            results.emplace_back(rd, cv::Point2f(0, 0), results.size(), MERGE);
+            double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
+            results.emplace_back(rd, getUnaryCodeLength(i) + 1, cv::Point2f(0, 0), results.size(), MERGE);
         }
     }
 
     // RDしたスコアが小さい順にソート
-    std::sort(results.begin(), results.end(), [](const std::tuple<double, cv::Point2f, int, MV_CODE_METHOD >& a, const std::tuple<double, cv::Point2f, int, MV_CODE_METHOD>& b){
+    std::sort(results.begin(), results.end(), [](const std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD >& a, const std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD>& b){
         return std::get<0>(a) < std::get<0>(b);
     });
+    double cost = std::get<0>(results[0]);
+    int code_length = std::get<1>(results[0]);
+    cv::Point2f mvd = std::get<2>(results[0]);
+    int selected_idx = std::get<3>(results[0]);
+    MV_CODE_METHOD method = std::get<4>(results[0]);
 
-    cv::Point2f mvd = std::get<1>(results[0]);
-    int selected_idx = std::get<2>(results[0]);
-    MV_CODE_METHOD method = selected_idx == spatial_triangle_size ? MV_CODE_METHOD::Collocated : MV_CODE_METHOD::SPATIAL;
-
-    return {mvd, selected_idx, method};
+    return {cost, code_length, mvd, selected_idx, method};
 }
 
 /**
@@ -2006,7 +1404,59 @@ cv::Point2f TriangleDivision::getQuantizedMv(cv::Point2f &mv, double quantize_st
     return ret;
 }
 
+cv::Mat TriangleDivision::getPredictedImageFromCtu(std::vector<CodingTreeUnit*> ctus){
+    cv::Mat out = cv::Mat::zeros(ref_image.size(), CV_8UC3);
+
+    for(int i = 0 ; i < ctus.size() ; i++) {
+        getPredictedImageFromCtu(ctus[i], out);
+    }
+
+    return out;
+}
+
+void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out){
+    if(ctu->leftNode == nullptr && ctu->rightNode == nullptr) {
+        int triangle_index = ctu->triangle_index;
+        cv::Point2f mv = ctu->mv1;
+        Triangle triangle_corner_idx = triangles[triangle_index].first;
+        Point3Vec triangle(corners[triangle_corner_idx.p1_idx], corners[triangle_corner_idx.p2_idx], corners[triangle_corner_idx.p3_idx]);
+
+//        std::cout << "p1:" << triangle.p1 << " p2:" << triangle.p2 << " p3:" << triangle.p3 << " mv:" << mv << std::endl;
+        std::vector<cv::Point2f> mvs{mv, mv, mv};
+        getPredictedImage(ref_image, target_image, out, triangle, mvs, true);
+        return;
+    }
+
+    if(ctu->leftNode != nullptr) getPredictedImageFromCtu(ctu->leftNode, out);
+    if(ctu->leftNode != nullptr) getPredictedImageFromCtu(ctu->rightNode, out);
+}
+
+int TriangleDivision::getCtuCodeLength(std::vector<CodingTreeUnit*> ctus) {
+    int code_length_sum = 0;
+    for(int i = 0 ; i < ctus.size() ; i++){
+        code_length_sum += getCtuCodeLength(ctus[i]);
+    }
+    return code_length_sum;
+}
+
+int TriangleDivision::getCtuCodeLength(CodingTreeUnit *ctu){
+
+    if(ctu->leftNode == nullptr && ctu->rightNode == nullptr) {
+        return 1+ctu->code_length;
+    }
+
+    // ここで足している1はsplit_cu_flag分です
+    return 1 + getCtuCodeLength(ctu->leftNode) + getCtuCodeLength(ctu->rightNode);
+}
+
 TriangleDivision::SplitResult::SplitResult(const Point3Vec &t1, const Point3Vec &t2, int t1Type, int t2Type) : t1(t1),
                                                                                                                t2(t2),
                                                                                                                t1_type(t1Type),
                                                                                                                t2_type(t2Type) {}
+
+TriangleDivision::GaussResult::GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvParallel,
+                                           double residual, int triangleSize, bool parallelFlag) : mv_warping(
+        mvWarping), mv_parallel(mvParallel), residual(residual), triangle_size(triangleSize), parallel_flag(
+        parallelFlag) {}
+
+TriangleDivision::GaussResult::GaussResult() {}

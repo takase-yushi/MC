@@ -293,6 +293,50 @@ std::vector<cv::Point2f> warping(const cv::Mat& prev_color, const cv::Mat& curre
 }
 
 /**
+ * @fn double bicubic_weight(double x)
+ * @brief bicubicフィルタの重みを計算する
+ * @param x 重み関数に渡すアレ
+ * @return 重み
+ */
+double bicubic_weight(double x){
+    double abs_x = fabs(x);
+
+    if (abs_x <= 1.0) {
+        return abs_x * abs_x * abs_x - 2 * abs_x * abs_x + 1;
+    } else if (abs_x <= 2.0) {
+        return - abs_x * abs_x * abs_x + 5 * abs_x * abs_x - 8 * abs_x + 4;
+    } else {
+        return 0.0;
+    }
+}
+
+/**
+ * @fn int bicubic_interpolation(unsigned char **img, double x, double y)
+ * @brief 与えられた座標を双三次補間を行い画素値を返す
+ * @param img 折返しなどで拡大した画像
+ * @param x 小数精度のx座標
+ * @param y 小数精度のy座標
+ * @return 補間した値
+ */
+int bicubic_interpolation(unsigned char **img, double x, double y){
+    int x0 = floor(x);
+    double d_x = x - x0;
+    int y0 = floor(y);
+    double d_y = y - y0;
+
+    double val = 0.0;
+    for(int ny = -1 ; ny <= 2 ; ny++) {
+        for(int nx = -1 ; nx <= 2 ; nx++) {
+            val += img[y0 + ny][x0 + nx] * bicubic_weight(nx - d_x) * bicubic_weight(ny - d_y);
+        }
+    }
+
+    if(val >= 255.5) return 255;
+    else if(val < -0.5) return 0;
+    else return (int)(val + 0.5);
+}
+
+/**
  * @fn void getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& output_image, std::vector<cv::Point2f>& mv)
  * @brief 動きベクトルをもらって、out_imageに画像を書き込む
  * @param[in] ref_image
@@ -340,6 +384,36 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
     b = triangle.p2 - triangle.p1;
     det = a.x * b.y - a.y * b.x;
 
+    // 拡大画像の取得
+    unsigned char **expand_ref;
+    int offset = 32;
+    expand_ref = (unsigned char **)malloc((ref_image.rows + offset * 2) * sizeof(unsigned char *));
+    expand_ref += offset;
+    for(int i = -offset ; i < ref_image.rows + offset ; i++) {
+        expand_ref[i] = (unsigned char *)malloc((ref_image.cols + offset * 2) * sizeof(unsigned char));
+        expand_ref[i] += offset;
+    }
+
+    for(int y = 0 ; y < ref_image.rows ; y++){
+        for(int x = 0 ; x < ref_image.cols ; x++){
+            expand_ref[y][x] = M(ref_image, x, y);
+        }
+    }
+
+    for(int y = 0 ; y < ref_image.rows ; y++){
+        for(int x = -offset ; x < 0 ; x++){
+            expand_ref[y][x] = M(ref_image, 0, y);
+            expand_ref[y][ref_image.cols + offset + x] = M(ref_image, ref_image.cols - 1, y);
+        }
+    }
+
+    for(int y = -offset ; y < 0 ; y++){
+        for(int x = -offset ; x < ref_image.cols + offset ; x++){
+            expand_ref[y][x] = M(ref_image, x, 0);
+            expand_ref[ref_image.rows + offset + y][x] = M(ref_image, x, ref_image.rows - 1);
+        }
+    }
+
     for(const auto& pixel : in_triangle_pixels) {
         X.x = pixel.x - triangle.p1.x;
         X.y = pixel.y - triangle.p1.y;
@@ -370,6 +444,8 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
         int y0 = floor(X_later.y);
         double d_y = X_later.y - y0;
 
+//        int y = bicubic_interpolation(expand_ref, X_later.x, X_later.y);
+
         int y = (int) floor((M(ref_image, (int) x0    , (int) y0    ) * (1 - d_x) * (1 - d_y)  +
                              M(ref_image, (int) x0 + 1, (int) y0    ) * (    d_x) * (1 - d_y)  +
                              M(ref_image, (int) x0    , (int) y0 + 1) * (1 - d_x) * (    d_y)  +
@@ -381,6 +457,15 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
 
         squared_error += pow((M(target_image, (int)pixel.x, (int)pixel.y) - (0.299 * y + 0.587 * y + 0.114 * y)), 2);
     }
+
+    // メモリの開放
+    for(int i = -offset ; i < ref_image.rows + offset ; i++) {
+        expand_ref[i] -= offset;
+        free(expand_ref[i]);
+    }
+
+    expand_ref -= offset;
+    free(expand_ref);
 
     return squared_error;
 }
@@ -528,34 +613,34 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                     }
                 }
             }
-            int k = 2;//画像の周り2ピクセルだけ折り返し
+            int spread = 16;//画像の周り16ピクセルだけ折り返し
             for (int j = 0; j < current_target_image.rows; j++) {
-                for (int i = 1; i <= k; i++) {
-                    current_target_expand[-i][j] = current_target_expand[i][j];
-                    current_target_expand[current_target_image.cols - 1 + i][j] = current_target_expand[current_target_image.cols - 1 - i][j];
-                    current_ref_expand[-i][j] = current_ref_expand[i][j];
-                    current_ref_expand[current_target_image.cols - 1 + i][j] = current_ref_expand[current_target_image.cols - 1 - i][j];
-                    current_target_org_expand[-i][j] = current_target_org_expand[i][j];
-                    current_target_org_expand[current_target_image.cols - 1 + i][j] = current_target_org_expand[current_target_image.cols - 1 - i][j];
-                    current_ref_org_expand[-i][j] = current_ref_org_expand[i][j];
-                    current_ref_org_expand[current_target_image.cols - 1 + i][j] = current_ref_org_expand[current_target_image.cols - 1 - i][j];
+                for (int i = 1; i <= spread; i++) {
+                    current_target_expand[-i][j] = current_target_expand[0][j];
+                    current_target_expand[current_target_image.cols - 1 + i][j] = current_target_expand[current_target_image.cols - 1][j];
+                    current_ref_expand[-i][j] = current_ref_expand[0][j];
+                    current_ref_expand[current_target_image.cols - 1 + i][j] = current_ref_expand[current_target_image.cols - 1][j];
+                    current_target_org_expand[-i][j] = current_target_org_expand[0][j];
+                    current_target_org_expand[current_target_image.cols - 1 + i][j] = current_target_org_expand[current_target_image.cols - 1][j];
+                    current_ref_org_expand[-i][j] = current_ref_org_expand[0][j];
+                    current_ref_org_expand[current_target_image.cols - 1 + i][j] = current_ref_org_expand[current_target_image.cols - 1][j];
                 }
             }
-            for (int i = -k; i < current_target_image.cols + k; i++) {
-                for (int j = 1; j <= k; j++) {
-                    current_target_expand[i][-j] = current_target_expand[i][j];
-                    current_target_expand[i][current_target_image.rows - 1 + j] = current_target_expand[i][current_target_image.rows - 1 - j];
-                    current_ref_expand[i][-j] = current_ref_expand[i][j];
-                    current_ref_expand[i][current_target_image.rows - 1 + j] = current_ref_expand[i][current_target_image.rows - 1 - j];
+            for (int i = -spread; i < current_target_image.cols + spread; i++) {
+                for (int j = 1; j <= spread; j++) {
+                    current_target_expand[i][-j] = current_target_expand[i][0];
+                    current_target_expand[i][current_target_image.rows - 1 + j] = current_target_expand[i][current_target_image.rows - 1];
+                    current_ref_expand[i][-j] = current_ref_expand[i][0];
+                    current_ref_expand[i][current_target_image.rows - 1 + j] = current_ref_expand[i][current_target_image.rows - 1];
 
-                    current_target_org_expand[i][-j] = current_target_org_expand[i][j];
-                    current_target_org_expand[i][current_target_image.rows - 1 + j] = current_target_org_expand[i][current_target_image.rows - 1 - j];
-                    current_ref_org_expand[i][-j] = current_ref_org_expand[i][j];
-                    current_ref_org_expand[i][current_target_image.rows - 1 + j] = current_ref_org_expand[i][current_target_image.rows - 1 - j];
+                    current_target_org_expand[i][-j] = current_target_org_expand[i][0];
+                    current_target_org_expand[i][current_target_image.rows - 1 + j] = current_target_org_expand[i][current_target_image.rows - 1];
+                    current_ref_org_expand[i][-j] = current_ref_org_expand[i][0];
+                    current_ref_org_expand[i][current_target_image.rows - 1 + j] = current_ref_org_expand[i][current_target_image.rows - 1];
                 }
             }
 
-
+            int scaled_spread = spread / scale;
             p0 = target_corners.p1 / scale;
             p1 = target_corners.p2 / scale;
             p2 = target_corners.p3 / scale;
@@ -577,12 +662,12 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
 
                 // ワーピング
                 double magnification = 2.0;
-                while ( (p0.x + tmp_mv_warping[0].x * magnification < 0 && p0.x + tmp_mv_warping[0].x * magnification > current_target_image.cols - 1) &&
-                        (p1.x + tmp_mv_warping[1].x * magnification < 0 && p1.x + tmp_mv_warping[1].x * magnification > current_target_image.cols - 1) &&
-                        (p2.x + tmp_mv_warping[2].x * magnification < 0 && p2.x + tmp_mv_warping[2].x * magnification > current_target_image.cols - 1) &&
-                        (p0.y + tmp_mv_warping[0].y * magnification < 0 && p0.y + tmp_mv_warping[0].y * magnification > current_target_image.rows - 1) &&
-                        (p1.y + tmp_mv_warping[1].y * magnification < 0 && p1.y + tmp_mv_warping[1].y * magnification > current_target_image.rows - 1) &&
-                        (p2.y + tmp_mv_warping[2].y * magnification < 0 && p2.y + tmp_mv_warping[2].y * magnification > current_target_image.rows - 1) ) {
+                while ( (p0.x + tmp_mv_warping[0].x * magnification < -scaled_spread && p0.x + tmp_mv_warping[0].x * magnification > current_target_image.cols - 1 + scaled_spread) &&
+                        (p1.x + tmp_mv_warping[1].x * magnification < -scaled_spread && p1.x + tmp_mv_warping[1].x * magnification > current_target_image.cols - 1 + scaled_spread) &&
+                        (p2.x + tmp_mv_warping[2].x * magnification < -scaled_spread && p2.x + tmp_mv_warping[2].x * magnification > current_target_image.cols - 1 + scaled_spread) &&
+                        (p0.y + tmp_mv_warping[0].y * magnification < -scaled_spread && p0.y + tmp_mv_warping[0].y * magnification > current_target_image.rows - 1 + scaled_spread) &&
+                        (p1.y + tmp_mv_warping[1].y * magnification < -scaled_spread && p1.y + tmp_mv_warping[1].y * magnification > current_target_image.rows - 1 + scaled_spread) &&
+                        (p2.y + tmp_mv_warping[2].y * magnification < -scaled_spread && p2.y + tmp_mv_warping[2].y * magnification > current_target_image.rows - 1 + scaled_spread) ) {
                     if(magnification <= 1)break;
                     magnification -= 0.1;
                 }
@@ -590,12 +675,12 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
 
                 // 平行移動
                 magnification = 2.0;
-                while ( (p0.x + tmp_mv_parallel.x * magnification < 0 && p0.x + tmp_mv_parallel.x * magnification > current_target_image.cols - 1) &&
-                        (p1.x + tmp_mv_parallel.x * magnification < 0 && p1.x + tmp_mv_parallel.x * magnification > current_target_image.cols - 1) &&
-                        (p2.x + tmp_mv_parallel.x * magnification < 0 && p2.x + tmp_mv_parallel.x * magnification > current_target_image.cols - 1) &&
-                        (p0.y + tmp_mv_parallel.y * magnification < 0 && p0.y + tmp_mv_parallel.y * magnification > current_target_image.rows - 1) &&
-                        (p1.y + tmp_mv_parallel.y * magnification < 0 && p1.y + tmp_mv_parallel.y * magnification > current_target_image.rows - 1) &&
-                        (p2.y + tmp_mv_parallel.y * magnification < 0 && p2.y + tmp_mv_parallel.y * magnification > current_target_image.rows - 1) ) {
+                while ( (p0.x + tmp_mv_parallel.x * magnification < -scaled_spread && p0.x + tmp_mv_parallel.x * magnification > current_target_image.cols - 1 + scaled_spread) &&
+                        (p1.x + tmp_mv_parallel.x * magnification < -scaled_spread && p1.x + tmp_mv_parallel.x * magnification > current_target_image.cols - 1 + scaled_spread) &&
+                        (p2.x + tmp_mv_parallel.x * magnification < -scaled_spread && p2.x + tmp_mv_parallel.x * magnification > current_target_image.cols - 1 + scaled_spread) &&
+                        (p0.y + tmp_mv_parallel.y * magnification < -scaled_spread && p0.y + tmp_mv_parallel.y * magnification > current_target_image.rows - 1 + scaled_spread) &&
+                        (p1.y + tmp_mv_parallel.y * magnification < -scaled_spread && p1.y + tmp_mv_parallel.y * magnification > current_target_image.rows - 1 + scaled_spread) &&
+                        (p2.y + tmp_mv_parallel.y * magnification < -scaled_spread && p2.y + tmp_mv_parallel.y * magnification > current_target_image.rows - 1 + scaled_spread) ) {
                     if(magnification <= 1)break;
                     magnification -= 0.1;
                 }
@@ -725,10 +810,10 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                         X_later_warping.y = alpha * a_later_warping.y + beta * b_later_warping.y + triangle_later_warping[0].y;
                         X_later_parallel = alpha * a_later_parallel + beta * b_later_parallel + triangle_later_parallel[0];
 
-                        if (X_later_warping.x >= current_ref_image.cols - 1) X_later_warping.x = current_ref_image.cols - 1.001;
-                        if (X_later_warping.y >= current_ref_image.rows - 1) X_later_warping.y = current_ref_image.rows - 1.001;
-                        if(X_later_warping.x < 0) X_later_warping.x = 0;
-                        if(X_later_warping.y < 0) X_later_warping.y = 0;
+                        if (X_later_warping.x >= current_ref_image.cols - 1 + scaled_spread) X_later_warping.x = current_ref_image.cols - 1.001 + scaled_spread;
+                        if (X_later_warping.y >= current_ref_image.rows - 1 + scaled_spread) X_later_warping.y = current_ref_image.rows - 1.001 + scaled_spread;
+                        if(X_later_warping.x < -scaled_spread) X_later_warping.x = -scaled_spread;
+                        if(X_later_warping.y < -scaled_spread) X_later_warping.y = -scaled_spread;
 
                         // 頂点を動かしたときのパッチ内の変動量x軸y軸独立に計算(delta_gを求めるために必要)
                         double delta_x, delta_y;
@@ -821,8 +906,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                         B_parallel.at<double>(row, 0) += (f - g_parallel) * delta_g_parallel[row];
                     }
 
-                    MSE_warping += (f_org - g_org_warping) * (f_org - g_org_warping);
-                    MSE_parallel += (f_org - g_org_parallel) * (f_org - g_org_parallel);
+                    MSE_warping += fabs(f_org - g_org_warping);   // * (f_org - g_org_warping);
+                    MSE_parallel += fabs(f_org - g_org_parallel); // * (f_org - g_org_parallel);
 //                    MSE_warping  += (f - g_warping)  * (f - g_warping);
 //                    MSE_parallel += (f - g_parallel) * (f - g_parallel);
                 }
@@ -852,14 +937,14 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                 for (int k = 0; k < 6; k++) {
 
                     if (k % 2 == 0) {
-                        if ((0 <= scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0)) &&
-                            (target_images[0][step].cols - 1 >=
+                        if ((-scaled_spread <= scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0)) &&
+                            (target_images[0][step].cols - 1 + scaled_spread >=
                              scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0))) {
                             tmp_mv_warping[(int) (k / 2)].x = tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0);//動きベクトルを更新(画像の外に出ないように)
                         }
                     } else {
-                        if ((0 <= scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0)) &&
-                            (target_images[0][step].rows - 1 >=
+                        if ((-scaled_spread <= scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0)) &&
+                            (target_images[0][step].rows - 1 + scaled_spread >=
                              scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0))) {
                             tmp_mv_warping[(int) (k / 2)].y = tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0);
                         }
@@ -868,26 +953,26 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
 
                 for (int k = 0; k < 2; k++) {
                     if (k % 2 == 0) {
-                        if ((0 <= scaled_coordinates[0].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
-                            (target_images[0][step].cols - 1 >=
+                        if ((-scaled_spread <= scaled_coordinates[0].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
+                            (target_images[0][step].cols - 1 + scaled_spread >=
                              scaled_coordinates[0].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
-                            (0 <= scaled_coordinates[1].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
-                            (target_images[0][step].cols - 1 >=
+                            (-scaled_spread <= scaled_coordinates[1].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
+                            (target_images[0][step].cols - 1 + scaled_spread >=
                              scaled_coordinates[1].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
-                            (0 <= scaled_coordinates[2].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
-                            (target_images[0][step].cols - 1 >=
+                            (-scaled_spread <= scaled_coordinates[2].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
+                            (target_images[0][step].cols - 1 + scaled_spread >=
                              scaled_coordinates[2].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0))) {
                             tmp_mv_parallel.x = tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0);
                         }
                     } else {
-                        if ((0 <= scaled_coordinates[0].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
-                            (target_images[0][step].rows - 1 >=
+                        if ((-scaled_spread <= scaled_coordinates[0].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
+                            (target_images[0][step].rows - 1 + scaled_spread >=
                              scaled_coordinates[0].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
-                            (0 <= scaled_coordinates[1].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
-                            (target_images[0][step].rows - 1 >=
+                            (-scaled_spread <= scaled_coordinates[1].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
+                            (target_images[0][step].rows - 1 + scaled_spread >=
                              scaled_coordinates[1].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
-                            (0 <= scaled_coordinates[2].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
-                            (target_images[0][step].rows - 1 >=
+                            (-scaled_spread <= scaled_coordinates[2].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
+                            (target_images[0][step].rows - 1 + scaled_spread >=
                              scaled_coordinates[2].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0))) {
                             tmp_mv_parallel.y = tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0);
                         }

@@ -12,8 +12,8 @@ class CodingTreeUnit {
 public:
     virtual ~CodingTreeUnit();
 
-    bool split_cu_flag1;
-    bool split_cu_flag2;
+    int code_length;
+    bool split_cu_flag;
     CodingTreeUnit *leftNode;
     CodingTreeUnit *rightNode;
     CodingTreeUnit *parentNode;
