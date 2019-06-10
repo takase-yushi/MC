@@ -151,7 +151,9 @@ public:
     std::vector<Triangle> getAllTriangleIndexList();
     int divide_steps; // 分割回数
 
-private:
+    cv::Mat getMvImage(std::vector<CodingTreeUnit*> ctus);
+
+    private:
     std::vector<cv::Point2f> corners;
     std::vector<std::pair<Triangle, int> > triangles;
     cv::Mat target_image, ref_image;
@@ -184,6 +186,7 @@ private:
     void eraseTriangle(int t_idx);
     void getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out);
     int getCtuCodeLength(CodingTreeUnit *ctu);
+    void drawMvImage(cv::Mat &out, CodingTreeUnit *ctu);
 
 };
 

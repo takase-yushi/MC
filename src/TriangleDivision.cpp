@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <queue>
 #include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 #include "../includes/ImageUtil.h"
 
 TriangleDivision::TriangleDivision(const cv::Mat &refImage, const cv::Mat &targetImage) : target_image(targetImage),
@@ -908,6 +909,7 @@ bool TriangleDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Colloc
         return true;
     }else{
         isCodedTriangle[triangle_index] = true;
+        delete_flag[triangle_index] = false;
         ctu->leftNode = ctu->rightNode = nullptr;
         eraseTriangle(triangles.size() - 1);
         eraseTriangle(triangles.size() - 1);
@@ -1447,6 +1449,37 @@ int TriangleDivision::getCtuCodeLength(CodingTreeUnit *ctu){
 
     // ここで足している1はsplit_cu_flag分です
     return 1 + getCtuCodeLength(ctu->leftNode) + getCtuCodeLength(ctu->rightNode);
+}
+
+
+cv::Mat TriangleDivision::getMvImage(std::vector<CodingTreeUnit*> ctus){
+    cv::Mat out = target_image.clone();
+
+    for(auto triangle : getTriangleCoordinateList()){
+        drawTriangle(out, triangle.p1, triangle.p2, triangle.p3, cv::Scalar(255, 255, 255));
+    }
+
+    for(int i = 0 ; i < ctus.size() ; i++){
+        drawMvImage(out, ctus[i]);
+    }
+
+    return out;
+}
+
+void TriangleDivision::drawMvImage(cv::Mat &out, CodingTreeUnit *ctu){
+    if(ctu->leftNode == nullptr && ctu->rightNode == nullptr) {
+        Triangle t = triangles[ctu->triangle_index].first;
+        cv::Point2f p1 = corners[t.p1_idx];
+        cv::Point2f p2 = corners[t.p2_idx];
+        cv::Point2f p3 = corners[t.p3_idx];
+
+        cv::Point2f g = (p1 + p2 + p3) / 3.0;
+
+        cv::line(out, g, g+ctu->mv1, GREEN);
+    }
+
+    if(ctu->leftNode != nullptr) drawMvImage(out, ctu->leftNode);
+    if(ctu->rightNode != nullptr) drawMvImage(out, ctu->rightNode);
 }
 
 TriangleDivision::SplitResult::SplitResult(const Point3Vec &t1, const Point3Vec &t2, int t1Type, int t2Type) : t1(t1),
