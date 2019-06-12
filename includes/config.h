@@ -33,28 +33,5 @@ typedef std::pair<double, cv::Point2f> pdp;
  */
 #define QUANTIZE 4
 
-/**
- * @def BM_AVAILABLE
- * @brief ブロックマッチング有効化フラグ
- * @details
- *  ブロックマッチングを有効にする場合はtrue, そうでない場合はfalseを設定する
- */
-#define BM_AVAILABLE true
-
-/**
- * @def WARP_AVAILABLE
- * @brief ワーピング有効化フラグ
- * @details
- *  ワーピングを有効にする場合はtrue, そうでない場合はfalseを設定する
- */
-#define WARP_AVAILABLE true
-
-/**
- * @def EPS
- * @brief 誤差を表す定数
- * @details
- *  誤差を表す定数EPS(EPSILON). 1×10^(-9)を表す.
- */
-#define EPS 1e-9
 
 #endif //ENCODER_CONFIG_H
