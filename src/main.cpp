@@ -156,6 +156,7 @@ int main(int argc, char *argv[]){
 //    storeResidualImage();
 
 }
+std::string out_file_suffix = "";
 
 void run(std::string config_path) {
 
@@ -320,29 +321,17 @@ void run(std::string config_path) {
             cv::Point2f p3 = triangle.first.p3;
             std::cout << "================== step:" << i << " ================== " << std::endl;
             triangle_division.split(gaussRefImage, foo[i], nullptr, Point3Vec(p1, p2, p3), i, triangle.second, division_steps);
-//            triangle_division.getSpatialTriangleList(triangles.size() - 1);
-//            int prev_triangles_max = triangles.size();
-//            triangles = triangle_division.getAllTriangleCoordinateList();
-//            corners = triangle_division.getCorners();
-//            if(prev_triangles_max < triangles.size()) {
-//                int draw_triangle_index = triangles.size() - 1;
-//                spatialMvTestImage = getReconstructionDivisionImage(gaussRefImage, foo);
-//                for(auto& t : triangle_division.getSpatialTriangleList(draw_triangle_index)) {
-//                    drawTriangle(spatialMvTestImage, triangles[t].p1, triangles[t].p2, triangles[t].p3, BLUE);
-//                }
-//                drawTriangle(spatialMvTestImage, triangles[draw_triangle_index].p1, triangles[draw_triangle_index].p2, triangles[draw_triangle_index].p3, RED);
-//                cv::imwrite(img_directory + "/spatialTriangle_" + std::to_string(draw_triangle_index) + ".png", spatialMvTestImage);
-            }
+        }
         std::cout << "split finished" << std::endl;
         getReconstructionDivisionImage(gaussRefImage, foo);
         cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo);
         int code_length = triangle_division.getCtuCodeLength(foo);
         std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
         std::cout << "PSNR:" << getPSNR(target_image, p_image) << " code_length:" << code_length << std::endl;
-        std::cout << img_directory + "p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + "_block.png" << std::endl;
-        cv::imwrite(img_directory + "p_image_" + std::to_string(qp) + "_divide_" +std::to_string(division_steps) + "_block.png", p_image);
-        cv::imwrite(img_directory + "p_residual_image_" + std::to_string(qp) + "_divide_" +std::to_string(division_steps) + "_block.png", getResidualImage(target_image, p_image));
-        cv::imwrite(img_directory + "p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + "_block.png", triangle_division.getMvImage(foo));
+        std::cout << img_directory + "p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png" << std::endl;
+        cv::imwrite(img_directory + "p_image_" + std::to_string(qp) + "_divide_" +std::to_string(division_steps) + out_file_suffix + ".png", p_image);
+        cv::imwrite(img_directory + "p_residual_image_" + std::to_string(qp) + "_divide_" +std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
+        cv::imwrite(img_directory + "p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", triangle_division.getMvImage(foo));
         exit(0);
         // 何回再帰的に分割を行うか
 
@@ -2583,7 +2572,7 @@ cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit
     for(const auto foo : hoge) {
         drawTriangle(reconstructedImage, foo.p1, foo.p2, foo.p3, cv::Scalar(255, 255, 255));
     }
-    cv::imwrite(getProjectDirectory(OS) + "/img/minato/reconstruction_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + ".png", reconstructedImage);
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/reconstruction_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix +".png", reconstructedImage);
 
     return reconstructedImage;
 }
