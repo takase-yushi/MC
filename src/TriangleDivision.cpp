@@ -263,6 +263,7 @@ int TriangleDivision::insertTriangle(int p1_idx, int p2_idx, int p3_idx, int typ
     isCodedTriangle.emplace_back(false);
     triangle_gauss_results.emplace_back();
     triangle_gauss_results[triangle_gauss_results.size() - 1].residual = -1.0;
+    delete_flag.emplace_back(false);
 
     return static_cast<int>(triangles.size() - 1);
 }
@@ -280,6 +281,7 @@ void TriangleDivision::eraseTriangle(int t_idx){
     triangles.erase(triangles.begin() + t_idx);
     covered_triangle.erase(covered_triangle.begin() + t_idx);
     triangle_gauss_results.erase(triangle_gauss_results.begin() + t_idx);
+    delete_flag.erase(delete_flag.begin() + t_idx);
 }
 
 /**
