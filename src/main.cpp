@@ -22,6 +22,8 @@
 #include "../includes/TriangleDivision.h"
 #include "../includes/Reconstruction.h"
 #include "../includes/ImageUtil.h"
+#include "../includes/Utils.h"
+
 
 struct PredictedImageResult {
     cv::Mat out, mv_image;
@@ -135,9 +137,9 @@ void storeResidualImage(){
 int main(int argc, char *argv[]){
     // Write test codes below
     // test1();
-    storeResidualImage();
+//    storeResidualImage();
 //    std::cout << getPSNR(cv::imread(getProjectDirectory(OS)+ std::string(argv[1])), cv::imread(getProjectDirectory(OS) + std::string(argv[2]))) << std::endl;
-    exit(0);
+//    exit(0);
     std::string config_path = std::string(argv[1]);
     // exec ME
     run(config_path);
