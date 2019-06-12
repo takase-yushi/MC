@@ -459,7 +459,7 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
     }
 
     // メモリの開放
-    for(int i = -offset ; i < ref_image.rows + offset ; i++) {
+    for(int i = -offset ; i < ref_image.cols + offset ; i++) {
         expand_ref[i] -= offset;
         free(expand_ref[i]);
     }
