@@ -446,11 +446,6 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
 
         int y = bicubic_interpolation(expand_ref, X_later.x, X_later.y);
 
-//        int y = (int) floor((M(ref_image, (int) x0    , (int) y0    ) * (1 - d_x) * (1 - d_y)  +
-//                             M(ref_image, (int) x0 + 1, (int) y0    ) * (    d_x) * (1 - d_y)  +
-//                             M(ref_image, (int) x0    , (int) y0 + 1) * (1 - d_x) * (    d_y)  +
-//                             M(ref_image, (int) x0 + 1, (int) y0 + 1) * (    d_x) * (    d_y)) + 0.5);
-
         R(output_image, (int)pixel.x, (int)pixel.y) = y;
         G(output_image, (int)pixel.x, (int)pixel.y) = y;
         B(output_image, (int)pixel.x, (int)pixel.y) = y;
@@ -560,9 +555,11 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
     bool parallel_flag = true;
     const int expand = 500;
 
+    cv::Point2f initial_vector(0.0, 0.0);
+    initial_vector /= 2.0;
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
-        std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(0.0, 0.0));
-        cv::Point2f tmp_mv_parallel(0.0, 0.0);
+        std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(initial_vector.x, initial_vector.y));
+        cv::Point2f tmp_mv_parallel(initial_vector.x, initial_vector.y);
 
         for(int step = 0 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
 
@@ -657,6 +654,24 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
 
             if(fabs((p2 - p0).x * (p1 - p0).y - (p2 - p0).y * (p1 - p0).x) <= 0) break;
 
+            Point3Vec current_triangle_coordinates(p0, p1, p2);
+            double sx = std::min({(int) p0.x, (int) p1.x, (int) p2.x});
+            double lx = std::max({(int) p0.x, (int) p1.x, (int) p2.x});
+            double sy = std::min({(int) p0.y, (int) p1.y, (int) p2.y});
+            double ly = std::max({(int) p0.y, (int) p1.y, (int) p2.y});
+
+            pixels_in_triangle.clear();
+            cv::Point2f xp;
+            for (int j = (int) (round(sy) - 1); j <= round(ly) + 1; j++) {
+                for (int i = (int) (round(sx) - 1); i <= round(lx) + 1; i++) {
+                    xp.x = (float) i;
+                    xp.y = (float) j;
+                    if (isInTriangle(current_triangle_coordinates, xp) == 1) {
+                        pixels_in_triangle.emplace_back(xp);//三角形の内部のピクセルを格納
+                    }
+                }
+            }
+
             std::vector<cv::Point2f> scaled_coordinates{p0, p1, p2};
 
             if(step != 0) {
@@ -690,24 +705,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
             }
             v_stack_parallel.clear();
             v_stack_warping.clear();
-
-            Point3Vec current_triangle_coordinates(p0, p1, p2);
-            double sx = std::min({(int) p0.x, (int) p1.x, (int) p2.x});
-            double lx = std::max({(int) p0.x, (int) p1.x, (int) p2.x});
-            double sy = std::min({(int) p0.y, (int) p1.y, (int) p2.y});
-            double ly = std::max({(int) p0.y, (int) p1.y, (int) p2.y});
-
-            pixels_in_triangle.clear();
-            cv::Point2f xp;
-            for (int j = (int) (round(sy) - 1); j <= round(ly) + 1; j++) {
-                for (int i = (int) (round(sx) - 1); i <= round(lx) + 1; i++) {
-                    xp.x = (float) i;
-                    xp.y = (float) j;
-                    if (isInTriangle(current_triangle_coordinates, xp) == 1) {
-                        pixels_in_triangle.emplace_back(xp);//三角形の内部のピクセルを格納
-                    }
-                }
-            }
 
             // 11回ガウス・ニュートン法をやる
             for(int gaussIterateNum = 0 ; gaussIterateNum < 11 ; gaussIterateNum++) {
