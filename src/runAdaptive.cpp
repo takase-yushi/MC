@@ -936,14 +936,14 @@ void runAdaptive() {
                     corner_list_later << point.x << " " << point.y << std::endl;
                 }
             }
-//            std::ifstream in_corner_list = std::ifstream("corner_list_" + corner_file_name + "_later.dat");
-//            std::string str1;
-//            int point_x,point_y;
-//            corners.clear();
-//            while (getline(in_corner_list, str1)) {
-//                sscanf(str1.data(), "%d %d", &point_x,&point_y);
-//                corners.emplace_back(cv::Point2f(point_x,point_y));
-//            }
+            std::ifstream in_corner_list = std::ifstream("corner_list_" + corner_file_name + "_later.dat");
+            std::string str1;
+            int point_x,point_y;
+            corners.clear();
+            while (getline(in_corner_list, str1)) {
+                sscanf(str1.data(), "%d %d", &point_x,&point_y);
+                corners.emplace_back(cv::Point2f(point_x,point_y));
+            }
 
             std::cout << "corners's size :" << corners.size() << std::endl;
             std::cout << "ref_corners's size :" << ref_corners.size() << std::endl;
