@@ -43,14 +43,6 @@ void block_matching(const cv::Mat& prev, const cv::Mat& current, double &error, 
 std::vector<cv::Point2f> warping(const cv::Mat& prev_color, const cv::Mat& current_color,
                                  double &error_warp, Point3Vec target_corners, Point3Vec& ref_corners);
 
-double Gauss_Newton(const cv::Mat& prev_color, const cv::Mat& current_color,const cv::Mat& intra,
-                                      Point3Vec target_corners, Point3Vec& ref_corners,int &triangle_size);
-
-std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& current_color,const cv::Mat& intra,std::vector<cv::Mat>& predict_buf,cv::Mat&predict_warp,cv::Mat&predict_para,
-                                       double &error_warp, Point3Vec target_corners, Point3Vec& ref_corners,
-                                       bool *flag,int t,const cv::Mat& residual_ref,int& in_triangle_size,double erase_th_global);
-
-std::vector<cv::Point2i> Gauss_Golomb(Triangle triangle, bool *flag, std::vector<cv::Point2i> &ev, std::vector<cv::Point2f> corners, DelaunayTriangulation md,std::vector<cv::Point2i> mv,const cv::Mat& target,const cv::Mat& targetx8,bool &para_flag);
 /**
  * @fn std::vector<cv::Point2f> getReferenceImageCoordinates(const cv::Mat& image, const std::vector<cv::Point2f>& target_corners, const int side_point_nums);
  * @brief 特徴点が参照画像でどの位置に属するのかを求める.(ブロックマッチングでフローをもとめる）
