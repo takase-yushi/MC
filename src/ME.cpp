@@ -953,8 +953,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
             free(current_ref_org_expand);
         }
     }
-
-    parallel_flag = true;
+    
     // 量子化
     double quantize_offset = 0.125;
     if(max_v_parallel.x < 0) {
@@ -987,7 +986,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
         error = min_error_warping; // / (double)pixels_in_triangle.size();
     }
 //    std::cout << "min_error_parallel:" << min_error_parallel << " min_error_warping:" << min_error_warping << std::endl;
-    return std::make_tuple(std::vector<cv::Point2f>{max_v_warping[0], max_v_warping[1], max_v_warping[2]}, max_v_parallel, error, pixels_in_triangle.size(),true);
+    return std::make_tuple(std::vector<cv::Point2f>{max_v_warping[0], max_v_warping[1], max_v_warping[2]}, max_v_parallel, error, pixels_in_triangle.size(),parallel_flag);
 }
 
 /**
