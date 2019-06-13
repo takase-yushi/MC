@@ -474,62 +474,8 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
  * @param[in] target_corners 対象画像上の三角パッチの座標
  * @return ワーピングの動きベクトル・平行移動の動きベクトル・予測残差・面積・平行移動のフラグのtuple
  */
-std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton(cv::Mat ref_image, cv::Mat target_image, cv::Mat gauss_ref_image, Point3Vec target_corners){
+std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char **>>> expand_image, Point3Vec target_corners){
     // 画像の初期化 vector[filter][picture_number]
-    std::vector<std::vector<cv::Mat>> ref_images;
-    std::vector<std::vector<cv::Mat>> target_images;
-
-    // 参照画像のフィルタ処理（１）
-    std::vector<cv::Mat> ref1_levels;
-    cv::Mat ref_level_1, ref_level_2, ref_level_3, ref_level_4;
-    ref_level_1 = gauss_ref_image;
-    ref_level_2 = half(ref_level_1, 2);
-    ref_level_3 = half(ref_level_2, 2);
-    ref_level_4 = half(ref_level_3, 2);
-    ref1_levels.emplace_back(ref_level_4);
-    ref1_levels.emplace_back(ref_level_3);
-    ref1_levels.emplace_back(ref_level_2);
-    ref1_levels.emplace_back(ref_image);
-
-    // 対象画像のフィルタ処理（１）
-    std::vector<cv::Mat> target1_levels;
-    cv::Mat target_level_1, target_level_2, target_level_3, target_level_4;
-    target_level_1 = target_image;
-    target_level_2 = half(target_level_1, 2);
-    target_level_3 = half(target_level_2, 2);
-    target_level_4 = half(target_level_3, 2);
-    target1_levels.emplace_back(target_level_4);
-    target1_levels.emplace_back(target_level_3);
-    target1_levels.emplace_back(target_level_2);
-    target1_levels.emplace_back(target_level_1);
-
-    // 参照画像のフィルタ処理（２）
-    std::vector<cv::Mat> ref2_levels;
-    cv::Mat ref2_level_1 = gauss_ref_image;
-    cv::Mat ref2_level_2 = half(ref2_level_1, 2);
-    cv::Mat ref2_level_3 = half(ref2_level_2, 1);
-    cv::Mat ref2_level_4 = half(ref2_level_3, 1);
-    ref2_levels.emplace_back(ref2_level_4);
-    ref2_levels.emplace_back(ref2_level_3);
-    ref2_levels.emplace_back(ref2_level_2);
-    ref2_levels.emplace_back(ref_image);
-
-    // 対象画像のフィルタ処理（２）
-    std::vector<cv::Mat> target2_levels;
-    cv::Mat target2_level_1 = target_image;
-    cv::Mat target2_level_2 = half(target2_level_1, 2);
-    cv::Mat target2_level_3 = half(target2_level_2, 1);
-    cv::Mat target2_level_4 = half(target2_level_3, 1);
-    target2_levels.emplace_back(target2_level_4);
-    target2_levels.emplace_back(target2_level_3);
-    target2_levels.emplace_back(target2_level_2);
-    target2_levels.emplace_back(target2_level_1);
-
-    ref_images.emplace_back(ref1_levels);
-    ref_images.emplace_back(ref2_levels);
-    target_images.emplace_back(target1_levels);
-    target_images.emplace_back(target2_levels);
-
 
     const int warping_matrix_dim = 6; // 方程式の次元
     const int parallel_matrix_dim = 2;
@@ -569,75 +515,13 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
 
             unsigned char **current_target_expand, **current_target_org_expand; //画像の周りに500ピクセルだけ黒の領域を設ける(念のため)
             unsigned char **current_ref_expand, **current_ref_org_expand;    //f_expandと同様
-            current_target_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
-            current_target_expand += expand;
-            current_target_org_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
-            current_target_org_expand += expand;
 
-            for (int j = -expand; j < current_target_image.cols + expand; j++) {
-                current_target_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (current_target_image.rows + expand * 2));
-                current_target_expand[j] += expand;
+            current_ref_expand        = expand_image[filter_num][step][0];
+            current_ref_org_expand    = expand_image[filter_num][step][1];
+            current_target_expand     = expand_image[filter_num][step][2];
+            current_target_org_expand = expand_image[filter_num][step][3];
 
-                current_target_org_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (current_target_image.rows + expand * 2));
-                current_target_org_expand[j] += expand;
-            }
-
-            current_ref_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
-            current_ref_expand += expand;
-            current_ref_org_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
-            current_ref_org_expand += expand;
-            for (int j = -expand; j < current_ref_image.cols + expand; j++) {
-                if ((current_ref_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (current_target_image.rows + expand * 2))) == NULL) {
-                }
-                current_ref_expand[j] += expand;
-
-                (current_ref_org_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (current_target_image.rows + expand * 2)));
-                current_ref_org_expand[j] += expand;
-            }
-            for (int j = -expand; j < current_target_image.rows + expand; j++) {
-                for (int i = -expand; i < current_target_image.cols + expand; i++) {
-                    if (j >= 0 && j < current_target_image.rows && i >= 0 && i < current_target_image.cols) {
-                        current_target_expand[i][j] = M(current_target_image, i, j);
-                        current_ref_expand[i][j] = M(current_ref_image, i, j);
-
-                        current_target_org_expand[i][j] = M(target_images[filter_num][step], i, j);
-                        current_ref_org_expand[i][j] = M(ref_images[filter_num][step], i, j);
-                    } else {
-                        current_target_expand[i][j] = 0;
-                        current_ref_expand[i][j] = 0;
-                        current_target_org_expand[i][j] = 0;
-                        current_ref_org_expand[i][j] = 0;
-                    }
-                }
-            }
-            int spread = 18;// 双3次補間を行うために、画像の周り(16+2)=18ピクセルだけ折り返し
-            for (int j = 0; j < current_target_image.rows; j++) {
-                for (int i = 1; i <= spread; i++) {
-                    current_target_expand[-i][j] = current_target_expand[0][j];
-                    current_target_expand[current_target_image.cols - 1 + i][j] = current_target_expand[current_target_image.cols - 1][j];
-                    current_ref_expand[-i][j] = current_ref_expand[0][j];
-                    current_ref_expand[current_target_image.cols - 1 + i][j] = current_ref_expand[current_target_image.cols - 1][j];
-                    current_target_org_expand[-i][j] = current_target_org_expand[0][j];
-                    current_target_org_expand[current_target_image.cols - 1 + i][j] = current_target_org_expand[current_target_image.cols - 1][j];
-                    current_ref_org_expand[-i][j] = current_ref_org_expand[0][j];
-                    current_ref_org_expand[current_target_image.cols - 1 + i][j] = current_ref_org_expand[current_target_image.cols - 1][j];
-                }
-            }
-            for (int i = -spread; i < current_target_image.cols + spread; i++) {
-                for (int j = 1; j <= spread; j++) {
-                    current_target_expand[i][-j] = current_target_expand[i][0];
-                    current_target_expand[i][current_target_image.rows - 1 + j] = current_target_expand[i][current_target_image.rows - 1];
-                    current_ref_expand[i][-j] = current_ref_expand[i][0];
-                    current_ref_expand[i][current_target_image.rows - 1 + j] = current_ref_expand[i][current_target_image.rows - 1];
-
-                    current_target_org_expand[i][-j] = current_target_org_expand[i][0];
-                    current_target_org_expand[i][current_target_image.rows - 1 + j] = current_target_org_expand[i][current_target_image.rows - 1];
-                    current_ref_org_expand[i][-j] = current_ref_org_expand[i][0];
-                    current_ref_org_expand[i][current_target_image.rows - 1 + j] = current_ref_org_expand[i][current_target_image.rows - 1];
-                }
-            }
-
-            spread = 16; // 探索範囲は16までなので16に戻す
+            int spread = 16; // 探索範囲は16までなので16に戻す
 
             int scaled_spread = spread / scale;
             p0 = target_corners.p1 / scale;
@@ -996,27 +880,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                     parallel_flag = false;//ワーピングを採用
                 }
             }
-
-            for(int d = -expand ;d < current_target_image.cols + expand;d++){
-                current_target_expand[d] -= expand;
-                current_ref_expand[d] -= expand;
-                free(current_ref_expand[d]);
-                free(current_target_expand[d]);
-
-                current_target_org_expand[d] -= expand;
-                current_ref_org_expand[d] -= expand;
-                free(current_ref_org_expand[d]);
-                free(current_target_org_expand[d]);
-            }
-            current_target_expand -= expand;
-            current_ref_expand -= expand;
-            free(current_target_expand);
-            free(current_ref_expand);
-
-            current_target_org_expand -= expand;
-            current_ref_org_expand -= expand;
-            free(current_target_org_expand);
-            free(current_ref_org_expand);
         }
     }
 

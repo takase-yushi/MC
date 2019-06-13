@@ -125,7 +125,7 @@ public:
         SplitResult(const Point3Vec &t1, const Point3Vec &t2, int t1Type, int t2Type);
     };
 
-    TriangleDivision(const cv::Mat &refImage, const cv::Mat &targetImage);
+    TriangleDivision(const cv::Mat &refImage, const cv::Mat &targetImage, const cv::Mat &refGaussImage);
     void initTriangle(int block_size_x, int block_size_y, int _divide_steps, int _qp, int divide_flag = LEFT_DIVIDE);
     std::vector<std::pair<Point3Vec, int> > getTriangles();
     std::vector<Point3Vec> getTriangleCoordinateList();
@@ -141,7 +141,7 @@ public:
     void constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num = 0);
 
     static SplitResult getSplitTriangle(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, int type);
-    bool split(cv::Mat& gaussRefImage, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point3Vec triangle, int triangle_index, int type, int steps);
+    bool split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point3Vec triangle, int triangle_index, int type, int steps);
     std::vector<int> getSpatialTriangleList(int t_idx);
     cv::Point2f getCollocatedTriangleList(CodingTreeUnit* unit);
     int getCtuCodeLength(std::vector<CodingTreeUnit*> ctus);
@@ -156,7 +156,7 @@ public:
     private:
     std::vector<cv::Point2f> corners;
     std::vector<std::pair<Triangle, int> > triangles;
-    cv::Mat target_image, ref_image;
+    cv::Mat target_image, ref_image, ref_gauss_image;
     std::vector<std::set<int> > neighbor_vtx;
     std::vector<std::set<int> > covered_triangle;
     std::vector<std::vector<int> > corner_flag;
@@ -167,9 +167,9 @@ public:
     int coded_picture_num;
     std::vector<cv::Mat> predicted_buf;
     std::vector<GaussResult> triangle_gauss_results;
-
+    std::vector<std::vector<cv::Mat>> ref_images;
+    std::vector<std::vector<cv::Mat>> target_images;
     int qp;
-
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
     void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
     void addCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_no);

@@ -276,8 +276,8 @@ void run(std::string config_path) {
         cv::imwrite(img_directory + "/crop_ref.png", crop_ref_image);
         cv::imwrite(img_directory + "/crop_target.png", crop_target_image);
 
-
-        TriangleDivision triangle_division(ref_image, target_image);
+        cv::Mat gaussRefImage = cv::imread(ref_file_path);
+        TriangleDivision triangle_division(ref_image, target_image, gaussRefImage);
 
         triangle_division.initTriangle(block_size_x, block_size_y, division_steps, LEFT_DIVIDE);
         std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
@@ -292,7 +292,6 @@ void run(std::string config_path) {
             foo[i]->triangle_index = i;
         }
 
-        cv::Mat gaussRefImage = cv::imread(ref_file_path);
         cv::Mat spatialMvTestImage;
 
         cv::Mat new_gauss_output_image = cv::Mat::zeros(gaussRefImage.rows, gaussRefImage.cols, CV_8UC3);
@@ -305,13 +304,161 @@ void run(std::string config_path) {
         cv::Mat r_ref = cv::Mat::zeros(target_image.rows, target_image.cols, CV_8UC1);
         int tmp_mv_x, tmp_mv_y;
         int p_flag;
-//        PredictedImageResult ret = getPredictedImage(gaussRefImage, target_image, ref_image, tt, tmp_ref_corners, corners, triangle_division, add_corners, add_count, r_ref, tmp_mv_x, tmp_mv_y, p_flag);
-//        cv::imwrite(img_directory + "/Gauss_Newton2_predicted_image.png", ret.out);
-//        std::cout << "PSNR:" << getPSNR(ret.out, target_image) << std::endl;
-//        exit(0);
-//
-    //#pragma omp parallel for
-//        for(int i = 0 ; i < init_triangles.size() ; i++) {
+
+        std::vector<std::vector<cv::Mat>> ref_images, target_images;
+        // 参照画像のフィルタ処理（１）
+        std::vector<cv::Mat> ref1_levels;
+        cv::Mat ref_level_1, ref_level_2, ref_level_3, ref_level_4;
+        ref_level_1 = gaussRefImage;
+        ref_level_2 = half(ref_level_1, 2);
+        ref_level_3 = half(ref_level_2, 2);
+        ref_level_4 = half(ref_level_3, 2);
+        ref1_levels.emplace_back(ref_level_4);
+        ref1_levels.emplace_back(ref_level_3);
+        ref1_levels.emplace_back(ref_level_2);
+        ref1_levels.emplace_back(ref_image);
+
+        // 対象画像のフィルタ処理（１）
+        std::vector<cv::Mat> target1_levels;
+        cv::Mat target_level_1, target_level_2, target_level_3, target_level_4;
+        target_level_1 = target_image;
+        target_level_2 = half(target_level_1, 2);
+        target_level_3 = half(target_level_2, 2);
+        target_level_4 = half(target_level_3, 2);
+        target1_levels.emplace_back(target_level_4);
+        target1_levels.emplace_back(target_level_3);
+        target1_levels.emplace_back(target_level_2);
+        target1_levels.emplace_back(target_level_1);
+
+        // 参照画像のフィルタ処理（２）
+        std::vector<cv::Mat> ref2_levels;
+        cv::Mat ref2_level_1 = gaussRefImage;
+        cv::Mat ref2_level_2 = half(ref2_level_1, 2);
+        cv::Mat ref2_level_3 = half(ref2_level_2, 1);
+        cv::Mat ref2_level_4 = half(ref2_level_3, 1);
+        ref2_levels.emplace_back(ref2_level_4);
+        ref2_levels.emplace_back(ref2_level_3);
+        ref2_levels.emplace_back(ref2_level_2);
+        ref2_levels.emplace_back(ref_image);
+
+        // 対象画像のフィルタ処理（２）
+        std::vector<cv::Mat> target2_levels;
+        cv::Mat target2_level_1 = target_image;
+        cv::Mat target2_level_2 = half(target2_level_1, 2);
+        cv::Mat target2_level_3 = half(target2_level_2, 1);
+        cv::Mat target2_level_4 = half(target2_level_3, 1);
+        target2_levels.emplace_back(target2_level_4);
+        target2_levels.emplace_back(target2_level_3);
+        target2_levels.emplace_back(target2_level_2);
+        target2_levels.emplace_back(target2_level_1);
+
+        ref_images.emplace_back(ref1_levels);
+        ref_images.emplace_back(ref2_levels);
+        target_images.emplace_back(target1_levels);
+        target_images.emplace_back(target2_levels);
+
+        std::vector<std::vector<std::vector<unsigned char **>>> expand_images;
+        expand_images.resize(ref_images.size());
+        for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++) {
+            expand_images[filter_num].resize(ref_images[filter_num].size());
+            for (int step = 0; step < static_cast<int>(ref_images[filter_num].size()); step++) {
+                expand_images[filter_num][step].resize(4);
+            }
+        }
+
+        unsigned char **current_target_expand, **current_target_org_expand; //画像の周りに500ピクセルだけ黒の領域を設ける(念のため)
+        unsigned char **current_ref_expand, **current_ref_org_expand;       //f_expandと同様
+
+        int expand = 500;
+        for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++) {
+            for (int step = 0; step < static_cast<int>(ref_images[filter_num].size()); step++) {
+                cv::Mat current_target_image = mv_filter(target_images[filter_num][step], 2);
+                cv::Mat current_ref_image = mv_filter(ref_images[filter_num][step],2);
+
+                current_target_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
+                current_target_expand += expand;
+                current_target_org_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
+                current_target_org_expand += expand;
+
+                for (int j = -expand; j < current_target_image.cols + expand; j++) {
+                    current_target_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (current_target_image.rows + expand * 2));
+                    current_target_expand[j] += expand;
+
+                    current_target_org_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (current_target_image.rows + expand * 2));
+                    current_target_org_expand[j] += expand;
+                }
+
+                current_ref_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
+                current_ref_expand += expand;
+                current_ref_org_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
+                current_ref_org_expand += expand;
+                for (int j = -expand; j < current_ref_image.cols + expand; j++) {
+                    if ((current_ref_expand[j] = (unsigned char *) std::malloc(
+                            sizeof(unsigned char) * (current_target_image.rows + expand * 2))) == NULL) {
+                    }
+                    current_ref_expand[j] += expand;
+
+                    (current_ref_org_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (current_target_image.rows + expand * 2)));
+                    current_ref_org_expand[j] += expand;
+                }
+                for (int j = -expand; j < current_target_image.rows + expand; j++) {
+                    for (int i = -expand; i < current_target_image.cols + expand; i++) {
+                        if (j >= 0 && j < current_target_image.rows && i >= 0 && i < current_target_image.cols) {
+                            current_target_expand[i][j] = M(current_target_image, i, j);
+                            current_ref_expand[i][j] = M(current_ref_image, i, j);
+
+                            current_target_org_expand[i][j] = M(target_images[filter_num][step], i, j);
+                            current_ref_org_expand[i][j] = M(ref_images[filter_num][step], i, j);
+                        } else {
+                            current_target_expand[i][j] = 0;
+                            current_ref_expand[i][j] = 0;
+                            current_target_org_expand[i][j] = 0;
+                            current_ref_org_expand[i][j] = 0;
+                        }
+                    }
+                }
+                int spread = 18;// 双3次補間を行うために、画像の周り(16+2)=18ピクセルだけ折り返し
+                for (int j = 0; j < current_target_image.rows; j++) {
+                    for (int i = 1; i <= spread; i++) {
+                        current_target_expand[-i][j] = current_target_expand[0][j];
+                        current_target_expand[current_target_image.cols - 1 + i][j] = current_target_expand[
+                                current_target_image.cols - 1][j];
+                        current_ref_expand[-i][j] = current_ref_expand[0][j];
+                        current_ref_expand[current_target_image.cols - 1 + i][j] = current_ref_expand[
+                                current_target_image.cols - 1][j];
+                        current_target_org_expand[-i][j] = current_target_org_expand[0][j];
+                        current_target_org_expand[current_target_image.cols - 1 + i][j] = current_target_org_expand[
+                                current_target_image.cols - 1][j];
+                        current_ref_org_expand[-i][j] = current_ref_org_expand[0][j];
+                        current_ref_org_expand[current_target_image.cols - 1 + i][j] = current_ref_org_expand[
+                                current_target_image.cols - 1][j];
+                    }
+                }
+                for (int i = -spread; i < current_target_image.cols + spread; i++) {
+                    for (int j = 1; j <= spread; j++) {
+                        current_target_expand[i][-j] = current_target_expand[i][0];
+                        current_target_expand[i][current_target_image.rows - 1 + j] = current_target_expand[i][
+                                current_target_image.rows - 1];
+                        current_ref_expand[i][-j] = current_ref_expand[i][0];
+                        current_ref_expand[i][current_target_image.rows - 1 + j] = current_ref_expand[i][
+                                current_target_image.rows - 1];
+
+                        current_target_org_expand[i][-j] = current_target_org_expand[i][0];
+                        current_target_org_expand[i][current_target_image.rows - 1 + j] = current_target_org_expand[i][
+                                current_target_image.rows - 1];
+                        current_ref_org_expand[i][-j] = current_ref_org_expand[i][0];
+                        current_ref_org_expand[i][current_target_image.rows - 1 + j] = current_ref_org_expand[i][
+                                current_target_image.rows - 1];
+                    }
+                }
+
+                expand_images[filter_num][step][0] = current_ref_expand;
+                expand_images[filter_num][step][1] = current_ref_org_expand;
+                expand_images[filter_num][step][2] = current_target_expand;
+                expand_images[filter_num][step][3] = current_target_org_expand;
+            }
+        }
+
         triangle_division.constructPreviousCodingTree(foo, 0);
         for(int i = 0 ; i < init_triangles.size() ; i++) {
             std::pair<Point3Vec, int> triangle = init_triangles[i];
@@ -320,7 +467,7 @@ void run(std::string config_path) {
             cv::Point2f p2 = triangle.first.p2;
             cv::Point2f p3 = triangle.first.p3;
             std::cout << "================== step:" << i << " ================== " << std::endl;
-            triangle_division.split(gaussRefImage, foo[i], nullptr, Point3Vec(p1, p2, p3), i, triangle.second, division_steps);
+            triangle_division.split(expand_images, foo[i], nullptr, Point3Vec(p1, p2, p3), i, triangle.second, division_steps);
         }
         std::cout << "split finished" << std::endl;
         getReconstructionDivisionImage(gaussRefImage, foo);
@@ -332,6 +479,28 @@ void run(std::string config_path) {
         cv::imwrite(img_directory + "p_image_" + std::to_string(qp) + "_divide_" +std::to_string(division_steps) + out_file_suffix + ".png", p_image);
         cv::imwrite(img_directory + "p_residual_image_" + std::to_string(qp) + "_divide_" +std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
         cv::imwrite(img_directory + "p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", triangle_division.getMvImage(foo));
+
+
+        for(int d = -expand ;d < target_image.cols + expand;d++){
+            current_target_expand[d] -= expand;
+            current_ref_expand[d] -= expand;
+            free(current_ref_expand[d]);
+            free(current_target_expand[d]);
+
+            current_target_org_expand[d] -= expand;
+            current_ref_org_expand[d] -= expand;
+            free(current_ref_org_expand[d]);
+            free(current_target_org_expand[d]);
+        }
+        current_target_expand -= expand;
+        current_ref_expand -= expand;
+        free(current_target_expand);
+        free(current_ref_expand);
+
+        current_target_org_expand -= expand;
+        current_ref_org_expand -= expand;
+        free(current_target_org_expand);
+        free(current_ref_org_expand);
         exit(0);
         // 何回再帰的に分割を行うか
 
@@ -2572,7 +2741,7 @@ cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit
     for(const auto foo : hoge) {
         drawTriangle(reconstructedImage, foo.p1, foo.p2, foo.p3, cv::Scalar(255, 255, 255));
     }
-    cv::imwrite(getProjectDirectory(OS) + "/img/minato/reconstruction_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix +".png", reconstructedImage);
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/reconstruction_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + ".png", reconstructedImage);
 
     return reconstructedImage;
 }
