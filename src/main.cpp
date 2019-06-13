@@ -166,28 +166,8 @@ void run(std::string config_path) {
 
     char buf[512];
 
-    // 頂点復号ベクトルのカウント
-    std::vector<int> count_all_x_coord(1001, 0);
-    std::vector<int> count_all_y_coord(1001, 0);
-
-    // 動きベクトル復元のカウント
-    std::vector<int> count_all_x_mv(1001, 0);
-    std::vector<int> count_all_y_mv(1001, 0);
-
-    // 引き返す点数のカウント
-    std::vector<int> count_all_prev_id(1001, 0);
-
-    // BMの差分ベクトルはグローバルにおいてある
-
-    double point_nums = 0.0;
-
-    std::string graph_file_path = project_directory_path + "\\graph\\";
-    std::cout << "graph_file_path:" << graph_file_path << std::endl;
-
-
     std::vector<cv::Point2f> corners, corners_org;
     std::vector<cv::Point2f> ref_corners, ref_corners_org;
-
 
     // 全画像分ループ
     while (fgets(buf, sizeof(buf), img_list) != nullptr) {
