@@ -139,7 +139,6 @@ std::vector<std::vector<cv::Mat>> getRefImages(const cv::Mat ref_image, const cv
     ref1_levels.emplace_back(ref_level_2);
     ref1_levels.emplace_back(ref_image);
 
-
     // 参照画像のフィルタ処理（２）
     std::vector<cv::Mat> ref2_levels;
     cv::Mat ref2_level_1 = gauss_ref_image;
@@ -151,9 +150,209 @@ std::vector<std::vector<cv::Mat>> getRefImages(const cv::Mat ref_image, const cv
     ref2_levels.emplace_back(ref2_level_2);
     ref2_levels.emplace_back(ref_image);
 
-
     ref_images.emplace_back(ref1_levels);
     ref_images.emplace_back(ref2_levels);
 
     return ref_images;
+}
+
+/**
+ * @fn std::vector<std::vector<cv::Mat>> getTargetImages(const cv::Mat target_image)
+ * @brief ガウス・ニュートン法で使う対象画像の集まりを返す
+ * @param target_image 対象画像
+ * @return vectorのvector(死)
+ */
+std::vector<std::vector<cv::Mat>> getTargetImages(const cv::Mat target_image){
+    std::vector<std::vector<cv::Mat>> target_images;
+
+    // 対象画像のフィルタ処理（１）
+    std::vector<cv::Mat> target1_levels;
+    cv::Mat target_level_1, target_level_2, target_level_3, target_level_4;
+    target_level_1 = target_image;
+    target_level_2 = half(target_level_1, 2);
+    target_level_3 = half(target_level_2, 2);
+    target_level_4 = half(target_level_3, 2);
+    target1_levels.emplace_back(target_level_4);
+    target1_levels.emplace_back(target_level_3);
+    target1_levels.emplace_back(target_level_2);
+    target1_levels.emplace_back(target_level_1);
+
+
+    // 対象画像のフィルタ処理（２）
+    std::vector<cv::Mat> target2_levels;
+    cv::Mat target2_level_1 = target_image;
+    cv::Mat target2_level_2 = half(target2_level_1, 2);
+    cv::Mat target2_level_3 = half(target2_level_2, 1);
+    cv::Mat target2_level_4 = half(target2_level_3, 1);
+    target2_levels.emplace_back(target2_level_4);
+    target2_levels.emplace_back(target2_level_3);
+    target2_levels.emplace_back(target2_level_2);
+    target2_levels.emplace_back(target2_level_1);
+
+    target_images.emplace_back(target1_levels);
+    target_images.emplace_back(target2_levels);
+
+    return target_images;
+}
+
+/**
+ * @fn EXPAND_ARRAY_TYPE getExpandImages(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, int expand)
+ * @brief 拡大した画像をいい感じに格納して返す
+ * @param ref_images 参照画像の集合
+ * @param target_images 対象画像の集合
+ * @param expand 拡大する範囲
+ * @return しゅうごう～
+ */
+EXPAND_ARRAY_TYPE getExpandImages(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, int expand){
+    EXPAND_ARRAY_TYPE expand_images;
+    expand_images.resize(ref_images.size());
+    for (int filter_num = 0; filter_num < static_cast<int>(ref_images.size()); filter_num++) {
+        expand_images[filter_num].resize(ref_images[filter_num].size());
+        for (int step = 0; step < static_cast<int>(ref_images[filter_num].size()); step++) {
+            expand_images[filter_num][step].resize(4);
+        }
+    }
+
+    for(int filter = 0 ; filter < static_cast<int>(ref_images.size()) ; filter++){
+        for(int step = 0 ; step < static_cast<int>(ref_images[filter].size()) ; step++){
+            cv::Mat current_target_image = mv_filter(target_images[filter][step], 2);
+            cv::Mat current_ref_image = mv_filter(ref_images[filter][step], 2);
+
+            auto **current_target_expand = (unsigned char **) std::malloc(
+                    sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
+            current_target_expand += expand;
+            auto **current_target_org_expand = (unsigned char **) std::malloc(
+                    sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
+            current_target_org_expand += expand;
+
+            for (int j = -expand; j < current_target_image.cols + expand; j++) {
+                current_target_expand[j] = (unsigned char *) std::malloc(
+                        sizeof(unsigned char) * (current_target_image.rows + expand * 2));
+                current_target_expand[j] += expand;
+
+                current_target_org_expand[j] = (unsigned char *) std::malloc(
+                        sizeof(unsigned char) * (current_target_image.rows + expand * 2));
+                current_target_org_expand[j] += expand;
+            }
+
+            auto **current_ref_expand = (unsigned char **) std::malloc(
+                    sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
+            current_ref_expand += expand;
+            auto **current_ref_org_expand = (unsigned char **) std::malloc(
+                    sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
+            current_ref_org_expand += expand;
+            for (int j = -expand; j < current_ref_image.cols + expand; j++) {
+                if ((current_ref_expand[j] = (unsigned char *) std::malloc(
+                        sizeof(unsigned char) * (current_target_image.rows + expand * 2))) == nullptr) {
+                }
+                current_ref_expand[j] += expand;
+
+                (current_ref_org_expand[j] = (unsigned char *) std::malloc(
+                        sizeof(unsigned char) * (current_target_image.rows + expand * 2)));
+                current_ref_org_expand[j] += expand;
+            }
+            for (int j = -expand; j < current_target_image.rows + expand; j++) {
+                for (int i = -expand; i < current_target_image.cols + expand; i++) {
+                    if (j >= 0 && j < current_target_image.rows && i >= 0 && i < current_target_image.cols) {
+                        current_target_expand[i][j] = M(current_target_image, i, j);
+                        current_ref_expand[i][j] = M(current_ref_image, i, j);
+
+                        current_target_org_expand[i][j] = M(target_images[filter][step], i, j);
+                        current_ref_org_expand[i][j] = M(ref_images[filter][step], i, j);
+                    } else {
+                        current_target_expand[i][j] = 0;
+                        current_ref_expand[i][j] = 0;
+                        current_target_org_expand[i][j] = 0;
+                        current_ref_org_expand[i][j] = 0;
+                    }
+                }
+            }
+            int spread = 18;// 双3次補間を行うために、画像の周り(16+2)=18ピクセルだけ折り返し
+            for (int j = 0; j < current_target_image.rows; j++) {
+                for (int i = 1; i <= spread; i++) {
+                    current_target_expand[-i][j] = current_target_expand[0][j];
+                    current_target_expand[current_target_image.cols - 1 + i][j] = current_target_expand[
+                            current_target_image.cols - 1][j];
+                    current_ref_expand[-i][j] = current_ref_expand[0][j];
+                    current_ref_expand[current_target_image.cols - 1 + i][j] = current_ref_expand[
+                            current_target_image.cols - 1][j];
+                    current_target_org_expand[-i][j] = current_target_org_expand[0][j];
+                    current_target_org_expand[current_target_image.cols - 1 + i][j] = current_target_org_expand[
+                            current_target_image.cols - 1][j];
+                    current_ref_org_expand[-i][j] = current_ref_org_expand[0][j];
+                    current_ref_org_expand[current_target_image.cols - 1 + i][j] = current_ref_org_expand[
+                            current_target_image.cols - 1][j];
+                }
+            }
+            for (int i = -spread; i < current_target_image.cols + spread; i++) {
+                for (int j = 1; j <= spread; j++) {
+                    current_target_expand[i][-j] = current_target_expand[i][0];
+                    current_target_expand[i][current_target_image.rows - 1 + j] = current_target_expand[i][
+                            current_target_image.rows - 1];
+                    current_ref_expand[i][-j] = current_ref_expand[i][0];
+                    current_ref_expand[i][current_target_image.rows - 1 + j] = current_ref_expand[i][
+                            current_target_image.rows - 1];
+
+                    current_target_org_expand[i][-j] = current_target_org_expand[i][0];
+                    current_target_org_expand[i][current_target_image.rows - 1 + j] = current_target_org_expand[i][
+                            current_target_image.rows - 1];
+                    current_ref_org_expand[i][-j] = current_ref_org_expand[i][0];
+                    current_ref_org_expand[i][current_target_image.rows - 1 + j] = current_ref_org_expand[i][
+                            current_target_image.rows - 1];
+                }
+            }
+
+            expand_images[filter][step][0] = current_ref_expand;
+            expand_images[filter][step][1] = current_ref_org_expand;
+            expand_images[filter][step][2] = current_target_expand;
+            expand_images[filter][step][3] = current_target_org_expand;
+        }
+    }
+
+    return expand_images;
+}
+
+/**
+ * @fn void freeExpandImages(EXPAND_ARRAY_TYPE expand_images, int expand, int filter_num, int step_num, int rows, int cols)
+ * @breif 拡張した画像(mallocで取得)を開放、通称「拡張フリー」をする
+ * @param expand_images freeeしたい画像
+ * @param expand 拡大した画素数
+ * @param filter_num フィルターの個数
+ * @param step_num ステップ数
+ * @param rows 原画像の横幅
+ * @param cols 原画像の縦幅
+ */
+void freeExpandImages(EXPAND_ARRAY_TYPE expand_images, int expand, int filter_num, int step_num, int rows, int cols){
+    for(int filter = 0 ; filter < filter_num ; filter++){
+        for(int step = 0 ; step < step_num ; step++){
+            int scaled_col = cols / std::pow(2, 3 - step);
+            auto current_ref_expand = expand_images[filter][step][0];
+            auto current_ref_org_expand = expand_images[filter][step][1];
+            auto current_target_expand = expand_images[filter][step][2];
+            auto current_target_org_expand = expand_images[filter][step][3];
+
+            for (int d = -expand; d < scaled_col + expand; d++) {
+                current_target_expand[d] -= expand;
+                current_ref_expand[d] -= expand;
+                free(current_ref_expand[d]);
+                free(current_target_expand[d]);
+
+                current_target_org_expand[d] -= expand;
+                current_ref_org_expand[d] -= expand;
+                free(current_ref_org_expand[d]);
+                free(current_target_org_expand[d]);
+            }
+
+            current_target_expand -= expand;
+            current_ref_expand -= expand;
+            free(current_target_expand);
+            free(current_ref_expand);
+
+            current_target_org_expand -= expand;
+            current_ref_org_expand -= expand;
+            free(current_target_org_expand);
+            free(current_ref_org_expand);
+        }
+    }
+
 }
