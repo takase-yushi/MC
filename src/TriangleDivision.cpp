@@ -147,56 +147,8 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
     predicted_buf.emplace_back(cv::Mat::zeros(ref_image.size()/2, CV_8UC3));
     predicted_buf.emplace_back(cv::Mat::zeros(ref_image.size(), CV_8UC3));
 
-    // 参照画像のフィルタ処理（１）
-    std::vector<cv::Mat> ref1_levels;
-    cv::Mat ref_level_1, ref_level_2, ref_level_3, ref_level_4;
-    ref_level_1 = ref_gauss_image;
-    ref_level_2 = half(ref_level_1, 2);
-    ref_level_3 = half(ref_level_2, 2);
-    ref_level_4 = half(ref_level_3, 2);
-    ref1_levels.emplace_back(ref_level_4);
-    ref1_levels.emplace_back(ref_level_3);
-    ref1_levels.emplace_back(ref_level_2);
-    ref1_levels.emplace_back(ref_image);
-
-    // 対象画像のフィルタ処理（１）
-    std::vector<cv::Mat> target1_levels;
-    cv::Mat target_level_1, target_level_2, target_level_3, target_level_4;
-    target_level_1 = target_image;
-    target_level_2 = half(target_level_1, 2);
-    target_level_3 = half(target_level_2, 2);
-    target_level_4 = half(target_level_3, 2);
-    target1_levels.emplace_back(target_level_4);
-    target1_levels.emplace_back(target_level_3);
-    target1_levels.emplace_back(target_level_2);
-    target1_levels.emplace_back(target_level_1);
-
-    // 参照画像のフィルタ処理（２）
-    std::vector<cv::Mat> ref2_levels;
-    cv::Mat ref2_level_1 = ref_gauss_image;
-    cv::Mat ref2_level_2 = half(ref2_level_1, 2);
-    cv::Mat ref2_level_3 = half(ref2_level_2, 1);
-    cv::Mat ref2_level_4 = half(ref2_level_3, 1);
-    ref2_levels.emplace_back(ref2_level_4);
-    ref2_levels.emplace_back(ref2_level_3);
-    ref2_levels.emplace_back(ref2_level_2);
-    ref2_levels.emplace_back(ref_image);
-
-    // 対象画像のフィルタ処理（２）
-    std::vector<cv::Mat> target2_levels;
-    cv::Mat target2_level_1 = target_image;
-    cv::Mat target2_level_2 = half(target2_level_1, 2);
-    cv::Mat target2_level_3 = half(target2_level_2, 1);
-    cv::Mat target2_level_4 = half(target2_level_3, 1);
-    target2_levels.emplace_back(target2_level_4);
-    target2_levels.emplace_back(target2_level_3);
-    target2_levels.emplace_back(target2_level_2);
-    target2_levels.emplace_back(target2_level_1);
-
-    ref_images.emplace_back(ref1_levels);
-    ref_images.emplace_back(ref2_levels);
-    target_images.emplace_back(target1_levels);
-    target_images.emplace_back(target2_levels);
+    ref_images = getRefImages(ref_image, ref_gauss_image);
+    target_images = getTargetImages(target_image);
 
 }
 
@@ -878,7 +830,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     addCornerAndTriangle(Triangle(corner_flag[(int) p1.y][(int) p1.x], corner_flag[(int) p2.y][(int) p2.x],
                                   corner_flag[(int) p3.y][(int) p3.x]), triangle_index, type);
 
-//    #pragma omp parallel for
+    #pragma omp parallel for
     for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
         double error_tmp;
         bool flag_tmp;
@@ -904,6 +856,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             {split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel}, split_mv_result[1].residual,
             triangle_indexes[1], (cmt->rightNode != nullptr ? cmt->rightNode->mv1 : cmt->mv1));
 
+    std::cout << split_mv_result[0].mv_parallel << " " << split_mv_result[1].mv_parallel << std::endl;
     std::cout << "before:" << cost_before_subdiv << " after:" << (cost_after_subdiv1 + cost_after_subdiv2) << std::endl;
     if(cost_before_subdiv > (cost_after_subdiv1 + cost_after_subdiv2)) {
 //        addCornerAndTriangle(Triangle(corner_flag[(int) p1.y][(int) p1.x], corner_flag[(int) p2.y][(int) p2.x],
