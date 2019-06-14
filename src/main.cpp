@@ -446,7 +446,7 @@ void run(std::string config_path) {
  */
 cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit *> ctu) {
     Reconstruction rec(image);
-    rec.init(128, 128, LEFT_DIVIDE);
+    rec.init(block_size_x, block_size_y, LEFT_DIVIDE);
     puts("");
     rec.reconstructionTriangle(ctu);
     std::vector<Point3Vec> hoge = rec.getTriangleCoordinateList();
