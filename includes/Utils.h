@@ -64,7 +64,7 @@
  * @details
  *  画像imgの(x, y)画素のRGB値から輝度値を計算する. 輝度値は M = 0.299 × R + 0.587 × G + 0.114 × Bとして計算される.
  */
-#define M(img, x, y) (int)(0.299 * (double)(R(img, (x), (y))) + 0.587 * (double)(G(img, (x), (y))) + 0.114 * (double)(B(img, (x), (y))) + 0.5)
+#define M(img, x, y) (int)round(0.299 * (double)(R(img, (x), (y))) + 0.587 * (double)(G(img, (x), (y))) + 0.114 * (double)(B(img, (x), (y))))
 
 /**
  *
