@@ -457,9 +457,51 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
     std::vector<cv::Point2f> pixels_in_triangle;
 
     bool parallel_flag = true;
-    const int expand = 500;
 
     cv::Point2f initial_vector(0.0, 0.0);
+
+    p0 = target_corners.p1;
+    p1 = target_corners.p2;
+    p2 = target_corners.p3;
+    Point3Vec current_triangle_coordinates(p0, p1, p2);
+    double sx = std::min({(int) p0.x, (int) p1.x, (int) p2.x});
+    double lx = std::max({(int) p0.x, (int) p1.x, (int) p2.x});
+    double sy = std::min({(int) p0.y, (int) p1.y, (int) p2.y});
+    double ly = std::max({(int) p0.y, (int) p1.y, (int) p2.y});
+
+    pixels_in_triangle.clear();
+    cv::Point2f xp;
+    for (int j = (int) (round(sy) - 1); j <= round(ly) + 1; j++) {
+        for (int i = (int) (round(sx) - 1); i <= round(lx) + 1; i++) {
+            xp.x = (float) i;
+            xp.y = (float) j;
+            if (isInTriangle(current_triangle_coordinates, xp) == 1) {
+                pixels_in_triangle.emplace_back(xp);//三角形の内部のピクセルを格納
+            }
+        }
+    }
+
+    int bm_x_offset = 10;
+    int bm_y_offset = 10;
+    double error_min = 1e9;
+
+    for(int by = -bm_y_offset ; by < bm_y_offset ; by++){
+        for(int bx = -bm_x_offset ; bx < bm_x_offset ; bx++){
+            if(sx + bx < -16 || ref_images[0][3].cols <= (lx + bx + 16) || sy + by < -16 || ref_images[0][3].rows <=(ly + by + 16)) continue;
+            double error_tmp = 0.0;
+            for(const auto& pixel : pixels_in_triangle) {
+                error_tmp += abs(expand_image[0][3][1][(int)(pixel.x + bx)][(int)(pixel.y + by)] - expand_image[0][3][3][(int)(pixel.x)][(int)(pixel.y)]);
+            }
+            if(error_min > error_tmp) {
+                error_min = error_tmp;
+                initial_vector.x = bx;
+                initial_vector.y = by;
+            }
+        }
+    }
+
+//    std::cout << target_corners.p1 << " " << target_corners.p2 << " " << target_corners.p3 << std::endl;
+//    std::cout << initial_vector << std::endl;
     initial_vector /= 2.0;
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
         std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(initial_vector.x, initial_vector.y));
