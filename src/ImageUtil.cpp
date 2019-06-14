@@ -116,3 +116,44 @@ double getTriangleResidual(const cv::Mat ref_image, const cv::Mat &target_image,
 
     return squared_error;
 }
+
+/**
+ * @fn std::vector<std::vector<cv::Mat>> getRefImages(const cv::Mat ref_image, const cv::Mat gauss_ref_image)
+ * @brief 参照画像の集まりを返す
+ * @param ref_image 参照画像
+ * @param gauss_ref_image ガウスニュートン法で使う参照画像
+ * @return あつまれ～！
+ */
+std::vector<std::vector<cv::Mat>> getRefImages(const cv::Mat ref_image, const cv::Mat gauss_ref_image){
+    std::vector<std::vector<cv::Mat>> ref_images;
+
+    // 参照画像のフィルタ処理（１）
+    std::vector<cv::Mat> ref1_levels;
+    cv::Mat ref_level_1, ref_level_2, ref_level_3, ref_level_4;
+    ref_level_1 = gauss_ref_image;
+    ref_level_2 = half(ref_level_1, 2);
+    ref_level_3 = half(ref_level_2, 2);
+    ref_level_4 = half(ref_level_3, 2);
+    ref1_levels.emplace_back(ref_level_4);
+    ref1_levels.emplace_back(ref_level_3);
+    ref1_levels.emplace_back(ref_level_2);
+    ref1_levels.emplace_back(ref_image);
+
+
+    // 参照画像のフィルタ処理（２）
+    std::vector<cv::Mat> ref2_levels;
+    cv::Mat ref2_level_1 = gauss_ref_image;
+    cv::Mat ref2_level_2 = half(ref2_level_1, 2);
+    cv::Mat ref2_level_3 = half(ref2_level_2, 1);
+    cv::Mat ref2_level_4 = half(ref2_level_3, 1);
+    ref2_levels.emplace_back(ref2_level_4);
+    ref2_levels.emplace_back(ref2_level_3);
+    ref2_levels.emplace_back(ref2_level_2);
+    ref2_levels.emplace_back(ref_image);
+
+
+    ref_images.emplace_back(ref1_levels);
+    ref_images.emplace_back(ref2_levels);
+
+    return ref_images;
+}
