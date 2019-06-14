@@ -136,9 +136,63 @@ void storeResidualImage(){
     exit(0);
 }
 
+void test1(){
+    cv::Mat gaussRefImage = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
+    cv::Mat ref_image     = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
+    cv::Mat target_image  = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_000413_limit.bmp");
+
+    std::vector<std::vector<cv::Mat>> ref_images, target_images;
+
+    ref_images = getRefImages(ref_image, gaussRefImage);
+    target_images = getTargetImages(target_image);
+
+    EXPAND_ARRAY_TYPE expand_images = getExpandImages(ref_images, target_images, 500);
+
+    cv::Point2f p1(0.0, 0.0), p2(64, 0), p3(128, 0), p4(0, 64), p5(64, 64), p6(0, 128);
+
+    // 一番大きな三角形
+    double error1;
+    int area;
+    std::tie(std::ignore, std::ignore, error1, area, std::ignore) = GaussNewton(ref_images, target_images, expand_images, Point3Vec(p1, p3, p6));
+    error1 /= area;
+
+    // 1分割
+    double error2 = 0.0, error_tmp = 0.0;
+    double area2 = 0.0, area2_tmp;
+    cv::Point2f mv;
+    std::tie(std::ignore, mv, error_tmp, area2_tmp, std::ignore) = GaussNewton(ref_images, target_images, expand_images, Point3Vec(p1, p3, p5));
+    error2 += (error_tmp);
+    area2 += area2_tmp;
+    std::tie(std::ignore, mv, error_tmp, area2_tmp, std::ignore) = GaussNewton(ref_images, target_images, expand_images, Point3Vec(p1, p5, p6));
+    error2 += (error_tmp);
+    area2 += area2_tmp;
+    error2 /= area2;
+
+    double error3 = 0.0;
+    double area3 = 0.0, area3_tmp;
+    std::tie(std::ignore, std::ignore, error_tmp, area3_tmp, std::ignore) = GaussNewton(ref_images, target_images, expand_images, Point3Vec(p1, p2, p5));
+    error3 += (error_tmp);
+    area3 += area3_tmp;
+    std::tie(std::ignore, std::ignore, error_tmp, area3_tmp, std::ignore) = GaussNewton(ref_images, target_images, expand_images, Point3Vec(p2, p3, p5));
+    error3 += (error_tmp);
+    area3 += area3_tmp;
+    std::tie(std::ignore, std::ignore, error_tmp, area3_tmp, std::ignore) = GaussNewton(ref_images, target_images, expand_images, Point3Vec(p1, p4, p5));
+    error3 += (error_tmp);
+    area3 += area3_tmp;
+    std::tie(std::ignore, std::ignore, error_tmp, area3_tmp, std::ignore) = GaussNewton(ref_images, target_images, expand_images, Point3Vec(p4, p5, p6));
+    error3 += (error_tmp);
+    area3 += area3_tmp;
+
+    error3 /= area3;
+
+    freeExpandImages(expand_images, 500, 2, 4, ref_image.rows, ref_image.cols);
+
+    std::cout << "error1: " << error1 << " error2:" << error2 << " error3:" << error3 << std::endl;
+}
+
 int main(int argc, char *argv[]){
     // Write test codes below
-    // test1();
+     test1();
 //    storeResidualImage();
 //    std::cout << getPSNR(cv::imread(getProjectDirectory(OS)+ std::string(argv[1])), cv::imread(getProjectDirectory(OS) + std::string(argv[2]))) << std::endl;
 //    exit(0);
@@ -346,101 +400,102 @@ void run(std::string config_path) {
         unsigned char **current_ref_expand, **current_ref_org_expand;       //f_expandと同様
 
         int expand = 500;
-        for (int filter_num = 0; filter_num < static_cast<int>(ref_images.size()); filter_num++) {
-            for (int step = 0; step < static_cast<int>(ref_images[filter_num].size()); step++) {
-                cv::Mat current_target_image = mv_filter(target_images[filter_num][step], 2);
-                cv::Mat current_ref_image = mv_filter(ref_images[filter_num][step], 2);
-
-                current_target_expand = (unsigned char **) std::malloc(
-                        sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
-                current_target_expand += expand;
-                current_target_org_expand = (unsigned char **) std::malloc(
-                        sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
-                current_target_org_expand += expand;
-
-                for (int j = -expand; j < current_target_image.cols + expand; j++) {
-                    current_target_expand[j] = (unsigned char *) std::malloc(
-                            sizeof(unsigned char) * (current_target_image.rows + expand * 2));
-                    current_target_expand[j] += expand;
-
-                    current_target_org_expand[j] = (unsigned char *) std::malloc(
-                            sizeof(unsigned char) * (current_target_image.rows + expand * 2));
-                    current_target_org_expand[j] += expand;
-                }
-
-                current_ref_expand = (unsigned char **) std::malloc(
-                        sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
-                current_ref_expand += expand;
-                current_ref_org_expand = (unsigned char **) std::malloc(
-                        sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
-                current_ref_org_expand += expand;
-                for (int j = -expand; j < current_ref_image.cols + expand; j++) {
-                    if ((current_ref_expand[j] = (unsigned char *) std::malloc(
-                            sizeof(unsigned char) * (current_target_image.rows + expand * 2))) == NULL) {
-                    }
-                    current_ref_expand[j] += expand;
-
-                    (current_ref_org_expand[j] = (unsigned char *) std::malloc(
-                            sizeof(unsigned char) * (current_target_image.rows + expand * 2)));
-                    current_ref_org_expand[j] += expand;
-                }
-                for (int j = -expand; j < current_target_image.rows + expand; j++) {
-                    for (int i = -expand; i < current_target_image.cols + expand; i++) {
-                        if (j >= 0 && j < current_target_image.rows && i >= 0 && i < current_target_image.cols) {
-                            current_target_expand[i][j] = M(current_target_image, i, j);
-                            current_ref_expand[i][j] = M(current_ref_image, i, j);
-
-                            current_target_org_expand[i][j] = M(target_images[filter_num][step], i, j);
-                            current_ref_org_expand[i][j] = M(ref_images[filter_num][step], i, j);
-                        } else {
-                            current_target_expand[i][j] = 0;
-                            current_ref_expand[i][j] = 0;
-                            current_target_org_expand[i][j] = 0;
-                            current_ref_org_expand[i][j] = 0;
-                        }
-                    }
-                }
-                int spread = 18;// 双3次補間を行うために、画像の周り(16+2)=18ピクセルだけ折り返し
-                for (int j = 0; j < current_target_image.rows; j++) {
-                    for (int i = 1; i <= spread; i++) {
-                        current_target_expand[-i][j] = current_target_expand[0][j];
-                        current_target_expand[current_target_image.cols - 1 + i][j] = current_target_expand[
-                                current_target_image.cols - 1][j];
-                        current_ref_expand[-i][j] = current_ref_expand[0][j];
-                        current_ref_expand[current_target_image.cols - 1 + i][j] = current_ref_expand[
-                                current_target_image.cols - 1][j];
-                        current_target_org_expand[-i][j] = current_target_org_expand[0][j];
-                        current_target_org_expand[current_target_image.cols - 1 + i][j] = current_target_org_expand[
-                                current_target_image.cols - 1][j];
-                        current_ref_org_expand[-i][j] = current_ref_org_expand[0][j];
-                        current_ref_org_expand[current_target_image.cols - 1 + i][j] = current_ref_org_expand[
-                                current_target_image.cols - 1][j];
-                    }
-                }
-                for (int i = -spread; i < current_target_image.cols + spread; i++) {
-                    for (int j = 1; j <= spread; j++) {
-                        current_target_expand[i][-j] = current_target_expand[i][0];
-                        current_target_expand[i][current_target_image.rows - 1 + j] = current_target_expand[i][
-                                current_target_image.rows - 1];
-                        current_ref_expand[i][-j] = current_ref_expand[i][0];
-                        current_ref_expand[i][current_target_image.rows - 1 + j] = current_ref_expand[i][
-                                current_target_image.rows - 1];
-
-                        current_target_org_expand[i][-j] = current_target_org_expand[i][0];
-                        current_target_org_expand[i][current_target_image.rows - 1 + j] = current_target_org_expand[i][
-                                current_target_image.rows - 1];
-                        current_ref_org_expand[i][-j] = current_ref_org_expand[i][0];
-                        current_ref_org_expand[i][current_target_image.rows - 1 + j] = current_ref_org_expand[i][
-                                current_target_image.rows - 1];
-                    }
-                }
-
-                expand_images[filter_num][step][0] = current_ref_expand;
-                expand_images[filter_num][step][1] = current_ref_org_expand;
-                expand_images[filter_num][step][2] = current_target_expand;
-                expand_images[filter_num][step][3] = current_target_org_expand;
-            }
-        }
+        expand_images = getExpandImages(ref_images, target_images, expand);
+//        for (int filter_num = 0; filter_num < static_cast<int>(ref_images.size()); filter_num++) {
+//            for (int step = 0; step < static_cast<int>(ref_images[filter_num].size()); step++) {
+//                cv::Mat current_target_image = mv_filter(target_images[filter_num][step], 2);
+//                cv::Mat current_ref_image = mv_filter(ref_images[filter_num][step], 2);
+//
+//                current_target_expand = (unsigned char **) std::malloc(
+//                        sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
+//                current_target_expand += expand;
+//                current_target_org_expand = (unsigned char **) std::malloc(
+//                        sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
+//                current_target_org_expand += expand;
+//
+//                for (int j = -expand; j < current_target_image.cols + expand; j++) {
+//                    current_target_expand[j] = (unsigned char *) std::malloc(
+//                            sizeof(unsigned char) * (current_target_image.rows + expand * 2));
+//                    current_target_expand[j] += expand;
+//
+//                    current_target_org_expand[j] = (unsigned char *) std::malloc(
+//                            sizeof(unsigned char) * (current_target_image.rows + expand * 2));
+//                    current_target_org_expand[j] += expand;
+//                }
+//
+//                current_ref_expand = (unsigned char **) std::malloc(
+//                        sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
+//                current_ref_expand += expand;
+//                current_ref_org_expand = (unsigned char **) std::malloc(
+//                        sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
+//                current_ref_org_expand += expand;
+//                for (int j = -expand; j < current_ref_image.cols + expand; j++) {
+//                    if ((current_ref_expand[j] = (unsigned char *) std::malloc(
+//                            sizeof(unsigned char) * (current_target_image.rows + expand * 2))) == NULL) {
+//                    }
+//                    current_ref_expand[j] += expand;
+//
+//                    (current_ref_org_expand[j] = (unsigned char *) std::malloc(
+//                            sizeof(unsigned char) * (current_target_image.rows + expand * 2)));
+//                    current_ref_org_expand[j] += expand;
+//                }
+//                for (int j = -expand; j < current_target_image.rows + expand; j++) {
+//                    for (int i = -expand; i < current_target_image.cols + expand; i++) {
+//                        if (j >= 0 && j < current_target_image.rows && i >= 0 && i < current_target_image.cols) {
+//                            current_target_expand[i][j] = M(current_target_image, i, j);
+//                            current_ref_expand[i][j] = M(current_ref_image, i, j);
+//
+//                            current_target_org_expand[i][j] = M(target_images[filter_num][step], i, j);
+//                            current_ref_org_expand[i][j] = M(ref_images[filter_num][step], i, j);
+//                        } else {
+//                            current_target_expand[i][j] = 0;
+//                            current_ref_expand[i][j] = 0;
+//                            current_target_org_expand[i][j] = 0;
+//                            current_ref_org_expand[i][j] = 0;
+//                        }
+//                    }
+//                }
+//                int spread = 18;// 双3次補間を行うために、画像の周り(16+2)=18ピクセルだけ折り返し
+//                for (int j = 0; j < current_target_image.rows; j++) {
+//                    for (int i = 1; i <= spread; i++) {
+//                        current_target_expand[-i][j] = current_target_expand[0][j];
+//                        current_target_expand[current_target_image.cols - 1 + i][j] = current_target_expand[
+//                                current_target_image.cols - 1][j];
+//                        current_ref_expand[-i][j] = current_ref_expand[0][j];
+//                        current_ref_expand[current_target_image.cols - 1 + i][j] = current_ref_expand[
+//                                current_target_image.cols - 1][j];
+//                        current_target_org_expand[-i][j] = current_target_org_expand[0][j];
+//                        current_target_org_expand[current_target_image.cols - 1 + i][j] = current_target_org_expand[
+//                                current_target_image.cols - 1][j];
+//                        current_ref_org_expand[-i][j] = current_ref_org_expand[0][j];
+//                        current_ref_org_expand[current_target_image.cols - 1 + i][j] = current_ref_org_expand[
+//                                current_target_image.cols - 1][j];
+//                    }
+//                }
+//                for (int i = -spread; i < current_target_image.cols + spread; i++) {
+//                    for (int j = 1; j <= spread; j++) {
+//                        current_target_expand[i][-j] = current_target_expand[i][0];
+//                        current_target_expand[i][current_target_image.rows - 1 + j] = current_target_expand[i][
+//                                current_target_image.rows - 1];
+//                        current_ref_expand[i][-j] = current_ref_expand[i][0];
+//                        current_ref_expand[i][current_target_image.rows - 1 + j] = current_ref_expand[i][
+//                                current_target_image.rows - 1];
+//
+//                        current_target_org_expand[i][-j] = current_target_org_expand[i][0];
+//                        current_target_org_expand[i][current_target_image.rows - 1 + j] = current_target_org_expand[i][
+//                                current_target_image.rows - 1];
+//                        current_ref_org_expand[i][-j] = current_ref_org_expand[i][0];
+//                        current_ref_org_expand[i][current_target_image.rows - 1 + j] = current_ref_org_expand[i][
+//                                current_target_image.rows - 1];
+//                    }
+//                }
+//
+//                expand_images[filter_num][step][0] = current_ref_expand;
+//                expand_images[filter_num][step][1] = current_ref_org_expand;
+//                expand_images[filter_num][step][2] = current_target_expand;
+//                expand_images[filter_num][step][3] = current_target_org_expand;
+//            }
+//        }
 
         triangle_division.constructPreviousCodingTree(foo, 0);
         for (int i = 0; i < init_triangles.size(); i++) {
