@@ -149,6 +149,74 @@ bool check_coordinate(cv::Point2f coordinate, cv::Vec4f range) {
 }
 
 /**
+ * @fn double outerProduct(cv::Point2f a, cv::Point2f b)
+ * @brief 外積の計算
+ * @param a ベクトル1
+ * @param b ベクトル2
+ * @return 計算結果
+ */
+double outerProduct(cv::Point2f a, cv::Point2f b){
+    return (a.x * b.y - a.y * b.x);
+}
+
+/**
+ * @fn bool isPointOnTheLine
+ * @brief 点pが線分a,b上に乗っているか判定する
+ * @param a 始点
+ * @param b 終点
+ * @param p 判定したい点
+ * @return 線に乗っていればtrue, そうでなければfalseを返す
+ */
+bool isPointOnTheLine(cv::Point2f a, cv::Point2f b, cv::Point2f p){
+    cv::Point2f v1 = b - a;
+    cv::Point2f v2 = p - a;
+    return outerProduct(v1, v2) == 0;
+}
+
+inline bool isEven(int x){
+    return x % 2 == 0;
+}
+
+/**
+ * @fn std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle)
+ * @brief 三角パッチ内に含まれる画素を返す
+ * @param triangle 三角形
+ * @return 画素の集合
+ */
+std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle){
+    std::vector<cv::Point2f> pixels_in_triangle;
+    cv::Point2f p0 = triangle.p1, p1 = triangle.p2, p2 = triangle.p3;
+
+    double sx = std::min({(int) p0.x, (int) p1.x, (int) p2.x});
+    double lx = std::max({(int) p0.x, (int) p1.x, (int) p2.x});
+    double sy = std::min({(int) p0.y, (int) p1.y, (int) p2.y});
+    double ly = std::max({(int) p0.y, (int) p1.y, (int) p2.y});
+
+    pixels_in_triangle.clear();
+    cv::Point2f xp;
+    for (int j = (int) (round(sy) - 1); j <= round(ly) + 1; j++) {
+        for (int i = (int) (round(sx) - 1); i <= round(lx) + 1; i++) {
+            xp.x = (float) i;
+            xp.y = (float) j;
+            if (isInTriangle(triangle, xp) == 1) {
+                if(isPointOnTheLine(p0, p1, xp) || isPointOnTheLine(p1, p2, xp) || isPointOnTheLine(p2, p0, xp)){
+                    if(xp.x != sx && xp.x != lx && xp.y != sy && xp.y != ly) {
+                        if(isEven(xp.x)) {
+
+                        }
+                    }
+                }else{
+                    pixels_in_triangle.emplace_back(xp);//三角形の内部のピクセルを格納
+                }
+
+            }
+        }
+    }
+
+    return pixels_in_triangle;
+}
+
+/**
  * @fn double intersectM(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, cv::Point2f p4)
  * @brief 線分の交差判定
  * @param[in] p1 線1の点1

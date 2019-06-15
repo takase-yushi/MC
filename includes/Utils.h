@@ -248,6 +248,8 @@ inline bool isInTriangle(const Point3Vec& trig, const cv::Point2d& p) {
 
 typedef std::vector<std::vector<std::vector<unsigned char **>>> EXPAND_ARRAY_TYPE;
 
+bool isPointOnTheLine(cv::Point2f a, cv::Point2f b, cv::Point2f p);
+
 inline int myRound(double x, int delta){
     return static_cast<int>((x / delta) + (x > 0 ? 0.5 : -0.5));
 }
