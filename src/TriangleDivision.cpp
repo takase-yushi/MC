@@ -39,8 +39,8 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
     block_size_x = _block_size_x;
     block_size_y = _block_size_y;
     qp = _qp;
-    int block_num_x = target_image.cols / block_size_x;
-    int block_num_y = target_image.rows / block_size_y;
+    int block_num_x = ceil((double)target_image.cols / (block_size_x));
+    int block_num_y = ceil((double)target_image.rows / (block_size_y));
     divide_steps = _divide_steps;
     coded_picture_num = 0;
 
@@ -76,9 +76,26 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
     previousMvList.emplace_back();
     // すべての頂点を入れる
     for(int block_y = 0 ; block_y <= block_num_y ; block_y++) {
-        for (int block_x = 0; block_x <= block_num_x; block_x++) {
-            int nx = block_x * block_size_x;
-            int ny = block_y * block_size_y;
+        for (int block_x = 0 ; block_x <= block_num_x; block_x++) {
+            int nx = block_x * (block_size_x);
+            int ny = block_y * (block_size_y);
+
+            if(nx < 0) nx = 0;
+            if(target_image.cols <= nx) nx = target_image.cols - 1;
+            if(ny < 0) ny = 0;
+            if(target_image.rows <= ny) ny = target_image.rows - 1;
+            corners.emplace_back(nx, ny);
+            corner_flag[ny][nx] = static_cast<int>(corners.size() - 1);
+            neighbor_vtx.emplace_back();
+
+            // 前の動きベクトルを保持しておくやつ
+            previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
+            previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
+
+            if(block_x == block_num_x) continue;
+
+            nx = (block_x + 1) * (block_size_x) - 1;
+            ny = (block_y) * (block_size_y);
 
             if(nx < 0) nx = 0;
             if(target_image.cols <= nx) nx = target_image.cols - 1;
@@ -92,6 +109,43 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
         }
+
+        if(block_y == block_num_y) continue;
+
+        for (int block_x = 0 ; block_x <= block_num_x; block_x++) {
+            int nx = block_x * (block_size_x);
+            int ny = (block_y + 1) * (block_size_y) - 1;
+
+            if(nx < 0) nx = 0;
+            if(target_image.cols <= nx) nx = target_image.cols - 1;
+            if(ny < 0) ny = 0;
+            if(target_image.rows <= ny) ny = target_image.rows - 1;
+            corners.emplace_back(nx, ny);
+            corner_flag[ny][nx] = static_cast<int>(corners.size() - 1);
+            neighbor_vtx.emplace_back();
+
+            // 前の動きベクトルを保持しておくやつ
+            previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
+            previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
+
+            if(block_x == block_num_x) continue;
+
+            nx = (block_x + 1) * (block_size_x) - 1;
+            ny = (block_y + 1) * (block_size_y) - 1;
+
+            if(nx < 0) nx = 0;
+            if(target_image.cols <= nx) nx = target_image.cols - 1;
+            if(ny < 0) ny = 0;
+            if(target_image.rows <= ny) ny = target_image.rows - 1;
+            corners.emplace_back(nx, ny);
+            corner_flag[ny][nx] = static_cast<int>(corners.size() - 1);
+            neighbor_vtx.emplace_back();
+
+            // 前の動きベクトルを保持しておくやつ
+            previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
+            previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
+        }
+
     }
 
     // 過去のMVを残すやつを初期化
@@ -105,22 +159,30 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
     std::cout << "block_num_y:" << block_num_y << std::endl;
     std::cout << "block_num_x:" << block_num_x << std::endl;
 
-    covered_triangle.resize(static_cast<unsigned long>((block_num_x + 1) * (block_num_y + 1)));
+    covered_triangle.resize(static_cast<unsigned long>((block_num_x * 2 + 1) * (block_num_y * 2 + 1)));
 
     for(int block_y = 0 ; block_y < block_num_y ; block_y++) {
         for(int block_x = 0 ; block_x < block_num_x ; block_x++) {
-            int p1_idx = block_x + block_y * (block_num_x + 1);
-            int p2_idx = p1_idx + 1;
-            int p3_idx = p1_idx + block_num_x + 1;
-            int p4_idx = p3_idx + 1;
+            int p1_idx;
+            int p2_idx;
+            int p3_idx;
+            int p4_idx;
             if(divide_flag == LEFT_DIVIDE) {
+                p1_idx = 2 * block_x + (2 * block_y) * ((block_num_x) * 2 + 1);
+                p2_idx = p1_idx + 1;
+                p3_idx = p1_idx + ((block_num_x) * 2 + 1 );
+
                 int triangleIndex = insertTriangle(p1_idx, p2_idx, p3_idx, TYPE1);
                 addNeighborVertex(p1_idx, p2_idx, p3_idx);
                 addCoveredTriangle(p1_idx, p2_idx, p3_idx, triangleIndex); // p1/p2/p3はtriangleIndex番目の三角形に含まれている
 
-                triangleIndex = insertTriangle(p2_idx, p3_idx, p4_idx, TYPE2);
-                addNeighborVertex(p2_idx, p3_idx, p4_idx);
-                addCoveredTriangle(p2_idx, p3_idx, p4_idx, triangleIndex);
+                int p4_idx = p2_idx;
+                int p5_idx = p3_idx;
+                int p6_idx = p3_idx + 1;
+
+                triangleIndex = insertTriangle(p4_idx, p5_idx, p6_idx, TYPE2);
+                addNeighborVertex(p4_idx, p5_idx, p6_idx);
+                addCoveredTriangle(p4_idx, p5_idx, p6_idx, triangleIndex);
             }else{
                 int triangleIndex = insertTriangle(p1_idx, p2_idx, p4_idx, TYPE1);
                 addNeighborVertex(p1_idx, p2_idx, p4_idx);
