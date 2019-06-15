@@ -12,6 +12,7 @@
 #include <ctime>
 #include <utility>
 #include <numeric>
+#include <cassert>
 #include "../includes/Encode.h"
 #include "../includes/config.h"
 #include "../includes/ME.hpp"
@@ -190,15 +191,83 @@ void test1(){
     std::cout << "error1: " << error1 << " error2:" << error2 << " error3:" << error3 << std::endl;
 }
 
+void test2(){
+    cv::Mat gauss_ref_image = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
+    cv::Mat ref_image       = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
+    cv::Mat target_image    = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_000413_limit.bmp");
+
+    TriangleDivision triangle_division(ref_image, target_image, gauss_ref_image);
+
+    // initする
+    triangle_division.initTriangle(128, 128, division_steps, LEFT_DIVIDE);
+    std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
+
+    std::vector<std::pair<Point3Vec, int> > init_triangles = triangle_division.getTriangles();
+
+    cv::Mat out = target_image.clone();
+    for(auto triangle : init_triangles) {
+        drawTriangle(out, triangle.first.p1, triangle.first.p2, triangle.first.p3, cv::Scalar(255, 255, 255));
+    }
+
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/init_triangle_127.png", out);
+}
+
+void test3(){
+    // これ、最適化とかかけた環境下だと多分assertそのものが消されている説があるので
+    assert(isPointOnTheLine(cv::Point2f(0, 0), cv::Point2f(10, 10), cv::Point2f(5, 5)));
+    assert(isPointOnTheLine(cv::Point2f(0, 0), cv::Point2f(10, 10), cv::Point2f(5, 7)));
+
+    // このコードに引っかかるとコケてる
+    if(isPointOnTheLine(cv::Point2f(0, 0), cv::Point2f(10, 10), cv::Point2f(5, 5)) == false){
+        std::cout << "TestCase1 failed" << std::endl;
+        exit(1);
+    }
+
+    if(isPointOnTheLine(cv::Point2f(0, 0), cv::Point2f(10, 10), cv::Point2f(5, 7)) == true){
+        std::cout << "TestCase2 failed" << std::endl;
+        exit(1);
+    }
+
+    if(isPointOnTheLine(cv::Point2f(64, 64), cv::Point2f(64, 128), cv::Point2f(64,96)) == false) {
+        std::cout << "TestCase3 failed" << std::endl;
+        exit(1);
+    }
+}
+
+void test4(){
+    cv::Mat gauss_ref_image = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
+    cv::Mat ref_image       = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
+    cv::Mat target_image    = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_000413_limit.bmp");
+
+    TriangleDivision triangle_division(ref_image, target_image, gauss_ref_image);
+
+    // initする
+    triangle_division.initTriangle(128, 128, division_steps, LEFT_DIVIDE);
+    std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
+
+    std::vector<std::pair<Point3Vec, int> > init_triangles = triangle_division.getTriangles();
+
+    cv::Mat out = target_image.clone();
+    for(auto triangle : init_triangles) {
+        drawTriangle(out, triangle.first.p1, triangle.first.p2, triangle.first.p3, cv::Scalar(255, 255, 255));
+    }
+
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/init_triangle_127.png", out);
+}
+
 int main(int argc, char *argv[]){
     // Write test codes below
-     test1();
+//    test2();
+    test3();
+    exit(0);
+
+//     test1();
 //    storeResidualImage();
 //    std::cout << getPSNR(cv::imread(getProjectDirectory(OS)+ std::string(argv[1])), cv::imread(getProjectDirectory(OS) + std::string(argv[2]))) << std::endl;
 //    exit(0);
-    std::string config_path = std::string(argv[1]);
-    // exec ME
-    run(config_path);
+//    std::string config_path = std::string(argv[1]);
+//    exec ME
+//    run(config_path);
 //    storeResidualImage();
 
 }
