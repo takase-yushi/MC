@@ -9,6 +9,7 @@
 
 #include <opencv2/core/types.hpp>
 #include "config.h"
+#include "CodingTreeUnit.h"
 
 /**
  * @def R(img, x, y) ((img).data[((int)img.step) * (y) + (x) * 3 + 2])
@@ -168,6 +169,8 @@ std::string getProjectDirectory(std::string os);
 std::string replaceBackslash(std::string str);
 
 std::string getVersionOfOpenCV();
+
+std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const std::vector<std::vector<int>>& area_flag, int triangle_index, CodingTreeUnit* ctu, int block_size_x, int block_size_y);
 
 void storeGnuplotFile(const std::string& out_file_path, const std::string& xlable, const std::string& ylabel, const std::string& data_name);
 

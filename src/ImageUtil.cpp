@@ -5,8 +5,12 @@
 #include <opencv2/core/mat.hpp>
 #include <cassert>
 #include <iostream>
+#include <opencv2/imgcodecs.hpp>
 #include "../includes/ImageUtil.h"
 #include "../includes/Utils.h"
+#include "../includes/CodingTreeUnit.h"
+#include "../includes/Reconstruction.h"
+#include "../includes/TriangleDivision.h"
 
 /**
  * @fn get_residual(const cv::Mat &target_image, const cv::Mat &predict_image)
@@ -40,7 +44,7 @@ cv::Mat getResidualImage(const cv::Mat &target_image, const cv::Mat &predict_ima
  * @param vec 動きベクトル
  * @return 残差
  */
-double getTriangleResidual(const cv::Mat ref_image, const cv::Mat &target_image, Point3Vec &triangle, std::vector<cv::Point2f> mv){
+double getTriangleResidual(const cv::Mat ref_image, const cv::Mat &target_image, Point3Vec &triangle, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_triangle_pixels){
     double residual = 0.0;
 
     cv::Point2f pixels_in_triangle;
@@ -56,22 +60,12 @@ double getTriangleResidual(const cv::Mat ref_image, const cv::Mat &target_image,
 
     double quantize_step = 4.0;
 
+    // TODO: 置き換え
     double sx = std::min({(int) triangle.p1.x, (int) triangle.p2.x, (int) triangle.p3.x});
     double lx = std::max({(int) triangle.p1.x, (int) triangle.p2.x, (int) triangle.p3.x});
     double sy = std::min({(int) triangle.p1.y, (int) triangle.p2.y, (int) triangle.p3.y});
     double ly = std::max({(int) triangle.p1.y, (int) triangle.p2.y, (int) triangle.p3.y});
 
-    std::vector<cv::Point2f> in_triangle_pixels;
-    cv::Point2f xp;
-    for (int j = (int) (round(sy) - 1); j <= round(ly) + 1; j++) {
-        for (int i = (int) (round(sx) - 1); i <= round(lx) + 1; i++) {
-            xp.x = (float) i;
-            xp.y = (float) j;
-            if (isInTriangle(triangle, xp) == 1) {
-                in_triangle_pixels.emplace_back(xp); //三角形の内部のピクセルを格納
-            }
-        }
-    }
     cv::Point2f X,a,b,a_later,b_later,X_later;
     double alpha,beta,det;
 
@@ -355,4 +349,27 @@ void freeExpandImages(EXPAND_ARRAY_TYPE expand_images, int expand, int filter_nu
         }
     }
 
+}
+
+/**
+ * @fn cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit *> ctu)
+ * @brief CodingTreeをもらって、三角形を書いた画像を返す
+ * @param image 下地
+ * @param ctu CodingTree
+ * @return 画像
+ */
+cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit *> ctu, int block_size_x, int block_size_y) {
+    Reconstruction rec(image);
+    rec.init(block_size_x, block_size_y, LEFT_DIVIDE);
+    puts("");
+    rec.reconstructionTriangle(ctu);
+    std::vector<Point3Vec> hoge = rec.getTriangleCoordinateList();
+
+    cv::Mat reconstructedImage = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_000413_limit.bmp");
+    for(const auto foo : hoge) {
+        drawTriangle(reconstructedImage, foo.p1, foo.p2, foo.p3, cv::Scalar(255, 255, 255));
+    }
+//    cv::imwrite(getProjectDirectory(OS) + "/img/minato/reconstruction_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", reconstructedImage);
+
+    return reconstructedImage;
 }

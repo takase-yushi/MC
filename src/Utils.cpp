@@ -10,6 +10,7 @@
 #include <opencv2/imgproc.hpp>
 #include "../includes/Utils.h"
 #include "../includes/GnuplotFileGenerator.hpp"
+#include "../includes/CodingTreeUnit.h"
 #include <unistd.h>
 #include <fstream>
 #include <tuple>
@@ -173,46 +174,92 @@ bool isPointOnTheLine(cv::Point2f a, cv::Point2f b, cv::Point2f p){
     return outerProduct(v1, v2) == 0;
 }
 
-inline bool isEven(int x){
-    return x % 2 == 0;
+bool isMyTriangle(const CodingTreeUnit* ctu, int triangle_index){
+    if(ctu == nullptr) return false;
+
+    while(ctu != nullptr) {
+        if(triangle_index == ctu->triangle_index) return true;
+        ctu = ctu->parentNode;
+    }
+
+    return false;
 }
 
 /**
  * @fn std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle)
  * @brief 三角パッチ内に含まれる画素を返す
  * @param triangle 三角形
+ * @param area_flag 境界線がどちらを表すかのフラグ
+ * @param triangle_index 三角形の番号
  * @return 画素の集合
  */
-std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle){
+std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const std::vector<std::vector<int>>& area_flag, int triangle_index, CodingTreeUnit* ctu, int block_size_x, int block_size_y){
     std::vector<cv::Point2f> pixels_in_triangle;
     cv::Point2f p0 = triangle.p1, p1 = triangle.p2, p2 = triangle.p3;
 
-    double sx = std::min({(int) p0.x, (int) p1.x, (int) p2.x});
-    double lx = std::max({(int) p0.x, (int) p1.x, (int) p2.x});
-    double sy = std::min({(int) p0.y, (int) p1.y, (int) p2.y});
-    double ly = std::max({(int) p0.y, (int) p1.y, (int) p2.y});
+    int sx = ceil(std::min({p0.x, p1.x, p2.x}));
+    int lx = floor(std::max({p0.x, p1.x, p2.x}));
+    int sy = ceil(std::min({p0.y, p1.y, p2.y}));
+    int ly = floor(std::max({p0.y, p1.y, p2.y}));
+
+    int width = lx - sx + 1;
+    int height = ly - sy + 1;
 
     pixels_in_triangle.clear();
-    cv::Point2f xp;
-    for (int j = (int) (round(sy) - 1); j <= round(ly) + 1; j++) {
-        for (int i = (int) (round(sx) - 1); i <= round(lx) + 1; i++) {
-            xp.x = (float) i;
-            xp.y = (float) j;
+    cv::Point2i xp;
+
+    for (int j = sy ; j <= ly ; j++) {
+        for (int i = sx; i <= lx ; i++) {
+            xp.x = i;
+            xp.y = j;
             if (isInTriangle(triangle, xp) == 1) {
                 if(isPointOnTheLine(p0, p1, xp) || isPointOnTheLine(p1, p2, xp) || isPointOnTheLine(p2, p0, xp)){
                     if(xp.x != sx && xp.x != lx && xp.y != sy && xp.y != ly) {
-                        if(isEven(xp.x)) {
-
+//                        if(triangle_index == 240) {
+//                            std::cout << xp.x << "(" << xp.x % block_size_x << ")" << " " << xp.y  << "(" << xp.y % block_size_y << ")" << std::endl;
+//                            std::cout << "area_flag[x][y]:" << area_flag[xp.x % block_size_x][xp.y % block_size_y] << " triangle_index:" << triangle_index << std::endl;
+//                            bool hoge = isMyTriangle(ctu, area_flag[xp.x % block_size_x][xp.y % block_size_y]);
+//                            std::cout << "hoge:" << hoge << std::endl;
+//                        }
+                        if (area_flag[xp.x % block_size_x][xp.y % block_size_y] == triangle_index || isMyTriangle(ctu, area_flag[xp.x % block_size_x][xp.y % block_size_y])) {
+                            pixels_in_triangle.emplace_back(xp);
                         }
+                    }else if ((i == sx && j == sy) || (i == lx && j == sy) || (i == sx && j == ly) || (i == lx && j == ly)) {
+                        if(xp.x == 127 && xp.y == 0) {
+                            std::cout << "127" << std::endl;
+                            std::cout << "triangle_index:" << triangle_index << std::endl;
+                            std::cout << "prev_size:" << pixels_in_triangle.size() << std::endl;
+                        }
+//                        if(i == 127 && j == 63) std::cout << "hoge" << std::endl;
+//
+                        if(triangle_index == 1) {
+                            std::cout << "line:" << xp.x << "(" << xp.x % block_size_x << ")" << " " << xp.y % block_size_y << "(" << xp.y % height << ")" << std::endl;
+                            std::cout << "sx:" << sx << " lx:" << lx << " sy:" << sy << " ly:" << ly << std::endl;
+                            std::cout << "area_flag[x][y]:" << area_flag[xp.x % block_size_x][xp.y % block_size_y] << " " << "triangle_index:" << triangle_index << std::endl;
+                            std::cout << "prev_size:" << pixels_in_triangle.size() << std::endl;
+                        }
+                        if (area_flag[xp.x % block_size_x][                  0] == triangle_index || isMyTriangle(ctu, area_flag[xp.x % block_size_x][                0])) pixels_in_triangle.emplace_back(xp.x, xp.y);
+//                        if (area_flag[xp.x % block_size_x][                  0] == triangle_index || isMyTriangle(ctu, area_flag[lx % block_size_x][                0])) pixels_in_triangle.emplace_back(xp.x, xp.y);
+                        if (area_flag[xp.x % block_size_x][xp.y % block_size_y] == triangle_index || isMyTriangle(ctu, area_flag[xp.x % block_size_x][xp.y % block_size_y])) pixels_in_triangle.emplace_back(xp.x, xp.y);
+//                        if (area_flag[xp.x % block_size_x][xp.y % block_size_y] == triangle_index || isMyTriangle(ctu, area_flag[lx % block_size_x][ly % block_size_y])) pixels_in_triangle.emplace_back(xp.x, xp.y);
+                        if(xp.x == 127 && xp.y == 0){
+                            std::cout << "after:" << pixels_in_triangle.size() << std::endl;
+                        }
+//                        if(triangle_index == 243) {
+//                            std::cout << "after_size:" << pixels_in_triangle.size() << std::endl;
+//                        }
+                    }else{
+                        pixels_in_triangle.emplace_back(xp);
                     }
-                }else{
+                }else {
                     pixels_in_triangle.emplace_back(xp);//三角形の内部のピクセルを格納
                 }
-
             }
         }
     }
-
+    if(triangle_index == 243){
+        std::cout << "hoge" << std::endl;
+    }
     return pixels_in_triangle;
 }
 

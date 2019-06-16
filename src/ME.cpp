@@ -367,8 +367,8 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
 
     for(int y = -offset ; y < 0 ; y++){
         for(int x = -offset ; x < ref_image.cols + offset ; x++){
-            expand_ref[x][y] = M(ref_image, x, 0);
-            expand_ref[x][ref_image.rows + offset + y] = M(ref_image, x, ref_image.rows - 1);
+            expand_ref[x][y] = expand_ref[x][y];
+            expand_ref[x][ref_image.rows + offset + y] = expand_ref[x][ref_image.rows - 1];
         }
     }
 
@@ -430,9 +430,11 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
  * @param[in] target_image 対象画像
  * @param[in] gauss_ref_image ガウス・ニュートン法で使用する参照画像（常にQP=22の参照画像）
  * @param[in] target_corners 対象画像上の三角パッチの座標
+ * @param[in] triangle_index 三角形の番号
+ * @param[in] area_flag 斜線がどちらに含まれるか示すフラグ
  * @return ワーピングの動きベクトル・平行移動の動きベクトル・予測残差・面積・平行移動のフラグのtuple
  */
-std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char **>>> expand_image, Point3Vec target_corners){
+std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char **>>> expand_image, Point3Vec target_corners, const std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, int block_size_x, int block_size_y){
     // 画像の初期化 vector[filter][picture_number]
 
     const int warping_matrix_dim = 6; // 方程式の次元
@@ -463,23 +465,15 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
     p0 = target_corners.p1;
     p1 = target_corners.p2;
     p2 = target_corners.p3;
+
     Point3Vec current_triangle_coordinates(p0, p1, p2);
+
+    pixels_in_triangle = getPixelsInTriangle(current_triangle_coordinates, area_flag, triangle_index, ctu, block_size_x, block_size_y);
+
     double sx = std::min({(int) p0.x, (int) p1.x, (int) p2.x});
     double lx = std::max({(int) p0.x, (int) p1.x, (int) p2.x});
     double sy = std::min({(int) p0.y, (int) p1.y, (int) p2.y});
     double ly = std::max({(int) p0.y, (int) p1.y, (int) p2.y});
-
-    pixels_in_triangle.clear();
-    cv::Point2f xp;
-    for (int j = (int) (round(sy) - 1); j <= round(ly) + 1; j++) {
-        for (int i = (int) (round(sx) - 1); i <= round(lx) + 1; i++) {
-            xp.x = (float) i;
-            xp.y = (float) j;
-            if (isInTriangle(current_triangle_coordinates, xp) == 1) {
-                pixels_in_triangle.emplace_back(xp);//三角形の内部のピクセルを格納
-            }
-        }
-    }
 
     int bm_x_offset = 10;
     int bm_y_offset = 10;
@@ -500,8 +494,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
         }
     }
 
-//    std::cout << target_corners.p1 << " " << target_corners.p2 << " " << target_corners.p3 << std::endl;
-//    std::cout << initial_vector << std::endl;
     initial_vector /= 2.0;
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
         std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(initial_vector.x, initial_vector.y));
@@ -544,17 +536,9 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
             double sy = std::min({(int) p0.y, (int) p1.y, (int) p2.y});
             double ly = std::max({(int) p0.y, (int) p1.y, (int) p2.y});
 
-            pixels_in_triangle.clear();
-            cv::Point2f xp;
-            for (int j = (int) (round(sy) - 1); j <= round(ly) + 1; j++) {
-                for (int i = (int) (round(sx) - 1); i <= round(lx) + 1; i++) {
-                    xp.x = (float) i;
-                    xp.y = (float) j;
-                    if (isInTriangle(current_triangle_coordinates, xp) == 1) {
-                        pixels_in_triangle.emplace_back(xp);//三角形の内部のピクセルを格納
-                    }
-                }
-            }
+
+
+            pixels_in_triangle = getPixelsInTriangle(current_triangle_coordinates, area_flag, triangle_index, ctu, block_size_x, block_size_y);
 
             std::vector<cv::Point2f> scaled_coordinates{p0, p1, p2};
 
@@ -749,10 +733,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                     int y0_later_warping_integer = (int)floor(X_later_warping.y);
                     int x0_later_parallel_integer = (int)floor(X_later_parallel.x);
                     int y0_later_parallel_integer = (int)floor(X_later_parallel.y);
-                    double x0_later_warping_decimal = X_later_warping.x - x0_later_warping_integer;
-                    double y0_later_warping_decimal = X_later_warping.y - y0_later_warping_integer;
-                    double x0_later_parallel_decimal = X_later_parallel.x - x0_later_parallel_integer;
-                    double y0_later_parallel_decimal = X_later_parallel.y - y0_later_parallel_integer;
 
                     double f = bicubic_interpolation(current_target_expand, X.x, X.y);
                     double f_org = bicubic_interpolation(current_target_org_expand, X.x, X.y);

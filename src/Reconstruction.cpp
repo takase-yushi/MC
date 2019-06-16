@@ -87,7 +87,6 @@ void Reconstruction::reconstructionTriangle(CodingTreeUnit* ctu, Point3Vec trian
 
         insertTriangle(p1_idx, p2_idx, p3_idx, type);
 
-
         return;
     }
 
