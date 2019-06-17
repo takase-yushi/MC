@@ -745,7 +745,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
 
                     for (int row = 0; row < warping_matrix_dim; row++) {
                         for (int col = 0; col < warping_matrix_dim; col++) {
-                            gg_warping.at<double>(row, col) += delta_g_warping[row] * delta_g_warping[col];//A_0の行列を生成(左辺の6x6の行列に相当)
+                            // TODO: マルカール法の導入
+                            gg_warping.at<double>(row, col) +=  delta_g_warping[row] * delta_g_warping[col];//A_0の行列を生成(左辺の6x6の行列に相当)
                         }
                         B_warping.at<double>(row, 0) += (f - g_warping) * delta_g_warping[row];//bの行列を生成(右辺の6x1のベクトルに相当)
                     }
