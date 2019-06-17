@@ -208,46 +208,19 @@ std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const st
     pixels_in_triangle.clear();
     cv::Point2i xp;
 
-    for (int j = sy ; j <= ly ; j++) {
-        for (int i = sx; i <= lx ; i++) {
+    for (int j = sy - 1 ; j <= ly + 1; j++) {
+        for (int i = sx - 1 ; i <= lx + 1; i++) {
             xp.x = i;
             xp.y = j;
             if (isInTriangle(triangle, xp) == 1) {
                 if(isPointOnTheLine(p0, p1, xp) || isPointOnTheLine(p1, p2, xp) || isPointOnTheLine(p2, p0, xp)){
                     if(xp.x != sx && xp.x != lx && xp.y != sy && xp.y != ly) {
-//                        if(triangle_index == 240) {
-//                            std::cout << xp.x << "(" << xp.x % block_size_x << ")" << " " << xp.y  << "(" << xp.y % block_size_y << ")" << std::endl;
-//                            std::cout << "area_flag[x][y]:" << area_flag[xp.x % block_size_x][xp.y % block_size_y] << " triangle_index:" << triangle_index << std::endl;
-//                            bool hoge = isMyTriangle(ctu, area_flag[xp.x % block_size_x][xp.y % block_size_y]);
-//                            std::cout << "hoge:" << hoge << std::endl;
-//                        }
                         if (area_flag[xp.x % block_size_x][xp.y % block_size_y] == triangle_index || isMyTriangle(ctu, area_flag[xp.x % block_size_x][xp.y % block_size_y])) {
                             pixels_in_triangle.emplace_back(xp);
                         }
                     }else if ((i == sx && j == sy) || (i == lx && j == sy) || (i == sx && j == ly) || (i == lx && j == ly)) {
-                        if(xp.x == 127 && xp.y == 0) {
-                            std::cout << "127" << std::endl;
-                            std::cout << "triangle_index:" << triangle_index << std::endl;
-                            std::cout << "prev_size:" << pixels_in_triangle.size() << std::endl;
-                        }
-//                        if(i == 127 && j == 63) std::cout << "hoge" << std::endl;
-//
-                        if(triangle_index == 1) {
-                            std::cout << "line:" << xp.x << "(" << xp.x % block_size_x << ")" << " " << xp.y % block_size_y << "(" << xp.y % height << ")" << std::endl;
-                            std::cout << "sx:" << sx << " lx:" << lx << " sy:" << sy << " ly:" << ly << std::endl;
-                            std::cout << "area_flag[x][y]:" << area_flag[xp.x % block_size_x][xp.y % block_size_y] << " " << "triangle_index:" << triangle_index << std::endl;
-                            std::cout << "prev_size:" << pixels_in_triangle.size() << std::endl;
-                        }
                         if (area_flag[xp.x % block_size_x][                  0] == triangle_index || isMyTriangle(ctu, area_flag[xp.x % block_size_x][                0])) pixels_in_triangle.emplace_back(xp.x, xp.y);
-//                        if (area_flag[xp.x % block_size_x][                  0] == triangle_index || isMyTriangle(ctu, area_flag[lx % block_size_x][                0])) pixels_in_triangle.emplace_back(xp.x, xp.y);
                         if (area_flag[xp.x % block_size_x][xp.y % block_size_y] == triangle_index || isMyTriangle(ctu, area_flag[xp.x % block_size_x][xp.y % block_size_y])) pixels_in_triangle.emplace_back(xp.x, xp.y);
-//                        if (area_flag[xp.x % block_size_x][xp.y % block_size_y] == triangle_index || isMyTriangle(ctu, area_flag[lx % block_size_x][ly % block_size_y])) pixels_in_triangle.emplace_back(xp.x, xp.y);
-                        if(xp.x == 127 && xp.y == 0){
-                            std::cout << "after:" << pixels_in_triangle.size() << std::endl;
-                        }
-//                        if(triangle_index == 243) {
-//                            std::cout << "after_size:" << pixels_in_triangle.size() << std::endl;
-//                        }
                     }else{
                         pixels_in_triangle.emplace_back(xp);
                     }
@@ -256,9 +229,6 @@ std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const st
                 }
             }
         }
-    }
-    if(triangle_index == 243){
-        std::cout << "hoge" << std::endl;
     }
     return pixels_in_triangle;
 }
