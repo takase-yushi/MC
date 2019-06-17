@@ -901,30 +901,30 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         int sy = ceil( std::min({triangle.p1.y, triangle.p2.y, triangle.p3.y}));
         int ly = floor(std::max({triangle.p1.y, triangle.p2.y, triangle.p3.y}));
 
-        int width =  (lx - sx) / 2 + 1;
-        int height = (ly - sy) / 2 + 1;
+        int width =  (lx - sx) / 2;
+        int height = (ly - sy) / 2;
 
         bool flag = true;
         int a, b, c, d;
         if(type == TYPE1) {
-            for (int x = 0; x < width - 1; x++) {
-                diagonal_line_area_flag[(x + sx) % block_size_x][(x + sx) % block_size_y] = (flag ? triangle_indexes[0] : triangle_indexes[1]);
+            for (int x = 1 ; x <= width  ; x++) {
+                diagonal_line_area_flag[(x + sx) % block_size_x][(x + sy) % block_size_y] = (flag ? triangle_indexes[1] : triangle_indexes[0]);
                 flag = !flag;
             }
         }else if(type == TYPE2) {
-            for (int x = 0 ; x < width - 1; x++) {
-                diagonal_line_area_flag[(sx + width + x) % block_size_x][(sy + height + x) % block_size_y] = (flag ? triangle_indexes[0] : triangle_indexes[1]);
+            for (int x = 1 ; x <= width ; x++) {
+                diagonal_line_area_flag[(sx + width + x) % block_size_x][(sy + height + x) % block_size_y] = (flag ? triangle_indexes[1] : triangle_indexes[0]);
                 flag = !flag;
             }
 
         }else if(type == TYPE3){
-            for(int x = 0 ; x < width - 1 ; x++){
+            for(int x = 1 ; x <= width ; x++){
                 diagonal_line_area_flag[(sx + width + x) % block_size_x][(sy + height - x) % block_size_y] = (flag ? triangle_indexes[0] : triangle_indexes[1]);
                 flag = !flag;
             }
         }else if(type == TYPE4){
-            for(int x = 0 ; x < width - 1 ; x++){
-                diagonal_line_area_flag[(x + sx) % block_size_x][(width - x) % block_size_y] = (flag ? triangle_indexes[0] : triangle_indexes[1]);
+            for(int x = 1 ; x <= width ; x++){
+                diagonal_line_area_flag[(x + sx) % block_size_x][(ly - x) % block_size_y] = (flag ? triangle_indexes[0] : triangle_indexes[1]);
                 flag = !flag;
             }
         }
@@ -1132,7 +1132,6 @@ TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(const cv::Point
         {
             cv::Point2f x = (p2 - p1) / 2.0;
             cv::Point2f y = (p3 - p1) / 2.0;
-
             a = p1;
             b = p2;
             c = a + x + y;
@@ -1548,7 +1547,6 @@ cv::Point2f TriangleDivision::getQuantizedMv(cv::Point2f &mv, double quantize_st
 
 cv::Mat TriangleDivision::getPredictedDiagonalImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag){
     cv::Mat out = cv::Mat::zeros(ref_image.size(), CV_8UC3);
-
     for(int i = 0 ; i < ctus.size() ; i++) {
         getPredictedDiagonalImageFromCtu(ctus[i], area_flag[(int)i/2], out);
     }
