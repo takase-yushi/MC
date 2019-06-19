@@ -305,7 +305,7 @@ int bicubic_interpolation(unsigned char **img, double x, double y){
  * @param[in] parallel_flag
  * @return 2乗誤差
  */
-double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& output_image, Point3Vec& triangle, std::vector<cv::Point2f>& mv, bool parallel_flag) {
+double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& output_image, Point3Vec& triangle, std::vector<cv::Point2f>& mv, bool parallel_flag, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Rect block_size) {
     cv::Point2f pp0, pp1, pp2;
 
     pp0.x = triangle.p1.x + mv[0].x;
@@ -317,22 +317,8 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
 
     double quantize_step = 4.0;
 
-    double sx = std::min({(int) triangle.p1.x, (int) triangle.p2.x, (int) triangle.p3.x});
-    double lx = std::max({(int) triangle.p1.x, (int) triangle.p2.x, (int) triangle.p3.x});
-    double sy = std::min({(int) triangle.p1.y, (int) triangle.p2.y, (int) triangle.p3.y});
-    double ly = std::max({(int) triangle.p1.y, (int) triangle.p2.y, (int) triangle.p3.y});
+    std::vector<cv::Point2f> in_triangle_pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, block_size.width, block_size.height);
 
-    std::vector<cv::Point2f> in_triangle_pixels;
-    cv::Point2f xp;
-    for (int j = (int) (round(sy) - 1); j <= round(ly) + 1; j++) {
-        for (int i = (int) (round(sx) - 1); i <= round(lx) + 1; i++) {
-            xp.x = (float) i;
-            xp.y = (float) j;
-            if (isInTriangle(triangle, xp) == 1) {
-                in_triangle_pixels.emplace_back(xp);//三角形の内部のピクセルを格納
-            }
-        }
-    }
     cv::Point2f X,a,b,a_later,b_later,X_later;
     double alpha,beta,det;
 

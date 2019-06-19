@@ -1569,17 +1569,17 @@ void TriangleDivision::getPredictedDiagonalImageFromCtu(CodingTreeUnit* ctu, std
     if(ctu->leftNode != nullptr) getPredictedDiagonalImageFromCtu(ctu->rightNode, area_flag, out);
 }
 
-cv::Mat TriangleDivision::getPredictedImageFromCtu(std::vector<CodingTreeUnit*> ctus){
+cv::Mat TriangleDivision::getPredictedImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag){
     cv::Mat out = cv::Mat::zeros(ref_image.size(), CV_8UC3);
 
     for(int i = 0 ; i < ctus.size() ; i++) {
-        getPredictedImageFromCtu(ctus[i], out);
+        getPredictedImageFromCtu(ctus[i], out, area_flag[i/2]);
     }
 
     return out;
 }
 
-void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out){
+void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, std::vector<std::vector<int>> &area_flag){
     if(ctu->leftNode == nullptr && ctu->rightNode == nullptr) {
         int triangle_index = ctu->triangle_index;
         cv::Point2f mv = ctu->mv1;
@@ -1587,12 +1587,12 @@ void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &ou
         Point3Vec triangle(corners[triangle_corner_idx.p1_idx], corners[triangle_corner_idx.p2_idx], corners[triangle_corner_idx.p3_idx]);
 
         std::vector<cv::Point2f> mvs{mv, mv, mv};
-        getPredictedImage(ref_image, target_image, out, triangle, mvs, true);
+        getPredictedImage(ref_image, target_image, out, triangle, mvs, true, area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y));
         return;
     }
 
-    if(ctu->leftNode != nullptr) getPredictedImageFromCtu(ctu->leftNode, out);
-    if(ctu->leftNode != nullptr) getPredictedImageFromCtu(ctu->rightNode, out);
+    if(ctu->leftNode != nullptr) getPredictedImageFromCtu(ctu->leftNode, out, area_flag);
+    if(ctu->leftNode != nullptr) getPredictedImageFromCtu(ctu->rightNode, out, area_flag);
 }
 
 int TriangleDivision::getCtuCodeLength(std::vector<CodingTreeUnit*> ctus) {

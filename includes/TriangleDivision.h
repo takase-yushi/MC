@@ -146,7 +146,7 @@ public:
     cv::Point2f getCollocatedTriangleList(CodingTreeUnit* unit);
     int getCtuCodeLength(std::vector<CodingTreeUnit*> ctus);
 
-    cv::Mat getPredictedImageFromCtu(std::vector<CodingTreeUnit*> ctus);
+    cv::Mat getPredictedImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag);
     std::vector<Point3Vec> getAllTriangleCoordinateList();
     std::vector<Triangle> getAllTriangleIndexList();
     int divide_steps; // 分割回数
@@ -185,7 +185,7 @@ private:
     std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu);
     bool isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> &vectors, const cv::Point2f &mv);
     void eraseTriangle(int t_idx);
-    void getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out);
+    void getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, std::vector<std::vector<int>> &area_Flag);
     int getCtuCodeLength(CodingTreeUnit *ctu);
     void drawMvImage(cv::Mat &out, CodingTreeUnit *ctu);
     void getPredictedDiagonalImageFromCtu(CodingTreeUnit* ctu, std::vector<std::vector<int>> &area_flag, const cv::Mat &out);

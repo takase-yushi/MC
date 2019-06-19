@@ -230,7 +230,7 @@ void run(std::string config_path) {
         // ===========================================================
         // TODO: init処理を書き直さないといけない
         getReconstructionDivisionImage(gaussRefImage, foo, block_size_x, block_size_y);
-        cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo);
+        cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo, area_flag_cache);
 
         int code_length = triangle_division.getCtuCodeLength(foo);
         std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
