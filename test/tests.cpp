@@ -152,7 +152,6 @@ void test5(){
             diagonal_line_area_flag[i/2][127][127] = i + 1;
         }
 
-        if(i < 5) {
             std::pair<Point3Vec, int> triangle = init_triangles[i];
 
             cv::Point2f p1 = triangle.first.p1;
@@ -161,7 +160,6 @@ void test5(){
             std::cout << "================== step:" << i << " ================== " << std::endl;
 
             triangle_division.split(expand_images, foo[i], nullptr, Point3Vec(p1, p2, p3), i, triangle.second, divide_steps, diagonal_line_area_flag[i/2]);
-        }
     }
 
     // ***************
