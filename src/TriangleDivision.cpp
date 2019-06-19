@@ -63,13 +63,13 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
      *
      */
 
-    corner_flag.resize(static_cast<unsigned long>(ref_image.rows));
-    for(int i = 0 ; i < ref_image.rows ; i++) {
-        corner_flag[i].resize(static_cast<unsigned long>(ref_image.cols));
+    corner_flag.resize(static_cast<unsigned long>(ref_image.rows * 2));
+    for(int i = 0 ; i < ref_image.rows * 2 ; i++) {
+        corner_flag[i].resize(static_cast<unsigned long>(ref_image.cols * 2));
     }
 
-    for(int y = 0 ; y < ref_image.rows ; y++) {
-        for(int x = 0 ; x < ref_image.cols ; x++) {
+    for(int y = 0 ; y < ref_image.rows * 2; y++) {
+        for(int x = 0 ; x < ref_image.cols * 2; x++) {
             corner_flag[y][x] = -1;
         }
     }
@@ -86,7 +86,7 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
             if(ny < 0) ny = 0;
             if(target_image.rows <= ny) ny = target_image.rows - 1;
             corners.emplace_back(nx, ny);
-            corner_flag[ny][nx] = static_cast<int>(corners.size() - 1);
+            corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
             neighbor_vtx.emplace_back();
 
             // 前の動きベクトルを保持しておくやつ
@@ -103,7 +103,7 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
             if(ny < 0) ny = 0;
             if(target_image.rows <= ny) ny = target_image.rows - 1;
             corners.emplace_back(nx, ny);
-            corner_flag[ny][nx] = static_cast<int>(corners.size() - 1);
+            corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
             neighbor_vtx.emplace_back();
 
             // 前の動きベクトルを保持しておくやつ
@@ -122,7 +122,7 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
             if(ny < 0) ny = 0;
             if(target_image.rows <= ny) ny = target_image.rows - 1;
             corners.emplace_back(nx, ny);
-            corner_flag[ny][nx] = static_cast<int>(corners.size() - 1);
+            corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
             neighbor_vtx.emplace_back();
 
             // 前の動きベクトルを保持しておくやつ
@@ -139,7 +139,7 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
             if(ny < 0) ny = 0;
             if(target_image.rows <= ny) ny = target_image.rows - 1;
             corners.emplace_back(nx, ny);
-            corner_flag[ny][nx] = static_cast<int>(corners.size() - 1);
+            corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
             neighbor_vtx.emplace_back();
 
             // 前の動きベクトルを保持しておくやつ
@@ -504,10 +504,10 @@ void TriangleDivision::removeTriangleCoveredTriangle(int p1_idx, int p2_idx, int
  * @return 頂点番号を返す
  */
 int TriangleDivision::addCorner(cv::Point2f p) {
-    if(corner_flag[(int)p.y][(int)p.x] != -1) return corner_flag[(int)p.y][(int)p.x];
+    if(corner_flag[(int)(p.y * 2)][(int)(p.x * 2)] != -1) return corner_flag[(int)(p.y * 2)][(int)(p.x * 2)];
     corners.emplace_back(p);
     neighbor_vtx.emplace_back();
-    corner_flag[(int)p.y][(int)p.x] = static_cast<int>(corners.size() - 1);
+    corner_flag[(int)(p.y * 2)][(int)(p.x * 2)] = static_cast<int>(corners.size() - 1);
     return static_cast<int>(corners.size() - 1);
 }
 
