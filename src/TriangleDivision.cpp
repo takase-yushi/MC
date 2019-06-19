@@ -185,6 +185,7 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
                 addNeighborVertex(p4_idx, p5_idx, p6_idx);
                 addCoveredTriangle(p4_idx, p5_idx, p6_idx, triangleIndex);
             }else{
+                // TODO: 右分割への対応
                 int triangleIndex = insertTriangle(p1_idx, p2_idx, p4_idx, TYPE1);
                 addNeighborVertex(p1_idx, p2_idx, p4_idx);
                 addCoveredTriangle(p1_idx, p2_idx, p4_idx, triangleIndex);
