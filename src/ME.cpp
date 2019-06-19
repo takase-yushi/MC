@@ -487,7 +487,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
 
     for(int by = -bm_y_offset ; by < bm_y_offset ; by++){
         for(int bx = -bm_x_offset ; bx < bm_x_offset ; bx++){
-            if(sx + bx < -16 || ref_images[0][3].cols <= (lx + bx + 16) || sy + by < -16 || ref_images[0][3].rows <=(ly + by + 16)) continue;
+            if(sx + bx < -16 || ref_images[0][3].cols + 16 <= (lx + bx) || sy + by < -16 || ref_images[0][3].rows + 16 <=(ly + by)) continue;
             double error_tmp = 0.0;
             for(const auto& pixel : pixels_in_triangle) {
                 error_tmp += abs(expand_image[0][3][1][(int)(pixel.x + bx)][(int)(pixel.y + by)] - expand_image[0][3][3][(int)(pixel.x)][(int)(pixel.y)]);
