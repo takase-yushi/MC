@@ -208,8 +208,8 @@ std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const st
     pixels_in_triangle.clear();
     cv::Point2i xp;
 
-    for (int j = sy - 1 ; j <= ly + 1; j++) {
-        for (int i = sx - 1 ; i <= lx + 1; i++) {
+    for (int j = sy ; j <= ly ; j++) {
+        for (int i = sx ; i <= lx; i++) {
             xp.x = i;
             xp.y = j;
             if (isInTriangle(triangle, xp) == 1) {
@@ -218,9 +218,6 @@ std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const st
                         if (area_flag[xp.x % block_size_x][xp.y % block_size_y] == triangle_index || isMyTriangle(ctu, area_flag[xp.x % block_size_x][xp.y % block_size_y])) {
                             pixels_in_triangle.emplace_back(xp);
                         }
-                    }else if ((i == sx && j == sy) || (i == lx && j == sy) || (i == sx && j == ly) || (i == lx && j == ly)) {
-                        if (area_flag[xp.x % block_size_x][                  0] == triangle_index || isMyTriangle(ctu, area_flag[xp.x % block_size_x][                0])) pixels_in_triangle.emplace_back(xp.x, xp.y);
-                        if (area_flag[xp.x % block_size_x][xp.y % block_size_y] == triangle_index || isMyTriangle(ctu, area_flag[xp.x % block_size_x][xp.y % block_size_y])) pixels_in_triangle.emplace_back(xp.x, xp.y);
                     }else{
                         pixels_in_triangle.emplace_back(xp);
                     }
