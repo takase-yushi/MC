@@ -429,6 +429,14 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
     cv::Mat gg_parallel = cv::Mat::zeros(parallel_matrix_dim, parallel_matrix_dim, CV_64F); // 式(52)の左辺2×2行列
     cv::Mat B_warping = cv::Mat::zeros(warping_matrix_dim, 1, CV_64F); // 式(45)の右辺
     cv::Mat B_parallel = cv::Mat::zeros(parallel_matrix_dim, 1, CV_64F); // 式(52)の右辺
+
+    /* マーカート法で使う一つ前の行列 */
+    cv::Mat gg_warping_prev = cv::Mat::zeros(warping_matrix_dim, warping_matrix_dim, CV_64F); // 式(45)の左辺6×6行列
+    cv::Mat gg_parallel_prev = cv::Mat::zeros(parallel_matrix_dim, parallel_matrix_dim, CV_64F); // 式(52)の左辺2×2行列
+    cv::Mat B_warping_prev = cv::Mat::zeros(warping_matrix_dim, 1, CV_64F); // 式(45)の右辺
+    cv::Mat B_parallel_prev = cv::Mat::zeros(parallel_matrix_dim, 1, CV_64F); // 式(52)の右辺
+
+
     cv::Mat delta_uv_warping = cv::Mat::zeros(warping_matrix_dim, 1, CV_64F); // 式(45)の左辺 delta
     cv::Mat delta_uv_parallel = cv::Mat::zeros(parallel_matrix_dim, 1, CV_64F); // 式(52)の右辺 delta
 
@@ -467,7 +475,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
 
     for(int by = -bm_y_offset ; by < bm_y_offset ; by++){
         for(int bx = -bm_x_offset ; bx < bm_x_offset ; bx++){
-            if(sx + bx < -16 || ref_images[0][3].cols <= (lx + bx + 16) || sy + by < -16 || ref_images[0][3].rows <=(ly + by + 16)) continue;
+            if(sx + bx < -16 || ref_images[0][3].cols + 16 <= (lx + bx) || sy + by < -16 || ref_images[0][3].rows + 16 <=(ly + by)) continue;
             double error_tmp = 0.0;
             for(const auto& pixel : pixels_in_triangle) {
                 error_tmp += abs(expand_image[0][3][1][(int)(pixel.x + bx)][(int)(pixel.y + by)] - expand_image[0][3][3][(int)(pixel.x)][(int)(pixel.y)]);
@@ -480,12 +488,12 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
         }
     }
 
-    initial_vector /= 2.0;
+    initial_vector /= 4.0;
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
         std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(initial_vector.x, initial_vector.y));
         cv::Point2f tmp_mv_parallel(initial_vector.x, initial_vector.y);
 
-        for(int step = 3 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
+        for(int step = 2 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
 
             double scale = pow(2, 3 - step);
             cv::Mat current_ref_image = mv_filter(ref_images[filter_num][step],2);
@@ -516,14 +524,9 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
 
             if(fabs((p2 - p0).x * (p1 - p0).y - (p2 - p0).y * (p1 - p0).x) <= 0) break;
 
-            Point3Vec current_triangle_coordinates(p0, p1, p2);
-            double sx = std::min({(int) p0.x, (int) p1.x, (int) p2.x});
-            double lx = std::max({(int) p0.x, (int) p1.x, (int) p2.x});
-            double sy = std::min({(int) p0.y, (int) p1.y, (int) p2.y});
-            double ly = std::max({(int) p0.y, (int) p1.y, (int) p2.y});
-
-
-
+            current_triangle_coordinates.p1 = p0;
+            current_triangle_coordinates.p2 = p1;
+            current_triangle_coordinates.p3 = p2;
             pixels_in_triangle = getPixelsInTriangle(current_triangle_coordinates, area_flag, triangle_index, ctu, block_size_x, block_size_y);
 
             std::vector<cv::Point2f> scaled_coordinates{p0, p1, p2};
@@ -560,8 +563,10 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
             v_stack_parallel.clear();
             v_stack_warping.clear();
 
+            double lambda_warp = 1.0, lambda_parallel = 1.0;
+            double error_warp_prev = 1e9, error_parallel_prev = 1e9;
             // 11回ガウス・ニュートン法をやる
-            for(int gaussIterateNum = 0 ; gaussIterateNum < 11 ; gaussIterateNum++) {
+            for(int gaussIterateNum = 0 ; gaussIterateNum < 1000 ; gaussIterateNum++) {
                 if(gaussIterateNum == 10 && step == 3) {
                     for(int i = 0 ; i < tmp_mv_warping.size(); i++){
                         tmp_mv_warping[i].x = 0.0;
@@ -732,13 +737,22 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                     for (int row = 0; row < warping_matrix_dim; row++) {
                         for (int col = 0; col < warping_matrix_dim; col++) {
                             // TODO: マルカール法の導入
-                            gg_warping.at<double>(row, col) +=  delta_g_warping[row] * delta_g_warping[col];//A_0の行列を生成(左辺の6x6の行列に相当)
+                            if(col == row) {
+                                gg_warping.at<double>(row, col) += (1 + lambda_warp) * delta_g_warping[row] * delta_g_warping[col];//A_0の行列を生成(左辺の6x6の行列に相当)
+                            }else{
+                                gg_warping.at<double>(row, col) += delta_g_warping[row] * delta_g_warping[col];//A_0の行列を生成(左辺の6x6の行列に相当)
+                            }
+
                         }
                         B_warping.at<double>(row, 0) += (f - g_warping) * delta_g_warping[row];//bの行列を生成(右辺の6x1のベクトルに相当)
                     }
                     for (int row = 0; row < 2; row++) {
                         for (int col = 0; col < 2; col++) {
-                            gg_parallel.at<double>(row, col) +=  delta_g_parallel[row] * delta_g_parallel[col];
+                            if(row == col) {
+                                gg_parallel.at<double>(row, col) += (1 + lambda_parallel) * delta_g_parallel[row] * delta_g_parallel[col];
+                            }else {
+                                gg_parallel.at<double>(row, col) += delta_g_parallel[row] * delta_g_parallel[col];
+                            }
                         }
                         B_parallel.at<double>(row, 0) += (f - g_parallel) * delta_g_parallel[row];
                     }
@@ -759,56 +773,84 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                 double Error_warping = MSE_warping;
                 double Error_parallel = MSE_parallel;
 
-                cv::solve(gg_warping, B_warping, delta_uv_warping);//6x6の連立方程式を解いてdelta_uvに格納
-                cv::solve(gg_parallel, B_parallel, delta_uv_parallel);
+//                std::cout << "Error_warping:" << Error_warping << " error_warp_prev:" << error_warp_prev << std::endl;
+//                std::cout << "Error_parallel:" << Error_parallel << " error_parallel_prev:" << error_parallel_prev << std::endl;
+                if(fabs(Error_warping - error_warp_prev) < 1e-5 && fabs(Error_parallel - error_parallel_prev) < 1e-5){
+                    break;
+                }
+                if(Error_warping > error_warp_prev){
+                    gg_warping = gg_warping_prev.clone();
+                    B_warping = B_warping_prev.clone();
+                    lambda_warp *= 10.0;
+                }else{
+                    gg_warping_prev = gg_warping.clone();
+                    B_warping_prev = B_warping.clone();
 
-                std::pair<std::vector<cv::Point2f>, double> v_pair_warping;
-                std::pair<cv::Point2f, double> v_pair_parallel;
-                v_pair_warping.first = tmp_mv_warping;//動きベクトルと予測残差のpairをスタックに格納
-                v_pair_warping.second = Error_warping;
-                v_stack_warping.emplace_back(v_pair_warping);
-                v_pair_parallel.first = tmp_mv_parallel;
-                v_pair_parallel.second = Error_parallel;
-                v_stack_parallel.emplace_back(v_pair_parallel);
+                    cv::solve(gg_warping, B_warping, delta_uv_warping); //6x6の連立方程式を解いてdelta_uvに格納
 
-                for (int k = 0; k < 6; k++) {
+                    v_stack_warping.emplace_back(tmp_mv_warping, Error_warping);
 
-                    if (k % 2 == 0) {
-                        if ((-scaled_spread <= scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0)) &&
-                            (target_images[0][step].cols - 1 + scaled_spread >=
-                             scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0))) {
-                            tmp_mv_warping[(int) (k / 2)].x = tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0);//動きベクトルを更新(画像の外に出ないように)
-                        }
-                    } else {
-                        if ((-scaled_spread <= scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0)) &&
-                            (target_images[0][step].rows - 1 + scaled_spread >=
-                             scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0))) {
-                            tmp_mv_warping[(int) (k / 2)].y = tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0);
+                    for (int k = 0; k < 6; k++) {
+
+                        if (k % 2 == 0) {
+                            if ((-scaled_spread <= scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0)) &&
+                                (target_images[0][step].cols - 1 + scaled_spread >=
+                                 scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0))) {
+                                tmp_mv_warping[(int) (k / 2)].x = tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0);//動きベクトルを更新(画像の外に出ないように)
+                            }
+                        } else {
+                            if ((-scaled_spread <= scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0)) &&
+                                (target_images[0][step].rows - 1 + scaled_spread >=
+                                 scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0))) {
+                                tmp_mv_warping[(int) (k / 2)].y = tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0);
+                            }
                         }
                     }
+
+                    lambda_warp *= 0.1;
+                    error_warp_prev = Error_warping;
                 }
 
-                for (int k = 0; k < 2; k++) {
-                    if (k % 2 == 0) {
-                        if ((-scaled_spread <= scaled_coordinates[0].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) && (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[0].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
-                            (-scaled_spread <= scaled_coordinates[1].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) && (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[1].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
-                            (-scaled_spread <= scaled_coordinates[2].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) && (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[2].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0))) {
+                if(Error_parallel > error_parallel_prev){
+                    gg_parallel = gg_parallel_prev.clone();
+                    B_parallel = B_parallel_prev.clone();
+                    lambda_parallel *= 10.0;
+                }else{
+                    gg_parallel_prev = gg_parallel.clone();
+                    B_parallel_prev = B_parallel.clone();
+
+                    cv::solve(gg_parallel, B_parallel, delta_uv_parallel);
+
+                    v_stack_parallel.emplace_back(tmp_mv_parallel, Error_parallel);
+
+                    for (int k = 0; k < 2; k++) {
+                        if (k % 2 == 0) {
+                            if ((-scaled_spread <= scaled_coordinates[0].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) && (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[0].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
+                                (-scaled_spread <= scaled_coordinates[1].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) && (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[1].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
+                                (-scaled_spread <= scaled_coordinates[2].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) && (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[2].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0))) {
                                 tmp_mv_parallel.x = tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0);
-                        }
-                    } else {
-                        if ((-scaled_spread <= scaled_coordinates[0].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
-                            (target_images[0][step].rows - 1 + scaled_spread >=
-                             scaled_coordinates[0].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
-                            (-scaled_spread <= scaled_coordinates[1].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
-                            (target_images[0][step].rows - 1 + scaled_spread >=
-                             scaled_coordinates[1].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
-                            (-scaled_spread <= scaled_coordinates[2].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
-                            (target_images[0][step].rows - 1 + scaled_spread >=
-                             scaled_coordinates[2].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0))) {
-                            tmp_mv_parallel.y = tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0);
+                            }
+                        } else {
+                            if ((-scaled_spread <= scaled_coordinates[0].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
+                                (target_images[0][step].rows - 1 + scaled_spread >=
+                                 scaled_coordinates[0].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
+                                (-scaled_spread <= scaled_coordinates[1].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
+                                (target_images[0][step].rows - 1 + scaled_spread >=
+                                 scaled_coordinates[1].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
+                                (-scaled_spread <= scaled_coordinates[2].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
+                                (target_images[0][step].rows - 1 + scaled_spread >=
+                                 scaled_coordinates[2].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0))) {
+                                tmp_mv_parallel.y = tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0);
+                            }
                         }
                     }
+                    error_parallel_prev = Error_parallel;
+                    lambda_parallel *= 0.1;
                 }
+
+                error_warp_prev = Error_warping;
+                error_parallel_prev = Error_parallel;
+//                std::cout << "lambda_warp:" << lambda_warp << std::endl;
             }
 
             std::sort(v_stack_warping.begin(), v_stack_warping.end(), [](std::pair<std::vector<cv::Point2f>,double> a, std::pair<std::vector<cv::Point2f>,double> b){
@@ -828,6 +870,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
             double PSNR_warping = 10 * log10((255 * 255) / MSE_warping);
             double PSNR_parallel = 10 * log10((255 * 255) / MSE_parallel);
 
+//            std::cout << "min_parallel_error:" << Error_parallel << std::endl;
             if(step == 3) {//一番下の階層で
                 if(PSNR_parallel >= max_PSNR_parallel){//2種類のボケ方で良い方を採用
                     max_PSNR_parallel = PSNR_parallel;
