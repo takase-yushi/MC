@@ -112,7 +112,7 @@ void test5(){
 
     TriangleDivision triangle_division(ref_image, target_image, gauss_ref_image);
 
-    int divide_steps = 3;
+    int divide_steps = 8;
     // initする
     triangle_division.initTriangle(128, 128, divide_steps, LEFT_DIVIDE);
     std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
@@ -146,8 +146,8 @@ void test5(){
                 flag = !flag;
             }
 
-            diagonal_line_area_flag[i/2][0][0] = i;
-            diagonal_line_area_flag[i/2][127][0] = i;
+            diagonal_line_area_flag[i/2][0][0] = 0;
+            diagonal_line_area_flag[i/2][127][0] = 0;
             diagonal_line_area_flag[i/2][0][127] = i + 1;
             diagonal_line_area_flag[i/2][127][127] = i + 1;
         }
@@ -159,9 +159,7 @@ void test5(){
             cv::Point2f p2 = triangle.first.p2;
             cv::Point2f p3 = triangle.first.p3;
             std::cout << "================== step:" << i << " ================== " << std::endl;
-//            for(int x = 0 ; x < 128 ; x++){
-//                std::cout << diagonal_line_area_flag[i/2][x][x] << std::endl;
-//            }
+
             triangle_division.split(expand_images, foo[i], nullptr, Point3Vec(p1, p2, p3), i, triangle.second, divide_steps, diagonal_line_area_flag[i/2]);
         }
     }
