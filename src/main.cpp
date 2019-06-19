@@ -228,6 +228,7 @@ void run(std::string config_path) {
         // ===========================================================
         // ログ出力
         // ===========================================================
+        // TODO: init処理を書き直さないといけない
         getReconstructionDivisionImage(gaussRefImage, foo, block_size_x, block_size_y);
         cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo);
 
