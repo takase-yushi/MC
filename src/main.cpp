@@ -50,17 +50,15 @@ int main(int argc, char *argv[]){
     // Write test codes below
     // test2();
     // test3();
-    test5();
-
-    exit(0);
+//    test5();
+//    exit(0);
 
 //     test1();
 //    storeResidualImage();
 //    std::cout << getPSNR(cv::imread(getProjectDirectory(OS)+ std::string(argv[1])), cv::imread(getProjectDirectory(OS) + std::string(argv[2]))) << std::endl;
 //    exit(0);
-//    std::string config_path = std::string(argv[1]);
-//    exec ME
-//    run(config_path);
+    std::string config_path = std::string(argv[1]);
+    run(config_path);
 //    storeResidualImage();
 
 }
@@ -191,7 +189,7 @@ void run(std::string config_path) {
 
         std::vector<std::vector<cv::Mat>> ref_images, target_images;
 
-        ref_images = getRefImages(ref_image, ref_gauss);
+        ref_images = getRefImages(ref_image, gaussRefImage);
         target_images = getTargetImages(target_image);
 
         std::vector<std::vector<std::vector<unsigned char **>>> expand_images;
@@ -201,17 +199,22 @@ void run(std::string config_path) {
 
         triangle_division.constructPreviousCodingTree(foo, 0);
 
-        std::vector<std::vector<std::vector<int>>> area_flag_cache(init_triangles.size(), std::vector< std::vector<int> >(block_size_x, std::vector<int>(block_size_y)) );
+        std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_triangles.size(), std::vector< std::vector<int> >(block_size_x, std::vector<int>(block_size_y)) );
 
         for (int i = 0; i < init_triangles.size(); i++) {
-            std::vector<std::vector<int>> diagonal_line_area_flag(block_size_x, std::vector<int>(block_size_y, 0)); // 斜め線でどちらを取るか表すフラグ flag[x][y]
+//            std::vector<std::vector<int>> diagonal_line_area_flag(block_size_x, std::vector<int>(block_size_y, 0)); // 斜め線でどちらを取るか表すフラグ flag[x][y]
             if(i % 2 == 0){
-                bool flag = true;
-                for(int x = 0 ; x < block_size_x ; x++){
+                bool flag = false;
+                for (int x = 0; x < block_size_x; x++) {
                     // diagonal line
-                    diagonal_line_area_flag[x][block_size_y - x - 1] = (flag ? i : i+1);
+                    diagonal_line_area_flag[i/2][x][block_size_y - x - 1] = (flag ? i : i + 1);
                     flag = !flag;
                 }
+
+                diagonal_line_area_flag[i/2][0][0] = 0;
+                diagonal_line_area_flag[i/2][127][0] = 0;
+                diagonal_line_area_flag[i/2][0][127] = i + 1;
+                diagonal_line_area_flag[i/2][127][127] = i + 1;
             }
 
             std::pair<Point3Vec, int> triangle = init_triangles[i];
@@ -219,8 +222,7 @@ void run(std::string config_path) {
             cv::Point2f p2 = triangle.first.p2;
             cv::Point2f p3 = triangle.first.p3;
             std::cout << "================== step:" << i << " ================== " << std::endl;
-            triangle_division.split(expand_images, foo[i], nullptr, Point3Vec(p1, p2, p3), i, triangle.second, division_steps, diagonal_line_area_flag);
-            area_flag_cache[i] = diagonal_line_area_flag;
+            triangle_division.split(expand_images, foo[i], nullptr, Point3Vec(p1, p2, p3), i, triangle.second, division_steps, diagonal_line_area_flag[i/2]);
         }
         std::cout << "split finished" << std::endl;
 
@@ -230,7 +232,7 @@ void run(std::string config_path) {
         // ===========================================================
         // TODO: init処理を書き直さないといけない
         getReconstructionDivisionImage(gaussRefImage, foo, block_size_x, block_size_y);
-        cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo, area_flag_cache);
+        cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo, diagonal_line_area_flag);
 
         int code_length = triangle_division.getCtuCodeLength(foo);
         std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;

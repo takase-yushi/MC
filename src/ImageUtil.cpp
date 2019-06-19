@@ -229,22 +229,20 @@ EXPAND_ARRAY_TYPE getExpandImages(std::vector<std::vector<cv::Mat>> ref_images, 
                 current_target_org_expand[j] += expand;
             }
 
-            auto **current_ref_expand = (unsigned char **) std::malloc(
-                    sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
+            auto **current_ref_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
             current_ref_expand += expand;
-            auto **current_ref_org_expand = (unsigned char **) std::malloc(
-                    sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
+            auto **current_ref_org_expand = (unsigned char **) std::malloc(sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
             current_ref_org_expand += expand;
+
             for (int j = -expand; j < current_ref_image.cols + expand; j++) {
-                if ((current_ref_expand[j] = (unsigned char *) std::malloc(
-                        sizeof(unsigned char) * (current_target_image.rows + expand * 2))) == nullptr) {
+                if ((current_ref_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (current_target_image.rows + expand * 2))) == nullptr) {
                 }
                 current_ref_expand[j] += expand;
 
-                (current_ref_org_expand[j] = (unsigned char *) std::malloc(
-                        sizeof(unsigned char) * (current_target_image.rows + expand * 2)));
+                (current_ref_org_expand[j] = (unsigned char *) std::malloc(sizeof(unsigned char) * (current_target_image.rows + expand * 2)));
                 current_ref_org_expand[j] += expand;
             }
+
             for (int j = -expand; j < current_target_image.rows + expand; j++) {
                 for (int i = -expand; i < current_target_image.cols + expand; i++) {
                     if (j >= 0 && j < current_target_image.rows && i >= 0 && i < current_target_image.cols) {
