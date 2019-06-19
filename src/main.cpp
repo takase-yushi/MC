@@ -50,19 +50,19 @@ int main(int argc, char *argv[]){
     // Write test codes below
     // test2();
     // test3();
-//    test5();
-//    exit(0);
+    test5();
+    exit(0);
 
 //     test1();
 //    storeResidualImage();
 //    std::cout << getPSNR(cv::imread(getProjectDirectory(OS)+ std::string(argv[1])), cv::imread(getProjectDirectory(OS) + std::string(argv[2]))) << std::endl;
 //    exit(0);
-    std::string config_path = std::string(argv[1]);
-    run(config_path);
+//    std::string config_path = std::string(argv[1]);
+//    run(config_path);
 //    storeResidualImage();
 
 }
-std::string out_file_suffix = "";
+std::string out_file_suffix = "_half_size_Marquard";
 
 void run(std::string config_path) {
 
