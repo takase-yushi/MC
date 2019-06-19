@@ -671,28 +671,42 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             cv::Point2f p3 = corners[triangle.p3_idx];
 
             cv::Point2f x = (p2 - p1) / 2.0;
+            x.x = (int)x.x;
 
-            cv::Point2f b = p1 + x;
+            cv::Point2f b1 = p1 + x;
+            cv::Point2f b2 = p1 + x;
+            b2.x += 1;
+            b1.y = (int)b1.y;
+            b2.y = (int)b2.y;
 
-            int b_idx = addCorner(b);
+            cv::Point2f d1 = p3;
+            cv::Point2f d2 = p3;
+            d1.x = (int)d1.x;
+            d1.y = (int)d1.y;
+            d2.x = ceil(d2.x);
+            d2.y = (int)(d2.y);
+
+            int b1_idx = addCorner(b1);
+            int b2_idx = addCorner(b2);
+            int d1_idx = addCorner(d1);
+            int d2_idx = addCorner(d2);
 
             int a_idx = triangle.p1_idx;
             int c_idx = triangle.p2_idx;
-            int d_idx = triangle.p3_idx;
 
-            int t1_idx = insertTriangle(a_idx, b_idx, d_idx, TYPE3);
-            int t2_idx = insertTriangle(b_idx, c_idx, d_idx, TYPE1);
+            int t1_idx = insertTriangle(a_idx, b1_idx, d1_idx, TYPE3);
+            int t2_idx = insertTriangle(b2_idx, c_idx, d2_idx, TYPE1);
 
             removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
             removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, triangle_index);
 
-            addNeighborVertex(a_idx, b_idx, d_idx);
-            addNeighborVertex(b_idx, c_idx, d_idx);
+            addNeighborVertex(a_idx, b1_idx, d1_idx);
+            addNeighborVertex(b2_idx, c_idx, d2_idx);
 
             covered_triangle.emplace_back();
             covered_triangle.emplace_back();
-            addCoveredTriangle(a_idx, b_idx, d_idx, t1_idx);
-            addCoveredTriangle(b_idx, c_idx, d_idx, t2_idx);
+            addCoveredTriangle(a_idx, b1_idx, d1_idx, t1_idx);
+            addCoveredTriangle(b2_idx, c_idx, d2_idx, t2_idx);
 
         }
             break;
@@ -703,29 +717,40 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             cv::Point2f p3 = corners[triangle.p3_idx];
 
             cv::Point2f y = (p3 - p1) / 2.0;
+            y.y = (int)y.y;
 
-            cv::Point2f b = p1 + y;
+            cv::Point2f b1 = p1 + y;
+            cv::Point2f b2 = p1 + y;
+            b2.y += 1;
 
-            int b_idx = addCorner(b);
+            cv::Point2f c1 = p2;
+            cv::Point2f c2 = p2;
+            c1.x = (int)c1.x;
+            c1.y = (int)c1.y;
+            c2.x = (int)(c2.x);
+            c2.y = ceil(c2.y);
+
+            int b1_idx = addCorner(b1);
+            int b2_idx = addCorner(b2);
+            int c1_idx = addCorner(c1);
+            int c2_idx = addCorner(c2);
 
             int a_idx = triangle.p1_idx;
-            int c_idx = triangle.p2_idx;
             int d_idx = triangle.p3_idx;
 
-            int t1_idx = insertTriangle(a_idx, b_idx, c_idx, TYPE4);
-            int t2_idx = insertTriangle(b_idx, c_idx, d_idx, TYPE1);
+            int t1_idx = insertTriangle(a_idx, b1_idx, c1_idx, TYPE4);
+            int t2_idx = insertTriangle(b2_idx, c2_idx, d_idx, TYPE1);
 
             removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
             removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, triangle_index);
 
-            addNeighborVertex(a_idx, b_idx, c_idx);
-            addNeighborVertex(b_idx, c_idx, d_idx);
+            addNeighborVertex(a_idx, b1_idx, c1_idx);
+            addNeighborVertex(b2_idx, c2_idx, d_idx);
 
             covered_triangle.emplace_back();
             covered_triangle.emplace_back();
-            addCoveredTriangle(a_idx, b_idx, c_idx, t1_idx);
-            addCoveredTriangle(b_idx, c_idx, d_idx, t2_idx);
-
+            addCoveredTriangle(a_idx, b1_idx, c1_idx, t1_idx);
+            addCoveredTriangle(b2_idx, c2_idx, d_idx, t2_idx);
         }
             break;
         case DIVIDE::TYPE7:
@@ -735,28 +760,39 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             cv::Point2f p3 = corners[triangle.p3_idx];
 
             cv::Point2f x = (p3 - p2) / 2.0;
+            x.x = (int)x.x;
 
-            cv::Point2f c = p2 + x;
+            cv::Point2f a1 = p1, a2 = p1;
+            a1.x = (int)a1.x;
+            a1.y = ceil(a1.y);
+            a2.x = ceil(a2.x);
+            a2.y = ceil(a2.y);
 
-            int c_idx = addCorner(c);
+            cv::Point2f c1 = p2 + x;
+            cv::Point2f c2 = p2 + x;
+            c2.x += 1;
 
-            int a_idx = triangle.p1_idx;
+            int a1_idx = addCorner(a1);
+            int a2_idx = addCorner(a2);
+            int c1_idx = addCorner(c1);
+            int c2_idx = addCorner(c2);
+
             int b_idx = triangle.p2_idx;
             int d_idx = triangle.p3_idx;
 
-            int t1_idx = insertTriangle(a_idx, b_idx, c_idx, TYPE2);
-            int t2_idx = insertTriangle(a_idx, c_idx, d_idx, TYPE4);
+            int t1_idx = insertTriangle(a1_idx, b_idx, c1_idx, TYPE2);
+            int t2_idx = insertTriangle(a2_idx, c2_idx, d_idx, TYPE4);
 
             removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
             removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, triangle_index);
 
-            addNeighborVertex(a_idx, b_idx, c_idx);
-            addNeighborVertex(a_idx, c_idx, d_idx);
+            addNeighborVertex(a1_idx, b_idx, c1_idx);
+            addNeighborVertex(a2_idx, c2_idx, d_idx);
 
             covered_triangle.emplace_back();
             covered_triangle.emplace_back();
-            addCoveredTriangle(a_idx, b_idx, c_idx, t1_idx);
-            addCoveredTriangle(a_idx, c_idx, d_idx, t2_idx);
+            addCoveredTriangle(a1_idx, b_idx, c1_idx, t1_idx);
+            addCoveredTriangle(a2_idx, c2_idx, d_idx, t2_idx);
 
         }
             break;
@@ -768,27 +804,39 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
 
             cv::Point2f y = (p3 - p1) / 2.0;
 
-            cv::Point2f c = p1 + y;
+            cv::Point2f a1 = p2;
+            cv::Point2f a2 = p2;
+            a1.x = ceil(a1.x);
+            a1.y = (int)a1.y;
+            a2.x = ceil(a2.x);
+            a2.y = ceil(a2.y);
 
-            int c_idx = addCorner(c);
+            cv::Point2f c1 = p1 + y;
+            cv::Point2f c2 = p1 + y;
+            c1.y = (int)c1.y;
+            c2.y = ceil(c2.y);
 
-            int a_idx = triangle.p2_idx;
+            int a1_idx = addCorner(a1);
+            int a2_idx = addCorner(a2);
+            int c1_idx = addCorner(c1);
+            int c2_idx = addCorner(c2);
+
             int b_idx = triangle.p1_idx;
             int d_idx = triangle.p3_idx;
 
-            int t1_idx = insertTriangle(a_idx, b_idx, c_idx, TYPE2);
-            int t2_idx = insertTriangle(a_idx, c_idx, d_idx, TYPE3);
+            int t1_idx = insertTriangle(a1_idx, b_idx, c1_idx, TYPE2);
+            int t2_idx = insertTriangle(a2_idx, c2_idx, d_idx, TYPE3);
 
             removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
             removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, triangle_index);
 
-            addNeighborVertex(a_idx, b_idx, c_idx);
-            addNeighborVertex(a_idx, c_idx, d_idx);
+            addNeighborVertex(a1_idx, b_idx, c1_idx);
+            addNeighborVertex(a2_idx, c2_idx, d_idx);
 
             covered_triangle.emplace_back();
             covered_triangle.emplace_back();
-            addCoveredTriangle(a_idx, b_idx, c_idx, t1_idx);
-            addCoveredTriangle(a_idx, c_idx, d_idx, t2_idx);
+            addCoveredTriangle(a1_idx, b_idx, c1_idx, t1_idx);
+            addCoveredTriangle(a2_idx, c2_idx, d_idx, t2_idx);
 
         }
             break;
@@ -828,7 +876,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
     std::vector<cv::Point2f> gauss_result_warping;
     cv::Point2f gauss_result_parallel;
-    std::cout << triangles.size() << std::endl;
     if(triangle_gauss_results[triangle_index].residual > 0) {
         GaussResult result_before = triangle_gauss_results[triangle_index];
         gauss_result_warping = result_before.mv_warping;
@@ -889,8 +936,10 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     double RMSE_after_subdiv = 0.0;
     std::vector<GaussResult> split_mv_result(2);
 
-    addCornerAndTriangle(Triangle(corner_flag[(int) p1.y][(int) p1.x], corner_flag[(int) p2.y][(int) p2.x],
-                                  corner_flag[(int) p3.y][(int) p3.x]), triangle_index, type);
+    int t1_idx = addCorner(p1);
+    int t2_idx = addCorner(p2);
+    int t3_idx = addCorner(p3);
+    addCornerAndTriangle(Triangle(t1_idx, t2_idx, t3_idx), triangle_index, type);
 
     int triangle_indexes[] = {(int)triangles.size() - 2, (int)triangles.size() - 1};
 
@@ -1046,76 +1095,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
 }
 
-//void TriangleDivision::updateAreaFlag(std::vector<std::vector<int>> diagonal_line_area_flag, Point3Vec triangle, int type){
-//        int sx = ceil( std::min({triangle.p1.x, triangle.p2.x, triangle.p3.x}));
-//        int lx = floor(std::max({triangle.p1.x, triangle.p2.x, triangle.p3.x}));
-//        int sy = ceil( std::min({triangle.p1.y, triangle.p2.y, triangle.p3.y}));
-//        int ly = floor(std::max({triangle.p1.y, triangle.p2.y, triangle.p3.y}));
-//
-//        int width =  (lx - sx) / 2 + 1;
-//        int height = (ly - sy) / 2 + 1;
-//
-//        bool flag = true;
-//        int a, b, c, d;
-//        if(type == TYPE1) {
-//            for (int x = 0; x < width - 1; x++) {
-//                diagonal_line_area_flag[(x + sx) % block_size_x][(x + sx) % block_size_y] = (flag ? triangle_indexes[0] : triangle_indexes[1]);
-//                flag = !flag;
-//            }
-//        }else if(type == TYPE2) {
-//            for (int x = 0 ; x < width - 1; x++) {
-//                diagonal_line_area_flag[(sx + width + x) % block_size_x][(sy + height + x) % block_size_y] = (flag ? triangle_indexes[0] : triangle_indexes[1]);
-//                flag = !flag;
-//            }
-//
-//        }else if(type == TYPE3){
-//            for(int x = 0 ; x < width - 1 ; x++){
-//                diagonal_line_area_flag[(sx + width + x) % block_size_x][(sy + height - x) % block_size_y] = (flag ? triangle_indexes[0] : triangle_indexes[1]);
-//                flag = !flag;
-//            }
-//        }else if(type == TYPE4){
-//            for(int x = 0 ; x < width - 1 ; x++){
-//                diagonal_line_area_flag[(x + sx) % block_size_x][(width - x) % block_size_y] = (flag ? triangle_indexes[0] : triangle_indexes[1]);
-//                flag = !flag;
-//            }
-//        }
-//
-//        int sx = ceil( std::min({triangle.p1.x, triangle.p2.x, triangle.p3.x}));
-//        int lx = floor(std::max({triangle.p1.x, triangle.p2.x, triangle.p3.x}));
-//        int sy = ceil( std::min({triangle.p1.y, triangle.p2.y, triangle.p3.y}));
-//        int ly = floor(std::max({triangle.p1.y, triangle.p2.y, triangle.p3.y}));
-//
-//        int width =  (lx - sx) / 2;
-//        int height = (ly - sy) / 2;
-//
-//        bool flag = true;
-//        int a, b, c, d;
-//        if(type == TYPE5) {
-//            diagonal_line_area_flag[(sx + width) % block_size_x    ][sy % block_size_y] = triangle_indexes[0];
-//            diagonal_line_area_flag[(sx + width) % block_size_x + 1][sy % block_size_y] = triangle_indexes[1];
-//        }else if(type == TYPE6) {
-//            diagonal_line_area_flag[sx % block_size_x][(sy + height) % block_size_y    ] = triangle_indexes[0];
-//            diagonal_line_area_flag[sx % block_size_x][(sy + height) % block_size_y + 1] = triangle_indexes[1];
-//
-//            std::cout << "TYPE6" << std::endl;
-//
-//            std::cout << sx << " " << lx << " " << sy << " " << ly << std::endl;
-//            std::cout << (sy + height) % block_size_y + 1 << std::endl;
-//
-//        }else if(type == TYPE7){
-//            diagonal_line_area_flag[(sx + width) % block_size_x   ][ly % block_size_y] = triangle_indexes[0];
-//            diagonal_line_area_flag[(sx + width) % block_size_x + 1][ly % block_size_y] = triangle_indexes[1];
-//        }else if(type == TYPE8){
-//            diagonal_line_area_flag[lx % block_size_x][(sy + height) % block_size_y    ] = triangle_indexes[0];
-//            diagonal_line_area_flag[lx % block_size_x][(sy + height) % block_size_y + 1] = triangle_indexes[1];
-//
-//            std::cout << "TYPE8" << std::endl;
-//            std::cout << sx << " " << lx << " " << sy << " " << ly << std::endl;
-//            std::cout << (sy + height) % block_size_y + 1 << std::endl;
-//        }
-//
-//}
-
 /**
  * @fn TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type)
  * @details ３点の座標とtypeを受け取り，分割した形状を返す
@@ -1130,8 +1109,9 @@ TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(const cv::Point
     switch(type) {
         case DIVIDE::TYPE1:
         {
-            cv::Point2f x = (p2 - p1) / 2.0;
-            cv::Point2f y = (p3 - p1) / 2.0;
+            cv::Point2f x = (p2 - p1) / 2;
+            cv::Point2f y = (p3 - p1) / 2;
+
             a = p1;
             b = p2;
             c = a + x + y;
@@ -1143,7 +1123,6 @@ TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(const cv::Point
         {
             cv::Point2f x = (p2 - p3) / 2.0;
             cv::Point2f y = (p1 - p3) / 2.0;
-
             a = p1;
             b = p3 + x + y;
             c = p2;
@@ -1178,46 +1157,91 @@ TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(const cv::Point
         case DIVIDE::TYPE5:
         {
             cv::Point2f x = (p2 - p1) / 2.0;
+            x.x = (int)x.x;
 
             a = p1;
-            b = p1 + x;
-            c = p2;
-            d = p3;
 
-            return {Point3Vec(a, b, d), Point3Vec(b, c, d), TYPE3, TYPE1};
+            cv::Point2f b1 = p1 + x;
+            cv::Point2f b2 = p1 + x;
+            b2.x += 1;
+            b1.y = (int)b1.y;
+            b2.y = (int)b2.y;
+
+            c = p2;
+
+            cv::Point2f d1 = p3;
+            cv::Point2f d2 = p3;
+            d1.x = (int)d1.x;
+            d1.y = (int)d1.y;
+            d2.x = ceil(d2.x);
+            d2.y = (int)(d2.y);
+
+            return {Point3Vec(a, b1, d1), Point3Vec(b2, c, d2), TYPE3, TYPE1};
         }
         case DIVIDE::TYPE6:
         {
             cv::Point2f y = (p3 - p1) / 2.0;
+            y.y = (int)y.y;
 
             a = p1;
-            b = p1 + y;
-            c = p2;
+            cv::Point2f b1 = p1 + y;
+            cv::Point2f b2 = p1 + y;
+            b2.y += 1;
+
+            cv::Point2f c1 = p2;
+            cv::Point2f c2 = p2;
+            c1.x = (int)c1.x;
+            c1.y = (int)c1.y;
+            c2.x = (int)(c2.x);
+            c2.y = ceil(c2.y);
+
             d = p3;
 
-            return {Point3Vec(a, b, c), Point3Vec(b, c, d), TYPE4, TYPE1};
+            return {Point3Vec(a, b1, c1), Point3Vec(b2, c2, d), TYPE4, TYPE1};
         }
         case DIVIDE::TYPE7:
         {
             cv::Point2f x = (p3 - p2) / 2.0;
+            x.x = (int)x.x;
 
-            a = p1;
+            cv::Point2f a1 = p1;
+            cv::Point2f a2 = p1;
+            a1.x = (int)a1.x;
+            a1.y = ceil(a1.y);
+            a2.x = ceil(a2.x);
+            a2.y = ceil(a2.y);
+
             b = p2;
-            c = p2 + x;
+
+            cv::Point2f c1 = p2 + x;
+            cv::Point2f c2 = p2 + x;
+            c2.x += 1;
+
             d = p3;
 
-            return {Point3Vec(a, b, c), Point3Vec(a, c, d), TYPE2, TYPE4};
+            return {Point3Vec(a1, b, c1), Point3Vec(a2, c2, d), TYPE2, TYPE4};
         }
         case DIVIDE::TYPE8:
         {
             cv::Point2f y = (p3 - p1) / 2.0;
 
-            a = p2;
+            cv::Point2f a1 = p2;
+            cv::Point2f a2 = p2;
+            a1.x = ceil(a1.x);
+            a1.y = (int)a1.y;
+            a2.x = ceil(a2.x);
+            a2.y = ceil(a2.y);
+
             b = p1;
-            c = p1 + y;
+
+            cv::Point2f c1 = p1 + y;
+            cv::Point2f c2 = p1 + y;
+            c1.y = (int)c1.y;
+            c2.y = ceil(c2.y);
+
             d = p3;
 
-            return {Point3Vec(a, b, c), Point3Vec(a, c, d), TYPE2, TYPE3};
+            return {Point3Vec(a1, b, c1), Point3Vec(a2, c2, d), TYPE2, TYPE3};
         }
         default:
             break;
