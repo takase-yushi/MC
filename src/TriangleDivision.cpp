@@ -978,49 +978,15 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             }
         }
 
-    }else{
-        int sx = ceil( std::min({triangle.p1.x, triangle.p2.x, triangle.p3.x}));
-        int lx = floor(std::max({triangle.p1.x, triangle.p2.x, triangle.p3.x}));
-        int sy = ceil( std::min({triangle.p1.y, triangle.p2.y, triangle.p3.y}));
-        int ly = floor(std::max({triangle.p1.y, triangle.p2.y, triangle.p3.y}));
-
-        int width =  (lx - sx) / 2;
-        int height = (ly - sy) / 2;
-
-        bool flag = true;
-        int a, b, c, d;
-        if(type == TYPE5) {
-            diagonal_line_area_flag[(sx + width) % block_size_x    ][sy % block_size_y] = triangle_indexes[0];
-            diagonal_line_area_flag[(sx + width) % block_size_x + 1][sy % block_size_y] = triangle_indexes[1];
-        }else if(type == TYPE6) {
-            diagonal_line_area_flag[sx % block_size_x][(sy + height) % block_size_y    ] = triangle_indexes[0];
-            diagonal_line_area_flag[sx % block_size_x][(sy + height) % block_size_y + 1] = triangle_indexes[1];
-
-            std::cout << "TYPE6" << std::endl;
-
-            std::cout << sx << " " << lx << " " << sy << " " << ly << std::endl;
-            std::cout << (sy + height) % block_size_y + 1 << std::endl;
-
-        }else if(type == TYPE7){
-            diagonal_line_area_flag[(sx + width) % block_size_x   ][ly % block_size_y] = triangle_indexes[0];
-            diagonal_line_area_flag[(sx + width) % block_size_x + 1][ly % block_size_y] = triangle_indexes[1];
-        }else if(type == TYPE8){
-            diagonal_line_area_flag[lx % block_size_x][(sy + height) % block_size_y    ] = triangle_indexes[0];
-            diagonal_line_area_flag[lx % block_size_x][(sy + height) % block_size_y + 1] = triangle_indexes[1];
-
-            std::cout << "TYPE8" << std::endl;
-            std::cout << sx << " " << lx << " " << sy << " " << ly << std::endl;
-            std::cout << (sy + height) % block_size_y + 1 << std::endl;
-        }
     }
 
-//    #pragma omp parallel for
     ctu->leftNode = new CodingTreeUnit();
     ctu->leftNode->parentNode = ctu;
 
     ctu->rightNode = new CodingTreeUnit();
     ctu->rightNode->parentNode = ctu;
 
+    #pragma omp parallel for
     for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
         double error_tmp;
         bool flag_tmp;
@@ -1045,7 +1011,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             {split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel}, split_mv_result[1].residual,
             triangle_indexes[1], (cmt->rightNode != nullptr ? cmt->rightNode->mv1 : cmt->mv1), diagonal_line_area_flag, ctu);
 
-    std::cout << split_mv_result[0].mv_parallel << " " << split_mv_result[1].mv_parallel << std::endl;
     std::cout << "before:" << cost_before_subdiv << " after:" << (cost_after_subdiv1 + cost_after_subdiv2) << std::endl;
     if(cost_before_subdiv > (cost_after_subdiv1 + cost_after_subdiv2)) {
         ctu->split_cu_flag = true;
@@ -1581,10 +1546,9 @@ cv::Mat TriangleDivision::getPredictedDiagonalImageFromCtu(std::vector<CodingTre
 void TriangleDivision::getPredictedDiagonalImageFromCtu(CodingTreeUnit* ctu, std::vector<std::vector<int>> &area_flag, const cv::Mat &out){
 
     if(ctu->leftNode == nullptr && ctu->rightNode == nullptr) {
-         int triangle_index = ctu->triangle_index;
+        int triangle_index = ctu->triangle_index;
         Triangle triangle_corner_idx = triangles[triangle_index].first;
         Point3Vec triangle(corners[triangle_corner_idx.p1_idx], corners[triangle_corner_idx.p2_idx], corners[triangle_corner_idx.p3_idx]);
-
         std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, block_size_x, block_size_y);
         std::random_device rnd;     // 非決定的な乱数生成器
         std::mt19937 mt(rnd());
@@ -1593,7 +1557,6 @@ void TriangleDivision::getPredictedDiagonalImageFromCtu(CodingTreeUnit* ctu, std
         int b = mt() % 256;
 
         for (const auto& pixel : pixels) {
-//            if(ctu->triangle_index == 243) std::cout << pixel.x << " " << pixel.y << std::endl;
             R(out, (int) pixel.x, (int) pixel.y) = r;
             G(out, (int) pixel.x, (int) pixel.y) = g;
             B(out, (int) pixel.x, (int) pixel.y) = b;
