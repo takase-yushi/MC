@@ -907,24 +907,24 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         bool flag = true;
         int a, b, c, d;
         if(type == TYPE1) {
-            for (int x = 1 ; x <= width  ; x++) {
-                diagonal_line_area_flag[(x + sx) % block_size_x][(x + sy) % block_size_y] = (flag ? triangle_indexes[1] : triangle_indexes[0]);
+            for (int x = 0 ; x <= width  ; x++) {
+                diagonal_line_area_flag[(x + sx) % block_size_x][(x + sy) % block_size_y] = triangle_indexes[x % 2];
                 flag = !flag;
             }
         }else if(type == TYPE2) {
-            for (int x = 1 ; x <= width ; x++) {
-                diagonal_line_area_flag[(sx + width + x) % block_size_x][(sy + height + x) % block_size_y] = (flag ? triangle_indexes[1] : triangle_indexes[0]);
+            for (int x = 0 ; x <= width ; x++) {
+                diagonal_line_area_flag[(sx + width + x) % block_size_x][(sy + height + x) % block_size_y] = triangle_indexes[x % 2];
                 flag = !flag;
             }
 
         }else if(type == TYPE3){
-            for(int x = 1 ; x <= width ; x++){
-                diagonal_line_area_flag[(sx + width + x) % block_size_x][(sy + height - x) % block_size_y] = (flag ? triangle_indexes[0] : triangle_indexes[1]);
+            for(int x = 0 ; x <= width ; x++){
+                diagonal_line_area_flag[(sx + width + x) % block_size_x][(sy + height - x + 1) % block_size_y] = triangle_indexes[x % 2];
                 flag = !flag;
             }
         }else if(type == TYPE4){
-            for(int x = 1 ; x <= width ; x++){
-                diagonal_line_area_flag[(x + sx) % block_size_x][(ly - x) % block_size_y] = (flag ? triangle_indexes[0] : triangle_indexes[1]);
+            for(int x = 0 ; x <= width ; x++){
+                diagonal_line_area_flag[(x + sx) % block_size_x][(ly - x) % block_size_y] = triangle_indexes[x % 2];
                 flag = !flag;
             }
         }
