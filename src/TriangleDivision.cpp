@@ -825,18 +825,18 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             int b_idx = triangle.p1_idx;
             int d_idx = triangle.p3_idx;
 
-            int t1_idx = insertTriangle(a1_idx, b_idx, c1_idx, TYPE2);
+            int t1_idx = insertTriangle(b_idx, a1_idx, c1_idx, TYPE2);
             int t2_idx = insertTriangle(a2_idx, c2_idx, d_idx, TYPE3);
 
             removeTriangleNeighborVertex(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx);
             removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, triangle_index);
 
-            addNeighborVertex(a1_idx, b_idx, c1_idx);
+            addNeighborVertex(b_idx, a1_idx, c1_idx);
             addNeighborVertex(a2_idx, c2_idx, d_idx);
 
             covered_triangle.emplace_back();
             covered_triangle.emplace_back();
-            addCoveredTriangle(a1_idx, b_idx, c1_idx, t1_idx);
+            addCoveredTriangle(b_idx, a1_idx, c1_idx, t1_idx);
             addCoveredTriangle(a2_idx, c2_idx, d_idx, t2_idx);
 
         }
@@ -1072,6 +1072,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
  */
 TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, int type){
     cv::Point2f a, b, c, d;
+
     switch(type) {
         case DIVIDE::TYPE1:
         {
@@ -1207,7 +1208,7 @@ TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(const cv::Point
 
             d = p3;
 
-            return {Point3Vec(a1, b, c1), Point3Vec(a2, c2, d), TYPE2, TYPE3};
+            return {Point3Vec(b, a1, c1), Point3Vec(a2, c2, d), TYPE2, TYPE3};
         }
         default:
             break;
