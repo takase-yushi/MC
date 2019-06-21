@@ -375,10 +375,11 @@ cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit
 
 /**
  * @fn cv::Mat getExpandImage(cv::Mat image, int k)
- * @brief
- * @param image
- * @param k
- * @return
+ * @brief k倍に拡張子，expansion_size分回りを拡張した画像を生成する
+ * @param image 画像
+ * @param k サイズの倍数
+ * @param expansion_size 拡張する画素数
+ * @return 拡張した画像
  */
 unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size){
     cv::Mat out = cv::Mat::zeros(image.rows, image.cols, CV_8UC3);
@@ -421,4 +422,20 @@ unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size){
     }
 
     return expansion_image;
+}
+
+/**
+ * @fn void freeImage(unsigned char **image, cv::Size image_size, int expansion_size)
+ * @brief 拡張画像をfreeする
+ * @param image 画素値が格納されていおり，拡張されている画素配列
+ * @param image_size 画像のサイズ
+ * @param expansion_size 拡張サイズ
+ */
+void freeImage(unsigned char **image, cv::Size image_size, int expansion_size){
+    for(int i = -expansion_size ; i < image_size.height + expansion_size ; i++){
+        image[i] -= expansion_size;
+        free(image[i]);
+    }
+    image -= expansion_size;
+    free(image);
 }
