@@ -6,6 +6,7 @@
 #include <cassert>
 #include <iostream>
 #include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 #include "../includes/ImageUtil.h"
 #include "../includes/Utils.h"
 #include "../includes/CodingTreeUnit.h"
@@ -370,4 +371,54 @@ cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit
 //    cv::imwrite(getProjectDirectory(OS) + "/img/minato/reconstruction_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", reconstructedImage);
 
     return reconstructedImage;
+}
+
+/**
+ * @fn cv::Mat getExpandImage(cv::Mat image, int k)
+ * @brief
+ * @param image
+ * @param k
+ * @return
+ */
+unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size){
+    cv::Mat out = cv::Mat::zeros(image.rows, image.cols, CV_8UC3);
+    cv::resize(image, out, cv::Size(image.rows * k, image.cols * k), 0, 0, CV_INTER_CUBIC);
+
+    auto **expansion_image = (unsigned char **)malloc(sizeof(unsigned char *) * out.cols + expansion_size * 2);
+    expansion_image += expansion_size;
+
+    for(int i = -expansion_size ; i < out.cols + expansion_size ; i++) {
+        expansion_image[i] = (unsigned char *)malloc(sizeof(unsigned char) * expansion_image.rows + expansion_size * 2);
+        expansion_image[i] += expansion_size;
+    }
+
+    for(int y = 0 ; y < out.rows ; y++){
+        for(int x = 0 ; x < out.cols ; x++){
+            expansion_image[x][y] = M(out, x, y);
+        }
+    }
+
+    // y方向に埋める
+    for(int y = 0 ; y < out.rows ; y++) {
+        for (int x = -expansion_size; x < 0; x++) {
+            expansion_image[x][y] = M(out, 0, y);
+            expansion_image[out.cols - x - 1][y] = M(out, out.cols - 1, y);
+
+            expansion_image[x][y] = M(out, 0, y);
+            expansion_image[out.cols - x - 1][y] = M(out, out.cols - 1, y);
+        }
+    }
+
+    // x方向に埋める
+    for(int y = -expansion_size ; y < 0 ; y++) {
+        for (int x = -expansion_size; x < out.cols + expansion_size; x++) {
+            expansion_image[x][y] = expansion_image[x][0];
+            expansion_image[x][out.rows - y - 1] = expansion_image[x][out.rows - 1];
+
+            expansion_image[x][y] = expansion_image[x][0];
+            expansion_image[x][out.rows - y - 1] = expansion_image[x][out.rows - 1];
+        }
+    }
+
+    return expansion_image;
 }
