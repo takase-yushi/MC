@@ -425,6 +425,57 @@ unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size){
 }
 
 /**
+ * @fn cv::Mat getExpandImage(cv::Mat image, int k)
+ * @brief k倍に拡張子，expansion_size分回りを拡張した画像(Mat)を生成する
+ * @param image 画像
+ * @param k サイズの倍数
+ * @param expansion_size 拡張する画素数
+ * @return 拡張した画像
+ */
+cv::Mat getExpansionMatImage(cv::Mat image, int k, int expansion_size){
+    cv::Mat out = cv::Mat::zeros(image.rows, image.cols, CV_8UC3);
+    cv::resize(image, out, cv::Size(image.rows * k, image.cols * k), 0, 0, CV_INTER_CUBIC);
+
+    cv::Mat expansion_image = cv::Mat::zeros(image.rows * k + expansion_size, image.cols * k + expansion_size, CV_8UC3);
+
+    for(int y = 0 ; y < out.rows ; y++){
+        for(int x = 0 ; x < out.cols ; x++){
+            R(expansion_image, x, y) = R(out, x, y);
+            B(expansion_image, x, y) = G(out, x, y);
+            B(expansion_image, x, y) = B(out, x, y);
+        }
+    }
+
+    // y方向に埋める
+    for(int y = 0 ; y < out.rows ; y++) {
+        for (int x = -expansion_size; x < 0; x++) {
+            R(expansion_image, x, y) = R(out, 0, y);
+            B(expansion_image, x, y) = G(out, 0, y);
+            B(expansion_image, x, y) = B(out, 0, y);
+
+            R(expansion_image, out.cols - x - 1, y) = R(out, out.cols - 1, y);
+            B(expansion_image, out.cols - x - 1, y) = G(out, out.cols - 1, y);
+            B(expansion_image, out.cols - x - 1, y) = B(out, out.cols - 1, y);
+        }
+    }
+
+    // x方向に埋める
+    for(int y = -expansion_size ; y < 0 ; y++) {
+        for (int x = -expansion_size; x < out.cols + expansion_size; x++) {
+            R(expansion_image, x, y) = R(out, x, 0);
+            B(expansion_image, x, y) = G(out, x, 0);
+            B(expansion_image, x, y) = B(out, x, 0);
+
+            R(expansion_image, x, out.rows - y - 1) = R(out, x, out.rows - 1);
+            B(expansion_image, x, out.rows - y - 1) = G(out, x, out.rows - 1);
+            B(expansion_image, x, out.rows - y - 1) = B(out, x, out.rows - 1);
+        }
+    }
+
+    return expansion_image;
+}
+
+/**
  * @fn void freeImage(unsigned char **image, cv::Size image_size, int expansion_size)
  * @brief 拡張画像をfreeする
  * @param image 画素値が格納されていおり，拡張されている画素配列
