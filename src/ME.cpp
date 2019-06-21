@@ -491,8 +491,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
         for(int step = 3 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
 
             double scale = pow(2, 3 - step);
-            cv::Mat current_ref_image = mv_filter(ref_images[filter_num][step],2);
-            cv::Mat current_target_image = mv_filter(target_images[filter_num][step],2);
+            cv::Mat current_ref_image = ref_images[filter_num][step];
+            cv::Mat current_target_image = target_images[filter_num][step];
 
             unsigned char **current_target_expand, **current_target_org_expand; //画像の周りに500ピクセルだけ黒の領域を設ける(念のため)
             unsigned char **current_ref_expand, **current_ref_org_expand;    //f_expandと同様
