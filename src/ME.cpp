@@ -14,6 +14,7 @@
 #include <memory>
 #include "../includes/DelaunayTriangulation.hpp"
 #include "../includes/Utils.h"
+#include "../includes/ImageUtil.h"
 #include <algorithm>
 
 #define HEIGHT 1024
