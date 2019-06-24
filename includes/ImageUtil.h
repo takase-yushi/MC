@@ -17,6 +17,6 @@ void freeExpandImages(EXPAND_ARRAY_TYPE expand_images, int expand, int filter_nu
 cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit *> ctu, int block_size_x, int block_size_y);
 void freeImage(unsigned char **image, cv::Size image_size, int expansion_size);
 unsigned char ** getExpansionImage(cv::Mat image, int k, int expansion_size);
-cv::Mat getExpansionMatImage(cv::Mat image, int k, int expansion_size);
+cv::Mat getExpansionMatImage(cv::Mat &image, int k, int expansion_size);
 
 #endif //ENCODER_IMAGEUTIL_H

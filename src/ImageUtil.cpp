@@ -389,7 +389,7 @@ unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size){
     expansion_image += expansion_size;
 
     for(int i = -expansion_size ; i < out.cols + expansion_size ; i++) {
-        expansion_image[i] = (unsigned char *)malloc(sizeof(unsigned char) * expansion_image.rows + expansion_size * 2);
+        expansion_image[i] = (unsigned char *)malloc(sizeof(unsigned char) * out.rows + expansion_size * 2);
         expansion_image[i] += expansion_size;
     }
 
@@ -432,43 +432,43 @@ unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size){
  * @param expansion_size 拡張する画素数
  * @return 拡張した画像
  */
-cv::Mat getExpansionMatImage(cv::Mat image, int k, int expansion_size){
-    cv::Mat out = cv::Mat::zeros(image.rows, image.cols, CV_8UC3);
-    cv::resize(image, out, cv::Size(image.rows * k, image.cols * k), 0, 0, CV_INTER_CUBIC);
+cv::Mat getExpansionMatImage(cv::Mat &image, int k, int expansion_size){
+    cv::Mat out;
+    cv::resize(image, out, cv::Size(), 4, 4, CV_INTER_CUBIC);
 
-    cv::Mat expansion_image = cv::Mat::zeros(image.rows * k + expansion_size, image.cols * k + expansion_size, CV_8UC3);
+    cv::Mat expansion_image = cv::Mat::zeros(image.rows * k + 2 * expansion_size, image.cols * k + 2 * expansion_size, CV_8UC3);
 
     for(int y = 0 ; y < out.rows ; y++){
         for(int x = 0 ; x < out.cols ; x++){
-            R(expansion_image, x, y) = R(out, x, y);
-            B(expansion_image, x, y) = G(out, x, y);
-            B(expansion_image, x, y) = B(out, x, y);
+            R(expansion_image, x + expansion_size, y + expansion_size) = M(out, x, y);
+            G(expansion_image, x + expansion_size, y + expansion_size) = M(out, x, y);
+            B(expansion_image, x + expansion_size, y + expansion_size) = M(out, x, y);
         }
     }
 
     // y方向に埋める
     for(int y = 0 ; y < out.rows ; y++) {
         for (int x = -expansion_size; x < 0; x++) {
-            R(expansion_image, x, y) = R(out, 0, y);
-            B(expansion_image, x, y) = G(out, 0, y);
-            B(expansion_image, x, y) = B(out, 0, y);
+            R(expansion_image, x + expansion_size, y + expansion_size) = M(out, 0, y);
+            G(expansion_image, x + expansion_size, y + expansion_size) = M(out, 0, y);
+            B(expansion_image, x + expansion_size, y + expansion_size) = M(out, 0, y);
 
-            R(expansion_image, out.cols - x - 1, y) = R(out, out.cols - 1, y);
-            B(expansion_image, out.cols - x - 1, y) = G(out, out.cols - 1, y);
-            B(expansion_image, out.cols - x - 1, y) = B(out, out.cols - 1, y);
+            R(expansion_image, out.cols - x - 1 + expansion_size, y + expansion_size) = M(out, out.cols - 1, y);
+            G(expansion_image, out.cols - x - 1 + expansion_size, y + expansion_size) = M(out, out.cols - 1, y);
+            B(expansion_image, out.cols - x - 1 + expansion_size, y + expansion_size) = M(out, out.cols - 1, y);
         }
     }
 
-    // x方向に埋める
+    // x方向?に埋める
     for(int y = -expansion_size ; y < 0 ; y++) {
         for (int x = -expansion_size; x < out.cols + expansion_size; x++) {
-            R(expansion_image, x, y) = R(out, x, 0);
-            B(expansion_image, x, y) = G(out, x, 0);
-            B(expansion_image, x, y) = B(out, x, 0);
+            R(expansion_image, x + expansion_size, y + expansion_size) = M(expansion_image, x + expansion_size, expansion_size);
+            G(expansion_image, x + expansion_size, y + expansion_size) = M(expansion_image, x + expansion_size, expansion_size);
+            B(expansion_image, x + expansion_size, y + expansion_size) = M(expansion_image, x + expansion_size, expansion_size);
 
-            R(expansion_image, x, out.rows - y - 1) = R(out, x, out.rows - 1);
-            B(expansion_image, x, out.rows - y - 1) = G(out, x, out.rows - 1);
-            B(expansion_image, x, out.rows - y - 1) = B(out, x, out.rows - 1);
+            R(expansion_image, x + expansion_size, out.rows - y - 1 + expansion_size) = M(expansion_image, x + expansion_size, out.rows - 1 + expansion_size);
+            G(expansion_image, x + expansion_size, out.rows - y - 1 + expansion_size) = M(expansion_image, x + expansion_size, out.rows - 1 + expansion_size);
+            B(expansion_image, x + expansion_size, out.rows - y - 1 + expansion_size) = M(expansion_image, x + expansion_size, out.rows - 1 + expansion_size);
         }
     }
 
