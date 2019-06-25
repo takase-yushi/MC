@@ -14,10 +14,12 @@
 #include <memory>
 #include "../includes/DelaunayTriangulation.hpp"
 #include "../includes/Utils.h"
+#include "../includes/ImageUtil.h"
 #include <algorithm>
 
 #define HEIGHT 1024
 #define WIDTH 1920
+
 /**
  * @fn void block_matching(cv::Mat &prev, cv::Mat &current, double &error, cv::Point2f &mv, Point3Vec tr, cv::Mat expansion_image)
  * @brief ブロックマッチングを行い, 動きベクトルを求める
@@ -25,138 +27,273 @@
  * @param[in]  current          対象画像
  * @param[out] error            誤差
  * @param[out] mv               ブロックマッチングの平行移動ベクトル
- * @param[in]  tr               三角形を表す3点の座標
+ * @param[in]  triangle               三角形を表す3点の座標
  * @param[in]  expansion_image  2倍に拡大した(補間した)画像
  * @details
  *
  */
-void block_matching(const cv::Mat& prev, const cv::Mat& current, double &error, cv::Point2f &mv, Point3Vec tr, cv::Mat expansion_image) {
+std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point3Vec tr, const cv::Mat& current, cv::Mat expansion_image) {
     double sx, sy, lx, ly;
     cv::Point2f tp1, tp2, tp3;
+
     tp1 = tr.p1;
     tp2 = tr.p2;
     tp3 = tr.p3;
+
+    tp1.x = (tp1.x + 1) * 4 - 1;
+    tp1.y = (tp1.y + 1) * 4 - 1;
+    tp2.x = (tp2.x + 1) * 4 - 1;
+    tp2.y = (tp2.y + 1) * 4 - 1;
+    tp3.x = (tp3.x + 1) * 4 - 1;
+    tp3.y = (tp3.y + 1) * 4 - 1;
 
     sx = std::min({tp1.x, tp2.x, tp3.x});
     sy = std::min({tp1.y, tp2.y, tp3.y});
     lx = std::max({tp1.x, tp2.x, tp3.x});
     ly = std::max({tp1.y, tp2.y, tp3.y});
 
-    cv::Point2f mv_tmp(0.0, 0.0);
-    int SX = 100; // ブロックマッチングの探索範囲(X)
-    int SY = 100; // ブロックマッチングの探索範囲(Y)
+    cv::Point2f mv_tmp(0.0, 0.0); //三角パッチの動きベクトル
+    int SX = 16; // ブロックマッチングの探索範囲(X)
+    int SY = 16; // ブロックマッチングの探索範囲(Y)
 
-    double error_tmp, error_min;
-    int error_count;
+    double e, error_min;
+    int e_count;
 
     error_min = 1 << 20;
     cv::Point2d xp(0.0, 0.0);
+    cv::Point2f mv_min;
+    int spread_quarter = 64;
+    int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
 
-    for (int j = -SY / 2; j <= SY / 2; j++) {
-        for (int i = -SX / 2; i <= SX / 2; i++) {
-            error_tmp = 0.0;
-            error_count = 0;
-
-            int nx = static_cast<int>(round(sx) + i);
-            int ny = static_cast<int>(round(sy) + j);
-
-            // 範囲外の場合
-            if(nx < 0 || prev.cols <= nx + (lx - sx) || ny < 0 || prev.rows <= ny + (ly - sy)) continue;
-
-            for (int m = (int) (round(sy) - 1); m <= round(ly) + 1; m++) {
-                for (int n = (int) (round(sx) - 1); n <= round(lx) + 1; n++) {
-                    xp.x = (double) n;
-                    xp.y = (double) m;
-
-                    // xpが三角形trの中かどうか判定
-                    if (isInTriangle(tr, xp)) {
-                        // 現在のフレームとの差分
-                        error_tmp += fabs(M(prev, n + i, m + j) - M(current, n, m));
-                        error_count++;
-                    }
-                }
-            }
-
-            error_tmp = error_count > 0 ? (error_tmp / (double) error_count) : 1e6;
-            if (error_tmp == error_min && error_count > 0) {
-                if (abs(i) < abs(mv_tmp.x) && abs(j) < abs(mv_tmp.y)) {
-                    mv_tmp.x = (float) i;
-                    mv_tmp.y = (float) j;
-                }
-            }
-
-            if (error_min > error_tmp && error_count > 0) {
-                error_min = error_tmp;
-                mv_tmp.x = (float) i;
-                mv_tmp.y = (float) j;
-            }
-        }
-    }
-
-    error = error_min;
-
-    error_min = 1 << 20;
-    xp.x = 0.0; xp.y = 0.0;
-
-    mv.x = mv_tmp.x * 2;
-    mv.y = mv_tmp.y * 2;
-
-    SX = 5; SY = 5;
-    for (int j = -SY / 2; j <= SY / 2; j++) {
-        for (int i = -SX / 2; i <= SX / 2; i++) {
-            error_tmp = 0.0;
-            error_count = 0;
-            if (0 <= 2 * round(sx) - 1 + i + mv.x && 2 * (round(lx) + 1) + i + mv.x < expansion_image.cols && 0 <= 2 * round(sy) - 1 + j + mv.y && 2 * (round(ly) + 1) + j + mv.y < expansion_image.rows) {
-                for (int m = (int) (round(sy) - 1); m <= round(ly) + 1; m++) {
-                    for (int n = (int) (round(sx) - 1); n <= round(lx) + 1; n++) {
-                        xp.x = (double) n;
-                        xp.y = (double) m;
-
-                        // xpが三角形trの中かどうか判定
-                        if (isInTriangle(tr, xp)) {
-                            // 現在のフレームとの差分
-                            error_tmp += fabs(M(expansion_image, 2 * n + i + (int)mv.x, 2 * m + j + (int)mv.y) - M(current, n, m));
-                            error_count++;
+    for(int j = -SY * 4 ; j <= SY * 4 ; j += s) {            //j : y方向のMV
+        for(int i = -SX * 4 ; i <= SX * 4 ; i += s) {        //i : x方向のMV
+            //探索範囲が画像上かどうか判定
+            if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_image.cols - spread_quarter
+               && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_image.rows - spread_quarter) {
+                e = 0.0;
+                e_count = 0;
+                for (int y = (int) (round(sy) / 4 - 1); y <= (int) (round(ly) / 4 + 1); y++) {
+                    for (int x = (int) (round(sx) / 4 - 1); x <= (int) (round(lx) / 4 + 1); x++) {
+                        xp.x = (double)x;
+                        xp.y = (double)y;
+                        //xpが三角形の中かどうか判定
+                        if(isInTriangle(tr, xp)){
+                            e += fabs(R(expansion_image, i + 4 * x + spread_quarter, j + 4 * y + spread_quarter) - M(current, x, y));
+                            e_count++;
                         }
                     }
                 }
-
-                error_tmp = error_count > 0 ? (error_tmp / (double) error_count) : 1e6;
-                if (error_tmp == error_min && error_count > 0) {
-                    if (abs(i) < abs(mv_tmp.x) && abs(j) < abs(mv_tmp.y)) {
-                        mv_tmp.x = (float) i;
-                        mv_tmp.y = (float) j;
-                    }
-                }
-
-                if (error_min > error_tmp && error_count > 0) {
-                    error_min = error_tmp;
-                    mv_tmp.x = (float) i;
-                    mv_tmp.y = (float) j;
+                if(error_min > e && e_count > 0){
+                    error_min = e;
+                    mv_min.x = (double)i / 4.0;
+                    mv_min.y = (double)j / 4.0;
                 }
             }
         }
     }
 
-    error = error_min;
-    mv.x = mv.x + mv_tmp.x;
-    mv.y = mv.y + mv_tmp.y;
+    std::vector<cv::Point2f> mvs;
+    mvs.emplace_back(mv_min.x, mv_min.y);
 
+    mv_tmp.x = mv_min.x * 4;
+    mv_tmp.y = mv_min.y * 4;
 
-    // フルペルで探索して得られた動きベクトルで, ハーフペル画像を探索する.（2段探索）
-    // 周囲8画素だけやれば良さそう
-    //
-    // ✕  ✕  ✕  ✕  ✕  ✕ ✕
-    //
-    // ✕  ○  ✕  ○  ✕  ○  ✕
-    //
-    // ✕  ✕  ✕  ✕  ✕  ✕ ✕
-    //
-    // ✕  ○  ✕  ○  ✕  ○  ✕
-    //
-    // ✕  ✕  ✕  ✕  ✕ ✕  ✕
-    //
+    s = 2;
+    error_min = 1 << 20;
+    for(int j = - s + mv_tmp.y ; j <= s + mv_tmp.y ; j += s){            //j : y方向のMV
+        for(int i = - s + mv_tmp.x ; i <= s + mv_tmp.x ; i += s){        //i : x方向のMV
+            if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_image.cols - spread_quarter
+               && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_image.rows - spread_quarter) {
+                e = 0.0;
+                e_count = 0;
+                for (int y = (int) (round(sy) / 4 - 1); y <= (int) (round(ly) / 4 + 1); y++) {
+                    for (int x = (int) (round(sx) / 4 - 1); x <= (int) (round(lx) / 4 + 1); x++) {
+                        xp.x = (double)x;
+                        xp.y = (double)y;
+                        //xpが三角形の中かどうか判定
+                        if(isInTriangle(tr, xp)){
+                            e += fabs(R(expansion_image, i + 4 * x + spread_quarter, j + 4 * y + spread_quarter) - M(current, x, y));
+                            e_count++;
+                        }
+                    }
+                }
+                if(error_min > e && e_count > 0){
+                    error_min = e;
+                    mv_min.x = (double)i / 4.0;
+                    mv_min.y = (double)j / 4.0;
+                }
+            }
+        }
+    }
 
+    mvs.emplace_back(mv_min.x, mv_min.y);
+    mv_tmp.x = mv_min.x * 4;
+    mv_tmp.y = mv_min.y * 4;
+
+    s = 1;
+    error_min = 1 << 20;
+
+    for(int j = - s + mv_tmp.y ; j <= s + mv_tmp.y ; j += s){            //j : y方向のMV
+        for(int i = - s + mv_tmp.x ; i <= s + mv_tmp.x ; i += s){        //i : x方向のMV
+            if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_image.cols - spread_quarter
+               && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_image.rows - spread_quarter) {
+                e = 0.0;
+                e_count = 0;
+                for (int y = (int) (round(sy) / 4 - 1); y <= (int) (round(ly) / 4 + 1); y++) {
+                    for (int x = (int) (round(sx) / 4 - 1); x <= (int) (round(lx) / 4 + 1); x++) {
+                        xp.x = (double)x;
+                        xp.y = (double)y;
+                        //xpが三角形の中かどうか判定
+                        if(isInTriangle(tr, xp)){
+                            e += fabs(R(expansion_image, i + 4 * x + spread_quarter, j + 4 * y + spread_quarter) - M(current, x, y));
+                            e_count++;
+                        }
+                    }
+                }
+                if(error_min > e && e_count > 0){
+                    error_min = e;
+                    mv_min.x = (double)i / 4.0;
+                    mv_min.y = (double)j / 4.0;
+                }
+            }
+        }
+    }
+
+    double error = error_min;
+    mvs.emplace_back(mv_min.x, mv_min.y);
+
+    return std::make_tuple(mvs, error);
+}
+
+/**
+ * @fn std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point3Vec tr, const cv::Mat& target_image, cv::Mat expansion_image, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu)
+ * @brief ブロックマッチング（三段探索）をして，動きベクトルを求める
+ * @param triangle 三角パッチ
+ * @param target_image 対象画像のMat
+ * @param expansion_ref_image 拡大した参照画像
+ * @param area_flag getPixelsInTriangleで使用するマスク
+ * @param triangle_index 三角パッチの番号△
+ * @param ctu CodingTree
+ * @return 動きベクトルのvector(vec[0]: full-pell vec[1]: half-pell vec[2]: quarter-pell)と
+ */
+std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Vec triangle, const cv::Mat& target_image, cv::Mat expansion_ref_image, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu) {
+    double sx, sy, lx, ly;
+    cv::Point2f tp1, tp2, tp3;
+
+    tp1 = triangle.p1;
+    tp2 = triangle.p2;
+    tp3 = triangle.p3;
+
+    sx = std::min({tp1.x, tp2.x, tp3.x});
+    sy = std::min({tp1.y, tp2.y, tp3.y});
+    lx = std::max({tp1.x, tp2.x, tp3.x});
+    ly = std::max({tp1.y, tp2.y, tp3.y});
+
+    cv::Point2f mv_tmp(0.0, 0.0); //三角パッチの動きベクトル
+    int SX = 64; // ブロックマッチングの探索範囲(X)
+    int SY = 64; // ブロックマッチングの探索範囲(Y)
+
+    double e = 1e9, error_min = 1e9;
+    int e_count;
+    cv::Point2f mv_min;
+    int spread_quarter = 64;
+    int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
+
+    std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, 128, 128);
+
+    for(int j = -SY * 4 ; j <= SY * 4 ; j += s) {            //j : y方向のMV
+        for(int i = -SX * 4 ; i <= SX * 4 ; i += s) {        //i : x方向のMV
+            //探索範囲が画像上かどうか判定
+            if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
+               && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
+                e = 0.0;
+                e_count = 0;
+                for(auto &pixel : pixels) {
+                    int ref_x = std::max((int)(4 * pixel.x) - 1, 0);
+                    ref_x = (i + ref_x + spread_quarter);
+                    int ref_y = std::max((int)((4 * pixel.y) - 1), 0);
+                    ref_y = (j + ref_y + spread_quarter);
+                    e += fabs(M(expansion_ref_image, ref_x, ref_y) - M(target_image, (int)pixel.x, (int)pixel.y));
+                    e_count++;
+                }
+            }
+            if(error_min > e){
+                error_min = e;
+                mv_min.x = (double)i / 4.0;
+                mv_min.y = (double)j / 4.0;
+            }
+        }
+    }
+
+    std::vector<cv::Point2f> mvs;
+    std::vector<double> errors;
+    mvs.emplace_back(mv_min.x, mv_min.y);
+    errors.emplace_back(error_min);
+
+    mv_tmp.x = mv_min.x * 4;
+    mv_tmp.y = mv_min.y * 4;
+
+    s = 2;
+    error_min = 1 << 20;
+    for(int j = - s + mv_tmp.y ; j <= s + mv_tmp.y ; j += s){            //j : y方向のMV
+        for(int i = - s + mv_tmp.x ; i <= s + mv_tmp.x ; i += s){        //i : x方向のMV
+            if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
+               && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
+                e = 0.0;
+                e_count = 0;
+                for(auto &pixel : pixels) {
+                    int ref_x = std::max((int)(4 * pixel.x) - 1, 0);
+                    ref_x = (i + ref_x + spread_quarter);
+                    int ref_y = std::max((int)((4 * pixel.y) - 1), 0);
+                    ref_y = (j + ref_y + spread_quarter);
+                    e += fabs(M(expansion_ref_image, ref_x, ref_y) - M(target_image, (int)pixel.x, (int)pixel.y));
+                    e_count++;
+                }
+                if(error_min > e && e_count > 0){
+                    error_min = e;
+                    mv_min.x = (double)i / 4.0;
+                    mv_min.y = (double)j / 4.0;
+                }
+            }
+        }
+    }
+
+    mvs.emplace_back(mv_min.x, mv_min.y);
+    errors.emplace_back(error_min);
+
+    mv_tmp.x = mv_min.x * 4;
+    mv_tmp.y = mv_min.y * 4;
+
+    s = 1;
+    error_min = 1 << 20;
+
+    for(int j = - s + mv_tmp.y ; j <= s + mv_tmp.y ; j += s){            //j : y方向のMV
+        for(int i = - s + mv_tmp.x ; i <= s + mv_tmp.x ; i += s){        //i : x方向のMV
+            if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
+               && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
+                e = 0.0;
+                for(auto &pixel : pixels) {
+                    int ref_x = std::max((int)(4 * pixel.x) - 1, 0);
+                    ref_x = (i + ref_x + spread_quarter);
+                    int ref_y = std::max((int)((4 * pixel.y) - 1), 0);
+                    ref_y = (j + ref_y + spread_quarter);
+                    e += fabs(M(expansion_ref_image, ref_x, ref_y) - M(target_image, (int)pixel.x, (int)pixel.y));
+                }
+
+                if(error_min > e){
+                    error_min = e;
+                    mv_min.x = (double)i / 4.0;
+                    mv_min.y = (double)j / 4.0;
+                }
+            }
+        }
+    }
+
+    double error = error_min;
+    mvs.emplace_back(mv_min.x, mv_min.y);
+    errors.emplace_back(error);
+
+    return std::make_tuple(mvs, errors);
 }
 
 /**
@@ -801,11 +938,11 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
             }
 
             std::sort(v_stack_warping.begin(), v_stack_warping.end(), [](std::pair<std::vector<cv::Point2f>,double> a, std::pair<std::vector<cv::Point2f>,double> b){
-                return a.second < b.second;
+              return a.second < b.second;
             });
 
             std::sort(v_stack_parallel.begin(), v_stack_parallel.end(), [](std::pair<cv::Point2f,double> a, std::pair<cv::Point2f,double> b){
-                return a.second < b.second;
+              return a.second < b.second;
             });
 
             tmp_mv_warping = v_stack_warping[0].first;//一番良い動きベクトルを採用
@@ -1321,11 +1458,11 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> Marquardt(s
             }
 
             std::sort(v_stack_warping.begin(), v_stack_warping.end(), [](std::pair<std::vector<cv::Point2f>,double> a, std::pair<std::vector<cv::Point2f>,double> b){
-                return a.second < b.second;
+              return a.second < b.second;
             });
 
             std::sort(v_stack_parallel.begin(), v_stack_parallel.end(), [](std::pair<cv::Point2f,double> a, std::pair<cv::Point2f,double> b){
-                return a.second < b.second;
+              return a.second < b.second;
             });
 
             tmp_mv_warping = v_stack_warping[0].first;//一番良い動きベクトルを採用

@@ -6,6 +6,7 @@
 #include <cassert>
 #include <iostream>
 #include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 #include "../includes/ImageUtil.h"
 #include "../includes/Utils.h"
 #include "../includes/CodingTreeUnit.h"
@@ -370,4 +371,122 @@ cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit
 //    cv::imwrite(getProjectDirectory(OS) + "/img/minato/reconstruction_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", reconstructedImage);
 
     return reconstructedImage;
+}
+
+/**
+ * @fn cv::Mat getExpandImage(cv::Mat image, int k)
+ * @brief k倍に拡張子，expansion_size分回りを拡張した画像を生成する
+ * @param image 画像
+ * @param k サイズの倍数
+ * @param expansion_size 拡張する画素数
+ * @return 拡張した画像
+ */
+unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size){
+    cv::Mat out = cv::Mat::zeros(image.rows, image.cols, CV_8UC3);
+    cv::resize(image, out, cv::Size(image.rows * k, image.cols * k), 0, 0, CV_INTER_CUBIC);
+
+    auto **expansion_image = (unsigned char **)malloc(sizeof(unsigned char *) * out.cols + expansion_size * 2);
+    expansion_image += expansion_size;
+
+    for(int i = -expansion_size ; i < out.cols + expansion_size ; i++) {
+        expansion_image[i] = (unsigned char *)malloc(sizeof(unsigned char) * out.rows + expansion_size * 2);
+        expansion_image[i] += expansion_size;
+    }
+
+    for(int y = 0 ; y < out.rows ; y++){
+        for(int x = 0 ; x < out.cols ; x++){
+            expansion_image[x][y] = M(out, x, y);
+        }
+    }
+
+    // y方向に埋める
+    for(int y = 0 ; y < out.rows ; y++) {
+        for (int x = -expansion_size; x < 0; x++) {
+            expansion_image[x][y] = M(out, 0, y);
+            expansion_image[out.cols - x - 1][y] = M(out, out.cols - 1, y);
+
+            expansion_image[x][y] = M(out, 0, y);
+            expansion_image[out.cols - x - 1][y] = M(out, out.cols - 1, y);
+        }
+    }
+
+    // x方向に埋める
+    for(int y = -expansion_size ; y < 0 ; y++) {
+        for (int x = -expansion_size; x < out.cols + expansion_size; x++) {
+            expansion_image[x][y] = expansion_image[x][0];
+            expansion_image[x][out.rows - y - 1] = expansion_image[x][out.rows - 1];
+
+            expansion_image[x][y] = expansion_image[x][0];
+            expansion_image[x][out.rows - y - 1] = expansion_image[x][out.rows - 1];
+        }
+    }
+
+    return expansion_image;
+}
+
+/**
+ * @fn cv::Mat getExpandImage(cv::Mat image, int k)
+ * @brief k倍に拡張子，expansion_size分回りを拡張した画像(Mat)を生成する
+ * @param image 画像
+ * @param k サイズの倍数
+ * @param expansion_size 拡張する画素数
+ * @return 拡張した画像
+ */
+cv::Mat getExpansionMatImage(cv::Mat &image, int k, int expansion_size){
+    cv::Mat out;
+    cv::resize(image, out, cv::Size(), 4, 4, CV_INTER_CUBIC);
+
+    cv::Mat expansion_image = cv::Mat::zeros(image.rows * k + 2 * expansion_size, image.cols * k + 2 * expansion_size, CV_8UC3);
+
+    for(int y = 0 ; y < out.rows ; y++){
+        for(int x = 0 ; x < out.cols ; x++){
+            R(expansion_image, x + expansion_size, y + expansion_size) = M(out, x, y);
+            G(expansion_image, x + expansion_size, y + expansion_size) = M(out, x, y);
+            B(expansion_image, x + expansion_size, y + expansion_size) = M(out, x, y);
+        }
+    }
+
+    // y方向に埋める
+    for(int y = 0 ; y < out.rows ; y++) {
+        for (int x = -expansion_size; x < 0; x++) {
+            R(expansion_image, x + expansion_size, y + expansion_size) = M(out, 0, y);
+            G(expansion_image, x + expansion_size, y + expansion_size) = M(out, 0, y);
+            B(expansion_image, x + expansion_size, y + expansion_size) = M(out, 0, y);
+
+            R(expansion_image, out.cols - x - 1 + expansion_size, y + expansion_size) = M(out, out.cols - 1, y);
+            G(expansion_image, out.cols - x - 1 + expansion_size, y + expansion_size) = M(out, out.cols - 1, y);
+            B(expansion_image, out.cols - x - 1 + expansion_size, y + expansion_size) = M(out, out.cols - 1, y);
+        }
+    }
+
+    // x方向?に埋める
+    for(int y = -expansion_size ; y < 0 ; y++) {
+        for (int x = -expansion_size; x < out.cols + expansion_size; x++) {
+            R(expansion_image, x + expansion_size, y + expansion_size) = M(expansion_image, x + expansion_size, expansion_size);
+            G(expansion_image, x + expansion_size, y + expansion_size) = M(expansion_image, x + expansion_size, expansion_size);
+            B(expansion_image, x + expansion_size, y + expansion_size) = M(expansion_image, x + expansion_size, expansion_size);
+
+            R(expansion_image, x + expansion_size, out.rows - y - 1 + expansion_size) = M(expansion_image, x + expansion_size, out.rows - 1 + expansion_size);
+            G(expansion_image, x + expansion_size, out.rows - y - 1 + expansion_size) = M(expansion_image, x + expansion_size, out.rows - 1 + expansion_size);
+            B(expansion_image, x + expansion_size, out.rows - y - 1 + expansion_size) = M(expansion_image, x + expansion_size, out.rows - 1 + expansion_size);
+        }
+    }
+
+    return expansion_image;
+}
+
+/**
+ * @fn void freeImage(unsigned char **image, cv::Size image_size, int expansion_size)
+ * @brief 拡張画像をfreeする
+ * @param image 画素値が格納されていおり，拡張されている画素配列
+ * @param image_size 画像のサイズ
+ * @param expansion_size 拡張サイズ
+ */
+void freeImage(unsigned char **image, cv::Size image_size, int expansion_size){
+    for(int i = -expansion_size ; i < image_size.height + expansion_size ; i++){
+        image[i] -= expansion_size;
+        free(image[i]);
+    }
+    image -= expansion_size;
+    free(image);
 }
