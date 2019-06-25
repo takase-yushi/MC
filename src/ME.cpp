@@ -189,6 +189,14 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
     lx = std::max({tp1.x, tp2.x, tp3.x});
     ly = std::max({tp1.y, tp2.y, tp3.y});
 
+    int width = lx - sx + 1;
+    int height = ly - sy + 1;
+
+    sx = sx * 4;
+    sy = sy * 4;
+    lx = sx + width * 4 - 1;
+    ly = sy + height * 4 - 1;
+
     cv::Point2f mv_tmp(0.0, 0.0); //三角パッチの動きベクトル
     int SX = 64; // ブロックマッチングの探索範囲(X)
     int SY = 64; // ブロックマッチングの探索範囲(Y)
