@@ -208,7 +208,6 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
     int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
 
     std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, 128, 128);
-
     for(int j = -SY * 4 ; j <= SY * 4 ; j += s) {            //j : y方向のMV
         for(int i = -SX * 4 ; i <= SX * 4 ; i += s) {        //i : x方向のMV
             //探索範囲が画像上かどうか判定
@@ -217,9 +216,9 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
                 e = 0.0;
                 e_count = 0;
                 for(auto &pixel : pixels) {
-                    int ref_x = std::max((int)(4 * pixel.x) - 1, 0);
+                    int ref_x = std::max((int)(4 * pixel.x), 0);
                     ref_x = (i + ref_x + spread_quarter);
-                    int ref_y = std::max((int)((4 * pixel.y) - 1), 0);
+                    int ref_y = std::max((int)((4 * pixel.y)), 0);
                     ref_y = (j + ref_y + spread_quarter);
                     e += fabs(M(expansion_ref_image, ref_x, ref_y) - M(target_image, (int)pixel.x, (int)pixel.y));
                     e_count++;
@@ -250,9 +249,9 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
                 e = 0.0;
                 e_count = 0;
                 for(auto &pixel : pixels) {
-                    int ref_x = std::max((int)(4 * pixel.x) - 1, 0);
+                    int ref_x = std::max((int)(4 * pixel.x), 0);
                     ref_x = (i + ref_x + spread_quarter);
-                    int ref_y = std::max((int)((4 * pixel.y) - 1), 0);
+                    int ref_y = std::max((int)((4 * pixel.y)), 0);
                     ref_y = (j + ref_y + spread_quarter);
                     e += fabs(M(expansion_ref_image, ref_x, ref_y) - M(target_image, (int)pixel.x, (int)pixel.y));
                     e_count++;
@@ -281,9 +280,9 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
                && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
                 e = 0.0;
                 for(auto &pixel : pixels) {
-                    int ref_x = std::max((int)(4 * pixel.x) - 1, 0);
+                    int ref_x = std::max((int)(4 * pixel.x), 0);
                     ref_x = (i + ref_x + spread_quarter);
-                    int ref_y = std::max((int)((4 * pixel.y) - 1), 0);
+                    int ref_y = std::max((int)((4 * pixel.y)), 0);
                     ref_y = (j + ref_y + spread_quarter);
                     e += fabs(M(expansion_ref_image, ref_x, ref_y) - M(target_image, (int)pixel.x, (int)pixel.y));
                 }
