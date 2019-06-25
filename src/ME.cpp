@@ -184,13 +184,6 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
     tp2 = triangle.p2;
     tp3 = triangle.p3;
 
-    tp1.x = (tp1.x + 1) * 4 - 1;
-    tp1.y = (tp1.y + 1) * 4 - 1;
-    tp2.x = (tp2.x + 1) * 4 - 1;
-    tp2.y = (tp2.y + 1) * 4 - 1;
-    tp3.x = (tp3.x + 1) * 4 - 1;
-    tp3.y = (tp3.y + 1) * 4 - 1;
-
     sx = std::min({tp1.x, tp2.x, tp3.x});
     sy = std::min({tp1.y, tp2.y, tp3.y});
     lx = std::max({tp1.x, tp2.x, tp3.x});
@@ -216,8 +209,10 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
                 e = 0.0;
                 e_count = 0;
                 for(auto &pixel : pixels) {
-                    int ref_x = std::max((int)(i + (4 * pixel.x) - 1 + spread_quarter), 0);
-                    int ref_y = std::max((int)(j + (4 * pixel.y) - 1 + spread_quarter), 0);
+                    int ref_x = std::max((int)(4 * pixel.x) - 1, 0);
+                    ref_x = (i + ref_x + spread_quarter);
+                    int ref_y = std::max((int)((4 * pixel.y) - 1), 0);
+                    ref_y = (j + ref_y + spread_quarter);
                     e += fabs(M(expansion_ref_image, ref_x, ref_y) - M(target_image, (int)pixel.x, (int)pixel.y));
                     e_count++;
                 }
@@ -247,8 +242,10 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
                 e = 0.0;
                 e_count = 0;
                 for(auto &pixel : pixels) {
-                    int ref_x = std::max((int)(i + (4 * pixel.x) - 1 + spread_quarter), 0);
-                    int ref_y = std::max((int)(j + (4 * pixel.y) - 1 + spread_quarter), 0);
+                    int ref_x = std::max((int)(4 * pixel.x) - 1, 0);
+                    ref_x = (i + ref_x + spread_quarter);
+                    int ref_y = std::max((int)((4 * pixel.y) - 1), 0);
+                    ref_y = (j + ref_y + spread_quarter);
                     e += fabs(M(expansion_ref_image, ref_x, ref_y) - M(target_image, (int)pixel.x, (int)pixel.y));
                     e_count++;
                 }
@@ -276,8 +273,10 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
                && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
                 e = 0.0;
                 for(auto &pixel : pixels) {
-                    int ref_x = std::max((int)(i + (4 * pixel.x) - 1 + spread_quarter), 0);
-                    int ref_y = std::max((int)(j + (4 * pixel.y) - 1 + spread_quarter), 0);
+                    int ref_x = std::max((int)(4 * pixel.x) - 1, 0);
+                    ref_x = (i + ref_x + spread_quarter);
+                    int ref_y = std::max((int)((4 * pixel.y) - 1), 0);
+                    ref_y = (j + ref_y + spread_quarter);
                     e += fabs(M(expansion_ref_image, ref_x, ref_y) - M(target_image, (int)pixel.x, (int)pixel.y));
                 }
 
