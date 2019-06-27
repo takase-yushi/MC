@@ -2078,7 +2078,7 @@ getPredictedImage(cv::Mat &ref,cv::Mat &target,cv::Mat &intra,  std::vector<Tria
         double MSE_prev = error_warp / (double) in_triangle_size;
         numerator++;
 //        std::cout << numerator << "/" << denominator << std::endl;
-        continue;
+//        continue;
 
 
         // 並行移動のみ塗る
