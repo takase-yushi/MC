@@ -198,8 +198,8 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
     ly = sy + height * 4 - 1;
 
     cv::Point2f mv_tmp(0.0, 0.0); //三角パッチの動きベクトル
-    int SX = 64; // ブロックマッチングの探索範囲(X)
-    int SY = 64; // ブロックマッチングの探索範囲(Y)
+    int SX = 32; // ブロックマッチングの探索範囲(X)
+    int SY = 32; // ブロックマッチングの探索範囲(Y)
 
     double e = 1e9, error_min = 1e9;
     int e_count;
