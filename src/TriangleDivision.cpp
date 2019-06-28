@@ -950,6 +950,8 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
     int triangle_indexes[] = {(int)triangles.size() - 2, (int)triangles.size() - 1};
 
+    std::vector<std::vector<int>> prev_area_flag(diagonal_line_area_flag);
+
     // 分割回数が偶数回目のとき斜線の更新を行う
     if((divide_steps - steps) % 2 == 0){
         int sx = ceil( std::min({triangle.p1.x, triangle.p2.x, triangle.p3.x}));
@@ -1066,6 +1068,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         isCodedTriangle[triangle_index] = true;
         delete_flag[triangle_index] = false;
         ctu->leftNode = ctu->rightNode = nullptr;
+        diagonal_line_area_flag = prev_area_flag;
         eraseTriangle(triangles.size() - 1);
         eraseTriangle(triangles.size() - 1);
         addNeighborVertex(triangles[triangle_index].first.p1_idx,triangles[triangle_index].first.p2_idx,triangles[triangle_index].first.p3_idx);
