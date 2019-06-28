@@ -10,6 +10,7 @@
 #include <opencv2/imgproc.hpp>
 #include "../includes/Utils.h"
 #include "../includes/GnuplotFileGenerator.hpp"
+#include "../includes/CodingTreeUnit.h"
 #include <unistd.h>
 #include <fstream>
 #include <tuple>
@@ -147,6 +148,32 @@ bool check_coordinate(cv::Point2f coordinate, cv::Vec4f range) {
   return range[0] <= coordinate.x && coordinate.x < range[1]
          && range[2] <= coordinate.y && coordinate.y < range[3];
 }
+
+/**
+ * @fn double outerProduct(cv::Point2f a, cv::Point2f b)
+ * @brief 外積の計算
+ * @param a ベクトル1
+ * @param b ベクトル2
+ * @return 計算結果
+ */
+double outerProduct(cv::Point2f a, cv::Point2f b){
+    return (a.x * b.y - a.y * b.x);
+}
+
+/**
+ * @fn bool isPointOnTheLine
+ * @brief 点pが線分a,b上に乗っているか判定する
+ * @param a 始点
+ * @param b 終点
+ * @param p 判定したい点
+ * @return 線に乗っていればtrue, そうでなければfalseを返す
+ */
+bool isPointOnTheLine(cv::Point2f a, cv::Point2f b, cv::Point2f p){
+    cv::Point2f v1 = b - a;
+    cv::Point2f v2 = p - a;
+    return outerProduct(v1, v2) == 0;
+}
+
 
 /**
  * @fn double intersectM(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, cv::Point2f p4)

@@ -65,33 +65,31 @@ void Reconstruction::reconstructionTriangle(std::vector<CodingTreeUnit*> ctu) {
 void Reconstruction::reconstructionTriangle(CodingTreeUnit* ctu, Point3Vec triangle, int type){
 
     if(ctu->leftNode == nullptr && ctu->rightNode == nullptr) {
-        // std::cout  <<  corner_flag[(int)triangle.p1.y][(int)triangle.p1.x] << " "  << corner_flag[(int)triangle.p2.y][(int)triangle.p2.x] <<  corner_flag[(int)triangle.p3.y][(int)triangle.p3.x] << std::endl;
         int p1_idx, p2_idx, p3_idx;
         if(isAdditionalPoint(triangle.p1)) {
             p1_idx = addCorner(triangle.p1) - 1;
         }else {
-            p1_idx = corner_flag[(int)triangle.p1.y][(int)triangle.p1.x];
+            p1_idx = corner_flag[(int)(triangle.p1.y * 2)][(int)(triangle.p1.x * 2)];
         }
 
         if(isAdditionalPoint(triangle.p2)) {
             p2_idx = addCorner(triangle.p2) - 1;
         }else {
-            p2_idx = corner_flag[(int)triangle.p2.y][(int)triangle.p2.x];
+            p2_idx = corner_flag[(int)(triangle.p2.y * 2)][(int)(triangle.p2.x * 2)];
         }
 
         if(isAdditionalPoint(triangle.p3)) {
             p3_idx = addCorner(triangle.p3) - 1;
         }else {
-            p3_idx = corner_flag[(int)triangle.p3.y][(int)triangle.p3.x];
+            p3_idx = corner_flag[(int)(triangle.p3.y * 2)][(int)(triangle.p3.x * 2)];
         }
 
         insertTriangle(p1_idx, p2_idx, p3_idx, type);
 
-
         return;
     }
 
-    std::vector<std::pair<cv::Point2f, int> > ret = sortTriangle(std::make_pair(triangle.p1, corner_flag[(int)triangle.p1.y][(int)triangle.p1.x]), std::make_pair(triangle.p2, corner_flag[(int)triangle.p2.y][(int)triangle.p2.x]), std::make_pair(triangle.p3, corner_flag[(int)triangle.p3.y][(int)triangle.p3.x]));
+    std::vector<std::pair<cv::Point2f, int> > ret = sortTriangle(std::make_pair(triangle.p1, corner_flag[(int)(triangle.p1.y * 2)][(int)(triangle.p1.x * 2)]), std::make_pair(triangle.p2, corner_flag[(int)(triangle.p2.y * 2)][(int)(triangle.p2.x * 2)]), std::make_pair(triangle.p3, corner_flag[(int)(triangle.p3.y * 2)][(int)(triangle.p3.x * 2)]));
     triangle.p1 = ret[0].first;
     triangle.p2 = ret[1].first;
     triangle.p3 = ret[2].first;
@@ -102,23 +100,12 @@ void Reconstruction::reconstructionTriangle(CodingTreeUnit* ctu, Point3Vec trian
 }
 
 bool Reconstruction::isAdditionalPoint(cv::Point2f p){
-    return corner_flag[(int)p.y][(int)p.x] == -1;
+    return corner_flag[(int)(p.y * 2)][(int)(p.x * 2)] == -1;
 }
 
 Reconstruction::Reconstruction(const cv::Mat &gaussRefImage): gaussRefImage(gaussRefImage){}
 
 void Reconstruction::init(int block_size_x, int block_size_y, int divide_flag) {
-    corner_flag.resize(gaussRefImage.rows);
-    for(int i = 0 ; i < gaussRefImage.rows ; i++) {
-        corner_flag[i].resize(gaussRefImage.cols);
-    }
-
-    for(int y = 0 ; y < gaussRefImage.rows ; y++) {
-        for(int x = 0 ; x < gaussRefImage.cols ; x++) {
-            corner_flag[y][x] = -1;
-        }
-    }
-
     int block_num_x = gaussRefImage.cols / block_size_x;
     int block_num_y = gaussRefImage.rows / block_size_y;
 
@@ -135,42 +122,91 @@ void Reconstruction::init(int block_size_x, int block_size_y, int divide_flag) {
      *
      */
 
-    corner_flag.resize(gaussRefImage.rows);
-    for(int i = 0 ; i < gaussRefImage.rows ; i++) {
-        corner_flag[i].resize(gaussRefImage.cols);
+    corner_flag.resize(gaussRefImage.rows * 2);
+    for(int i = 0 ; i < gaussRefImage.rows * 2; i++) {
+        corner_flag[i].resize(gaussRefImage.cols * 2);
     }
 
-    for(int y = 0 ; y < gaussRefImage.rows ; y++) {
-        for(int x = 0 ; x < gaussRefImage.cols ; x++) {
+    for(int y = 0 ; y < gaussRefImage.rows * 2 ; y++) {
+        for(int x = 0 ; x < gaussRefImage.cols * 2 ; x++) {
             corner_flag[y][x] = -1;
         }
     }
 
     // すべての頂点を入れる
     for(int block_y = 0 ; block_y <= block_num_y ; block_y++) {
-        for (int block_x = 0; block_x <= block_num_x; block_x++) {
-            int nx = block_x * block_size_x;
-            int ny = block_y * block_size_y;
+        for (int block_x = 0 ; block_x <= block_num_x; block_x++) {
+            int nx = block_x * (block_size_x);
+            int ny = block_y * (block_size_y);
+
+            if (nx < 0) nx = 0;
+            if (gaussRefImage.cols <= nx) nx = gaussRefImage.cols - 1;
+            if (ny < 0) ny = 0;
+            if (gaussRefImage.rows <= ny) ny = gaussRefImage.rows - 1;
+            corners.emplace_back(nx, ny);
+            corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
+
+
+            if (block_x == block_num_x) continue;
+
+            nx = (block_x + 1) * (block_size_x) - 1;
+            ny = (block_y) * (block_size_y);
+
+            if (nx < 0) nx = 0;
+            if (gaussRefImage.cols <= nx) nx = gaussRefImage.cols - 1;
+            if (ny < 0) ny = 0;
+            if (gaussRefImage.rows <= ny) ny = gaussRefImage.rows - 1;
+            corners.emplace_back(nx, ny);
+            corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
+        }
+
+        if(block_y == block_num_y) continue;
+
+        for (int block_x = 0 ; block_x <= block_num_x; block_x++) {
+            int nx = block_x * (block_size_x);
+            int ny = (block_y + 1) * (block_size_y) - 1;
 
             if(nx < 0) nx = 0;
             if(gaussRefImage.cols <= nx) nx = gaussRefImage.cols - 1;
             if(ny < 0) ny = 0;
             if(gaussRefImage.rows <= ny) ny = gaussRefImage.rows - 1;
             corners.emplace_back(nx, ny);
-            corner_flag[ny][nx] = corners.size() - 1;
+            corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
+
+            if(block_x == block_num_x) continue;
+
+            nx = (block_x + 1) * (block_size_x) - 1;
+            ny = (block_y + 1) * (block_size_y) - 1;
+
+            if(nx < 0) nx = 0;
+            if(gaussRefImage.cols <= nx) nx = gaussRefImage.cols - 1;
+            if(ny < 0) ny = 0;
+            if(gaussRefImage.rows <= ny) ny = gaussRefImage.rows - 1;
+            corners.emplace_back(nx, ny);
+            corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
+
         }
+
     }
-
-
     for(int block_y = 0 ; block_y < block_num_y ; block_y++) {
         for(int block_x = 0 ; block_x < block_num_x ; block_x++) {
-            int p1_idx = block_x + block_y * (block_num_x + 1);
-            int p2_idx = p1_idx + 1;
-            int p3_idx = p1_idx + block_num_x + 1;
-            int p4_idx = p3_idx + 1;
+            int p1_idx;
+            int p2_idx;
+            int p3_idx;
+            int p4_idx;
             if(divide_flag == LEFT_DIVIDE) {
+                p1_idx = 2 * block_x + (2 * block_y) * ((block_num_x) * 2 + 1);
+                p2_idx = p1_idx + 1;
+                p3_idx = p1_idx + ((block_num_x) * 2 + 1 );
+
                 int triangleIndex = insertTriangle(init_triangles, p1_idx, p2_idx, p3_idx, TYPE1);
-                triangleIndex = insertTriangle(init_triangles, p2_idx, p3_idx, p4_idx, TYPE2);
+
+                int p4_idx = p2_idx;
+                int p5_idx = p3_idx;
+                int p6_idx = p3_idx + 1;
+
+                triangleIndex = insertTriangle(init_triangles, p4_idx, p5_idx, p6_idx, TYPE2);
+
             }else{
                 int triangleIndex = insertTriangle(init_triangles, p1_idx, p2_idx, p4_idx, TYPE1);
                 triangleIndex = insertTriangle(init_triangles, p1_idx, p3_idx, p4_idx, TYPE2);
@@ -187,7 +223,7 @@ void Reconstruction::init(int block_size_x, int block_size_y, int divide_flag) {
  */
 int Reconstruction::addCorner(cv::Point2f p) {
     corners.emplace_back(p);
-    corner_flag[(int)p.y][(int)p.x] = corners.size() - 1;
+    corner_flag[(int)(p.y * 2)][(int)(p.x * 2)] = corners.size() - 1;
     return corners.size();
 }
 
