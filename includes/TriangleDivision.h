@@ -172,6 +172,8 @@ private:
     std::vector<std::vector<cv::Mat>> ref_images;
     std::vector<std::vector<cv::Mat>> target_images;
     int qp;
+    cv::Mat expansion_ref;
+
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
     void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
     void addCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_no);

@@ -214,6 +214,8 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
     ref_images = getRefImages(ref_image, ref_gauss_image);
     target_images = getTargetImages(target_image);
 
+    expansion_ref = getExpansionMatImage(ref_image, 4, 16);
+
 }
 
 /**
@@ -877,7 +879,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
     std::vector<cv::Point2f> gauss_result_warping;
     cv::Point2f gauss_result_parallel;
-    cv::Mat expansion_ref = getExpansionMatImage(ref_image, 4, 64);
 
     if(triangle_gauss_results[triangle_index].residual > 0) {
         GaussResult result_before = triangle_gauss_results[triangle_index];
