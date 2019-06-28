@@ -199,7 +199,7 @@ void run(std::string config_path) {
 
         triangle_division.constructPreviousCodingTree(foo, 0);
 
-        std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_triangles.size(), std::vector< std::vector<int> >(block_size_x, std::vector<int>(block_size_y)) );
+        std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_triangles.size(), std::vector< std::vector<int> >(block_size_x, std::vector<int>(block_size_y, -1)) );
 
         for (int i = 0; i < init_triangles.size(); i++) {
 //            std::vector<std::vector<int>> diagonal_line_area_flag(block_size_x, std::vector<int>(block_size_y, 0)); // 斜め線でどちらを取るか表すフラグ flag[x][y]
