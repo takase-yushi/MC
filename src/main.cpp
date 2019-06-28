@@ -2038,7 +2038,6 @@ getPredictedImage(cv::Mat &ref,cv::Mat &target,cv::Mat &intra,  std::vector<Tria
 //        std::cout << corners[triangle.p1_idx] << " " << corners[triangle.p2_idx] << " " << corners[triangle.p3_idx] << std::endl;
 
         // 良い方法を選んで貼り付け
-        double error_warp;
         Point3Vec triangleVec(corners[triangle.p1_idx], corners[triangle.p2_idx], corners[triangle.p3_idx]);
 
         // ガウスニュートン法による変形
@@ -2047,7 +2046,7 @@ getPredictedImage(cv::Mat &ref,cv::Mat &target,cv::Mat &intra,  std::vector<Tria
         std::vector<cv::Point2f> add_corner;
         std::vector<cv::Point2f> add_corner_tmp;
         std::vector<Triangle> triangles_tmp;
-        int in_triangle_size;
+
 
 
         // para_flag == trueなら平行移動
@@ -2075,11 +2074,8 @@ getPredictedImage(cv::Mat &ref,cv::Mat &target,cv::Mat &intra,  std::vector<Tria
         cv::Point2f a(mv[0].x, mv[0].y), b(mv[1].x, mv[1].y), c(mv[2].x, mv[2].y);
 
         std::cout <<     a << " " << b << " " << c << std::endl;
-        double MSE_prev = error_warp / (double) in_triangle_size;
-        numerator++;
-//        std::cout << numerator << "/" << denominator << std::endl;
+        double MSE_prev = MSE_tmp / (double) triangle_size;
 //        continue;
-
 
         // 並行移動のみ塗る
         if(parallel_flag) {
@@ -2139,10 +2135,10 @@ getPredictedImage(cv::Mat &ref,cv::Mat &target,cv::Mat &intra,  std::vector<Tria
 
                 int triangle_later_size;
                 // add_countは足した頂点の数らしい(ループで共有)
-                Gauss_Newton2(ref, target, intra, predict_buf_dummy, predict_warp, predict_para, error_warp,
+                Gauss_Newton2(ref, target, intra, predict_buf_dummy, predict_warp, predict_para, MSE_tmp,
                          triangleVec_later, prev_corners, &parallel_flag, t,
                               residual_ref, triangle_later_size,erase_th_global);
-                MSE_later += error_warp;
+                MSE_later += MSE_tmp;
                 triangle_size_sum_later += triangle_later_size;
             }
             // 加える可能性のある頂点の座標
@@ -2230,23 +2226,23 @@ getPredictedImage(cv::Mat &ref,cv::Mat &target,cv::Mat &intra,  std::vector<Tria
             }
         }
 
-        error_warp = 0;
+        MSE_tmp = 0;
         cv::Point2d xp, va, vb, ta, tb, tc;
         ta = triangleVec.p1;
         tb = triangleVec.p2;
         tc = triangleVec.p3;
 
-//        std::cout << numerator++ << "/" << denominator << "\n";
+        std::cout << numerator++ << "/" << denominator << "\n";
     }
-
+    std::cout << "check" << std::endl;
     // 基準ベクトルの符号化
     std::vector<std::vector<cv::Point2i>> corded_mv(corners.size());
     std::queue<int> Queue_neighbor;
     bool init_flag = false;
 
     // 初期化のようなもの（1番最初に符号化するための頂点を見つける）
-    //    int start_idx = 0;
-    //    while(mv_basis_tuple[start_idx].empty()) start_idx++;
+//        int start_idx = 0;
+//        while(mv_basis_tuple[start_idx].empty()) start_idx++;
 
     for (int i = 0; i < (int) mv_basis_tuple.size(); i++) { // i: 三角パッチの番号
         for (int j = 0; j < (int) mv_basis_tuple[i].size(); j++) { // j: スタックのようなものを辿る
@@ -2273,6 +2269,7 @@ getPredictedImage(cv::Mat &ref,cv::Mat &target,cv::Mat &intra,  std::vector<Tria
         }
         if (init_flag)break;
     }
+    std::cout << "check1" << std::endl;
 
     std::vector<bool> inqueue_flag(corners.size(), false);
     while (!Queue_neighbor.empty()) {
@@ -2297,6 +2294,7 @@ getPredictedImage(cv::Mat &ref,cv::Mat &target,cv::Mat &intra,  std::vector<Tria
                 }
             }
         }
+        std::cout << "check2" << std::endl;
 
         // その頂点に設定されている基準ベクトルをすべて符号化する
         for (int j = 0; j < (int) mv_basis_tuple[current_idx].size(); j++) {
@@ -2401,7 +2399,7 @@ getPredictedImage(cv::Mat &ref,cv::Mat &target,cv::Mat &intra,  std::vector<Tria
             }
         }
     }
-
+    std::cout << "chek3" << std::endl;
     cv::imwrite(getProjectDirectory() + "/img/minato/flag_img_" + std::to_string(block_size_x) + "_" + std::to_string(block_size_y) + "_QP" + std::to_string(qp) + "_RIGHT.png", parallel_flag_img_color);
 
     int worth = 0;
