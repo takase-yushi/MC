@@ -170,8 +170,6 @@ std::string replaceBackslash(std::string str);
 
 std::string getVersionOfOpenCV();
 
-std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const std::vector<std::vector<int>>& area_flag, int triangle_index, CodingTreeUnit* ctu, int block_size_x, int block_size_y);
-
 void storeGnuplotFile(const std::string& out_file_path, const std::string& xlable, const std::string& ylabel, const std::string& data_name);
 
 /**

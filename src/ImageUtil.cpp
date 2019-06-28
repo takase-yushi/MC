@@ -210,8 +210,8 @@ EXPAND_ARRAY_TYPE getExpandImages(std::vector<std::vector<cv::Mat>> ref_images, 
 
     for(int filter = 0 ; filter < static_cast<int>(ref_images.size()) ; filter++){
         for(int step = 0 ; step < static_cast<int>(ref_images[filter].size()) ; step++){
-            cv::Mat current_target_image = mv_filter(target_images[filter][step], 2);
-            cv::Mat current_ref_image = mv_filter(ref_images[filter][step], 2);
+            cv::Mat current_target_image = target_images[filter][step];
+            cv::Mat current_ref_image = ref_images[filter][step];
 
             auto **current_target_expand = (unsigned char **) std::malloc(
                     sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
@@ -424,6 +424,71 @@ unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size){
     return expansion_image;
 }
 
+
+double w(double x){
+    double absx = fabs(x);
+
+    if (absx <= 1.0) {
+        return absx * absx * absx - 2 * absx * absx + 1;
+    } else if (absx <= 2.0) {
+        return - absx * absx * absx + 5 * absx * absx - 8 * absx + 4;
+    } else {
+        return 0.0;
+    }
+}
+
+int img_ip(unsigned char **img, int xs, int ys, double x, double y, int mode){
+    int x0, y0;          /* 補間点 (x, y) の整数部分 */
+    double dx, dy;       /* 補間点 (x, y) の小数部分 */
+    int nx, ny;          /* 双3次補間用のループ変数 */
+    double val = 0.0, w(double);
+
+    /*** 補間点(x, y)が原画像の領域外なら, 範囲外を示す -1 を返す ***/
+    if (x < -16 || x > xs || y < -16 || y > ys ) {
+        std::cout << "Error in img_ip!" << std::endl;
+        std::cout << x << " " << y << std::endl;
+        exit(1);
+    }
+
+    /*** 補間点(x, y)の整数部分(x0, y0), 小数部分(dx, dy)を求める ***/
+    x0 = (int) floor(x);
+    y0 = (int) floor(y);
+    dx = x - (double) x0;
+    dy = y - (double) y0;
+
+    /*** mode で指定された補間法に従って補間し，値を val に保存 ***/
+    switch(mode) { /* mode = 0 : 最近傍, 1 : 双1次, 2 : 双3次 */
+        case 0:  /* 最近傍補間法 --- 式(9.4) */
+            if (dx <= 0.5 && dy <= 0.5)     val = img[x0  ][y0  ];
+            else if (dx > 0.5 && dy <= 0.5) val = img[x0+1][y0  ];
+            else if (dx <= 0.5 && dy > 0.5) val = img[x0  ][y0+1];
+            else                            val = img[x0+1][y0+1];
+            break;
+        case 1: /* 双1次補間法 --- 式(9.8) */
+            val = img[x0  ][y0  ] * (1.0 - dx) * (1.0 - dy) +
+                  img[x0+1][y0  ] * dx         * (1.0 - dy) +
+                  img[x0  ][y0+1] * (1.0 - dx) * dy         +
+                  img[x0+1][y0+1] * dx         * dy;
+            break;
+        case 2: /* 3次補間法 --- 式(9.13) */
+            val = 0.0;
+            for(ny = -1 ; ny <= 2 ; ny++) {
+                for(nx = -1 ; nx <= 2 ; nx++) {
+                    val += img[x0 + nx][y0 + ny] * w(nx - dx) * w(ny - dy);
+                }
+            }
+            break;
+        default:
+            break;
+    }
+
+    /*** リミッタを掛けて return ***/
+    if (val >= 255.5) return 255;
+    else if (val < -0.5) return 0;
+    else return (int) (val + 0.5);
+}
+
+
 /**
  * @fn cv::Mat getExpandImage(cv::Mat image, int k)
  * @brief k倍に拡張子，expansion_size分回りを拡張した画像(Mat)を生成する
@@ -433,44 +498,55 @@ unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size){
  * @return 拡張した画像
  */
 cv::Mat getExpansionMatImage(cv::Mat &image, int k, int expansion_size){
-    cv::Mat out;
-    cv::resize(image, out, cv::Size(), 4, 4, CV_INTER_CUBIC);
+    unsigned char **img;
+    int scaled_expand_size = expansion_size + 1; // 折返しの分
+    if((img = (unsigned char **)malloc(sizeof(unsigned char *) * (image.cols + 2 * (scaled_expand_size)))) == NULL) {
+        fprintf(stderr, "malloc error");
+        exit(1);
+    }
+    img += scaled_expand_size;
 
-    cv::Mat expansion_image = cv::Mat::zeros(image.rows * k + 2 * expansion_size, image.cols * k + 2 * expansion_size, CV_8UC3);
+    for(int x = -scaled_expand_size ; x < image.cols + scaled_expand_size ; x++) {
+        img[x] = (unsigned char *)malloc(sizeof(unsigned char) * (image.rows + 2 * (scaled_expand_size)));
+        img[x] += scaled_expand_size;
+    }
 
-    for(int y = 0 ; y < out.rows ; y++){
-        for(int x = 0 ; x < out.cols ; x++){
-            R(expansion_image, x + expansion_size, y + expansion_size) = M(out, x, y);
-            G(expansion_image, x + expansion_size, y + expansion_size) = M(out, x, y);
-            B(expansion_image, x + expansion_size, y + expansion_size) = M(out, x, y);
+    for(int y = 0 ; y < image.rows ; y++){
+        for(int x = 0 ; x < image.cols ; x++) {
+            img[x][y] = M(image, x, y);
         }
     }
 
-    // y方向に埋める
-    for(int y = 0 ; y < out.rows ; y++) {
-        for (int x = -expansion_size; x < 0; x++) {
-            R(expansion_image, x + expansion_size, y + expansion_size) = M(out, 0, y);
-            G(expansion_image, x + expansion_size, y + expansion_size) = M(out, 0, y);
-            B(expansion_image, x + expansion_size, y + expansion_size) = M(out, 0, y);
-
-            R(expansion_image, out.cols - x - 1 + expansion_size, y + expansion_size) = M(out, out.cols - 1, y);
-            G(expansion_image, out.cols - x - 1 + expansion_size, y + expansion_size) = M(out, out.cols - 1, y);
-            B(expansion_image, out.cols - x - 1 + expansion_size, y + expansion_size) = M(out, out.cols - 1, y);
+    for(int y = 0 ; y < image.rows ; y++){
+        for(int x = -scaled_expand_size ; x < 0 ; x++) {
+            img[x][y] = M(image, 0, y);
+            img[image.cols + scaled_expand_size + x][y] = M(image, (int)(image.cols - 1), y);
         }
     }
 
-    // x方向?に埋める
-    for(int y = -expansion_size ; y < 0 ; y++) {
-        for (int x = -expansion_size; x < out.cols + expansion_size; x++) {
-            R(expansion_image, x + expansion_size, y + expansion_size) = M(expansion_image, x + expansion_size, expansion_size);
-            G(expansion_image, x + expansion_size, y + expansion_size) = M(expansion_image, x + expansion_size, expansion_size);
-            B(expansion_image, x + expansion_size, y + expansion_size) = M(expansion_image, x + expansion_size, expansion_size);
-
-            R(expansion_image, x + expansion_size, out.rows - y - 1 + expansion_size) = M(expansion_image, x + expansion_size, out.rows - 1 + expansion_size);
-            G(expansion_image, x + expansion_size, out.rows - y - 1 + expansion_size) = M(expansion_image, x + expansion_size, out.rows - 1 + expansion_size);
-            B(expansion_image, x + expansion_size, out.rows - y - 1 + expansion_size) = M(expansion_image, x + expansion_size, out.rows - 1 + expansion_size);
+    for (int y = -scaled_expand_size ; y < 0 ; y++) {
+        for (int x = -scaled_expand_size ; x < image.cols + scaled_expand_size; x++) {
+            img[x][y] = img[x][0];
+            img[x][image.rows + expansion_size  + y] = img[x][image.rows - 1];
         }
     }
+
+    cv::Mat expansion_image = cv::Mat::zeros(image.rows * k + 2 * k * expansion_size, image.cols * k + 2 * k * expansion_size, CV_8UC3);
+
+    for(int y = 0 ; y < expansion_image.rows ; y++){
+        for(int x = 0 ; x < expansion_image.cols ; x++){
+            R(expansion_image, x, y) = img_ip(img, (image.cols + expansion_size), (image.rows + expansion_size), x / (double)k - expansion_size, y / (double)k - expansion_size, 1);
+            G(expansion_image, x, y) = img_ip(img, (image.cols + expansion_size), (image.rows + expansion_size), x / (double)k - expansion_size, y / (double)k - expansion_size, 1);
+            B(expansion_image, x, y) = img_ip(img, (image.cols + expansion_size), (image.rows + expansion_size), x / (double)k - expansion_size, y / (double)k - expansion_size, 1);
+        }
+    }
+
+    for(int x = -scaled_expand_size ; x < image.cols + scaled_expand_size ; x++) {
+        img[x] -= scaled_expand_size;
+        free(img[x]);
+    }
+    img -= scaled_expand_size;
+    free(img);
 
     return expansion_image;
 }
@@ -489,4 +565,70 @@ void freeImage(unsigned char **image, cv::Size image_size, int expansion_size){
     }
     image -= expansion_size;
     free(image);
+}
+
+/**
+ *
+ * @param ctu
+ * @param triangle_index
+ * @return
+ */
+bool isMyTriangle(const CodingTreeUnit* ctu, int triangle_index){
+    if(ctu == nullptr) return false;
+
+    while(ctu != nullptr) {
+        if(triangle_index == ctu->triangle_index) return true;
+        ctu = ctu->parentNode;
+    }
+
+    return false;
+}
+
+/**
+ * @fn std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle)
+ * @brief 三角パッチ内に含まれる画素を返す
+ * @param triangle 三角形
+ * @param area_flag 境界線がどちらを表すかのフラグ
+ * @param triangle_index 三角形の番号
+ * @return 画素の集合
+ */
+std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const std::vector<std::vector<int>>& area_flag, int triangle_index, CodingTreeUnit* ctu, int block_size_x, int block_size_y){
+    std::vector<cv::Point2f> pixels_in_triangle;
+    cv::Point2f p0 = triangle.p1, p1 = triangle.p2, p2 = triangle.p3;
+
+    int sx = ceil(std::min({p0.x, p1.x, p2.x}));
+    int lx = floor(std::max({p0.x, p1.x, p2.x}));
+    int sy = ceil(std::min({p0.y, p1.y, p2.y}));
+    int ly = floor(std::max({p0.y, p1.y, p2.y}));
+
+    int width = lx - sx + 1;
+    int height = ly - sy + 1;
+
+    pixels_in_triangle.clear();
+    cv::Point2i xp;
+
+    for (int j = sy ; j <= ly ; j++) {
+        for (int i = sx ; i <= lx; i++) {
+            xp.x = i;
+            xp.y = j;
+            if (isInTriangle(triangle, xp) == 1) {
+//                if(isPointOnTheLine(p0, p1, xp) || isPointOnTheLine(p1, p2, xp) || isPointOnTheLine(p2, p0, xp)){
+//                    if(xp.x != sx && xp.x != lx && xp.y != sy && xp.y != ly) {
+//                        if (area_flag[xp.x % block_size_x][xp.y % block_size_y] == triangle_index || isMyTriangle(ctu, area_flag[xp.x % block_size_x][xp.y % block_size_y])) {
+//                            pixels_in_triangle.emplace_back(xp);
+//                        }
+//                    }else{
+//                        pixels_in_triangle.emplace_back(xp);
+//                    }
+//                }else {
+//                    pixels_in_triangle.emplace_back(xp);//三角形の内部のピクセルを格納
+//                }
+                int pixel_index = area_flag[xp.x % block_size_x][xp.y % block_size_y];
+                if(pixel_index == -1 || pixel_index == triangle_index || isMyTriangle(ctu, pixel_index)){
+                    pixels_in_triangle.emplace_back(xp);
+                }
+            }
+        }
+    }
+    return pixels_in_triangle;
 }

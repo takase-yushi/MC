@@ -174,61 +174,6 @@ bool isPointOnTheLine(cv::Point2f a, cv::Point2f b, cv::Point2f p){
     return outerProduct(v1, v2) == 0;
 }
 
-bool isMyTriangle(const CodingTreeUnit* ctu, int triangle_index){
-    if(ctu == nullptr) return false;
-
-    while(ctu != nullptr) {
-        if(triangle_index == ctu->triangle_index) return true;
-        ctu = ctu->parentNode;
-    }
-
-    return false;
-}
-
-/**
- * @fn std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle)
- * @brief 三角パッチ内に含まれる画素を返す
- * @param triangle 三角形
- * @param area_flag 境界線がどちらを表すかのフラグ
- * @param triangle_index 三角形の番号
- * @return 画素の集合
- */
-std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const std::vector<std::vector<int>>& area_flag, int triangle_index, CodingTreeUnit* ctu, int block_size_x, int block_size_y){
-    std::vector<cv::Point2f> pixels_in_triangle;
-    cv::Point2f p0 = triangle.p1, p1 = triangle.p2, p2 = triangle.p3;
-
-    int sx = ceil(std::min({p0.x, p1.x, p2.x}));
-    int lx = floor(std::max({p0.x, p1.x, p2.x}));
-    int sy = ceil(std::min({p0.y, p1.y, p2.y}));
-    int ly = floor(std::max({p0.y, p1.y, p2.y}));
-
-    int width = lx - sx + 1;
-    int height = ly - sy + 1;
-
-    pixels_in_triangle.clear();
-    cv::Point2i xp;
-
-    for (int j = sy ; j <= ly ; j++) {
-        for (int i = sx ; i <= lx; i++) {
-            xp.x = i;
-            xp.y = j;
-            if (isInTriangle(triangle, xp) == 1) {
-                if(isPointOnTheLine(p0, p1, xp) || isPointOnTheLine(p1, p2, xp) || isPointOnTheLine(p2, p0, xp)){
-                    if(xp.x != sx && xp.x != lx && xp.y != sy && xp.y != ly) {
-                        if (area_flag[xp.x % block_size_x][xp.y % block_size_y] == triangle_index || isMyTriangle(ctu, area_flag[xp.x % block_size_x][xp.y % block_size_y])) {
-                            pixels_in_triangle.emplace_back(xp);
-                        }
-                    }else{
-                        pixels_in_triangle.emplace_back(xp);
-                    }
-                }else {
-                    pixels_in_triangle.emplace_back(xp);//三角形の内部のピクセルを格納
-                }
-            }
-        }
-    }
-    return pixels_in_triangle;
-}
 
 /**
  * @fn double intersectM(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, cv::Point2f p4)

@@ -18,5 +18,7 @@ cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit
 void freeImage(unsigned char **image, cv::Size image_size, int expansion_size);
 unsigned char ** getExpansionImage(cv::Mat image, int k, int expansion_size);
 cv::Mat getExpansionMatImage(cv::Mat &image, int k, int expansion_size);
+bool isMyTriangle(const CodingTreeUnit* ctu, int triangle_index);
+std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const std::vector<std::vector<int>>& area_flag, int triangle_index, CodingTreeUnit* ctu, int block_size_x, int block_size_y);
 
 #endif //ENCODER_IMAGEUTIL_H
