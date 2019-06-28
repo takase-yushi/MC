@@ -1027,7 +1027,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             triangle_indexes[1], (cmt->rightNode != nullptr ? cmt->rightNode->mv1 : cmt->mv1), diagonal_line_area_flag, ctu);
 
     std::cout << "before:" << cost_before_subdiv << " after:" << (cost_after_subdiv1 + cost_after_subdiv2) << std::endl;
-    if(cost_before_subdiv > (cost_after_subdiv1 + cost_after_subdiv2)) {
+    if(cost_before_subdiv >= (cost_after_subdiv1 + cost_after_subdiv2)) {
         ctu->split_cu_flag = true;
 
         int t1_idx = triangles.size() - 2;
