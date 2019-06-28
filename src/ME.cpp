@@ -176,7 +176,7 @@ std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point3Vec tr, const c
  * @param ctu CodingTree
  * @return 動きベクトルのvector(vec[0]: full-pell vec[1]: half-pell vec[2]: quarter-pell)と
  */
-std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Vec triangle, const cv::Mat& target_image, cv::Mat expansion_ref_image, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu) {
+std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Vec triangle, const cv::Mat& target_image, cv::Mat expansion_ref_image, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Point2f fullpell_initial_vector) {
     double sx, sy, lx, ly;
     cv::Point2f tp1, tp2, tp3;
 
@@ -206,30 +206,36 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
     cv::Point2f mv_min;
     int spread_quarter = 64;
     int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
-
     std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, 128, 128);
-    for(int j = -SY * 4 ; j <= SY * 4 ; j += s) {            //j : y方向のMV
-        for(int i = -SX * 4 ; i <= SX * 4 ; i += s) {        //i : x方向のMV
-            //探索範囲が画像上かどうか判定
-            if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
-               && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
-                e = 0.0;
-                e_count = 0;
-                for(auto &pixel : pixels) {
-                    int ref_x = std::max((int)(4 * pixel.x), 0);
-                    ref_x = (i + ref_x + spread_quarter);
-                    int ref_y = std::max((int)((4 * pixel.y)), 0);
-                    ref_y = (j + ref_y + spread_quarter);
-                    e += fabs(M(expansion_ref_image, ref_x, ref_y) - M(target_image, (int)pixel.x, (int)pixel.y));
-                    e_count++;
+
+    if(fullpell_initial_vector.x == -10000 && fullpell_initial_vector.y == -10000){
+        for(int j = -SY * 4 ; j <= SY * 4 ; j += s) {            //j : y方向のMV
+            for(int i = -SX * 4 ; i <= SX * 4 ; i += s) {        //i : x方向のMV
+                //探索範囲が画像上かどうか判定
+                if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
+                   && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
+                    e = 0.0;
+                    e_count = 0;
+                    for(auto &pixel : pixels) {
+                        int ref_x = std::max((int)(4 * pixel.x), 0);
+                        ref_x = (i + ref_x + spread_quarter);
+                        int ref_y = std::max((int)((4 * pixel.y)), 0);
+                        ref_y = (j + ref_y + spread_quarter);
+                        e += fabs(M(expansion_ref_image, ref_x, ref_y) - M(target_image, (int)pixel.x, (int)pixel.y));
+                        e_count++;
+                    }
+                }
+                if(error_min > e){
+                    error_min = e;
+                    mv_min.x = (double)i / 4.0;
+                    mv_min.y = (double)j / 4.0;
                 }
             }
-            if(error_min > e){
-                error_min = e;
-                mv_min.x = (double)i / 4.0;
-                mv_min.y = (double)j / 4.0;
-            }
         }
+        std::cout << mv_min << std::endl;
+    }else{
+        mv_min.x = (fullpell_initial_vector.x > 0 ? (int)(fullpell_initial_vector.x + 0.5) : (int) (fullpell_initial_vector.x - 0.5));
+        mv_min.y = (fullpell_initial_vector.y > 0 ? (int)(fullpell_initial_vector.y + 0.5) : (int) (fullpell_initial_vector.y - 0.5));
     }
 
     std::vector<cv::Point2f> mvs;
@@ -264,7 +270,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
             }
         }
     }
-
+    std::cout << mv_min << std::endl;
     mvs.emplace_back(mv_min.x, mv_min.y);
     errors.emplace_back(error_min);
 
@@ -295,7 +301,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
             }
         }
     }
-
+    std::cout << mv_min << std::endl;
     double error = error_min;
     mvs.emplace_back(mv_min.x, mv_min.y);
     errors.emplace_back(error);
