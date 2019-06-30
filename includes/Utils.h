@@ -77,6 +77,13 @@
  */
 #define SIDE_Y_MIN 400
 
+enum {
+    BM,
+    NEWTON,
+};
+
+#define PRED_MODE BM
+
 const std::string OS = "Ubuntu";
 
 /**
