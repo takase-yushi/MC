@@ -499,7 +499,7 @@ int img_ip(unsigned char **img, int xs, int ys, double x, double y, int mode){
  */
 cv::Mat getExpansionMatImage(cv::Mat &image, int k, int expansion_size){
     unsigned char **img;
-    int scaled_expand_size = expansion_size + 1; // 折返しの分
+    int scaled_expand_size = expansion_size + 2; // 折返しの分
     if((img = (unsigned char **)malloc(sizeof(unsigned char *) * (image.cols + 2 * (scaled_expand_size)))) == NULL) {
         fprintf(stderr, "malloc error");
         exit(1);
@@ -535,9 +535,9 @@ cv::Mat getExpansionMatImage(cv::Mat &image, int k, int expansion_size){
 
     for(int y = 0 ; y < expansion_image.rows ; y++){
         for(int x = 0 ; x < expansion_image.cols ; x++){
-            R(expansion_image, x, y) = img_ip(img, (image.cols + expansion_size), (image.rows + expansion_size), x / (double)k - expansion_size, y / (double)k - expansion_size, 1);
-            G(expansion_image, x, y) = img_ip(img, (image.cols + expansion_size), (image.rows + expansion_size), x / (double)k - expansion_size, y / (double)k - expansion_size, 1);
-            B(expansion_image, x, y) = img_ip(img, (image.cols + expansion_size), (image.rows + expansion_size), x / (double)k - expansion_size, y / (double)k - expansion_size, 1);
+            R(expansion_image, x, y) = img_ip(img, (image.cols + expansion_size), (image.rows + expansion_size), x / (double)k - expansion_size, y / (double)k - expansion_size, 2);
+            G(expansion_image, x, y) = img_ip(img, (image.cols + expansion_size), (image.rows + expansion_size), x / (double)k - expansion_size, y / (double)k - expansion_size, 2);
+            B(expansion_image, x, y) = img_ip(img, (image.cols + expansion_size), (image.rows + expansion_size), x / (double)k - expansion_size, y / (double)k - expansion_size, 2);
         }
     }
 
