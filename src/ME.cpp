@@ -452,7 +452,7 @@ int bicubic_interpolation(unsigned char **img, double x, double y){
  * @param[in] parallel_flag
  * @return 2乗誤差
  */
-double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& output_image, Point3Vec& triangle, std::vector<cv::Point2f>& mv, bool parallel_flag, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Rect block_size) {
+double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::Mat& output_image, Point3Vec& triangle, std::vector<cv::Point2f>& mv, int offset, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Rect block_size) {
     cv::Point2f pp0, pp1, pp2;
 
     pp0.x = triangle.p1.x + mv[0].x;
@@ -475,36 +475,6 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
     b = triangle.p2 - triangle.p1;
     det = a.x * b.y - a.y * b.x;
 
-    // 拡大画像の取得
-    unsigned char **expand_ref;
-    int offset = 32;
-    expand_ref = (unsigned char **)malloc((ref_image.cols + offset * 2) * sizeof(unsigned char *));
-    expand_ref += offset;
-    for(int i = -offset ; i < ref_image.cols + offset ; i++) {
-        expand_ref[i] = (unsigned char *)malloc((ref_image.rows + offset * 2) * sizeof(unsigned char));
-        expand_ref[i] += offset;
-    }
-
-    for(int y = 0 ; y < ref_image.rows ; y++){
-        for(int x = 0 ; x < ref_image.cols ; x++){
-            expand_ref[x][y] = M(ref_image, x, y);
-        }
-    }
-
-    for(int y = 0 ; y < ref_image.rows ; y++){
-        for(int x = -offset ; x < 0 ; x++){
-            expand_ref[x][y] = M(ref_image, 0, y);
-            expand_ref[ref_image.cols + offset + x][y] = M(ref_image, ref_image.cols - 1, y);
-        }
-    }
-
-    for(int y = -offset ; y < 0 ; y++){
-        for(int x = -offset ; x < ref_image.cols + offset ; x++){
-            expand_ref[x][y] = expand_ref[x][y];
-            expand_ref[x][ref_image.rows + offset + y] = expand_ref[x][ref_image.rows - 1];
-        }
-    }
-
     for(const auto& pixel : in_triangle_pixels) {
         X.x = pixel.x - triangle.p1.x;
         X.y = pixel.y - triangle.p1.y;
@@ -517,11 +487,11 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
         b_later = pp1 - pp0;
         X_later = alpha * a_later + beta * b_later + pp0;
 
-        if (X_later.x >= ref_image.cols - 1) {
-            X_later.x = ref_image.cols - 1.001;
+        if (X_later.x >= target_image.cols - 1) {
+            X_later.x = target_image.cols - 1.001;
         }
-        if (X_later.y >= ref_image.rows - 1) {
-            X_later.y = ref_image.rows - 1.001;
+        if (X_later.y >= target_image.rows - 1) {
+            X_later.y = target_image.rows - 1.001;
         }
 
         if (X_later.x < 0) {
@@ -543,15 +513,6 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
 
         squared_error += pow((M(target_image, (int)pixel.x, (int)pixel.y) - (0.299 * y + 0.587 * y + 0.114 * y)), 2);
     }
-
-    // メモリの開放
-    for(int i = -offset ; i < ref_image.cols + offset ; i++) {
-        expand_ref[i] -= offset;
-        free(expand_ref[i]);
-    }
-
-    expand_ref -= offset;
-    free(expand_ref);
 
     return squared_error;
 }

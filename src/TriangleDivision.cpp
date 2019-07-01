@@ -214,8 +214,23 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
     ref_images = getRefImages(ref_image, ref_gauss_image);
     target_images = getTargetImages(target_image);
 
-    expansion_ref = getExpansionMatImage(ref_image, 4, 16);
+    int expansion_size = 16;
+    expansion_ref = getExpansionMatImage(ref_image, 4, expansion_size);
 
+    cv::Mat tmp_mat = getExpansionMatImage(ref_image, 1, expansion_size);
+
+    expansion_ref_uchar = (unsigned char **)malloc(sizeof(unsigned char *) * tmp_mat.cols);
+    expansion_ref_uchar += expansion_size;
+    for(int x = 0; x < tmp_mat.cols ; x++){
+        expansion_ref_uchar[x - expansion_size] = (unsigned char *)malloc(sizeof(unsigned char) * tmp_mat.rows);
+        expansion_ref_uchar[x - expansion_size] += expansion_size;
+    }
+
+    for(int y = 0 ; y < tmp_mat.rows ; y++){
+        for(int x = 0 ; x < tmp_mat.cols ; x++){
+            expansion_ref_uchar[x - expansion_size][y - expansion_size] = M(tmp_mat, x, y);
+        }
+    }
 }
 
 /**
@@ -1673,6 +1688,7 @@ void TriangleDivision::getPredictedDiagonalImageFromCtu(CodingTreeUnit* ctu, std
 cv::Mat TriangleDivision::getPredictedImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag){
     cv::Mat out = cv::Mat::zeros(ref_image.size(), CV_8UC3);
 
+#pragma omp parallel for
     for(int i = 0 ; i < ctus.size() ; i++) {
         getPredictedImageFromCtu(ctus[i], out, area_flag[i/2]);
     }
@@ -1688,7 +1704,7 @@ void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &ou
         Point3Vec triangle(corners[triangle_corner_idx.p1_idx], corners[triangle_corner_idx.p2_idx], corners[triangle_corner_idx.p3_idx]);
 
         std::vector<cv::Point2f> mvs{mv, mv, mv};
-        getPredictedImage(ref_image, target_image, out, triangle, mvs, true, area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y));
+        getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, 16, area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y));
         return;
     }
 
