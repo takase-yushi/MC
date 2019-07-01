@@ -1155,6 +1155,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
         triangle_gauss_results[t4_idx] = split_mv_result[3];
         isCodedTriangle[t4_idx] = true;
+        result = split(expand_images, ctu->rightNode->rightNode, cmt_right_right, split_sub_triangles2.t2, t4_idx, split_sub_triangles2.t2_type, steps - 2, diagonal_line_area_flag);
 
         return true;
     }else{
