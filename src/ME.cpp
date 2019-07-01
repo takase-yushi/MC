@@ -232,7 +232,6 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
                 }
             }
         }
-        std::cout << mv_min << std::endl;
     }else{
         mv_min.x = (fullpell_initial_vector.x > 0 ? (int)(fullpell_initial_vector.x + 0.5) : (int) (fullpell_initial_vector.x - 0.5));
         mv_min.y = (fullpell_initial_vector.y > 0 ? (int)(fullpell_initial_vector.y + 0.5) : (int) (fullpell_initial_vector.y - 0.5));
@@ -270,7 +269,6 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
             }
         }
     }
-    std::cout << mv_min << std::endl;
     mvs.emplace_back(mv_min.x, mv_min.y);
     errors.emplace_back(error_min);
 
@@ -301,7 +299,6 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
             }
         }
     }
-    std::cout << mv_min << std::endl;
     double error = error_min;
     mvs.emplace_back(mv_min.x, mv_min.y);
     errors.emplace_back(error);
