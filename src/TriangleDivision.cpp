@@ -1104,8 +1104,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             {split_mv_result[3].mv_parallel, split_mv_result[3].mv_parallel, split_mv_result[3].mv_parallel}, split_mv_result[3].residual,
             triangle_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->rightNode);
 
-    std::cout << "before:" << cost_before_subdiv << " after:" << (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4) << std::endl;
-    double alpha = 1.0;
+
+    double alpha = 1;
+    std::cout << "before:" << cost_before_subdiv << " after:" << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4) << std::endl;
     if(cost_before_subdiv >= alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4)) {
         ctu->split_cu_flag = true;
 
