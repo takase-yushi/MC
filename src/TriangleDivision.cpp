@@ -23,7 +23,7 @@
 #include "../includes/ImageUtil.h"
 
 TriangleDivision::TriangleDivision(const cv::Mat &refImage, const cv::Mat &targetImage, const cv::Mat &refGaussImage) : target_image(targetImage),
-                                                                                          ref_image(refImage), ref_gauss_image(refGaussImage) {}
+                                                                                                                        ref_image(refImage), ref_gauss_image(refGaussImage) {}
 
 
 
@@ -865,7 +865,7 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
  * @return 分割した場合はtrue, そうでない場合falseを返す
  */
 bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point3Vec triangle, int triangle_index, int type, int steps, std::vector<std::vector<int>> &diagonal_line_area_flag) {
-    if(steps == 0) return false;
+    if(steps <= 0) return false;
 
     double RMSE_before_subdiv = 0.0;
     cv::Point2f p1 = triangle.p1;
@@ -912,7 +912,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         }
 
         parallel_flag = true;
-        std::cout << "before_mv:" << gauss_result_parallel << " " << RMSE_before_subdiv <<std::endl;
+//        std::cout << "before_mv:" << gauss_result_parallel << " " << RMSE_before_subdiv <<std::endl;
     }
 
     cv::Point2f mvd;
@@ -946,68 +946,95 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
     SplitResult split_triangles = getSplitTriangle(p1, p2, p3, type);
 
+    SplitResult split_sub_triangles1 = getSplitTriangle(split_triangles.t1.p1, split_triangles.t1.p2, split_triangles.t1.p3, split_triangles.t1_type);
+    SplitResult split_sub_triangles2 = getSplitTriangle(split_triangles.t2.p1, split_triangles.t2.p2, split_triangles.t2.p3, split_triangles.t2_type);
+
     std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
-    subdiv_ref_triangles.push_back(split_triangles.t1);
-    subdiv_target_triangles.push_back(split_triangles.t1);
-    subdiv_ref_triangles.push_back(split_triangles.t2);
-    subdiv_target_triangles.push_back(split_triangles.t2);
+    subdiv_ref_triangles.emplace_back(split_sub_triangles1.t1);
+    subdiv_ref_triangles.emplace_back(split_sub_triangles1.t2);
+    subdiv_ref_triangles.emplace_back(split_sub_triangles2.t1);
+    subdiv_ref_triangles.emplace_back(split_sub_triangles2.t2);
+
+    subdiv_target_triangles.emplace_back(split_sub_triangles1.t1);
+    subdiv_target_triangles.emplace_back(split_sub_triangles1.t2);
+    subdiv_target_triangles.emplace_back(split_sub_triangles2.t1);
+    subdiv_target_triangles.emplace_back(split_sub_triangles2.t2);
 
     double RMSE_after_subdiv = 0.0;
-    std::vector<GaussResult> split_mv_result(2);
+    std::vector<GaussResult> split_mv_result(subdiv_target_triangles.size());
 
-    int t1_idx = addCorner(p1);
-    int t2_idx = addCorner(p2);
-    int t3_idx = addCorner(p3);
-    addCornerAndTriangle(Triangle(t1_idx, t2_idx, t3_idx), triangle_index, type);
+    int p1_idx = addCorner(p1);
+    int p2_idx = addCorner(p2);
+    int p3_idx = addCorner(p3);
+    addCornerAndTriangle(Triangle(p1_idx, p2_idx, p3_idx), triangle_index, type);
 
-    int triangle_indexes[] = {(int)triangles.size() - 2, (int)triangles.size() - 1};
+    int t1_idx = (int)triangles.size() - 2;
+    int t2_idx = (int)triangles.size() - 1;
+    int t1_p1_idx = addCorner(split_triangles.t1.p1);
+    int t1_p2_idx = addCorner(split_triangles.t1.p2);
+    int t1_p3_idx = addCorner(split_triangles.t1.p3);
+    addCornerAndTriangle(Triangle(t1_p1_idx, t1_p2_idx, t1_p3_idx), t1_idx, split_triangles.t1_type);
+
+    int t2_p1_idx = addCorner(split_triangles.t2.p1);
+    int t2_p2_idx = addCorner(split_triangles.t2.p2);
+    int t2_p3_idx = addCorner(split_triangles.t2.p3);
+    addCornerAndTriangle(Triangle(t2_p1_idx, t2_p2_idx, t2_p3_idx), t2_idx, split_triangles.t2_type);
+
+    int triangle_indexes[] = {(int)triangles.size() - 4, (int)triangles.size() - 3, (int)triangles.size() - 2, (int)triangles.size() - 1};
 
     std::vector<std::vector<int>> prev_area_flag(diagonal_line_area_flag);
 
     // 分割回数が偶数回目のとき斜線の更新を行う
-    if((divide_steps - steps) % 2 == 0){
-        int sx = ceil( std::min({triangle.p1.x, triangle.p2.x, triangle.p3.x}));
-        int lx = floor(std::max({triangle.p1.x, triangle.p2.x, triangle.p3.x}));
-        int sy = ceil( std::min({triangle.p1.y, triangle.p2.y, triangle.p3.y}));
-        int ly = floor(std::max({triangle.p1.y, triangle.p2.y, triangle.p3.y}));
+    int sx = ceil( std::min({triangle.p1.x, triangle.p2.x, triangle.p3.x}));
+    int lx = floor(std::max({triangle.p1.x, triangle.p2.x, triangle.p3.x}));
+    int sy = ceil( std::min({triangle.p1.y, triangle.p2.y, triangle.p3.y}));
+    int ly = floor(std::max({triangle.p1.y, triangle.p2.y, triangle.p3.y}));
 
-        int width =  (lx - sx) / 2 + 1;
-        int height = (ly - sy) / 2 + 1;
+    int width =  (lx - sx) / 2 + 1;
+    int height = (ly - sy) / 2 + 1;
 
-        bool flag = true;
-        int a, b, c, d;
-        if(type == TYPE1) {
-            for (int x = 0 ; x < width  ; x++) {
-                diagonal_line_area_flag[(x + sx) % block_size_x][(x + sy) % block_size_y] = triangle_indexes[x % 2];
-                flag = !flag;
-            }
-        }else if(type == TYPE2) {
-            for (int x = 0 ; x < width ; x++) {
-                diagonal_line_area_flag[(sx + width + x) % block_size_x][(sy + height + x) % block_size_y] = triangle_indexes[x % 2];
-                flag = !flag;
-            }
-
-        }else if(type == TYPE3){
-            for(int x = 0 ; x < width ; x++){
-                diagonal_line_area_flag[(sx + width + x) % block_size_x][(sy + height - x - 1) % block_size_y] = triangle_indexes[x % 2];
-                flag = !flag;
-            }
-        }else if(type == TYPE4){
-            for(int x = 0 ; x < width ; x++){
-                diagonal_line_area_flag[(x + sx) % block_size_x][(ly - x) % block_size_y] = triangle_indexes[x % 2];
-                flag = !flag;
-            }
+    bool flag = true;
+    int a, b, c, d;
+    if(type == TYPE1) {
+        for (int x = 0 ; x < width  ; x++) {
+            diagonal_line_area_flag[(x + sx) % block_size_x][(x + sy) % block_size_y] = (x % 2 == 0 ? triangle_indexes[0] : triangle_indexes[2]);
+            flag = !flag;
+        }
+    }else if(type == TYPE2) {
+        for (int x = 0 ; x < width ; x++) {
+            diagonal_line_area_flag[(sx + width + x) % block_size_x][(sy + height + x) % block_size_y] = (x % 2 == 0 ? triangle_indexes[1] : triangle_indexes[3]);
+            flag = !flag;
         }
 
+    }else if(type == TYPE3){
+        for(int x = 0 ; x < width ; x++){
+            diagonal_line_area_flag[(sx + width + x) % block_size_x][(sy + height - x - 1) % block_size_y] = (x % 2 == 0 ? triangle_indexes[1] : triangle_indexes[2]);
+            flag = !flag;
+        }
+    }else if(type == TYPE4){
+        for(int x = 0 ; x < width ; x++){
+            diagonal_line_area_flag[(x + sx) % block_size_x][(ly - x) % block_size_y] = (x % 2 == 0 ? triangle_indexes[1] : triangle_indexes[2]);
+            flag = !flag;
+        }
     }
 
     ctu->leftNode = new CodingTreeUnit();
+    ctu->leftNode->triangle_index = triangles.size() - 6;
     ctu->leftNode->parentNode = ctu;
+    ctu->leftNode->leftNode = new CodingTreeUnit();
+    ctu->leftNode->leftNode->parentNode = ctu->leftNode;
+    ctu->leftNode->rightNode = new CodingTreeUnit();
+    ctu->leftNode->rightNode->parentNode = ctu->leftNode;
 
     ctu->rightNode = new CodingTreeUnit();
+    ctu->rightNode->triangle_index = triangles.size() - 5;
     ctu->rightNode->parentNode = ctu;
+    ctu->rightNode->leftNode = new CodingTreeUnit();
+    ctu->rightNode->leftNode->parentNode = ctu->rightNode;
+    ctu->rightNode->rightNode = new CodingTreeUnit();
+    ctu->rightNode->rightNode->parentNode = ctu->rightNode;
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
         double error_tmp;
         bool flag_tmp;
@@ -1029,57 +1056,90 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
         split_mv_result[j] = GaussResult(mv_warping_tmp, mv_parallel_tmp, error_tmp, triangle_size_tmp, flag_tmp);
         RMSE_after_subdiv += error_tmp;
-
-        std::cout << "after_mv:" << mv_parallel_tmp << " " << error_tmp << std::endl;
     }
-
 
     double cost_after_subdiv1;
     int code_length1;
+    CollocatedMvTree *cmt_left_left, *cmt_left_right, *cmt_right_left, *cmt_right_right;
+
+    cmt_left_left  = (cmt->leftNode == nullptr ? cmt : (cmt->leftNode->leftNode == nullptr ? cmt->leftNode : cmt->leftNode->leftNode));
+    cmt_left_right  = (cmt->leftNode == nullptr ? cmt : (cmt->leftNode->rightNode == nullptr ? cmt->rightNode : cmt->leftNode->rightNode));
+    cmt_right_left  = (cmt->rightNode == nullptr ? cmt : (cmt->rightNode->leftNode == nullptr ? cmt->rightNode : cmt->rightNode->leftNode));
+    cmt_right_right  = (cmt->rightNode == nullptr ? cmt : (cmt->rightNode->rightNode == nullptr ? cmt->rightNode : cmt->rightNode->rightNode));
+
     std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag) = getMVD(
             {split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel}, split_mv_result[0].residual,
-            triangle_indexes[0], (cmt->leftNode != nullptr ? cmt->leftNode->mv1 : cmt->mv1), diagonal_line_area_flag, ctu);
+            triangle_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->leftNode);
 
     double cost_after_subdiv2;
     int code_length2;
     std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag) = getMVD(
             {split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel}, split_mv_result[1].residual,
-            triangle_indexes[1], (cmt->rightNode != nullptr ? cmt->rightNode->mv1 : cmt->mv1), diagonal_line_area_flag, ctu);
+            triangle_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->leftNode);
 
-    std::cout << "before:" << cost_before_subdiv << " after:" << (cost_after_subdiv1 + cost_after_subdiv2) << std::endl;
-    if(cost_before_subdiv >= (cost_after_subdiv1 + cost_after_subdiv2)) {
+    double cost_after_subdiv3;
+    int code_length3;
+    std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag) = getMVD(
+            {split_mv_result[2].mv_parallel, split_mv_result[2].mv_parallel, split_mv_result[2].mv_parallel}, split_mv_result[2].residual,
+            triangle_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->rightNode);
+
+    double cost_after_subdiv4;
+    int code_length4;
+    std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag) = getMVD(
+            {split_mv_result[3].mv_parallel, split_mv_result[3].mv_parallel, split_mv_result[3].mv_parallel}, split_mv_result[3].residual,
+            triangle_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->rightNode);
+
+    std::cout << "before:" << cost_before_subdiv << " after:" << (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4) << std::endl;
+    double alpha = 1.0;
+    if(cost_before_subdiv >= alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4)) {
         ctu->split_cu_flag = true;
 
-        int t1_idx = triangles.size() - 2;
-        int t2_idx = triangles.size() - 1;
+        int t1_idx = triangles.size() - 4;
+        int t2_idx = triangles.size() - 3;
+        int t3_idx = triangles.size() - 2;
+        int t4_idx = triangles.size() - 1;
 
-        ctu->leftNode->triangle_index = t1_idx;
-        ctu->leftNode->mv1 = split_mv_result[0].mv_parallel;
-        ctu->leftNode->mv2 = split_mv_result[0].mv_parallel;
-        ctu->leftNode->mv3 = split_mv_result[0].mv_parallel;
-        ctu->code_length = code_length1;
+        // 1つ目の頂点追加
+        ctu->leftNode->leftNode->triangle_index = t1_idx;
+        ctu->leftNode->leftNode->mv1 = split_mv_result[0].mv_parallel;
+        ctu->leftNode->leftNode->mv2 = split_mv_result[0].mv_parallel;
+        ctu->leftNode->leftNode->mv3 = split_mv_result[0].mv_parallel;
+        ctu->leftNode->code_length = code_length1;
 
         triangle_gauss_results[t1_idx] = split_mv_result[0]; // TODO: warping対応
         isCodedTriangle[t1_idx] = true;
-        bool result = split(expand_images, ctu->leftNode, (cmt->leftNode != nullptr ? cmt->leftNode : cmt), split_triangles.t1, t1_idx,split_triangles.t1_type, steps - 1, diagonal_line_area_flag);
-        if(result) {
-            ctu->leftNode->parentNode = ctu;
-            ctu->depth = divide_steps - steps;
-        }
+        bool result = split(expand_images, ctu->leftNode->leftNode, cmt_left_left, split_sub_triangles1.t1, t1_idx,split_sub_triangles1.t1_type, steps - 2, diagonal_line_area_flag);
 
-        ctu->rightNode->triangle_index = t2_idx;
-        ctu->rightNode->mv1 = split_mv_result[1].mv_parallel;
-        ctu->rightNode->mv2 = split_mv_result[1].mv_parallel;
-        ctu->rightNode->mv3 = split_mv_result[1].mv_parallel;
-        ctu->code_length = code_length2;
+        // 2つ目の三角形
+        ctu->leftNode->rightNode->triangle_index = t2_idx;
+        ctu->leftNode->rightNode->mv1 = split_mv_result[1].mv_parallel;
+        ctu->leftNode->rightNode->mv2 = split_mv_result[1].mv_parallel;
+        ctu->leftNode->rightNode->mv3 = split_mv_result[1].mv_parallel;
+        ctu->rightNode->code_length = code_length2;
 
         triangle_gauss_results[t2_idx] = split_mv_result[1];
         isCodedTriangle[t2_idx] = true;
-        result = split(expand_images, ctu->rightNode, (cmt->rightNode != nullptr ? cmt->rightNode : cmt), split_triangles.t2, t2_idx, split_triangles.t2_type, steps - 1, diagonal_line_area_flag);
-        if(result) {
-            ctu->rightNode->parentNode = ctu;
-            ctu->depth = divide_steps - steps;
-        }
+        result = split(expand_images, ctu->leftNode->rightNode, cmt_left_right, split_sub_triangles1.t2, t2_idx, split_sub_triangles1.t2_type, steps - 2, diagonal_line_area_flag);
+
+        // 3つ目の三角形
+        ctu->rightNode->leftNode->triangle_index = t3_idx;
+        ctu->rightNode->leftNode->mv1 = split_mv_result[2].mv_parallel;
+        ctu->rightNode->leftNode->mv2 = split_mv_result[2].mv_parallel;
+        ctu->rightNode->leftNode->mv3 = split_mv_result[2].mv_parallel;
+        ctu->rightNode->leftNode->code_length = code_length3;
+
+        triangle_gauss_results[t3_idx] = split_mv_result[2];
+        isCodedTriangle[t3_idx] = true;
+        result = split(expand_images, ctu->rightNode->leftNode, cmt_right_left, split_sub_triangles2.t1, t3_idx, split_sub_triangles2.t1_type, steps - 2, diagonal_line_area_flag);
+
+        ctu->rightNode->rightNode->triangle_index = t4_idx;
+        ctu->rightNode->rightNode->mv1 = split_mv_result[3].mv_parallel;
+        ctu->rightNode->rightNode->mv2 = split_mv_result[3].mv_parallel;
+        ctu->rightNode->rightNode->mv3 = split_mv_result[3].mv_parallel;
+        ctu->rightNode->rightNode->code_length = code_length4;
+
+        triangle_gauss_results[t4_idx] = split_mv_result[3];
+        isCodedTriangle[t4_idx] = true;
 
         return true;
     }else{
@@ -1087,6 +1147,10 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         delete_flag[triangle_index] = false;
         ctu->leftNode = ctu->rightNode = nullptr;
         diagonal_line_area_flag = prev_area_flag;
+        eraseTriangle(triangles.size() - 1);
+        eraseTriangle(triangles.size() - 1);
+        eraseTriangle(triangles.size() - 1);
+        eraseTriangle(triangles.size() - 1);
         eraseTriangle(triangles.size() - 1);
         eraseTriangle(triangles.size() - 1);
         addNeighborVertex(triangles[triangle_index].first.p1_idx,triangles[triangle_index].first.p2_idx,triangles[triangle_index].first.p3_idx);
