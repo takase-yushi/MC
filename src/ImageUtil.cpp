@@ -368,7 +368,6 @@ cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit
     for(const auto foo : hoge) {
         drawTriangle(reconstructedImage, foo.p1, foo.p2, foo.p3, cv::Scalar(255, 255, 255));
     }
-//    cv::imwrite(getProjectDirectory(OS) + "/img/minato/reconstruction_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", reconstructedImage);
 
     return reconstructedImage;
 }
@@ -612,17 +611,6 @@ std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const st
             xp.x = i;
             xp.y = j;
             if (isInTriangle(triangle, xp) == 1) {
-//                if(isPointOnTheLine(p0, p1, xp) || isPointOnTheLine(p1, p2, xp) || isPointOnTheLine(p2, p0, xp)){
-//                    if(xp.x != sx && xp.x != lx && xp.y != sy && xp.y != ly) {
-//                        if (area_flag[xp.x % block_size_x][xp.y % block_size_y] == triangle_index || isMyTriangle(ctu, area_flag[xp.x % block_size_x][xp.y % block_size_y])) {
-//                            pixels_in_triangle.emplace_back(xp);
-//                        }
-//                    }else{
-//                        pixels_in_triangle.emplace_back(xp);
-//                    }
-//                }else {
-//                    pixels_in_triangle.emplace_back(xp);//三角形の内部のピクセルを格納
-//                }
                 int pixel_index = area_flag[xp.x % block_size_x][xp.y % block_size_y];
                 if(pixel_index == -1 || pixel_index == triangle_index || isMyTriangle(ctu, pixel_index)){
                     pixels_in_triangle.emplace_back(xp);
