@@ -175,3 +175,18 @@ void test5(){
 
 }
 
+void test6(){
+    cv::Mat ref_image = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
+    unsigned char **img1 = getExpansionImage(ref_image, 4, 16);
+
+    cv::Mat out = cv::Mat::zeros(ref_image.rows * 4 + 2 * 4 * 16, ref_image.cols * 4 + 2 * 4 * 16, CV_8UC3);
+    for(int y = -16 * 4 ; y < 4 * ref_image.rows + 4 * 16 ; y++){
+        for(int x = -16 * 4 ; x < 4 * ref_image.cols + 4 * 16 ; x++){
+            R(out, x + 16 * 4, y + 16 * 4) = img1[x][y];
+            G(out, x + 16 * 4, y + 16 * 4) = img1[x][y];
+            B(out, x + 16 * 4, y + 16 * 4) = img1[x][y];
+        }
+    }
+
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/out.png", out);
+}
