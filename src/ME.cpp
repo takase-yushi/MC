@@ -826,14 +826,12 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                     int x0_later_parallel_integer = (int)floor(X_later_parallel.x);
                     int y0_later_parallel_integer = (int)floor(X_later_parallel.y);
 
-                    double f = bicubic_interpolation(current_target_expand, X.x, X.y);
-                    double f_org = bicubic_interpolation(current_target_org_expand, X.x, X.y);
-
-                    double g_warping = bicubic_interpolation(current_ref_expand, X_later_warping.x, X_later_warping.y);
-                    double g_parallel = bicubic_interpolation(current_ref_expand, X_later_parallel.x, X_later_parallel.y);
-
-                    double g_org_warping = bicubic_interpolation(current_ref_org_expand, X_later_warping.x, X_later_warping.y);
-                    double g_org_parallel = bicubic_interpolation(current_ref_org_expand, X_later_parallel.x, X_later_parallel.y);
+                    double f              = img_ip(current_target_expand    , current_target_image.cols + spread, current_target_image.rows + spread,                X.x,                X.y, 2);
+                    double f_org          = img_ip(current_target_org_expand, current_target_image.cols + spread, current_target_image.rows + spread,                X.x,                X.y, 2);
+                    double g_warping      = img_ip(current_ref_expand       , current_target_image.cols + spread, current_target_image.rows + spread,  X_later_warping.x,  X_later_warping.y, 2);
+                    double g_parallel     = img_ip(current_ref_expand       , current_target_image.cols + spread, current_target_image.rows + spread, X_later_parallel.x, X_later_parallel.y, 2);
+                    double g_org_warping  = img_ip(current_ref_org_expand   , current_target_image.cols + spread, current_target_image.rows + spread,  X_later_warping.x,  X_later_warping.y, 2);
+                    double g_org_parallel = img_ip(current_ref_org_expand   , current_target_image.cols + spread, current_target_image.rows + spread, X_later_parallel.x, X_later_parallel.y, 2);
 
                     for (int row = 0; row < warping_matrix_dim; row++) {
                         for (int col = 0; col < warping_matrix_dim; col++) {
