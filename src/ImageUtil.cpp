@@ -350,6 +350,87 @@ void freeExpandImages(EXPAND_ARRAY_TYPE expand_images, int expand, int filter_nu
 
 }
 
+
+/**
+ * @fn double w(double x)
+ * @brief bicubic補間で使う重みを計算する
+ * @param x 値
+ * @return 重み
+ */
+double w(double x){
+    double absx = fabs(x);
+
+    if (absx <= 1.0) {
+        return absx * absx * absx - 2 * absx * absx + 1;
+    } else if (absx <= 2.0) {
+        return - absx * absx * absx + 5 * absx * absx - 8 * absx + 4;
+    } else {
+        return 0.0;
+    }
+}
+
+/**
+ * @fn int img_ip(unsigned char **img, int xs, int ys, double x, double y, int mode)
+ * @brief x,yの座標の補間値を返す
+ * @param img 保管するための原画像
+ * @param xs xの最大値
+ * @param ys yの最大値
+ * @param x 補間するx座標
+ * @param y 補間するy座標
+ * @param mode 補間モード。モードはImageUtil.hにenumで定義してある
+ * @return 補間値
+ */
+int img_ip(unsigned char **img, int xs, int ys, double x, double y, int mode){
+    int x0, y0;          /* 補間点 (x, y) の整数部分 */
+    double dx, dy;       /* 補間点 (x, y) の小数部分 */
+    int nx, ny;          /* 双3次補間用のループ変数 */
+    double val = 0.0, w(double);
+
+    /*** 補間点(x, y)が原画像の領域外なら, 範囲外を示す -1 を返す ***/
+    if (x < -16 || x > xs || y < -16 || y > ys ) {
+        std::cout << "Error in img_ip!" << std::endl;
+        std::cout << x << " " << y << std::endl;
+        exit(1);
+    }
+
+    /*** 補間点(x, y)の整数部分(x0, y0), 小数部分(dx, dy)を求める ***/
+    x0 = (int) floor(x);
+    y0 = (int) floor(y);
+    dx = x - (double) x0;
+    dy = y - (double) y0;
+
+    /*** mode で指定された補間法に従って補間し，値を val に保存 ***/
+    switch(mode) { /* mode = 0 : 最近傍, 1 : 双1次, 2 : 双3次 */
+        case 0:  /* 最近傍補間法 --- 式(9.4) */
+            if (dx <= 0.5 && dy <= 0.5)     val = img[x0  ][y0  ];
+            else if (dx > 0.5 && dy <= 0.5) val = img[x0+1][y0  ];
+            else if (dx <= 0.5 && dy > 0.5) val = img[x0  ][y0+1];
+            else                            val = img[x0+1][y0+1];
+            break;
+        case 1: /* 双1次補間法 --- 式(9.8) */
+            val = img[x0  ][y0  ] * (1.0 - dx) * (1.0 - dy) +
+                  img[x0+1][y0  ] * dx         * (1.0 - dy) +
+                  img[x0  ][y0+1] * (1.0 - dx) * dy         +
+                  img[x0+1][y0+1] * dx         * dy;
+            break;
+        case 2: /* 3次補間法 --- 式(9.13) */
+            val = 0.0;
+            for(ny = -1 ; ny <= 2 ; ny++) {
+                for(nx = -1 ; nx <= 2 ; nx++) {
+                    val += img[x0 + nx][y0 + ny] * w(nx - dx) * w(ny - dy);
+                }
+            }
+            break;
+        default:
+            break;
+    }
+
+    /*** リミッタを掛けて return ***/
+    if (val >= 255.5) return 255;
+    else if (val < -0.5) return 0;
+    else return (int) (val + 0.5);
+}
+
 /**
  * @fn cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit *> ctu)
  * @brief CodingTreeをもらって、三角形を書いた画像を返す
@@ -431,71 +512,6 @@ unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size, IP_M
     return expansion_image;
 }
 
-
-double w(double x){
-    double absx = fabs(x);
-
-    if (absx <= 1.0) {
-        return absx * absx * absx - 2 * absx * absx + 1;
-    } else if (absx <= 2.0) {
-        return - absx * absx * absx + 5 * absx * absx - 8 * absx + 4;
-    } else {
-        return 0.0;
-    }
-}
-
-int img_ip(unsigned char **img, int xs, int ys, double x, double y, int mode){
-    int x0, y0;          /* 補間点 (x, y) の整数部分 */
-    double dx, dy;       /* 補間点 (x, y) の小数部分 */
-    int nx, ny;          /* 双3次補間用のループ変数 */
-    double val = 0.0, w(double);
-
-    /*** 補間点(x, y)が原画像の領域外なら, 範囲外を示す -1 を返す ***/
-    if (x < -16 || x > xs || y < -16 || y > ys ) {
-        std::cout << "Error in img_ip!" << std::endl;
-        std::cout << x << " " << y << std::endl;
-        exit(1);
-    }
-
-    /*** 補間点(x, y)の整数部分(x0, y0), 小数部分(dx, dy)を求める ***/
-    x0 = (int) floor(x);
-    y0 = (int) floor(y);
-    dx = x - (double) x0;
-    dy = y - (double) y0;
-
-    /*** mode で指定された補間法に従って補間し，値を val に保存 ***/
-    switch(mode) { /* mode = 0 : 最近傍, 1 : 双1次, 2 : 双3次 */
-        case 0:  /* 最近傍補間法 --- 式(9.4) */
-            if (dx <= 0.5 && dy <= 0.5)     val = img[x0  ][y0  ];
-            else if (dx > 0.5 && dy <= 0.5) val = img[x0+1][y0  ];
-            else if (dx <= 0.5 && dy > 0.5) val = img[x0  ][y0+1];
-            else                            val = img[x0+1][y0+1];
-            break;
-        case 1: /* 双1次補間法 --- 式(9.8) */
-            val = img[x0  ][y0  ] * (1.0 - dx) * (1.0 - dy) +
-                  img[x0+1][y0  ] * dx         * (1.0 - dy) +
-                  img[x0  ][y0+1] * (1.0 - dx) * dy         +
-                  img[x0+1][y0+1] * dx         * dy;
-            break;
-        case 2: /* 3次補間法 --- 式(9.13) */
-            val = 0.0;
-            for(ny = -1 ; ny <= 2 ; ny++) {
-                for(nx = -1 ; nx <= 2 ; nx++) {
-                    val += img[x0 + nx][y0 + ny] * w(nx - dx) * w(ny - dy);
-                }
-            }
-            break;
-        default:
-            break;
-    }
-
-    /*** リミッタを掛けて return ***/
-    if (val >= 255.5) return 255;
-    else if (val < -0.5) return 0;
-    else return (int) (val + 0.5);
-}
-
-
 /**
  * @fn cv::Mat getExpandImage(cv::Mat image, int k)
  * @brief k倍に拡張子，expansion_size分回りを拡張した画像(Mat)を生成する
@@ -575,10 +591,11 @@ void freeImage(unsigned char **image, cv::Size image_size, int expansion_size){
 }
 
 /**
- *
- * @param ctu
- * @param triangle_index
- * @return
+ * @fn bool isMyTriangle(const CodingTreeUnit* ctu, int triangle_index)
+ * @brief CodingTreeUnitをさかのぼって、triangle_indexが親に含まれているか確認する
+ * @param ctu CTUのカレントノード
+ * @param triangle_index 調べるtriangle_index
+ * @return 存在していた場合true, 存在しない場合はfalseを返す
  */
 bool isMyTriangle(const CodingTreeUnit* ctu, int triangle_index){
     if(ctu == nullptr) return false;
