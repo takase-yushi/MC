@@ -13,6 +13,7 @@ typedef std::vector<std::vector<std::vector<unsigned char **>>> EXPAND_ARRAY_TYP
 enum IP_MODE {
     BILINEAR,
     BICUBIC,
+    HEVC
 };
 
 cv::Mat getResidualImage(const cv::Mat &target_image, const cv::Mat &predict_image, int k = 1);
@@ -27,5 +28,7 @@ unsigned char ** getExpansionImage(cv::Mat image, int k, int expansion_size, IP_
 cv::Mat getExpansionMatImage(cv::Mat &image, int k, int expansion_size, IP_MODE mode = IP_MODE::BICUBIC);
 bool isMyTriangle(const CodingTreeUnit* ctu, int triangle_index);
 std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const std::vector<std::vector<int>>& area_flag, int triangle_index, CodingTreeUnit* ctu, int block_size_x, int block_size_y);
-
+double w(double x);
+int img_ip(unsigned char **img, int xs, int ys, double x, double y, int mode);
+unsigned int** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size);
 #endif //ENCODER_IMAGEUTIL_H
