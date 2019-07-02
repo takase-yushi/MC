@@ -8,6 +8,13 @@
 #include "Utils.h"
 #include "CodingTreeUnit.h"
 
+typedef std::vector<std::vector<std::vector<unsigned char **>>> EXPAND_ARRAY_TYPE;
+
+enum IP_MODE {
+    BILINEAR,
+    BICUBIC,
+};
+
 cv::Mat getResidualImage(const cv::Mat &target_image, const cv::Mat &predict_image, int k = 1);
 double getTriangleResidual(const cv::Mat ref_image, const cv::Mat &target_image, Point3Vec &triangle, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_triangle_pixels);
 std::vector<std::vector<cv::Mat>> getRefImages(const cv::Mat ref_image, const cv::Mat gauss_ref_image);

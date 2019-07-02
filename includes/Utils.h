@@ -254,7 +254,6 @@ inline bool isInTriangle(const Point3Vec& trig, const cv::Point2d& p) {
     return !(intersectM(tp1, tp2, p, ret) < 0 || intersectM(tp1, tp3, p, ret) < 0 || intersectM(tp2, tp3, p, ret) < 0);
 }
 
-typedef std::vector<std::vector<std::vector<unsigned char **>>> EXPAND_ARRAY_TYPE;
 
 bool isPointOnTheLine(cv::Point2f a, cv::Point2f b, cv::Point2f p);
 
