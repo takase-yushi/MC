@@ -382,39 +382,49 @@ cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit
  */
 unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size, IP_MODE mode){
 
-    auto **expansion_image = (unsigned char **)malloc(sizeof(unsigned char *) * out.cols + expansion_size * 2);
-    expansion_image += expansion_size;
+    int scaled_expansion_size = expansion_size + 2;
+    auto **expansion_image_tmp = (unsigned char **)malloc(sizeof(unsigned char *) * (image.cols + scaled_expansion_size * 2));
+    expansion_image_tmp += scaled_expansion_size;
 
-    for(int i = -expansion_size ; i < out.cols + expansion_size ; i++) {
-        expansion_image[i] = (unsigned char *)malloc(sizeof(unsigned char) * out.rows + expansion_size * 2);
-        expansion_image[i] += expansion_size;
+    for(int i = -scaled_expansion_size ; i < image.cols + scaled_expansion_size ; i++) {
+        expansion_image_tmp[i] = (unsigned char *)malloc(sizeof(unsigned char) * (image.rows + scaled_expansion_size * 2));
+        expansion_image_tmp[i] += scaled_expansion_size;
     }
 
-    for(int y = 0 ; y < out.rows ; y++){
-        for(int x = 0 ; x < out.cols ; x++){
-            expansion_image[x][y] = M(out, x, y);
+    for(int y = 0 ; y < image.rows ; y++){
+        for(int x = 0 ; x < image.cols ; x++){
+            expansion_image_tmp[x][y] = M(image, x, y);
         }
     }
 
     // y方向に埋める
-    for(int y = 0 ; y < out.rows ; y++) {
-        for (int x = -expansion_size; x < 0; x++) {
-            expansion_image[x][y] = M(out, 0, y);
-            expansion_image[out.cols - x - 1][y] = M(out, out.cols - 1, y);
-
-            expansion_image[x][y] = M(out, 0, y);
-            expansion_image[out.cols - x - 1][y] = M(out, out.cols - 1, y);
+    for(int y = 0 ; y < image.rows ; y++) {
+        for (int x = -scaled_expansion_size; x < 0; x++) {
+            expansion_image_tmp[x][y] = M(image, 0, y);
+            expansion_image_tmp[image.cols - x - 1][y] = M(image, image.cols - 1, y);
         }
     }
 
     // x方向に埋める
-    for(int y = -expansion_size ; y < 0 ; y++) {
-        for (int x = -expansion_size; x < out.cols + expansion_size; x++) {
-            expansion_image[x][y] = expansion_image[x][0];
-            expansion_image[x][out.rows - y - 1] = expansion_image[x][out.rows - 1];
+    for(int y = -scaled_expansion_size ; y < 0 ; y++) {
+        for (int x = -scaled_expansion_size; x < image.cols + scaled_expansion_size; x++) {
+            expansion_image_tmp[x][y] = expansion_image_tmp[x][0];
+            expansion_image_tmp[x][image.rows - y - 1] = expansion_image_tmp[x][image.rows - 1];
+        }
+    }
 
-            expansion_image[x][y] = expansion_image[x][0];
-            expansion_image[x][out.rows - y - 1] = expansion_image[x][out.rows - 1];
+    auto **expansion_image = (unsigned char **)malloc(sizeof(unsigned char *) * (k * image.cols + 2 * k * scaled_expansion_size));
+    expansion_image += (k * scaled_expansion_size);
+
+    for(int i = -k * expansion_size ; i < k * image.cols + 2 *  k * expansion_size ; i++) {
+        expansion_image[i] = (unsigned char *)malloc(sizeof(unsigned char) * (k * image.rows + 2 * k * scaled_expansion_size));
+        expansion_image[i] += (k * scaled_expansion_size);
+    }
+
+    std::cout << "x: from " << -k * expansion_size << " to " << k * image.rows + k * expansion_size << std::endl;
+    for(int y = -k * expansion_size ; y < k * image.rows + k * expansion_size ; y++){
+        for(int x = -k * expansion_size ; x < k * image.cols + k * expansion_size ; x++){
+            expansion_image[x][y] = img_ip(expansion_image_tmp, image.cols + expansion_size, image.rows + expansion_size,(double)x / k, (double)y / k, IP_MODE::BICUBIC);
         }
     }
 
