@@ -373,16 +373,14 @@ cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit
 }
 
 /**
- * @fn cv::Mat getExpandImage(cv::Mat image, int k)
+ * @fn cv::Mat getExpansionImage(cv::Mat image, int k)
  * @brief k倍に拡張子，expansion_size分回りを拡張した画像を生成する
  * @param image 画像
  * @param k サイズの倍数
  * @param expansion_size 拡張する画素数
  * @return 拡張した画像
  */
-unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size){
-    cv::Mat out = cv::Mat::zeros(image.rows, image.cols, CV_8UC3);
-    cv::resize(image, out, cv::Size(image.rows * k, image.cols * k), 0, 0, CV_INTER_CUBIC);
+unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size, IP_MODE mode){
 
     auto **expansion_image = (unsigned char **)malloc(sizeof(unsigned char *) * out.cols + expansion_size * 2);
     expansion_image += expansion_size;
@@ -496,7 +494,7 @@ int img_ip(unsigned char **img, int xs, int ys, double x, double y, int mode){
  * @param expansion_size 拡張する画素数
  * @return 拡張した画像
  */
-cv::Mat getExpansionMatImage(cv::Mat &image, int k, int expansion_size){
+cv::Mat getExpansionMatImage(cv::Mat &image, int k, int expansion_size, IP_MODE mode){
     unsigned char **img;
     int scaled_expand_size = expansion_size + 2; // 折返しの分
     if((img = (unsigned char **)malloc(sizeof(unsigned char *) * (image.cols + 2 * (scaled_expand_size)))) == NULL) {
