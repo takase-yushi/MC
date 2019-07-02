@@ -13,6 +13,7 @@
 #include "../includes/ME.hpp"
 #include "../includes/TriangleDivision.h"
 #include "../includes/Reconstruction.h"
+#include "../includes/psnr.h"
 
 void storeResidualImage(){
 //    cv::imwrite(getProjectDirectory(OS) + "/img/minato/p_residual_image_22_divide_5_billinear.png", getResidualImage(cv::imread(getProjectDirectory(OS)+ "/img/minato/p_image_22_divide_5_billinear.png"), cv::imread(getProjectDirectory(OS) + "/img/minato/minato_000413_limit.bmp"),2));
@@ -189,4 +190,67 @@ void test6(){
     }
 
     cv::imwrite(getProjectDirectory(OS) + "/img/minato/out.png", out);
+}
+
+void test7(){
+    cv::Mat ref_image = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
+    unsigned int **img1 = getExpansionHEVCImage(ref_image, 4, 16);
+
+
+    cv::Mat out = cv::Mat::zeros(ref_image.rows * 4 + 2 * 4 * 16, ref_image.cols * 4 + 2 * 4 * 16, CV_8UC3);
+    for(int y = -16 * 4 ; y < 4 * ref_image.rows + 4 * 16 ; y++){
+        for(int x = -16 * 4 ; x < 4 * ref_image.cols + 4 * 16 ; x++){
+            if(x % 4 == 0 && y % 4 == 0){
+                R(out, x + 16 * 4, y + 16 * 4) = img1[x][y];
+                G(out, x + 16 * 4, y + 16 * 4) = img1[x][y];
+                B(out, x + 16 * 4, y + 16 * 4) = img1[x][y];
+            }else{
+                if(x == 3823 && y == 928) {
+                    std::cout << img1[x][y] << std::endl;
+                }
+                int val = (img1[x][y] + 32)  / 64;
+                val = (val > 255 ? 255 : (val < 0 ? 0 : val));
+                R(out, x + 16 * 4, y + 16 * 4) = val;
+                G(out, x + 16 * 4, y + 16 * 4) = val;
+                B(out, x + 16 * 4, y + 16 * 4) = val;
+            }
+
+        }
+    }
+
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/out_hevc_filter.png", out);
+}
+
+void testFilter(){
+    cv::Mat ref_image = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
+    cv::Mat out;
+    cv::resize(ref_image, out, cv::Size(), 0.25, 0.25);
+
+    cv::Mat bilinear = getExpansionMatImage(out, 4, 0, IP_MODE::BILINEAR);
+    cv::Mat bicubic = getExpansionMatImage(out, 4, 0, IP_MODE::BICUBIC);
+    unsigned int **hevc_ip = getExpansionHEVCImage(out, 4, 0);
+
+    cv::Mat hevc = cv::Mat::zeros(ref_image.size(), CV_8UC3);
+    for(int y = 0 ; y < hevc.rows ; y++) {
+        for (int x = 0; x < hevc.cols; x++) {
+            if(x % 4 == 0 && y % 4 == 0){
+                R(hevc, x, y) = hevc_ip[x][y];
+                G(hevc, x, y) = hevc_ip[x][y];
+                B(hevc, x, y) = hevc_ip[x][y];
+            }else{
+                int val = (hevc_ip[x][y] + 32)  / 64;
+                val = (val > 255 ? 255 : (val < 0 ? 0 : val));
+                R(hevc, x, y) = val;
+                G(hevc, x, y) = val;
+                B(hevc, x, y) = val;
+            }
+        }
+    }
+
+    std::cout << "Bilinear:" << getPSNR(bilinear, ref_image) << std::endl;
+    std::cout << "Bicubic :" << getPSNR(bicubic, ref_image) << std::endl;
+    std::cout << "HEVC    :" << getPSNR(hevc, ref_image) << std::endl;
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/resize_bilinear.png", bilinear);
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/resize_bicubic.png", bicubic);
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/resize_hevcpng.png", hevc);
 }
