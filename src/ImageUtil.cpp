@@ -523,14 +523,14 @@ unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size, IP_M
 
 
 unsigned int** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
+
+    // 引き伸ばし＋補間で使うため4画素余分に取る
     int scaled_expansion_size = expansion_size + 4;
-    auto **expansion_image_tmp = (unsigned int **) malloc(
-            sizeof(unsigned int *) * (image.cols + scaled_expansion_size * 2));
+    auto **expansion_image_tmp = (unsigned int **) malloc(sizeof(unsigned int *) * (image.cols + scaled_expansion_size * 2));
     expansion_image_tmp += scaled_expansion_size;
 
     for (int i = -scaled_expansion_size; i < image.cols + scaled_expansion_size; i++) {
-        expansion_image_tmp[i] = (unsigned int *) malloc(
-                sizeof(unsigned int) * (image.rows + scaled_expansion_size * 2));
+        expansion_image_tmp[i] = (unsigned int *) malloc(sizeof(unsigned int) * (image.rows + scaled_expansion_size * 2));
         expansion_image_tmp[i] += scaled_expansion_size;
     }
 
@@ -556,39 +556,42 @@ unsigned int** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
         }
     }
 
-    auto **expansion_image = (unsigned int **) malloc(
-            sizeof(unsigned int *) * (k * image.cols + 2 * k * scaled_expansion_size));
+    auto **expansion_image = (unsigned int **) malloc(sizeof(unsigned int *) * (k * image.cols + 2 * k * scaled_expansion_size));
     expansion_image += (k * scaled_expansion_size);
 
-    for (int i = -k * expansion_size; i < k * image.cols + 2 * k * expansion_size; i++) {
-        expansion_image[i] = (unsigned int *) malloc(
-                sizeof(unsigned int) * (k * image.rows + 2 * k * scaled_expansion_size));
+    for (int i = -k * scaled_expansion_size; i < k * image.cols + 2 * k * scaled_expansion_size; i++) {
+        expansion_image[i] = (unsigned int *) malloc(sizeof(unsigned int) * (k * image.rows + 2 * k * scaled_expansion_size));
         expansion_image[i] += (k * scaled_expansion_size);
     }
 
     // 左上に原画像つっこむ
-    int width = k * image.cols + k * expansion_size;
-    int height = k * image.rows + k * expansion_size;
+    int width = k * image.cols + k * scaled_expansion_size;
+    int height = k * image.rows + k * scaled_expansion_size;
 
     std::cout << -k * expansion_size << " " << width << std::endl;
-    for(int y = -k * expansion_size ; y < height ; y+=k){
-        for(int x = -k * expansion_size ; x < width ; x+=k){
-            expansion_image[x][y] = expansion_image_tmp[x/k][y/k];
-            // a
-            expansion_image[x + 1][    y] = -expansion_image_tmp[x/k - 3][y/k    ] + 4 *  expansion_image_tmp[x/k - 2][    y/k] -10 * expansion_image_tmp[x/k - 1][y/k    ] + 58 * expansion_image_tmp[x/k    ][y/k    ] + 17 * expansion_image_tmp[x/k + 1][y/k    ]   -5 * expansion_image_tmp[x/k + 2][y/k    ] +     expansion_image_tmp[x/k + 3][y/k    ];
-            // b
-            expansion_image[x + 2][    y] = -expansion_image_tmp[x/k - 3][y/k    ] + 4 *  expansion_image_tmp[x/k - 2][    y/k] -11 * expansion_image_tmp[x/k - 1][y/k    ] + 40 * expansion_image_tmp[x/k    ][y/k    ] + 40 * expansion_image_tmp[x/k + 1][y/k    ]  -11 * expansion_image_tmp[x/k + 2][y/k    ] + 4 * expansion_image_tmp[x/k + 3][y/k    ] - expansion_image_tmp[x/k + 4][y/k    ];
-            // c
-            expansion_image[x + 3][    y] =                                               expansion_image_tmp[x/k - 2][    y/k] - 5 * expansion_image_tmp[x/k - 1][y/k    ] + 17 * expansion_image_tmp[x/k    ][y/k    ] + 58 * expansion_image_tmp[x/k + 1][y/k    ] - 10 * expansion_image_tmp[x/k + 2][y/k    ] + 4 * expansion_image_tmp[x/k + 3][y/k    ] - expansion_image_tmp[x/k + 4][y/k    ];
-            // d
-            expansion_image[x    ][y + 1] = -expansion_image_tmp[x/k    ][y/k - 3] + 4 *  expansion_image_tmp[    x/k][y/k - 2] -10 * expansion_image_tmp[x/k    ][y/k - 1] + 58 * expansion_image_tmp[x/k    ][y/k    ] + 17 * expansion_image_tmp[x/k    ][y/k + 1] -  5 * expansion_image_tmp[x/k    ][y/k + 2] +     expansion_image_tmp[x/k    ][y/k + 3];
-            // h
-            expansion_image[x    ][y + 2] = -expansion_image_tmp[x/k    ][y/k - 3] + 4 *  expansion_image_tmp[    x/k][y/k - 2] -11 * expansion_image_tmp[x/k    ][y/k - 1] + 40 * expansion_image_tmp[x/k    ][y/k    ] + 40 * expansion_image_tmp[x/k    ][y/k + 1] - 11 * expansion_image_tmp[x/k    ][y/k + 2] + 4 * expansion_image_tmp[x/k    ][y/k + 3] - expansion_image_tmp[x/k    ][y/k + 4];
-            // n
-            expansion_image[x    ][y + 3] =                                               expansion_image_tmp[    x/k][y/k - 2] - 5 * expansion_image_tmp[x/k    ][y/k - 1] + 17 * expansion_image_tmp[x/k    ][y/k    ] + 58 * expansion_image_tmp[x/k    ][y/k + 1] - 10 * expansion_image_tmp[x/k    ][y/k + 2] + 4 * expansion_image_tmp[x/k    ][y/k + 3] - expansion_image_tmp[x/k    ][y/k + 4];
+    for(int y = -k * scaled_expansion_size ; y < height ; y+=k){
+        for(int x = -k * scaled_expansion_size ; x < width ; x+=k) {
+            expansion_image[x][y] = expansion_image_tmp[x / k][y / k];
+
+            if (x >= -k * expansion_size && x < k * image.cols + k * expansion_size) {
+                // a
+                expansion_image[x + 1][y] = -expansion_image_tmp[x / k - 3][y / k] + 4 * expansion_image_tmp[x / k - 2][y / k] - 10 * expansion_image_tmp[x / k - 1][y / k] + 58 * expansion_image_tmp[x / k][y / k] + 17 * expansion_image_tmp[x / k + 1][y / k] - 5 * expansion_image_tmp[x / k + 2][y / k] + expansion_image_tmp[x / k + 3][y / k];
+                // b
+                expansion_image[x + 2][y] = -expansion_image_tmp[x / k - 3][y / k] + 4 * expansion_image_tmp[x / k - 2][y / k] - 11 * expansion_image_tmp[x / k - 1][y / k] + 40 * expansion_image_tmp[x / k][y / k] + 40 * expansion_image_tmp[x / k + 1][y / k] - 11 * expansion_image_tmp[x / k + 2][y / k] + 4 * expansion_image_tmp[x / k + 3][y / k] - expansion_image_tmp[x / k + 4][y / k];
+                // c
+                expansion_image[x + 3][y] =  expansion_image_tmp[x / k - 2][y / k] - 5 * expansion_image_tmp[x / k - 1][y / k] + 17 * expansion_image_tmp[x / k][y / k] + 58 * expansion_image_tmp[x / k + 1][y / k] - 10 * expansion_image_tmp[x / k + 2][y / k] + 4 * expansion_image_tmp[x / k + 3][y / k] - expansion_image_tmp[x / k + 4][y / k];
+                // d
+                expansion_image[x][y + 1] = -expansion_image_tmp[x / k][y / k - 3] + 4 * expansion_image_tmp[x / k][y / k - 2] -10 * expansion_image_tmp[x / k][y / k - 1] + 58 * expansion_image_tmp[x / k][y / k] + 17 * expansion_image_tmp[x / k][y / k + 1] - 5 * expansion_image_tmp[x / k][y / k + 2] + expansion_image_tmp[x / k][y / k + 3];
+                // h
+                expansion_image[x][y + 2] = -expansion_image_tmp[x / k][y / k - 3] + 4 * expansion_image_tmp[x / k][y / k - 2] - 11 * expansion_image_tmp[x / k][y / k - 1] + 40 * expansion_image_tmp[x / k][y / k] + 40 * expansion_image_tmp[x / k][y / k + 1] - 11 * expansion_image_tmp[x / k][y / k + 2] + 4 * expansion_image_tmp[x / k][y / k + 3] - expansion_image_tmp[x / k][y / k + 4];
+                // n
+                expansion_image[x][y + 3] = expansion_image_tmp[x / k][y / k - 2] - 5 * expansion_image_tmp[x / k][y / k - 1] + 17 * expansion_image_tmp[x / k][y / k] + 58 * expansion_image_tmp[x / k][y / k + 1] - 10 * expansion_image_tmp[x / k][y / k + 2] + 4 * expansion_image_tmp[x / k][y / k + 3] - expansion_image_tmp[x / k][y / k + 4];
+            }
         }
     }
 
+    width = k * (image.cols + expansion_size);
+    height = k * (image.rows + expansion_size);
     for(int y = -k * expansion_size ; y < height ; y+=k) {
         for (int x = -k * expansion_size; x < width; x+=k) {
             // e
@@ -612,9 +615,27 @@ unsigned int** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
 
             for(int j = 1 ; j < 4 ; j++){
                 for(int i = 1 ; i < 4 ; i++){
-                    expansion_image[x + i][y + j] /= 64;
+                    expansion_image[x + i][y + j] = (expansion_image[x + i][y + j] / 64 + 32) / 64;
                 }
             }
+        }
+    }
+
+    //四捨五入(0～255へ)
+    for(int y = - k * expansion_size ; y < height ; y+=k){
+        for(int x = - k * expansion_size ; x < width ; x+=k){
+            // a
+            expansion_image[x + 1][    y] = (expansion_image[x + 1][    y] + 32) / 64;
+            // b
+            expansion_image[x + 2][    y] = (expansion_image[x + 2][    y] + 32) / 64;
+            // c
+            expansion_image[x + 3][    y] = (expansion_image[x + 3][    y] + 32) / 64;
+            // d
+            expansion_image[x    ][y + 1] = (expansion_image[x    ][y + 1] + 32) / 64;
+            // h
+            expansion_image[x    ][y + 2] = (expansion_image[x    ][y + 2] + 32) / 64;
+            // n
+            expansion_image[x    ][y + 3] = (expansion_image[x    ][y + 3] + 32) / 64;
         }
     }
 
