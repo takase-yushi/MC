@@ -388,7 +388,7 @@ int img_ip(unsigned char **img, int xs, int ys, double x, double y, int mode){
     double val = 0.0, w(double);
 
     /*** 補間点(x, y)が原画像の領域外なら, 範囲外を示す -1 を返す ***/
-    if (x < -16 || x > xs || y < -16 || y > ys ) {
+    if (x < -64 || x > xs || y < -64 || y > ys ) {
         std::cout << "Error in img_ip!" << std::endl;
         std::cout << x << " " << y << std::endl;
         exit(1);
