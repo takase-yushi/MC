@@ -194,7 +194,7 @@ void test6(){
 
 void test7(){
     cv::Mat ref_image = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
-    unsigned int **img1 = getExpansionHEVCImage(ref_image, 4, 16);
+    unsigned char **img1 = getExpansionHEVCImage(ref_image, 4, 16);
 
 
     cv::Mat out = cv::Mat::zeros(ref_image.rows * 4 + 2 * 4 * 16, ref_image.cols * 4 + 2 * 4 * 16, CV_8UC3);
@@ -228,22 +228,16 @@ void testFilter(){
 
     cv::Mat bilinear = getExpansionMatImage(out, 4, 0, IP_MODE::BILINEAR);
     cv::Mat bicubic = getExpansionMatImage(out, 4, 0, IP_MODE::BICUBIC);
-    unsigned int **hevc_ip = getExpansionHEVCImage(out, 4, 0);
+    unsigned char **hevc_ip = getExpansionHEVCImage(out, 4, 0);
 
     cv::Mat hevc = cv::Mat::zeros(ref_image.size(), CV_8UC3);
     for(int y = 0 ; y < hevc.rows ; y++) {
         for (int x = 0; x < hevc.cols; x++) {
-            if(x % 4 == 0 && y % 4 == 0){
-                R(hevc, x, y) = hevc_ip[x][y];
-                G(hevc, x, y) = hevc_ip[x][y];
-                B(hevc, x, y) = hevc_ip[x][y];
-            }else{
-                int val = (hevc_ip[x][y] + 32)  / 64;
-                val = (val > 255 ? 255 : (val < 0 ? 0 : val));
-                R(hevc, x, y) = val;
-                G(hevc, x, y) = val;
-                B(hevc, x, y) = val;
-            }
+            int val = hevc_ip[x][y];
+            val = (val > 255 ? 255 : (val < 0 ? 0 : val));
+            R(hevc, x, y) = val;
+            G(hevc, x, y) = val;
+            B(hevc, x, y) = val;
         }
     }
 
@@ -252,5 +246,25 @@ void testFilter(){
     std::cout << "HEVC    :" << getPSNR(hevc, ref_image) << std::endl;
     cv::imwrite(getProjectDirectory(OS) + "/img/minato/resize_bilinear.png", bilinear);
     cv::imwrite(getProjectDirectory(OS) + "/img/minato/resize_bicubic.png", bicubic);
-    cv::imwrite(getProjectDirectory(OS) + "/img/minato/resize_hevcpng.png", hevc);
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/resize_hevc.png", hevc);
+}
+
+void test4xHEVCImage(){
+    cv::Mat ref_image = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
+
+    int k = 4;
+    int expansion_size = 16;
+    unsigned char **hevc_ip = getExpansionHEVCImage(ref_image, k, expansion_size);
+
+    cv::Mat hevc = cv::Mat::zeros(k * (ref_image.rows + 2 * expansion_size), k * (ref_image.cols + 2 * expansion_size), CV_8UC3);
+
+    for(int y = 0 ; y < k * (ref_image.rows + 2 * expansion_size) ; y++){
+        for(int x = 0 ; x < k * (ref_image.cols + 2 * expansion_size); x++){
+            R(hevc, x, y) = hevc_ip[x - k * expansion_size][y - k * expansion_size];
+            G(hevc, x, y) = hevc_ip[x - k * expansion_size][y - k * expansion_size];
+            B(hevc, x, y) = hevc_ip[x - k * expansion_size][y - k * expansion_size];
+        }
+    }
+
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/test_4x_hevc.png", hevc);
 }

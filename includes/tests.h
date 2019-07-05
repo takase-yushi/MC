@@ -27,5 +27,6 @@ void test5();
 void test6();
 void test7();
 void testFilter();
+void test4xHEVCImage();
 
 #endif //ENCODER_TESTS_H
