@@ -173,6 +173,7 @@ private:
     std::vector<std::vector<cv::Mat>> target_images;
     int qp;
     cv::Mat expansion_ref;
+    unsigned char **ref_hevc;
     unsigned char **expansion_ref_uchar;
 
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);

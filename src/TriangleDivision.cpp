@@ -215,7 +215,8 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
     target_images = getTargetImages(target_image);
 
     int expansion_size = 16;
-    expansion_ref = getExpansionMatImage(ref_image, 4, expansion_size);
+    expansion_ref = getExpansionMatHEVCImage(ref_image, 4, expansion_size);
+    ref_hevc = getExpansionHEVCImage(ref_image, 4, 16);
 
     cv::Mat tmp_mat = getExpansionMatImage(ref_image, 1, expansion_size);
 
@@ -905,7 +906,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     }else {
         if(PRED_MODE == NEWTON) {
             std::tie(gauss_result_warping, gauss_result_parallel, RMSE_before_subdiv, triangle_size,
-                     parallel_flag) = GaussNewton(ref_images, target_images, expand_images, targetTriangle, diagonal_line_area_flag,triangle_index, ctu, block_size_x, block_size_y);
+                     parallel_flag) = GaussNewton(ref_images, target_images, expand_images, targetTriangle, diagonal_line_area_flag,triangle_index, ctu, block_size_x, block_size_y, ref_hevc);
             triangle_gauss_results[triangle_index].mv_warping = gauss_result_warping;
             triangle_gauss_results[triangle_index].mv_parallel = gauss_result_parallel;
             triangle_gauss_results[triangle_index].triangle_size = triangle_size;
@@ -1059,7 +1060,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         std::vector<cv::Point2f> tmp_bm_mv;
         std::vector<double> tmp_bm_errors;
         if(PRED_MODE == NEWTON){
-            std::tie(mv_warping_tmp, mv_parallel_tmp, error_tmp, triangle_size_tmp, flag_tmp) = GaussNewton(ref_images, target_images, expand_images, subdiv_target_triangles[j], diagonal_line_area_flag, triangle_indexes[j], (j == 0 ? ctu->leftNode : ctu->rightNode), block_size_x, block_size_y);
+            std::tie(mv_warping_tmp, mv_parallel_tmp, error_tmp, triangle_size_tmp, flag_tmp) = GaussNewton(ref_images, target_images, expand_images, subdiv_target_triangles[j], diagonal_line_area_flag, triangle_indexes[j], (j == 0 ? ctu->leftNode : ctu->rightNode), block_size_x, block_size_y, ref_hevc);
         }else if(PRED_MODE == BM){
             std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_triangles[j], target_image, expansion_ref, diagonal_line_area_flag, triangle_indexes[j], ctu);
             mv_warping_tmp = tmp_bm_mv;
