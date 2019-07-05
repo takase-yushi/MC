@@ -642,6 +642,22 @@ unsigned int** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
     return expansion_image;
 }
 
+cv::Mat getExpansionMatHEVCImage(cv::Mat image, int k, int expansion_size){
+    unsigned char **expansion_image = getExpansionHEVCImage(image, k, expansion_size);
+
+    cv::Mat out = cv::Mat::zeros(k * (image.rows + 2 * expansion_size), k * (image.cols + 2 * expansion_size), CV_8UC3);
+
+    for(int y = 0 ; y < k * (image.rows + 2 * expansion_size) ; y++){
+        for(int x = 0 ; x < k * (image.cols + 2 * expansion_size) ; x++){
+            R(out, x, y) = expansion_image[x - k * expansion_size][y - k * expansion_size];
+            B(out, x, y) = expansion_image[x - k * expansion_size][y - k * expansion_size];
+            G(out, x, y) = expansion_image[x - k * expansion_size][y - k * expansion_size];
+        }
+    }
+
+    return out;
+}
+
 /**
  * @fn cv::Mat getExpandImage(cv::Mat image, int k)
  * @brief k倍に拡張子，expansion_size分回りを拡張した画像(Mat)を生成する
