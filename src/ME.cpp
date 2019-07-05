@@ -531,7 +531,7 @@ double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::
  * @param block_size_y
  * @return ワーピングの動きベクトル・平行移動の動きベクトル・予測残差・面積・平行移動のフラグのtuple
  */
-std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char **>>> expand_image, Point3Vec target_corners, const std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, int block_size_x, int block_size_y){
+std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char **>>> expand_image, Point3Vec target_corners, const std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, int block_size_x, int block_size_y, unsigned char **ref_hevc){
     // 画像の初期化 vector[filter][picture_number]
 
     const int warping_matrix_dim = 6; // 方程式の次元
@@ -830,8 +830,16 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                     double f_org          = img_ip(current_target_org_expand, current_target_image.cols + spread, current_target_image.rows + spread,                X.x,                X.y, 2);
                     double g_warping      = img_ip(current_ref_expand       , current_target_image.cols + spread, current_target_image.rows + spread,  X_later_warping.x,  X_later_warping.y, 2);
                     double g_parallel     = img_ip(current_ref_expand       , current_target_image.cols + spread, current_target_image.rows + spread, X_later_parallel.x, X_later_parallel.y, 2);
-                    double g_org_warping  = img_ip(current_ref_org_expand   , current_target_image.cols + spread, current_target_image.rows + spread,  X_later_warping.x,  X_later_warping.y, 2);
-                    double g_org_parallel = img_ip(current_ref_org_expand   , current_target_image.cols + spread, current_target_image.rows + spread, X_later_parallel.x, X_later_parallel.y, 2);
+                    double g_org_warping;
+                    double g_org_parallel;
+
+                    if(ref_hevc != nullptr) {
+                        g_org_warping = img_ip(ref_hevc, 4 * (current_target_image.cols + spread), 4 * (current_target_image.rows + spread),  4 * X_later_warping.x,  4 * X_later_warping.y, 1);
+                        g_org_parallel = img_ip(ref_hevc, 4 * (current_target_image.cols + spread), 4 * (current_target_image.rows + spread), 4 * X_later_parallel.x, 4 * X_later_parallel.y, 1);
+                    }else {
+                        g_org_warping  = img_ip(current_ref_org_expand   , current_target_image.cols + spread, current_target_image.rows + spread,  X_later_warping.x,  X_later_warping.y, 2);
+                        g_org_parallel = img_ip(current_ref_org_expand   , current_target_image.cols + spread, current_target_image.rows + spread, X_later_parallel.x, X_later_parallel.y, 2);
+                    }
 
                     for (int row = 0; row < warping_matrix_dim; row++) {
                         for (int col = 0; col < warping_matrix_dim; col++) {
