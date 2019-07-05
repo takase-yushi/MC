@@ -531,7 +531,7 @@ double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::
  * @param block_size_y
  * @return ワーピングの動きベクトル・平行移動の動きベクトル・予測残差・面積・平行移動のフラグのtuple
  */
-std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char **>>> expand_image, Point3Vec target_corners, const std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, int block_size_x, int block_size_y, unsigned char **ref_hevc){
+std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char **>>> expand_image, Point3Vec target_corners, const std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, int block_size_x, int block_size_y, cv::Point2f init_vector, unsigned char **ref_hevc){
     // 画像の初期化 vector[filter][picture_number]
 
     const int warping_matrix_dim = 6; // 方程式の次元
@@ -576,19 +576,27 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
     int bm_y_offset = 10;
     double error_min = 1e9;
 
-    for(int by = -bm_y_offset ; by < bm_y_offset ; by++){
-        for(int bx = -bm_x_offset ; bx < bm_x_offset ; bx++){
-            if(sx + bx < -16 || ref_images[0][3].cols + 16 <= (lx + bx) || sy + by < -16 || ref_images[0][3].rows + 16 <=(ly + by)) continue;
-            double error_tmp = 0.0;
-            for(const auto& pixel : pixels_in_triangle) {
-                error_tmp += abs(expand_image[0][3][1][(int)(pixel.x + bx)][(int)(pixel.y + by)] - expand_image[0][3][3][(int)(pixel.x)][(int)(pixel.y)]);
-            }
-            if(error_min > error_tmp) {
-                error_min = error_tmp;
-                initial_vector.x = bx;
-                initial_vector.y = by;
+    if(init_vector.x == -1000 && init_vector.y == -1000) {
+        for (int by = -bm_y_offset; by < bm_y_offset; by++) {
+            for (int bx = -bm_x_offset; bx < bm_x_offset; bx++) {
+                if (sx + bx < -16 || ref_images[0][3].cols + 16 <= (lx + bx) || sy + by < -16 ||
+                    ref_images[0][3].rows + 16 <= (ly + by))
+                    continue;
+                double error_tmp = 0.0;
+                for (const auto &pixel : pixels_in_triangle) {
+                    error_tmp += abs(expand_image[0][3][1][(int) (pixel.x + bx)][(int) (pixel.y + by)] -
+                                     expand_image[0][3][3][(int) (pixel.x)][(int) (pixel.y)]);
+                }
+                if (error_min > error_tmp) {
+                    error_min = error_tmp;
+                    initial_vector.x = bx;
+                    initial_vector.y = by;
+                }
             }
         }
+    }else{
+        initial_vector.x = init_vector.x;
+        initial_vector.y = init_vector.y;
     }
 
     initial_vector /= 2.0;
