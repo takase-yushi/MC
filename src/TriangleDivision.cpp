@@ -1741,6 +1741,45 @@ void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &ou
     if(ctu->leftNode != nullptr) getPredictedImageFromCtu(ctu->rightNode, out, area_flag);
 }
 
+cv::Mat TriangleDivision::getPredictedColorImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag, double original_psnr){
+    cv::Mat out = cv::Mat::zeros(ref_image.size(), CV_8UC3);
+
+//#pragma omp parallel for
+    for(int i = 0 ; i < ctus.size() ; i++) {
+        getPredictedColorImageFromCtu(ctus[i], out, area_flag[i/2], original_psnr);
+    }
+
+    return out;
+}
+
+void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, std::vector<std::vector<int>> &area_flag, double original_psnr){
+    if(ctu->leftNode == nullptr && ctu->rightNode == nullptr) {
+        int triangle_index = ctu->triangle_index;
+        cv::Point2f mv = ctu->mv1;
+        Triangle triangle_corner_idx = triangles[triangle_index].first;
+        Point3Vec triangle(corners[triangle_corner_idx.p1_idx], corners[triangle_corner_idx.p2_idx], corners[triangle_corner_idx.p3_idx]);
+
+        std::vector<cv::Point2f> mvs{mv, mv, mv};
+        std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, block_size_x, block_size_y);
+        double residual = getTriangleResidual(expansion_ref_uchar, target_image, triangle, mvs, pixels, cv::Rect(-16, -16, target_image.cols + 2 * 16, target_image.rows + 2 * 16));
+        double mse = residual / (pixels.size());
+        double psnr = 10 * std::log10(255.0 * 255.0 / mse);
+
+        if(psnr < original_psnr){
+            std::cout << "PSNR:" << psnr << " opriginal_PSNR:" << original_psnr << std::endl;
+            for(auto pixel : pixels) {
+                R(out, (int)pixel.x, (int)pixel.y) = 255;
+            }
+        }else{
+            getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, 16, area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
+        }
+        return;
+    }
+
+    if(ctu->leftNode != nullptr) getPredictedColorImageFromCtu(ctu->leftNode, out, area_flag, original_psnr);
+    if(ctu->leftNode != nullptr) getPredictedColorImageFromCtu(ctu->rightNode, out, area_flag, original_psnr);
+}
+
 int TriangleDivision::getCtuCodeLength(std::vector<CodingTreeUnit*> ctus) {
     int code_length_sum = 0;
     for(int i = 0 ; i < ctus.size() ; i++){
