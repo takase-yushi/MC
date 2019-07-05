@@ -381,14 +381,14 @@ double w(double x){
  * @param mode 補間モード。モードはImageUtil.hにenumで定義してある
  * @return 補間値
  */
-int img_ip(unsigned char **img, int xs, int ys, double x, double y, int mode){
+int img_ip(unsigned char **img, cv::Rect rect, double x, double y, int mode){
     int x0, y0;          /* 補間点 (x, y) の整数部分 */
     double dx, dy;       /* 補間点 (x, y) の小数部分 */
     int nx, ny;          /* 双3次補間用のループ変数 */
     double val = 0.0, w(double);
 
     /*** 補間点(x, y)が原画像の領域外なら, 範囲外を示す -1 を返す ***/
-    if (x < -64 || x > xs || y < -64 || y > ys ) {
+    if (x < rect.x || x > rect.x + rect.width || y < rect.y || y > rect.y + rect.height ) {
         std::cout << "Error in img_ip!" << std::endl;
         std::cout << x << " " << y << std::endl;
         exit(1);
@@ -510,9 +510,7 @@ unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size, IP_M
         std::cout << "x: from " << -k * expansion_size << " to " << k * image.rows + k * expansion_size << std::endl;
         for (int y = -k * expansion_size; y < k * image.rows + k * expansion_size; y++) {
             for (int x = -k * expansion_size; x < k * image.cols + k * expansion_size; x++) {
-                expansion_image[x][y] = img_ip(expansion_image_tmp, image.cols + expansion_size,
-                                               image.rows + expansion_size, (double) x / k, (double) y / k,
-                                               IP_MODE::BICUBIC);
+                expansion_image[x][y] = img_ip(expansion_image_tmp, cv::Rect(-expansion_size, -expansion_size, image.cols + 2 * expansion_size, image.rows + 2 * expansion_size), (double) x / k, (double) y / k, IP_MODE::BICUBIC);
             }
         }
         return expansion_image;
@@ -568,7 +566,6 @@ unsigned char** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
     int width = k * image.cols + k * scaled_expansion_size;
     int height = k * image.rows + k * scaled_expansion_size;
 
-    std::cout << -k * expansion_size << " " << width << std::endl;
     for(int y = -k * scaled_expansion_size ; y < height ; y+=k){
         for(int x = -k * scaled_expansion_size ; x < width ; x+=k) {
             expansion_image[x][y] = expansion_image_tmp[x / k][y / k];
@@ -640,11 +637,11 @@ unsigned char** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
     }
 
     unsigned char **ret = (unsigned char **)malloc(sizeof(unsigned char *) * k * (image.cols + 2 * expansion_size));
-    ret += expansion_size;
+    ret += k * expansion_size;
 
     for(int x = -k * expansion_size ; x < k * (image.cols + expansion_size) ; x++) {
         ret[x] = (unsigned char *)malloc(sizeof(unsigned char) * k * (image.rows + 2 * expansion_size));
-        ret[x] += expansion_size;
+        ret[x] += k * expansion_size;
     }
 
     for(int y = -k * expansion_size ; y < k * (image.rows + expansion_size) ; y++){
@@ -719,24 +716,18 @@ cv::Mat getExpansionMatImage(cv::Mat &image, int k, int expansion_size, IP_MODE 
     if(mode == IP_MODE::BICUBIC) {
         for (int y = 0; y < expansion_image.rows; y++) {
             for (int x = 0; x < expansion_image.cols; x++) {
-                R(expansion_image, x, y) = img_ip(img, (image.cols + expansion_size), (image.rows + expansion_size),
-                                                  x / (double) k - expansion_size, y / (double) k - expansion_size, 2);
-                G(expansion_image, x, y) = img_ip(img, (image.cols + expansion_size), (image.rows + expansion_size),
-                                                  x / (double) k - expansion_size, y / (double) k - expansion_size, 2);
-                B(expansion_image, x, y) = img_ip(img, (image.cols + expansion_size), (image.rows + expansion_size),
-                                                  x / (double) k - expansion_size, y / (double) k - expansion_size, 2);
+                R(expansion_image, x, y) = img_ip(img, cv::Rect(-expansion_size, -expansion_size, (image.cols + 2 * expansion_size), (image.rows + 2 * expansion_size)), x / (double) k - expansion_size, y / (double) k - expansion_size, 2);
+                G(expansion_image, x, y) = img_ip(img, cv::Rect(-expansion_size, -expansion_size, (image.cols + 2 * expansion_size), (image.rows + 2 * expansion_size)), x / (double) k - expansion_size, y / (double) k - expansion_size, 2);
+                B(expansion_image, x, y) = img_ip(img, cv::Rect(-expansion_size, -expansion_size, (image.cols + 2 * expansion_size), (image.rows + 2 * expansion_size)), x / (double) k - expansion_size, y / (double) k - expansion_size, 2);
             }
         }
     }else if(mode == IP_MODE::BILINEAR){
 
         for (int y = 0; y < expansion_image.rows; y++) {
             for (int x = 0; x < expansion_image.cols; x++) {
-                R(expansion_image, x, y) = img_ip(img, (image.cols + expansion_size), (image.rows + expansion_size),
-                                                  x / (double) k - expansion_size, y / (double) k - expansion_size, 1);
-                G(expansion_image, x, y) = img_ip(img, (image.cols + expansion_size), (image.rows + expansion_size),
-                                                  x / (double) k - expansion_size, y / (double) k - expansion_size, 1);
-                B(expansion_image, x, y) = img_ip(img, (image.cols + expansion_size), (image.rows + expansion_size),
-                                                  x / (double) k - expansion_size, y / (double) k - expansion_size, 1);
+                R(expansion_image, x, y) = img_ip(img, cv::Rect(-expansion_size, -expansion_size, (image.cols + 2 * expansion_size), (image.rows + 2 * expansion_size)), x / (double) k - expansion_size, y / (double) k - expansion_size, 1);
+                G(expansion_image, x, y) = img_ip(img, cv::Rect(-expansion_size, -expansion_size, (image.cols + 2 * expansion_size), (image.rows + 2 * expansion_size)), x / (double) k - expansion_size, y / (double) k - expansion_size, 1);
+                B(expansion_image, x, y) = img_ip(img, cv::Rect(-expansion_size, -expansion_size, (image.cols + 2 * expansion_size), (image.rows + 2 * expansion_size)), x / (double) k - expansion_size, y / (double) k - expansion_size, 1);
             }
         }
     }
