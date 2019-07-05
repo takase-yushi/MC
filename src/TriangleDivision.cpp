@@ -905,8 +905,21 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         parallel_flag = result_before.parallel_flag;
     }else {
         if(PRED_MODE == NEWTON) {
-            std::tie(gauss_result_warping, gauss_result_parallel, RMSE_before_subdiv, triangle_size,
-                     parallel_flag) = GaussNewton(ref_images, target_images, expand_images, targetTriangle, diagonal_line_area_flag,triangle_index, ctu, block_size_x, block_size_y, ref_hevc);
+            if(GAUSS_NEWTON_INIT_VECTOR) {
+                std::vector<cv::Point2f> tmp_bm_mv;
+                std::vector<double> tmp_bm_errors;
+                std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(triangle, target_image, expansion_ref,
+                                                                   diagonal_line_area_flag, triangle_index, ctu);
+                std::tie(gauss_result_warping, gauss_result_parallel, RMSE_before_subdiv, triangle_size,
+                         parallel_flag) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
+                                                      diagonal_line_area_flag, triangle_index, ctu, block_size_x,
+                                                      block_size_y, tmp_bm_mv[2], ref_hevc);
+            }else{
+                std::tie(gauss_result_warping, gauss_result_parallel, RMSE_before_subdiv, triangle_size,
+                         parallel_flag) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
+                                                      diagonal_line_area_flag, triangle_index, ctu, block_size_x,
+                                                      block_size_y, cv::Point2f(-1000, -1000), ref_hevc);
+            }
             triangle_gauss_results[triangle_index].mv_warping = gauss_result_warping;
             triangle_gauss_results[triangle_index].mv_parallel = gauss_result_parallel;
             triangle_gauss_results[triangle_index].triangle_size = triangle_size;
@@ -1060,7 +1073,20 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         std::vector<cv::Point2f> tmp_bm_mv;
         std::vector<double> tmp_bm_errors;
         if(PRED_MODE == NEWTON){
-            std::tie(mv_warping_tmp, mv_parallel_tmp, error_tmp, triangle_size_tmp, flag_tmp) = GaussNewton(ref_images, target_images, expand_images, subdiv_target_triangles[j], diagonal_line_area_flag, triangle_indexes[j], (j == 0 ? ctu->leftNode : ctu->rightNode), block_size_x, block_size_y, ref_hevc);
+            if(GAUSS_NEWTON_INIT_VECTOR) {
+                std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_triangles[j], target_image,
+                                                                   expansion_ref, diagonal_line_area_flag,
+                                                                   triangle_indexes[j], ctu);
+                std::tie(mv_warping_tmp, mv_parallel_tmp, error_tmp, triangle_size_tmp, flag_tmp) = GaussNewton(
+                        ref_images, target_images, expand_images, subdiv_target_triangles[j], diagonal_line_area_flag,
+                        triangle_indexes[j], (j == 0 ? ctu->leftNode : ctu->rightNode), block_size_x, block_size_y,
+                        tmp_bm_mv[2], ref_hevc);
+            }else{
+                std::tie(mv_warping_tmp, mv_parallel_tmp, error_tmp, triangle_size_tmp, flag_tmp) = GaussNewton(
+                        ref_images, target_images, expand_images, subdiv_target_triangles[j], diagonal_line_area_flag,
+                        triangle_indexes[j], (j == 0 ? ctu->leftNode : ctu->rightNode), block_size_x, block_size_y,
+                        cv::Point2f(-1000, -1000), ref_hevc);
+            }
         }else if(PRED_MODE == BM){
             std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_triangles[j], target_image, expansion_ref, diagonal_line_area_flag, triangle_indexes[j], ctu);
             mv_warping_tmp = tmp_bm_mv;
@@ -1707,7 +1733,7 @@ void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &ou
         Point3Vec triangle(corners[triangle_corner_idx.p1_idx], corners[triangle_corner_idx.p2_idx], corners[triangle_corner_idx.p3_idx]);
 
         std::vector<cv::Point2f> mvs{mv, mv, mv};
-        getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, 16, area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y));
+        getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, 16, area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
         return;
     }
 

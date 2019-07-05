@@ -82,7 +82,8 @@ enum {
     NEWTON,
 };
 
-#define PRED_MODE BM
+#define PRED_MODE NEWTON
+#define GAUSS_NEWTON_INIT_VECTOR false
 
 const std::string OS = "Ubuntu";
 
