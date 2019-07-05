@@ -452,7 +452,7 @@ int bicubic_interpolation(unsigned char **img, double x, double y){
  * @param[in] parallel_flag
  * @return 2乗誤差
  */
-double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::Mat& output_image, Point3Vec& triangle, std::vector<cv::Point2f>& mv, int offset, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Rect block_size) {
+double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::Mat& output_image, Point3Vec& triangle, std::vector<cv::Point2f>& mv, int offset, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Rect block_size, unsigned char **ref_hevc) {
     cv::Point2f pp0, pp1, pp2;
 
     pp0.x = triangle.p1.x + mv[0].x;
@@ -505,7 +505,12 @@ double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::
         int y0 = floor(X_later.y);
         double d_y = X_later.y - y0;
 
-        int y = bicubic_interpolation(expand_ref, X_later.x, X_later.y);
+        int y;
+        if(ref_hevc != nullptr){
+            y = img_ip(ref_hevc, cv::Rect(-64, -64, 4 * (target_image.cols + 2 * 16), 4 * (target_image.rows + 2 * 16)), 4 * X_later.x, 4 * X_later.y, 1);
+        }else{
+            y = bicubic_interpolation(expand_ref, X_later.x, X_later.y);
+        }
 
         R(output_image, (int)pixel.x, (int)pixel.y) = y;
         G(output_image, (int)pixel.x, (int)pixel.y) = y;
