@@ -161,7 +161,7 @@ void run(std::string config_path) {
         cv::Mat gaussRefImage = cv::imread(ref_file_path);
         TriangleDivision triangle_division(ref_image, target_image, gaussRefImage);
 
-        triangle_division.initTriangle(block_size_x, block_size_y, division_steps, LEFT_DIVIDE);
+        triangle_division.initTriangle(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);
         std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
 
         std::vector<std::pair<Point3Vec, int> > init_triangles = triangle_division.getTriangles();
