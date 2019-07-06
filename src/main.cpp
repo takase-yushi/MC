@@ -207,11 +207,6 @@ void run(std::string config_path) {
                     diagonal_line_area_flag[i/2][x][block_size_y - x - 1] = (flag ? i : i + 1);
                     flag = !flag;
                 }
-
-                diagonal_line_area_flag[i/2][0][0] = 0;
-                diagonal_line_area_flag[i/2][127][0] = 0;
-                diagonal_line_area_flag[i/2][0][127] = i + 1;
-                diagonal_line_area_flag[i/2][127][127] = i + 1;
             }
 
             std::pair<Point3Vec, int> triangle = init_triangles[i];
