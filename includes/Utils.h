@@ -59,6 +59,14 @@
  */
 #define RED   (cv::Scalar(0, 0, 255))
 
+#define  WHITE (cv::Scalar(255, 255, 255))
+
+#define YELLOW (cv::Scalar(0, 255, 255))
+
+#define LIGHT_BLUE (cv::Scalar(255, 255, 0))
+
+#define PURPLE (cv::Scalar(255, 0, 255))
+
 /**
  * @def M(img, x, y) ((0.299 * (double)(R(img, (x), (y))) + 0.587 * (double)(G(img, (x), (y))) + 0.114 * (double)(B(img, (x), (y)))))
  * @brief 指定画素の輝度値を返す.
