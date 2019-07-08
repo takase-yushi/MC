@@ -268,3 +268,13 @@ void test4xHEVCImage(){
 
     cv::imwrite(getProjectDirectory(OS) + "/img/minato/test_4x_hevc.png", hevc);
 }
+
+void testRoundVecQuarter(){
+    cv::Point2f a(-1.6, 1.1);
+    cv::Point2f b(1.9, 1.1);
+    cv::Point2f c(-1.6, -100.4);
+
+    std::cout << roundVecQuarter(a) << std::endl;
+    std::cout << roundVecQuarter(b) << std::endl;
+    std::cout << roundVecQuarter(c) << std::endl;
+}
