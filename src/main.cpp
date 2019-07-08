@@ -48,18 +48,11 @@ int division_steps;
 
 int main(int argc, char *argv[]){
     // Write test codes below
-//    testMatHEVCImage();
 
-//     test1();
-//    storeResidualImage();
-//    std::cout << getPSNR(cv::imread(getProjectDirectory(OS)+ std::string(argv[1])), cv::imread(getProjectDirectory(OS) + std::string(argv[2]))) << std::endl;
-//    exit(0);
     std::string config_path = std::string(argv[1]);
     run(config_path);
-//    storeResidualImage();
-
 }
-std::string out_file_suffix = "_Gauss_Newton_add_initial_vector";
+std::string out_file_suffix = "_debug";
 
 void run(std::string config_path) {
 
