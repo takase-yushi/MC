@@ -247,8 +247,8 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
 
     s = 2;
     error_min = 1 << 20;
-    for(int j = - s + mv_tmp.y ; j <= s + mv_tmp.y ; j += s){            //j : y方向のMV
-        for(int i = - s + mv_tmp.x ; i <= s + mv_tmp.x ; i += s){        //i : x方向のMV
+    for(int j = -2 *  s + mv_tmp.y ; j <= 2 * s + mv_tmp.y ; j += s){            //j : y方向のMV
+        for(int i = - 2 * s + mv_tmp.x ; i <= 2 * s + mv_tmp.x ; i += s){        //i : x方向のMV
             if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
                && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
                 e = 0.0;
@@ -278,8 +278,8 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
     s = 1;
     error_min = 1 << 20;
 
-    for(int j = - s + mv_tmp.y ; j <= s + mv_tmp.y ; j += s){            //j : y方向のMV
-        for(int i = - s + mv_tmp.x ; i <= s + mv_tmp.x ; i += s){        //i : x方向のMV
+    for(int j = - 2 * s + mv_tmp.y ; j <= 2 * s + mv_tmp.y ; j += s){            //j : y方向のMV
+        for(int i = - 2 * s + mv_tmp.x ; i <= 2 * s + mv_tmp.x ; i += s){        //i : x方向のMV
             if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
                && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
                 e = 0.0;
@@ -462,8 +462,6 @@ double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::
     pp2.x = triangle.p3.x + mv[2].x;
     pp2.y = triangle.p3.y + mv[2].y;
 
-    double quantize_step = 4.0;
-
     std::vector<cv::Point2f> in_triangle_pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, block_size.width, block_size.height);
 
     cv::Point2f X,a,b,a_later,b_later,X_later;
@@ -487,28 +485,11 @@ double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::
         b_later = pp1 - pp0;
         X_later = alpha * a_later + beta * b_later + pp0;
 
-        if (X_later.x >= target_image.cols - 1) {
-            X_later.x = target_image.cols - 1.001;
-        }
-        if (X_later.y >= target_image.rows - 1) {
-            X_later.y = target_image.rows - 1.001;
-        }
-
-        if (X_later.x < 0) {
-            X_later.x = 0;
-        }
-        if (X_later.y < 0) {
-            X_later.y = 0;
-        }
-        int x0 = floor(X_later.x);
-        double d_x = X_later.x - x0;
-        int y0 = floor(X_later.y);
-        double d_y = X_later.y - y0;
-
         int y;
         if(ref_hevc != nullptr){
             y = img_ip(ref_hevc, cv::Rect(-64, -64, 4 * (target_image.cols + 2 * 16), 4 * (target_image.rows + 2 * 16)), 4 * X_later.x, 4 * X_later.y, 1);
         }else{
+            std::cout << X_later.x << " " << X_later.y << std::endl;
             y = bicubic_interpolation(expand_ref, X_later.x, X_later.y);
         }
 
