@@ -91,7 +91,8 @@ enum {
 };
 
 #define PRED_MODE NEWTON
-#define GAUSS_NEWTON_INIT_VECTOR false
+#define GAUSS_NEWTON_INIT_VECTOR true
+#define HEVC_REF_IMAGE true
 
 const std::string OS = "Ubuntu";
 
