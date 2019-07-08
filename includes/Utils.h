@@ -90,8 +90,8 @@ enum {
     NEWTON,
 };
 
-#define PRED_MODE NEWTON
-#define GAUSS_NEWTON_INIT_VECTOR true
+#define PRED_MODE BM
+#define GAUSS_NEWTON_INIT_VECTOR false
 #define HEVC_REF_IMAGE true
 
 const std::string OS = "Ubuntu";
@@ -270,6 +270,8 @@ bool isPointOnTheLine(cv::Point2f a, cv::Point2f b, cv::Point2f p);
 inline int myRound(double x, int delta){
     return static_cast<int>((x / delta) + (x > 0 ? 0.5 : -0.5));
 }
+
+cv::Point2f roundVecQuarter(const cv::Point2f &p);
 
 std::vector<std::string> splitString(const std::string &s, char delim);
 
