@@ -76,7 +76,6 @@ double getLambdaMode(int qp){
  * @return lambdaの値
  */
 double getLambdaPred(int qp){
-//    return 0;
     return sqrt(getLambdaMode(qp));
 }
 
