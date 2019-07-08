@@ -906,6 +906,12 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         RMSE_before_subdiv = result_before.residual;
         triangle_size = result_before.triangle_size;
         parallel_flag = result_before.parallel_flag;
+//        ctu->error_bm = result_before.residual_bm;
+//        ctu->error_newton = result_before.residual_newton;
+//
+//        if(ctu->error_bm < ctu->error_newton) {
+//            std::cout << "bm: " << ctu->error_bm << " newton:" << ctu->error_newton << std::endl;
+//        }
     }else {
         if(PRED_MODE == NEWTON) {
             if(GAUSS_NEWTON_INIT_VECTOR) {
@@ -937,6 +943,17 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             std::vector<double> tmp_bm_errors;
             std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(triangle, target_image, expansion_ref,
                                                                diagonal_line_area_flag, triangle_index, ctu);
+//            std::tie(std::ignore, std::ignore, RMSE_before_subdiv, std::ignore,
+//                    std::ignore) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
+//                                                  diagonal_line_area_flag, triangle_index, ctu, block_size_x,
+//                                                  block_size_y, cv::Point2f(-1000, -1000), ref_hevc);
+//            triangle_gauss_results[triangle_index].residual_bm = tmp_bm_errors[2];
+//            triangle_gauss_results[triangle_index].residual_newton = RMSE_before_subdiv;
+//            ctu->error_newton = RMSE_before_subdiv;
+//            ctu->error_bm = tmp_bm_errors[2];
+//            if(RMSE_before_subdiv > tmp_bm_errors[2]) {
+//                std::cout << "bm: " << tmp_bm_errors[2] << " newton:" << RMSE_before_subdiv << std::endl;
+//            }
             gauss_result_warping = tmp_bm_mv;
             gauss_result_parallel = tmp_bm_mv[2];
             RMSE_before_subdiv = tmp_bm_errors[2];
@@ -1070,7 +1087,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     ctu->rightNode->rightNode = new CodingTreeUnit();
     ctu->rightNode->rightNode->parentNode = ctu->rightNode;
 
-//#pragma omp parallel for
+#pragma omp parallel for
     for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
         double error_tmp;
         bool flag_tmp;
@@ -1079,6 +1096,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         std::vector<cv::Point2f> mv_warping_tmp;
         std::vector<cv::Point2f> tmp_bm_mv;
         std::vector<double> tmp_bm_errors;
+        double tmp_error_newton;
         if(PRED_MODE == NEWTON){
             if(GAUSS_NEWTON_INIT_VECTOR) {
                 std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_triangles[j], target_image,
@@ -1099,6 +1117,10 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             }
         }else if(PRED_MODE == BM){
             std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_triangles[j], target_image, expansion_ref, diagonal_line_area_flag, triangle_indexes[j], ctu);
+//            std::tie(std::ignore, std::ignore, tmp_error_newton, std::ignore,
+//                     std::ignore) = GaussNewton(ref_images, target_images, expand_images, subdiv_target_triangles[j],
+//                                                  diagonal_line_area_flag, triangle_indexes[j], ctu, block_size_x,
+//                                                  block_size_y, cv::Point2f(-1000, -1000), ref_hevc);
             mv_warping_tmp = tmp_bm_mv;
             mv_parallel_tmp = tmp_bm_mv[2];
             error_tmp = tmp_bm_errors[2];
@@ -1106,7 +1128,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             flag_tmp = true;
         }
 
-        split_mv_result[j] = GaussResult(mv_warping_tmp, mv_parallel_tmp, error_tmp, triangle_size_tmp, flag_tmp);
+        split_mv_result[j] = GaussResult(mv_warping_tmp, mv_parallel_tmp, error_tmp, triangle_size_tmp, flag_tmp, tmp_bm_errors[2], tmp_error_newton);
         RMSE_after_subdiv += error_tmp;
     }
 
@@ -1780,45 +1802,51 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
 
         std::vector<cv::Point2f> mvs{mv, mv, mv};
         std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, block_size_x, block_size_y);
-        double residual = getTriangleResidual(expansion_ref_uchar, target_image, triangle, mvs, pixels, cv::Rect(-16, -16, target_image.cols + 2 * 16, target_image.rows + 2 * 16));
-        double mse = residual / (pixels.size());
-        double psnr = 10 * std::log10(255.0 * 255.0 / mse);
+//        double residual = getTriangleResidual(expansion_ref_uchar, target_image, triangle, mvs, pixels, cv::Rect(-16, -16, target_image.cols + 2 * 16, target_image.rows + 2 * 16));
+//        double mse = residual / (pixels.size());
+//        double psnr = 10 * std::log10(255.0 * 255.0 / mse);
 
-        if(psnr < 25.0){
+//        if(psnr < 25.0){
+//            for(auto pixel : pixels) {
+//                R(out, (int)pixel.x, (int)pixel.y) = colors[0][0];
+//                G(out, (int)pixel.x, (int)pixel.y) = colors[0][1];
+//                B(out, (int)pixel.x, (int)pixel.y) = colors[0][2];
+//            }
+//        }else if(psnr < 26.0){
+//            for(auto pixel : pixels) {
+//                R(out, (int)pixel.x, (int)pixel.y) = colors[1][0];
+//                G(out, (int)pixel.x, (int)pixel.y) = colors[1][1];
+//                B(out, (int)pixel.x, (int)pixel.y) = colors[1][2];
+//            }
+//        }else if(psnr < 27.0){
+//            for(auto pixel : pixels) {
+//                R(out, (int)pixel.x, (int)pixel.y) = colors[2][0];
+//                G(out, (int)pixel.x, (int)pixel.y) = colors[2][1];
+//                B(out, (int)pixel.x, (int)pixel.y) = colors[2][2];
+//            }
+//        }else if(psnr < 28.0){
+//            for(auto pixel : pixels) {
+//                R(out, (int)pixel.x, (int)pixel.y) = colors[3][0];
+//                G(out, (int)pixel.x, (int)pixel.y) = colors[3][1];
+//                B(out, (int)pixel.x, (int)pixel.y) = colors[3][2];
+//            }
+//        }else if(psnr < 29.0){
+//            for(auto pixel : pixels) {
+//                R(out, (int)pixel.x, (int)pixel.y) = colors[4][0];
+//                G(out, (int)pixel.x, (int)pixel.y) = colors[4][1];
+//                B(out, (int)pixel.x, (int)pixel.y) = colors[4][2];
+//            }
+//        }else if(psnr < 30.0){
+//            for(auto pixel : pixels) {
+//                R(out, (int)pixel.x, (int)pixel.y) = colors[5][0];
+//                G(out, (int)pixel.x, (int)pixel.y) = colors[5][1];
+//                B(out, (int)pixel.x, (int)pixel.y) = colors[5][2];
+//            }
+        if(ctu->error_newton > ctu->error_bm) {
             for(auto pixel : pixels) {
-                R(out, (int)pixel.x, (int)pixel.y) = colors[0][0];
-                G(out, (int)pixel.x, (int)pixel.y) = colors[0][1];
-                B(out, (int)pixel.x, (int)pixel.y) = colors[0][2];
-            }
-        }else if(psnr < 26.0){
-            for(auto pixel : pixels) {
-                R(out, (int)pixel.x, (int)pixel.y) = colors[1][0];
-                G(out, (int)pixel.x, (int)pixel.y) = colors[1][1];
-                B(out, (int)pixel.x, (int)pixel.y) = colors[1][2];
-            }
-        }else if(psnr < 27.0){
-            for(auto pixel : pixels) {
-                R(out, (int)pixel.x, (int)pixel.y) = colors[2][0];
-                G(out, (int)pixel.x, (int)pixel.y) = colors[2][1];
-                B(out, (int)pixel.x, (int)pixel.y) = colors[2][2];
-            }
-        }else if(psnr < 28.0){
-            for(auto pixel : pixels) {
-                R(out, (int)pixel.x, (int)pixel.y) = colors[3][0];
-                G(out, (int)pixel.x, (int)pixel.y) = colors[3][1];
-                B(out, (int)pixel.x, (int)pixel.y) = colors[3][2];
-            }
-        }else if(psnr < 29.0){
-            for(auto pixel : pixels) {
-                R(out, (int)pixel.x, (int)pixel.y) = colors[4][0];
-                G(out, (int)pixel.x, (int)pixel.y) = colors[4][1];
-                B(out, (int)pixel.x, (int)pixel.y) = colors[4][2];
-            }
-        }else if(psnr < 30.0){
-            for(auto pixel : pixels) {
-                R(out, (int)pixel.x, (int)pixel.y) = colors[5][0];
-                G(out, (int)pixel.x, (int)pixel.y) = colors[5][1];
-                B(out, (int)pixel.x, (int)pixel.y) = colors[5][2];
+                R(out, (int)pixel.x, (int)pixel.y) = 255;
+                G(out, (int)pixel.x, (int)pixel.y) = 0;
+                B(out, (int)pixel.x, (int)pixel.y) = 0;
             }
         }else{
             getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, 16, area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
@@ -1885,8 +1913,7 @@ TriangleDivision::SplitResult::SplitResult(const Point3Vec &t1, const Point3Vec 
                                                                                                                t2_type(t2Type) {}
 
 TriangleDivision::GaussResult::GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvParallel,
-                                           double residual, int triangleSize, bool parallelFlag) : mv_warping(
-        mvWarping), mv_parallel(mvParallel), residual(residual), triangle_size(triangleSize), parallel_flag(
-        parallelFlag) {}
+                                           double residual, int triangleSize, bool parallelFlag, double residualBm, double residualNewton) : mv_warping(
+        mvWarping), mv_parallel(mvParallel), residual(residual), triangle_size(triangleSize), parallel_flag(parallelFlag), residual_bm(residualBm), residual_newton(residualNewton) {}
 
 TriangleDivision::GaussResult::GaussResult() {}
