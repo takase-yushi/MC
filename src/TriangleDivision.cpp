@@ -215,21 +215,24 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
     target_images = getTargetImages(target_image);
 
     int expansion_size = 16;
-    expansion_ref = getExpansionMatHEVCImage(ref_image, 4, expansion_size);
+    int scaled_expansion_size = expansion_size + 2;
+    if(HEVC_REF_IMAGE) expansion_ref = getExpansionMatHEVCImage(ref_image, 4, expansion_size);
+    else expansion_ref = getExpansionMatImage(ref_image, 4, scaled_expansion_size);
+
     ref_hevc = getExpansionHEVCImage(ref_image, 4, 16);
 
-    cv::Mat tmp_mat = getExpansionMatImage(ref_image, 1, expansion_size);
+    cv::Mat tmp_mat = getExpansionMatImage(ref_image, 1, scaled_expansion_size);
 
     expansion_ref_uchar = (unsigned char **)malloc(sizeof(unsigned char *) * tmp_mat.cols);
-    expansion_ref_uchar += expansion_size;
+    expansion_ref_uchar += scaled_expansion_size;
     for(int x = 0; x < tmp_mat.cols ; x++){
-        expansion_ref_uchar[x - expansion_size] = (unsigned char *)malloc(sizeof(unsigned char) * tmp_mat.rows);
-        expansion_ref_uchar[x - expansion_size] += expansion_size;
+        expansion_ref_uchar[x - scaled_expansion_size] = (unsigned char *)malloc(sizeof(unsigned char) * tmp_mat.rows);
+        expansion_ref_uchar[x - scaled_expansion_size] += scaled_expansion_size;
     }
 
     for(int y = 0 ; y < tmp_mat.rows ; y++){
         for(int x = 0 ; x < tmp_mat.cols ; x++){
-            expansion_ref_uchar[x - expansion_size][y - expansion_size] = M(tmp_mat, x, y);
+            expansion_ref_uchar[x - scaled_expansion_size][y - scaled_expansion_size] = M(tmp_mat, x, y);
         }
     }
 }
@@ -914,6 +917,10 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                          parallel_flag) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
                                                       diagonal_line_area_flag, triangle_index, ctu, block_size_x,
                                                       block_size_y, tmp_bm_mv[2], ref_hevc);
+
+                if(tmp_bm_errors[2] < RMSE_before_subdiv) std::cout << "Foo";
+                std::cout << "bm:" << tmp_bm_errors[2] << "(" << tmp_bm_mv[2] << ") newton:" << RMSE_before_subdiv << "(" << gauss_result_parallel << ")" << std::endl;
+
             }else{
                 std::tie(gauss_result_warping, gauss_result_parallel, RMSE_before_subdiv, triangle_size,
                          parallel_flag) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
@@ -1063,7 +1070,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     ctu->rightNode->rightNode = new CodingTreeUnit();
     ctu->rightNode->rightNode->parentNode = ctu->rightNode;
 
-#pragma omp parallel for
+//#pragma omp parallel for
     for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
         double error_tmp;
         bool flag_tmp;
@@ -1081,6 +1088,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                         ref_images, target_images, expand_images, subdiv_target_triangles[j], diagonal_line_area_flag,
                         triangle_indexes[j], (j == 0 ? ctu->leftNode : ctu->rightNode), block_size_x, block_size_y,
                         tmp_bm_mv[2], ref_hevc);
+
+                if(tmp_bm_errors[2] < error_tmp) std::cout << "Foo";
+                std::cout << "bm:" << tmp_bm_errors[2] << "(" << tmp_bm_mv[2] << ") newton:" << error_tmp << "(" << mv_parallel_tmp << ")" << std::endl;
             }else{
                 std::tie(mv_warping_tmp, mv_parallel_tmp, error_tmp, triangle_size_tmp, flag_tmp) = GaussNewton(
                         ref_images, target_images, expand_images, subdiv_target_triangles[j], diagonal_line_area_flag,
@@ -1738,7 +1748,7 @@ void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &ou
     }
 
     if(ctu->leftNode != nullptr) getPredictedImageFromCtu(ctu->leftNode, out, area_flag);
-    if(ctu->leftNode != nullptr) getPredictedImageFromCtu(ctu->rightNode, out, area_flag);
+    if(ctu->rightNode != nullptr) getPredictedImageFromCtu(ctu->rightNode, out, area_flag);
 }
 
 cv::Mat TriangleDivision::getPredictedColorImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag, double original_psnr){
