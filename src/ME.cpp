@@ -660,17 +660,11 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
             v_stack_parallel.clear();
             v_stack_warping.clear();
 
-            // 11回ガウス・ニュートン法をやる
-            for(int gaussIterateNum = 0 ; gaussIterateNum < 11 ; gaussIterateNum++) {
-                if(gaussIterateNum == 10 && step == 3) {
-                    for(int i = 0 ; i < tmp_mv_warping.size(); i++){
-                        tmp_mv_warping[i].x = 0.0;
-                        tmp_mv_warping[i].y = 0.0;
-                    }
-                    tmp_mv_parallel.x = 0.0;
-                    tmp_mv_parallel.y = 0.0;
-                }
+            double prev_error_warping = 1e9, prev_error_parallel = 1e9;
 
+            int iterate_counter = 0;
+            // 11回ガウス・ニュートン法をやる
+            while(true){
                 // 移動後の座標を格納する
                 std::vector<cv::Point2f> ref_coordinates_warping;
                 std::vector<cv::Point2f> ref_coordinates_parallel;
@@ -827,6 +821,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                     double g_org_warping;
                     double g_org_parallel;
 
+
                     cv::Point2f tmp_X_later_warping, tmp_X_later_parallel;
                     tmp_X_later_warping.x = X_later_warping.x;
                     tmp_X_later_warping.y = X_later_warping.y;
@@ -860,6 +855,10 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                     MSE_warping += fabs(f_org - g_org_warping);   // * (f_org - g_org_warping);
                     MSE_parallel += fabs(f_org - g_org_parallel); // * (f_org - g_org_parallel);
                 }
+
+                prev_error_parallel = MSE_parallel;
+                prev_error_warping = MSE_warping;
+                iterate_counter++;
 
                 double mu = 10;
                 for(int row = 0 ; row < warping_matrix_dim ; row++){
@@ -914,6 +913,11 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                             tmp_mv_parallel.y = tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0);
                         }
                     }
+                }
+
+                double eps = 1e-3;
+                if((fabs(prev_error_parallel - MSE_parallel) / MSE_parallel < eps && fabs(prev_error_warping - MSE_warping) / MSE_warping < eps) || iterate_counter < 20){
+                    break;
                 }
             }
 
