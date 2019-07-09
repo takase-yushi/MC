@@ -660,7 +660,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
             v_stack_parallel.clear();
             v_stack_warping.clear();
 
-            double prev_error_warping = 1e9, prev_error_parallel = 1e9;
+            double prev_error_warping = 1e6, prev_error_parallel = 1e6;
 
             int iterate_counter = 0;
             // 11回ガウス・ニュートン法をやる
@@ -839,7 +839,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                         g_org_parallel = img_ip(current_ref_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread), tmp_X_later_parallel.x, tmp_X_later_parallel.y, 2);
                     }
 
-                    if(iterate_counter > 1){
+                    if(iterate_counter > 4){
                         f = f_org;
                         g_warping = g_org_warping;
                         g_parallel = g_org_parallel;
@@ -861,10 +861,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                     MSE_warping += fabs(f_org - g_org_warping);   // * (f_org - g_org_warping);
                     MSE_parallel += fabs(f_org - g_org_parallel); // * (f_org - g_org_parallel);
                 }
-
-                prev_error_parallel = MSE_parallel;
-                prev_error_warping = MSE_warping;
-                iterate_counter++;
 
                 double mu = 10;
                 for(int row = 0 ; row < warping_matrix_dim ; row++){
@@ -922,9 +918,15 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                 }
 
                 double eps = 1e-3;
-                if((fabs(prev_error_parallel - MSE_parallel) / MSE_parallel < eps && fabs(prev_error_warping - MSE_warping) / MSE_warping < eps) || iterate_counter < 20){
+//                std::cout << fabs(prev_error_warping - MSE_warping) << " " << MSE_warping << " " <<(fabs(prev_error_warping - MSE_warping) / MSE_warping) << std::endl;
+                if(((fabs(prev_error_parallel - MSE_parallel) / MSE_parallel) < eps && (fabs(prev_error_warping - MSE_warping) / MSE_warping < eps)) || iterate_counter > 5){
                     break;
                 }
+
+                prev_error_parallel = MSE_parallel;
+                prev_error_warping = MSE_warping;
+                iterate_counter++;
+//                std::cout << "prev_error_parallel:" << prev_error_parallel << " prev_error_warping:" << prev_error_warping << std::endl;
             }
 
             std::sort(v_stack_warping.begin(), v_stack_warping.end(), [](std::pair<std::vector<cv::Point2f>,double> a, std::pair<std::vector<cv::Point2f>,double> b){
