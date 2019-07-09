@@ -33,5 +33,6 @@ int img_ip(unsigned char **img, cv::Rect rect, double x, double y, int mode);
 unsigned char** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size);
 cv::Mat getExpansionMatHEVCImage(cv::Mat image, int k, int expansion_size);
 double getTriangleResidual(unsigned char **ref_image, const cv::Mat &target_image, Point3Vec &triangle, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_triangle_pixels, cv::Rect rect);
+cv::Mat getAppliedLPFImage(const cv::Mat &image);
 
 #endif //ENCODER_IMAGEUTIL_H

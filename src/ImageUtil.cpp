@@ -863,3 +863,44 @@ std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const st
     }
     return pixels_in_triangle;
 }
+
+/**
+ * @fn cv::Mat getAppliedLPFImage(cv::Mat &image)
+ * @brief 1:2:1のLPFを適用したMatを返す
+ * @param image
+ * @return フィルタを適用した画像
+ */
+cv::Mat getAppliedLPFImage(const cv::Mat &image){
+    unsigned char **expansion_image = getExpansionImage(image, 1, 2);
+
+    double weight[3][3];
+    weight[0][0] = 0.0625;
+    weight[1][0] = 0.125;
+    weight[2][0] = 0.0625;
+
+    weight[0][1] = 0.125;
+    weight[1][1] = 0.25;
+    weight[2][1] = 0.125;
+
+    weight[0][2] = 0.0625;
+    weight[1][2] = 0.125;
+    weight[2][2] = 0.0625;
+
+    cv::Mat out = cv::Mat::zeros(image.size(), CV_8UC3);
+    for(int y = 0 ; y < out.rows ; y++){
+        for(int x = 0 ; x < out.cols ; x++){
+            double sum = 0.0;
+            for(int j = 0 ; j < 3; j++){
+                for(int i = 0 ; i < 3 ; i++){
+                    sum += weight[i][j] * expansion_image[x + i - 1][y + i - 1];
+                }
+            }
+            sum = round(sum);
+            R(out, x, y) = (unsigned char)sum;
+            G(out, x, y) = (unsigned char)sum;
+            B(out, x, y) = (unsigned char)sum;
+        }
+    }
+
+    return out;
+}
