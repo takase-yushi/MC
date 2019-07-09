@@ -1582,14 +1582,22 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
     // 空間予測と時間予測の候補を取り出す
     std::vector<int> spatial_triangles = getSpatialTriangleList(triangle_idx);
     int spatial_triangle_size = static_cast<int>(spatial_triangles.size());
-    std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors;
+    std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors; // ベクトルとモードを表すフラグのペア
 
     // すべてのベクトルを格納する．
     for(int i = 0 ; i < spatial_triangle_size ; i++) {
-        // TODO: これ平行移動のみしか対応してないがどうする…？
-        if(!isMvExists(vectors, triangle_gauss_results[spatial_triangles[i]].mv_parallel)) {
-            // とりあえず平行移動のみ考慮
-            vectors.emplace_back(triangle_gauss_results[spatial_triangles[i]].mv_parallel, SPATIAL);
+        int spatial_triangle_index = spatial_triangles[i];
+        GaussResult spatial_triangle = triangle_gauss_results[spatial_triangle_index];
+
+        if(spatial_triangle.parallel_flag){
+            if(!isMvExists(vectors, spatial_triangle.mv_parallel)) {
+                vectors.emplace_back(spatial_triangle.mv_parallel, SPATIAL);
+            }
+        }else{
+            // 隣接パッチがワーピングで予想されている場合、そのパッチの0番の動きベクトルを候補とする
+            if(!isMvExists(vectors, spatial_triangle.mv_warping[0])){
+                vectors.emplace_back(spatial_triangle.mv_warping[0], SPATIAL);
+            }
         }
     }
 
@@ -1604,40 +1612,86 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
     for(int i = 0 ; i < vectors.size() ; i++) {
         std::pair<cv::Point2f, MV_CODE_METHOD> vector = vectors[i];
         cv::Point2f current_mv = vector.first;
-        cv::Point2f mvd = current_mv - mv[0];
+        // TODO: ワーピング対応
 
-        mvd = getQuantizedMv(mvd, 4);
-        mvd *= 4;
+        if(triangle_gauss_results[triangle_idx].parallel_flag) { // 平行移動成分に関してはこれまで通りにやる
+            cv::Point2f mvd = current_mv - mv[0];
 
-        /* 動きベクトル符号化 */
+            mvd = getQuantizedMv(mvd, 4);
+            mvd *= 4;
 
-        // 動きベクトル差分の絶対値が0より大きいのか？
-        bool is_x_greater_than_zero = mvd.x > 0 ? true : false;
-        bool is_y_greater_than_zero = mvd.y > 0 ? true : false;
+            /* 動きベクトル符号化 */
 
-        // 動きベクトル差分の絶対値が1より大きいのか？
-        bool is_x_greater_than_one = mvd.x > 1 ? true : false;
-        bool is_y_greater_than_one = mvd.y > 1 ? true : false;
+            // 動きベクトル差分の絶対値が0より大きいのか？
+            bool is_x_greater_than_zero = mvd.x > 0 ? true : false;
+            bool is_y_greater_than_zero = mvd.y > 0 ? true : false;
 
-        // 正負の判定
-        bool is_x_minus = mvd.x < 0 ? true : false;
-        bool is_y_minus = mvd.y < 0 ? true : false;
+            // 動きベクトル差分の絶対値が1より大きいのか？
+            bool is_x_greater_than_one = mvd.x > 1 ? true : false;
+            bool is_y_greater_than_one = mvd.y > 1 ? true : false;
 
-        // 動きベクトル差分から2を引いたろ！
-        int mvd_x_minus_2 = mvd.x - 2;
-        int mvd_y_minus_2 = mvd.y - 2;
+            // 正負の判定
+            bool is_x_minus = mvd.x < 0 ? true : false;
+            bool is_y_minus = mvd.y < 0 ? true : false;
 
-        int mvd_code_length = getExponentialGolombCodeLength((int)mvd_x_minus_2, 0) + getExponentialGolombCodeLength((int)mvd_y_minus_2, 0);
+            // 動きベクトル差分から2を引いたろ！
+            int mvd_x_minus_2 = mvd.x - 2;
+            int mvd_y_minus_2 = mvd.y - 2;
 
-        // 参照箇所符号化
-        int reference_index = std::get<1>(vector);
-        int reference_index_code_length = getUnaryCodeLength(reference_index);
+            int mvd_code_length = getExponentialGolombCodeLength((int) mvd_x_minus_2, 0) +
+                                  getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
 
-        // 各種フラグ分を(3*2)bit足してます
-        double rd = residual + lambda * (mvd_code_length + reference_index_code_length + 6 + 1);
+            // 参照箇所符号化
+            int reference_index = std::get<1>(vector);
+            int reference_index_code_length = getUnaryCodeLength(reference_index);
 
-        // 結果に入れる
-        results.emplace_back(rd, mvd_code_length + reference_index_code_length + 6 + 1, mvd, i, vector.second);
+            // 各種フラグ分を(3*2)bit足してます
+            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + 6 + 1);
+
+            // 結果に入れる
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length + 6 + 1, mvd, i, vector.second);
+        }else{
+            std::vector<cv::Point2f> mvds;
+            mvds.emplace_back(current_mv - mv[0]);
+            mvds.emplace_back(current_mv - mv[1]);
+            mvds.emplace_back(current_mv - mv[2]);
+
+            for(auto &mvd : mvds){
+                mvd = getQuantizedMv(mvd, 4);
+                mvd *= 4;
+
+                /* 動きベクトル符号化 */
+
+                // 動きベクトル差分の絶対値が0より大きいのか？
+                bool is_x_greater_than_zero = mvd.x > 0 ? true : false;
+                bool is_y_greater_than_zero = mvd.y > 0 ? true : false;
+
+                // 動きベクトル差分の絶対値が1より大きいのか？
+                bool is_x_greater_than_one = mvd.x > 1 ? true : false;
+                bool is_y_greater_than_one = mvd.y > 1 ? true : false;
+
+                // 正負の判定
+                bool is_x_minus = mvd.x < 0 ? true : false;
+                bool is_y_minus = mvd.y < 0 ? true : false;
+
+                // 動きベクトル差分から2を引いたろ！
+                int mvd_x_minus_2 = mvd.x - 2;
+                int mvd_y_minus_2 = mvd.y - 2;
+
+                int mvd_code_length = getExponentialGolombCodeLength((int) mvd_x_minus_2, 0) +
+                                      getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
+
+                // 参照箇所符号化
+                int reference_index = std::get<1>(vector);
+                int reference_index_code_length = getUnaryCodeLength(reference_index);
+
+                // 各種フラグ分を(3*2)bit足してます
+                double rd = residual + lambda * (mvd_code_length + reference_index_code_length + 6 + 1);
+
+                // 結果に入れる
+                results.emplace_back(rd, mvd_code_length + reference_index_code_length + 6 + 1, mvd, i, vector.second);
+            }
+        }
     }
 
     // マージ符号化
