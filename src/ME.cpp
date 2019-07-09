@@ -660,17 +660,11 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
             v_stack_parallel.clear();
             v_stack_warping.clear();
 
-            // 11回ガウス・ニュートン法をやる
-            for(int gaussIterateNum = 0 ; gaussIterateNum < 11 ; gaussIterateNum++) {
-                if(gaussIterateNum == 10 && step == 3) {
-                    for(int i = 0 ; i < tmp_mv_warping.size(); i++){
-                        tmp_mv_warping[i].x = 0.0;
-                        tmp_mv_warping[i].y = 0.0;
-                    }
-                    tmp_mv_parallel.x = 0.0;
-                    tmp_mv_parallel.y = 0.0;
-                }
+            double prev_error_warping = 1e6, prev_error_parallel = 1e6;
 
+            int iterate_counter = 0;
+            // 11回ガウス・ニュートン法をやる
+            while(true){
                 // 移動後の座標を格納する
                 std::vector<cv::Point2f> ref_coordinates_warping;
                 std::vector<cv::Point2f> ref_coordinates_parallel;
@@ -827,6 +821,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                     double g_org_warping;
                     double g_org_parallel;
 
+
                     cv::Point2f tmp_X_later_warping, tmp_X_later_parallel;
                     tmp_X_later_warping.x = X_later_warping.x;
                     tmp_X_later_warping.y = X_later_warping.y;
@@ -842,6 +837,12 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                     }else {
                         g_org_warping  = img_ip(current_ref_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread),  tmp_X_later_warping.x, tmp_X_later_warping.y, 2);
                         g_org_parallel = img_ip(current_ref_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread), tmp_X_later_parallel.x, tmp_X_later_parallel.y, 2);
+                    }
+
+                    if(iterate_counter > 4){
+                        f = f_org;
+                        g_warping = g_org_warping;
+                        g_parallel = g_org_parallel;
                     }
 
                     for (int row = 0; row < warping_matrix_dim; row++) {
@@ -915,6 +916,17 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                         }
                     }
                 }
+
+                double eps = 1e-3;
+//                std::cout << fabs(prev_error_warping - MSE_warping) << " " << MSE_warping << " " <<(fabs(prev_error_warping - MSE_warping) / MSE_warping) << std::endl;
+                if(((fabs(prev_error_parallel - MSE_parallel) / MSE_parallel) < eps && (fabs(prev_error_warping - MSE_warping) / MSE_warping < eps)) || iterate_counter > 5){
+                    break;
+                }
+
+                prev_error_parallel = MSE_parallel;
+                prev_error_warping = MSE_warping;
+                iterate_counter++;
+//                std::cout << "prev_error_parallel:" << prev_error_parallel << " prev_error_warping:" << prev_error_warping << std::endl;
             }
 
             std::sort(v_stack_warping.begin(), v_stack_warping.end(), [](std::pair<std::vector<cv::Point2f>,double> a, std::pair<std::vector<cv::Point2f>,double> b){
