@@ -558,8 +558,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
     double sy = std::min({(int) p0.y, (int) p1.y, (int) p2.y});
     double ly = std::max({(int) p0.y, (int) p1.y, (int) p2.y});
 
-    int bm_x_offset = 16;
-    int bm_y_offset = 16;
+    int bm_x_offset = 32;
+    int bm_y_offset = 32;
     double error_min = 1e9;
 
     if(init_vector.x == -1000 && init_vector.y == -1000) {
