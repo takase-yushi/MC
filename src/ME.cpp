@@ -839,6 +839,12 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                         g_org_parallel = img_ip(current_ref_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread), tmp_X_later_parallel.x, tmp_X_later_parallel.y, 2);
                     }
 
+                    if(iterate_counter > 1){
+                        f = f_org;
+                        g_warping = g_org_warping;
+                        g_parallel = g_org_parallel;
+                    }
+
                     for (int row = 0; row < warping_matrix_dim; row++) {
                         for (int col = 0; col < warping_matrix_dim; col++) {
                             gg_warping.at<double>(row, col) += delta_g_warping[row] * delta_g_warping[col];//A_0の行列を生成(左辺の6x6の行列に相当)
