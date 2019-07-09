@@ -551,7 +551,6 @@ unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size, IP_M
             expansion_image[i] += (k * scaled_expansion_size);
         }
 
-        std::cout << "x: from " << -k * expansion_size << " to " << k * image.rows + k * expansion_size << std::endl;
         for (int y = -k * expansion_size; y < k * image.rows + k * expansion_size; y++) {
             for (int x = -k * expansion_size; x < k * image.cols + k * expansion_size; x++) {
                 expansion_image[x][y] = img_ip(expansion_image_tmp, cv::Rect(-expansion_size, -expansion_size, image.cols + 2 * expansion_size, image.rows + 2 * expansion_size), (double) x / k, (double) y / k, IP_MODE::BICUBIC);
