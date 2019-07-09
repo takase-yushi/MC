@@ -61,12 +61,6 @@ double getTriangleResidual(const cv::Mat ref_image, const cv::Mat &target_image,
 
     double quantize_step = 4.0;
 
-    // TODO: 置き換え
-    double sx = std::min({(int) triangle.p1.x, (int) triangle.p2.x, (int) triangle.p3.x});
-    double lx = std::max({(int) triangle.p1.x, (int) triangle.p2.x, (int) triangle.p3.x});
-    double sy = std::min({(int) triangle.p1.y, (int) triangle.p2.y, (int) triangle.p3.y});
-    double ly = std::max({(int) triangle.p1.y, (int) triangle.p2.y, (int) triangle.p3.y});
-
     cv::Point2f X,a,b,a_later,b_later,X_later;
     double alpha,beta,det;
 

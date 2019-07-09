@@ -90,7 +90,7 @@ enum {
     NEWTON,
 };
 
-#define PRED_MODE BM
+#define PRED_MODE NEWTON
 #define GAUSS_NEWTON_INIT_VECTOR false
 #define HEVC_REF_IMAGE true
 

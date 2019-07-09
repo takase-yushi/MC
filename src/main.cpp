@@ -52,7 +52,7 @@ int main(int argc, char *argv[]){
     std::string config_path = std::string(argv[1]);
     run(config_path);
 }
-std::string out_file_suffix = "_debug";
+std::string out_file_suffix = "_Gauss_Newton_2_filter";
 
 void run(std::string config_path) {
 
@@ -215,10 +215,9 @@ void run(std::string config_path) {
         // ===========================================================
         // ログ出力
         // ===========================================================
-        // TODO: init処理を書き直さないといけない
         getReconstructionDivisionImage(gaussRefImage, foo, block_size_x, block_size_y);
         cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo, diagonal_line_area_flag);
-        cv::Mat color = triangle_division.getPredictedColorImageFromCtu(foo, diagonal_line_area_flag, getPSNR(target_image, p_image));
+//        cv::Mat color = triangle_division.getPredictedColorImageFromCtu(foo, diagonal_line_area_flag, getPSNR(target_image, p_image));
 
         int code_length = triangle_division.getCtuCodeLength(foo);
         std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
@@ -227,7 +226,7 @@ void run(std::string config_path) {
         cv::imwrite(img_directory + "p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
         cv::imwrite( img_directory + "p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
         cv::imwrite(img_directory + "p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", triangle_division.getMvImage(foo));
-        cv::imwrite(img_directory + "p_color_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
+//        cv::imwrite(img_directory + "p_color_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
 
     }
 }

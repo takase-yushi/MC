@@ -185,7 +185,6 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
                 addNeighborVertex(p4_idx, p5_idx, p6_idx);
                 addCoveredTriangle(p4_idx, p5_idx, p6_idx, triangleIndex);
             }else{
-                // TODO: 右分割への対応
                 int triangleIndex = insertTriangle(p1_idx, p2_idx, p4_idx, TYPE1);
                 addNeighborVertex(p1_idx, p2_idx, p4_idx);
                 addCoveredTriangle(p1_idx, p2_idx, p4_idx, triangleIndex);
@@ -1164,17 +1163,19 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         int t4_idx = triangles.size() - 1;
 
         // 1つ目の頂点追加
+        // TODO: warping対応
         ctu->leftNode->leftNode->triangle_index = t1_idx;
         ctu->leftNode->leftNode->mv1 = split_mv_result[0].mv_parallel;
         ctu->leftNode->leftNode->mv2 = split_mv_result[0].mv_parallel;
         ctu->leftNode->leftNode->mv3 = split_mv_result[0].mv_parallel;
         ctu->leftNode->code_length = code_length1;
 
-        triangle_gauss_results[t1_idx] = split_mv_result[0]; // TODO: warping対応
+        triangle_gauss_results[t1_idx] = split_mv_result[0];
         isCodedTriangle[t1_idx] = true;
         bool result = split(expand_images, ctu->leftNode->leftNode, cmt_left_left, split_sub_triangles1.t1, t1_idx,split_sub_triangles1.t1_type, steps - 2, diagonal_line_area_flag);
 
         // 2つ目の三角形
+        // TODO: warping対応
         ctu->leftNode->rightNode->triangle_index = t2_idx;
         ctu->leftNode->rightNode->mv1 = split_mv_result[1].mv_parallel;
         ctu->leftNode->rightNode->mv2 = split_mv_result[1].mv_parallel;
@@ -1186,6 +1187,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         result = split(expand_images, ctu->leftNode->rightNode, cmt_left_right, split_sub_triangles1.t2, t2_idx, split_sub_triangles1.t2_type, steps - 2, diagonal_line_area_flag);
 
         // 3つ目の三角形
+        // TODO: warping対応
         ctu->rightNode->leftNode->triangle_index = t3_idx;
         ctu->rightNode->leftNode->mv1 = split_mv_result[2].mv_parallel;
         ctu->rightNode->leftNode->mv2 = split_mv_result[2].mv_parallel;
@@ -1196,6 +1198,8 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         isCodedTriangle[t3_idx] = true;
         result = split(expand_images, ctu->rightNode->leftNode, cmt_right_left, split_sub_triangles2.t1, t3_idx, split_sub_triangles2.t1_type, steps - 2, diagonal_line_area_flag);
 
+        // 4つ目の三角形
+        // TODO: warping対応
         ctu->rightNode->rightNode->triangle_index = t4_idx;
         ctu->rightNode->rightNode->mv1 = split_mv_result[3].mv_parallel;
         ctu->rightNode->rightNode->mv2 = split_mv_result[3].mv_parallel;
