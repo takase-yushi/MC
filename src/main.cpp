@@ -48,21 +48,11 @@ int division_steps;
 
 int main(int argc, char *argv[]){
     // Write test codes below
-    // test2();
-    // test3();
-//    test5();
-//    exit(0);
 
-//     test1();
-//    storeResidualImage();
-//    std::cout << getPSNR(cv::imread(getProjectDirectory(OS)+ std::string(argv[1])), cv::imread(getProjectDirectory(OS) + std::string(argv[2]))) << std::endl;
-//    exit(0);
     std::string config_path = std::string(argv[1]);
     run(config_path);
-//    storeResidualImage();
-
 }
-std::string out_file_suffix = "_10step_bm_all_patch";
+std::string out_file_suffix = "_Gauss_Newton_2_filter";
 
 void run(std::string config_path) {
 
@@ -164,7 +154,7 @@ void run(std::string config_path) {
         cv::Mat gaussRefImage = cv::imread(ref_file_path);
         TriangleDivision triangle_division(ref_image, target_image, gaussRefImage);
 
-        triangle_division.initTriangle(block_size_x, block_size_y, division_steps, LEFT_DIVIDE);
+        triangle_division.initTriangle(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);
         std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
 
         std::vector<std::pair<Point3Vec, int> > init_triangles = triangle_division.getTriangles();
@@ -210,11 +200,6 @@ void run(std::string config_path) {
                     diagonal_line_area_flag[i/2][x][block_size_y - x - 1] = (flag ? i : i + 1);
                     flag = !flag;
                 }
-
-                diagonal_line_area_flag[i/2][0][0] = 0;
-                diagonal_line_area_flag[i/2][127][0] = 0;
-                diagonal_line_area_flag[i/2][0][127] = i + 1;
-                diagonal_line_area_flag[i/2][127][127] = i + 1;
             }
 
             std::pair<Point3Vec, int> triangle = init_triangles[i];
@@ -230,9 +215,9 @@ void run(std::string config_path) {
         // ===========================================================
         // ログ出力
         // ===========================================================
-        // TODO: init処理を書き直さないといけない
         getReconstructionDivisionImage(gaussRefImage, foo, block_size_x, block_size_y);
         cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo, diagonal_line_area_flag);
+//        cv::Mat color = triangle_division.getPredictedColorImageFromCtu(foo, diagonal_line_area_flag, getPSNR(target_image, p_image));
 
         int code_length = triangle_division.getCtuCodeLength(foo);
         std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
@@ -241,6 +226,7 @@ void run(std::string config_path) {
         cv::imwrite(img_directory + "p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
         cv::imwrite( img_directory + "p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
         cv::imwrite(img_directory + "p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", triangle_division.getMvImage(foo));
+//        cv::imwrite(img_directory + "p_color_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
 
     }
 }

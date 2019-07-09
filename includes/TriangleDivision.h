@@ -107,14 +107,14 @@ public:
         GaussResult();
 
         GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvParallel, double residual,
-                    int triangleSize, bool parallelFlag);
-
+                    int triangleSize, bool parallelFlag, double residual_bm, double residual_newton);
         std::vector<cv::Point2f> mv_warping;
         cv::Point2f mv_parallel;
         double residual;
         int triangle_size;
         bool parallel_flag;
-
+        double residual_bm;
+        double residual_newton;
     };
 
     struct SplitResult {
@@ -154,6 +154,7 @@ public:
     cv::Mat getMvImage(std::vector<CodingTreeUnit*> ctus);
 
     cv::Mat getPredictedDiagonalImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag);
+    cv::Mat getPredictedColorImageFromCtu(std::vector<CodingTreeUnit*> ctus,std::vector<std::vector<std::vector<int>>> &area_flag, double original_psnr);
 
 private:
     std::vector<cv::Point2f> corners;
@@ -173,7 +174,10 @@ private:
     std::vector<std::vector<cv::Mat>> target_images;
     int qp;
     cv::Mat expansion_ref;
+    unsigned char **ref_hevc;
+    unsigned char **expansion_ref_uchar;
 
+    void getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, std::vector<std::vector<int>> &area_flag, double original_psnr, std::vector<cv::Scalar> &colors);
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
     void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
     void addCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_no);

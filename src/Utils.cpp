@@ -135,6 +135,31 @@ void drawRectangle(cv::Mat &img, const cv::Point2f p1, const cv::Point2f p2, con
 }
 
 /**
+ * @fn cv::Point2f roundVecQuarter(const cv::Point2f p)
+ * @brief 動きベクトルをハーフペル精度に丸める
+ * @param p 丸めたい実数精度の動きベクトル
+* @return 丸められた動きベクトル
+ */
+cv::Point2f roundVecQuarter(const cv::Point2f &p){
+    cv::Point2f ret;
+    double quantize_offset = 0.125;
+    if(p.x < 0) {
+        ret.x = ((int)((p.x - quantize_offset) * 4) / 4.0);
+    }else{
+        ret.x = ((int)((p.x + quantize_offset) * 4) / 4.0);
+    }
+
+    if(p.y < 0) {
+        ret.y = ((int) ((p.y - quantize_offset) * 4) / 4.0);
+    }else{
+        ret.y = ((int) ((p.y + quantize_offset) * 4) / 4.0);
+    }
+
+    return ret;
+}
+
+
+/**
  * @fn bool check_coordinate(cv::Point2f coordinate, cv::Vec4f range)
  * @brief 座標のチェックをする.
  * @param[in] coordinate チェックしたい座標

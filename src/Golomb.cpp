@@ -41,7 +41,7 @@ int ozi::getGolombCode(int l, int x, int region, int type, int k) {
 
     if (l > 1) { // m>1のときはこっち
       if (isPowerOfTwo(l)) {
-        q_length = static_cast<int>(log2(l)); // TODO: +1でよい？
+        q_length = static_cast<int>(log2(l));
       } else {
         double b = ceil(log2(l));
         if (q < std::pow(2, b) - l) {

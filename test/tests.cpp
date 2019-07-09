@@ -13,6 +13,7 @@
 #include "../includes/ME.hpp"
 #include "../includes/TriangleDivision.h"
 #include "../includes/Reconstruction.h"
+#include "../includes/psnr.h"
 
 void storeResidualImage(){
 //    cv::imwrite(getProjectDirectory(OS) + "/img/minato/p_residual_image_22_divide_5_billinear.png", getResidualImage(cv::imread(getProjectDirectory(OS)+ "/img/minato/p_image_22_divide_5_billinear.png"), cv::imread(getProjectDirectory(OS) + "/img/minato/minato_000413_limit.bmp"),2));
@@ -175,3 +176,105 @@ void test5(){
 
 }
 
+void test6(){
+    cv::Mat ref_image = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
+    unsigned char **img1 = getExpansionImage(ref_image, 4, 16);
+
+    cv::Mat out = cv::Mat::zeros(ref_image.rows * 4 + 2 * 4 * 16, ref_image.cols * 4 + 2 * 4 * 16, CV_8UC3);
+    for(int y = -16 * 4 ; y < 4 * ref_image.rows + 4 * 16 ; y++){
+        for(int x = -16 * 4 ; x < 4 * ref_image.cols + 4 * 16 ; x++){
+            R(out, x + 16 * 4, y + 16 * 4) = img1[x][y];
+            G(out, x + 16 * 4, y + 16 * 4) = img1[x][y];
+            B(out, x + 16 * 4, y + 16 * 4) = img1[x][y];
+        }
+    }
+
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/out.png", out);
+}
+
+void test7(){
+    cv::Mat ref_image = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
+    unsigned char **img1 = getExpansionHEVCImage(ref_image, 4, 16);
+
+
+    cv::Mat out = cv::Mat::zeros(ref_image.rows * 4 + 2 * 4 * 16, ref_image.cols * 4 + 2 * 4 * 16, CV_8UC3);
+    for(int y = -16 * 4 ; y < 4 * ref_image.rows + 4 * 16 ; y++){
+        for(int x = -16 * 4 ; x < 4 * ref_image.cols + 4 * 16 ; x++){
+            if(x % 4 == 0 && y % 4 == 0){
+                R(out, x + 16 * 4, y + 16 * 4) = img1[x][y];
+                G(out, x + 16 * 4, y + 16 * 4) = img1[x][y];
+                B(out, x + 16 * 4, y + 16 * 4) = img1[x][y];
+            }else{
+                if(x == 3823 && y == 928) {
+                    std::cout << img1[x][y] << std::endl;
+                }
+                int val = (img1[x][y] + 32)  / 64;
+                val = (val > 255 ? 255 : (val < 0 ? 0 : val));
+                R(out, x + 16 * 4, y + 16 * 4) = val;
+                G(out, x + 16 * 4, y + 16 * 4) = val;
+                B(out, x + 16 * 4, y + 16 * 4) = val;
+            }
+
+        }
+    }
+
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/out_hevc_filter.png", out);
+}
+
+void testFilter(){
+    cv::Mat ref_image = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
+    cv::Mat out;
+    cv::resize(ref_image, out, cv::Size(), 0.25, 0.25);
+
+    cv::Mat bilinear = getExpansionMatImage(out, 4, 0, IP_MODE::BILINEAR);
+    cv::Mat bicubic = getExpansionMatImage(out, 4, 0, IP_MODE::BICUBIC);
+    unsigned char **hevc_ip = getExpansionHEVCImage(out, 4, 0);
+
+    cv::Mat hevc = cv::Mat::zeros(ref_image.size(), CV_8UC3);
+    for(int y = 0 ; y < hevc.rows ; y++) {
+        for (int x = 0; x < hevc.cols; x++) {
+            int val = hevc_ip[x][y];
+            val = (val > 255 ? 255 : (val < 0 ? 0 : val));
+            R(hevc, x, y) = val;
+            G(hevc, x, y) = val;
+            B(hevc, x, y) = val;
+        }
+    }
+
+    std::cout << "Bilinear:" << getPSNR(bilinear, ref_image) << std::endl;
+    std::cout << "Bicubic :" << getPSNR(bicubic, ref_image) << std::endl;
+    std::cout << "HEVC    :" << getPSNR(hevc, ref_image) << std::endl;
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/resize_bilinear.png", bilinear);
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/resize_bicubic.png", bicubic);
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/resize_hevc.png", hevc);
+}
+
+void test4xHEVCImage(){
+    cv::Mat ref_image = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
+
+    int k = 4;
+    int expansion_size = 16;
+    unsigned char **hevc_ip = getExpansionHEVCImage(ref_image, k, expansion_size);
+
+    cv::Mat hevc = cv::Mat::zeros(k * (ref_image.rows + 2 * expansion_size), k * (ref_image.cols + 2 * expansion_size), CV_8UC3);
+
+    for(int y = 0 ; y < k * (ref_image.rows + 2 * expansion_size) ; y++){
+        for(int x = 0 ; x < k * (ref_image.cols + 2 * expansion_size); x++){
+            R(hevc, x, y) = hevc_ip[x - k * expansion_size][y - k * expansion_size];
+            G(hevc, x, y) = hevc_ip[x - k * expansion_size][y - k * expansion_size];
+            B(hevc, x, y) = hevc_ip[x - k * expansion_size][y - k * expansion_size];
+        }
+    }
+
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/test_4x_hevc.png", hevc);
+}
+
+void testRoundVecQuarter(){
+    cv::Point2f a(-1.6, 1.1);
+    cv::Point2f b(1.9, 1.1);
+    cv::Point2f c(-1.6, -100.4);
+
+    std::cout << roundVecQuarter(a) << std::endl;
+    std::cout << roundVecQuarter(b) << std::endl;
+    std::cout << roundVecQuarter(c) << std::endl;
+}

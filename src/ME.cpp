@@ -176,7 +176,7 @@ std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point3Vec tr, const c
  * @param ctu CodingTree
  * @return 動きベクトルのvector(vec[0]: full-pell vec[1]: half-pell vec[2]: quarter-pell)と
  */
-std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Vec triangle, const cv::Mat& target_image, cv::Mat expansion_ref_image, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu) {
+std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Vec triangle, const cv::Mat& target_image, cv::Mat expansion_ref_image, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Point2f fullpell_initial_vector) {
     double sx, sy, lx, ly;
     cv::Point2f tp1, tp2, tp3;
 
@@ -206,30 +206,35 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
     cv::Point2f mv_min;
     int spread_quarter = 64;
     int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
-
     std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, 128, 128);
-    for(int j = -SY * 4 ; j <= SY * 4 ; j += s) {            //j : y方向のMV
-        for(int i = -SX * 4 ; i <= SX * 4 ; i += s) {        //i : x方向のMV
-            //探索範囲が画像上かどうか判定
-            if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
-               && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
-                e = 0.0;
-                e_count = 0;
-                for(auto &pixel : pixels) {
-                    int ref_x = std::max((int)(4 * pixel.x), 0);
-                    ref_x = (i + ref_x + spread_quarter);
-                    int ref_y = std::max((int)((4 * pixel.y)), 0);
-                    ref_y = (j + ref_y + spread_quarter);
-                    e += fabs(M(expansion_ref_image, ref_x, ref_y) - M(target_image, (int)pixel.x, (int)pixel.y));
-                    e_count++;
+
+    if(fullpell_initial_vector.x == -10000 && fullpell_initial_vector.y == -10000){
+        for(int j = -SY * 4 ; j <= SY * 4 ; j += s) {            //j : y方向のMV
+            for(int i = -SX * 4 ; i <= SX * 4 ; i += s) {        //i : x方向のMV
+                //探索範囲が画像上かどうか判定
+                if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
+                   && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
+                    e = 0.0;
+                    e_count = 0;
+                    for(auto &pixel : pixels) {
+                        int ref_x = std::max((int)(4 * pixel.x), 0);
+                        ref_x = (i + ref_x + spread_quarter);
+                        int ref_y = std::max((int)((4 * pixel.y)), 0);
+                        ref_y = (j + ref_y + spread_quarter);
+                        e += fabs(M(expansion_ref_image, ref_x, ref_y) - M(target_image, (int)pixel.x, (int)pixel.y));
+                        e_count++;
+                    }
+                }
+                if(error_min > e){
+                    error_min = e;
+                    mv_min.x = (double)i / 4.0;
+                    mv_min.y = (double)j / 4.0;
                 }
             }
-            if(error_min > e){
-                error_min = e;
-                mv_min.x = (double)i / 4.0;
-                mv_min.y = (double)j / 4.0;
-            }
         }
+    }else{
+        mv_min.x = (fullpell_initial_vector.x > 0 ? (int)(fullpell_initial_vector.x + 0.5) : (int) (fullpell_initial_vector.x - 0.5));
+        mv_min.y = (fullpell_initial_vector.y > 0 ? (int)(fullpell_initial_vector.y + 0.5) : (int) (fullpell_initial_vector.y - 0.5));
     }
 
     std::vector<cv::Point2f> mvs;
@@ -242,8 +247,8 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
 
     s = 2;
     error_min = 1 << 20;
-    for(int j = - s + mv_tmp.y ; j <= s + mv_tmp.y ; j += s){            //j : y方向のMV
-        for(int i = - s + mv_tmp.x ; i <= s + mv_tmp.x ; i += s){        //i : x方向のMV
+    for(int j = -2 *  s + mv_tmp.y ; j <= 2 * s + mv_tmp.y ; j += s){            //j : y方向のMV
+        for(int i = - 2 * s + mv_tmp.x ; i <= 2 * s + mv_tmp.x ; i += s){        //i : x方向のMV
             if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
                && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
                 e = 0.0;
@@ -264,7 +269,6 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
             }
         }
     }
-
     mvs.emplace_back(mv_min.x, mv_min.y);
     errors.emplace_back(error_min);
 
@@ -274,8 +278,8 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
     s = 1;
     error_min = 1 << 20;
 
-    for(int j = - s + mv_tmp.y ; j <= s + mv_tmp.y ; j += s){            //j : y方向のMV
-        for(int i = - s + mv_tmp.x ; i <= s + mv_tmp.x ; i += s){        //i : x方向のMV
+    for(int j = - 2 * s + mv_tmp.y ; j <= 2 * s + mv_tmp.y ; j += s){            //j : y方向のMV
+        for(int i = - 2 * s + mv_tmp.x ; i <= 2 * s + mv_tmp.x ; i += s){        //i : x方向のMV
             if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
                && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
                 e = 0.0;
@@ -295,7 +299,6 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
             }
         }
     }
-
     double error = error_min;
     mvs.emplace_back(mv_min.x, mv_min.y);
     errors.emplace_back(error);
@@ -449,7 +452,7 @@ int bicubic_interpolation(unsigned char **img, double x, double y){
  * @param[in] parallel_flag
  * @return 2乗誤差
  */
-double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& output_image, Point3Vec& triangle, std::vector<cv::Point2f>& mv, bool parallel_flag, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Rect block_size) {
+double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::Mat& output_image, Point3Vec& triangle, std::vector<cv::Point2f>& mv, int offset, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Rect block_size, unsigned char **ref_hevc) {
     cv::Point2f pp0, pp1, pp2;
 
     pp0.x = triangle.p1.x + mv[0].x;
@@ -458,8 +461,6 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
     pp1.y = triangle.p2.y + mv[1].y;
     pp2.x = triangle.p3.x + mv[2].x;
     pp2.y = triangle.p3.y + mv[2].y;
-
-    double quantize_step = 4.0;
 
     std::vector<cv::Point2f> in_triangle_pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, block_size.width, block_size.height);
 
@@ -471,36 +472,6 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
     a = triangle.p3 - triangle.p1;
     b = triangle.p2 - triangle.p1;
     det = a.x * b.y - a.y * b.x;
-
-    // 拡大画像の取得
-    unsigned char **expand_ref;
-    int offset = 32;
-    expand_ref = (unsigned char **)malloc((ref_image.cols + offset * 2) * sizeof(unsigned char *));
-    expand_ref += offset;
-    for(int i = -offset ; i < ref_image.cols + offset ; i++) {
-        expand_ref[i] = (unsigned char *)malloc((ref_image.rows + offset * 2) * sizeof(unsigned char));
-        expand_ref[i] += offset;
-    }
-
-    for(int y = 0 ; y < ref_image.rows ; y++){
-        for(int x = 0 ; x < ref_image.cols ; x++){
-            expand_ref[x][y] = M(ref_image, x, y);
-        }
-    }
-
-    for(int y = 0 ; y < ref_image.rows ; y++){
-        for(int x = -offset ; x < 0 ; x++){
-            expand_ref[x][y] = M(ref_image, 0, y);
-            expand_ref[ref_image.cols + offset + x][y] = M(ref_image, ref_image.cols - 1, y);
-        }
-    }
-
-    for(int y = -offset ; y < 0 ; y++){
-        for(int x = -offset ; x < ref_image.cols + offset ; x++){
-            expand_ref[x][y] = expand_ref[x][y];
-            expand_ref[x][ref_image.rows + offset + y] = expand_ref[x][ref_image.rows - 1];
-        }
-    }
 
     for(const auto& pixel : in_triangle_pixels) {
         X.x = pixel.x - triangle.p1.x;
@@ -514,25 +485,13 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
         b_later = pp1 - pp0;
         X_later = alpha * a_later + beta * b_later + pp0;
 
-        if (X_later.x >= ref_image.cols - 1) {
-            X_later.x = ref_image.cols - 1.001;
+        int y;
+        if(ref_hevc != nullptr){
+            y = img_ip(ref_hevc, cv::Rect(-64, -64, 4 * (target_image.cols + 2 * 16), 4 * (target_image.rows + 2 * 16)), 4 * X_later.x, 4 * X_later.y, 1);
+        }else{
+            std::cout << X_later.x << " " << X_later.y << std::endl;
+            y = bicubic_interpolation(expand_ref, X_later.x, X_later.y);
         }
-        if (X_later.y >= ref_image.rows - 1) {
-            X_later.y = ref_image.rows - 1.001;
-        }
-
-        if (X_later.x < 0) {
-            X_later.x = 0;
-        }
-        if (X_later.y < 0) {
-            X_later.y = 0;
-        }
-        int x0 = floor(X_later.x);
-        double d_x = X_later.x - x0;
-        int y0 = floor(X_later.y);
-        double d_y = X_later.y - y0;
-
-        int y = bicubic_interpolation(expand_ref, X_later.x, X_later.y);
 
         R(output_image, (int)pixel.x, (int)pixel.y) = y;
         G(output_image, (int)pixel.x, (int)pixel.y) = y;
@@ -540,15 +499,6 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
 
         squared_error += pow((M(target_image, (int)pixel.x, (int)pixel.y) - (0.299 * y + 0.587 * y + 0.114 * y)), 2);
     }
-
-    // メモリの開放
-    for(int i = -offset ; i < ref_image.cols + offset ; i++) {
-        expand_ref[i] -= offset;
-        free(expand_ref[i]);
-    }
-
-    expand_ref -= offset;
-    free(expand_ref);
 
     return squared_error;
 }
@@ -567,7 +517,7 @@ double getPredictedImage(cv::Mat& ref_image, cv::Mat& target_image, cv::Mat& out
  * @param block_size_y
  * @return ワーピングの動きベクトル・平行移動の動きベクトル・予測残差・面積・平行移動のフラグのtuple
  */
-std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char **>>> expand_image, Point3Vec target_corners, const std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, int block_size_x, int block_size_y){
+std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char **>>> expand_image, Point3Vec target_corners, const std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, int block_size_x, int block_size_y, cv::Point2f init_vector, unsigned char **ref_hevc){
     // 画像の初期化 vector[filter][picture_number]
 
     const int warping_matrix_dim = 6; // 方程式の次元
@@ -608,27 +558,35 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
     double sy = std::min({(int) p0.y, (int) p1.y, (int) p2.y});
     double ly = std::max({(int) p0.y, (int) p1.y, (int) p2.y});
 
-    int bm_x_offset = 10;
-    int bm_y_offset = 10;
+    int bm_x_offset = 32;
+    int bm_y_offset = 32;
     double error_min = 1e9;
 
-    for(int by = -bm_y_offset ; by < bm_y_offset ; by++){
-        for(int bx = -bm_x_offset ; bx < bm_x_offset ; bx++){
-            if(sx + bx < -16 || ref_images[0][3].cols + 16 <= (lx + bx) || sy + by < -16 || ref_images[0][3].rows + 16 <=(ly + by)) continue;
-            double error_tmp = 0.0;
-            for(const auto& pixel : pixels_in_triangle) {
-                error_tmp += abs(expand_image[0][3][1][(int)(pixel.x + bx)][(int)(pixel.y + by)] - expand_image[0][3][3][(int)(pixel.x)][(int)(pixel.y)]);
-            }
-            if(error_min > error_tmp) {
-                error_min = error_tmp;
-                initial_vector.x = bx;
-                initial_vector.y = by;
+    if(init_vector.x == -1000 && init_vector.y == -1000) {
+        for (int by = -bm_y_offset; by < bm_y_offset; by++) {
+            for (int bx = -bm_x_offset; bx < bm_x_offset; bx++) {
+                if (sx + bx < -16 || ref_images[0][3].cols + 16 <= (lx + bx) || sy + by < -16 ||
+                    ref_images[0][3].rows + 16 <= (ly + by))
+                    continue;
+                double error_tmp = 0.0;
+                for (const auto &pixel : pixels_in_triangle) {
+                    error_tmp += abs(expand_image[0][3][1][(int) (pixel.x + bx)][(int) (pixel.y + by)] -
+                                     expand_image[0][3][3][(int) (pixel.x)][(int) (pixel.y)]);
+                }
+                if (error_min > error_tmp) {
+                    error_min = error_tmp;
+                    initial_vector.x = bx;
+                    initial_vector.y = by;
+                }
             }
         }
+    }else{
+        initial_vector.x = init_vector.x;
+        initial_vector.y = init_vector.y;
     }
 
     initial_vector /= 2.0;
-    for(int filter_num = 1 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
+    for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
         std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(initial_vector.x, initial_vector.y));
         cv::Point2f tmp_mv_parallel(initial_vector.x, initial_vector.y);
 
@@ -862,14 +820,29 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                     int x0_later_parallel_integer = (int)floor(X_later_parallel.x);
                     int y0_later_parallel_integer = (int)floor(X_later_parallel.y);
 
-                    double f = bicubic_interpolation(current_target_expand, X.x, X.y);
-                    double f_org = bicubic_interpolation(current_target_org_expand, X.x, X.y);
+                    double f              = img_ip(current_target_expand    , cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread),                X.x,                X.y, 2);
+                    double f_org          = img_ip(current_target_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread),                X.x,                X.y, 2);
+                    double g_warping      = img_ip(current_ref_expand       , cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread),  X_later_warping.x,  X_later_warping.y, 2);
+                    double g_parallel     = img_ip(current_ref_expand       , cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread), X_later_parallel.x, X_later_parallel.y, 2);
+                    double g_org_warping;
+                    double g_org_parallel;
 
-                    double g_warping = bicubic_interpolation(current_ref_expand, X_later_warping.x, X_later_warping.y);
-                    double g_parallel = bicubic_interpolation(current_ref_expand, X_later_parallel.x, X_later_parallel.y);
+                    cv::Point2f tmp_X_later_warping, tmp_X_later_parallel;
+                    tmp_X_later_warping.x = X_later_warping.x;
+                    tmp_X_later_warping.y = X_later_warping.y;
+                    tmp_X_later_parallel.x = X_later_parallel.x;
+                    tmp_X_later_parallel.y = X_later_parallel.y;
 
-                    double g_org_warping = bicubic_interpolation(current_ref_org_expand, X_later_warping.x, X_later_warping.y);
-                    double g_org_parallel = bicubic_interpolation(current_ref_org_expand, X_later_parallel.x, X_later_parallel.y);
+                    tmp_X_later_warping = roundVecQuarter(tmp_X_later_warping);
+                    tmp_X_later_parallel = roundVecQuarter(tmp_X_later_parallel);
+
+                    if(ref_hevc != nullptr) {
+                        g_org_warping  = img_ip(ref_hevc, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * tmp_X_later_warping.x,  4 * tmp_X_later_warping.y, 1);
+                        g_org_parallel = img_ip(ref_hevc, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * tmp_X_later_parallel.x, 4 * tmp_X_later_parallel.y, 1);
+                    }else {
+                        g_org_warping  = img_ip(current_ref_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread),  tmp_X_later_warping.x, tmp_X_later_warping.y, 2);
+                        g_org_parallel = img_ip(current_ref_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread), tmp_X_later_parallel.x, tmp_X_later_parallel.y, 2);
+                    }
 
                     for (int row = 0; row < warping_matrix_dim; row++) {
                         for (int col = 0; col < warping_matrix_dim; col++) {
@@ -1014,6 +987,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
     }else{
         error = min_error_warping; // / (double)pixels_in_triangle.size();
     }
+
     return std::make_tuple(std::vector<cv::Point2f>{max_v_warping[0], max_v_warping[1], max_v_warping[2]}, max_v_parallel, error, pixels_in_triangle.size(),true);
 }
 

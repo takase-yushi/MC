@@ -59,6 +59,14 @@
  */
 #define RED   (cv::Scalar(0, 0, 255))
 
+#define  WHITE (cv::Scalar(255, 255, 255))
+
+#define YELLOW (cv::Scalar(0, 255, 255))
+
+#define LIGHT_BLUE (cv::Scalar(255, 255, 0))
+
+#define PURPLE (cv::Scalar(255, 0, 255))
+
 /**
  * @def M(img, x, y) ((0.299 * (double)(R(img, (x), (y))) + 0.587 * (double)(G(img, (x), (y))) + 0.114 * (double)(B(img, (x), (y)))))
  * @brief 指定画素の輝度値を返す.
@@ -76,6 +84,15 @@
  *
  */
 #define SIDE_Y_MIN 400
+
+enum {
+    BM,
+    NEWTON,
+};
+
+#define PRED_MODE NEWTON
+#define GAUSS_NEWTON_INIT_VECTOR false
+#define HEVC_REF_IMAGE true
 
 const std::string OS = "Ubuntu";
 
@@ -247,13 +264,14 @@ inline bool isInTriangle(const Point3Vec& trig, const cv::Point2d& p) {
     return !(intersectM(tp1, tp2, p, ret) < 0 || intersectM(tp1, tp3, p, ret) < 0 || intersectM(tp2, tp3, p, ret) < 0);
 }
 
-typedef std::vector<std::vector<std::vector<unsigned char **>>> EXPAND_ARRAY_TYPE;
 
 bool isPointOnTheLine(cv::Point2f a, cv::Point2f b, cv::Point2f p);
 
 inline int myRound(double x, int delta){
     return static_cast<int>((x / delta) + (x > 0 ? 0.5 : -0.5));
 }
+
+cv::Point2f roundVecQuarter(const cv::Point2f &p);
 
 std::vector<std::string> splitString(const std::string &s, char delim);
 

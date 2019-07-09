@@ -61,12 +61,6 @@ double getTriangleResidual(const cv::Mat ref_image, const cv::Mat &target_image,
 
     double quantize_step = 4.0;
 
-    // TODO: 置き換え
-    double sx = std::min({(int) triangle.p1.x, (int) triangle.p2.x, (int) triangle.p3.x});
-    double lx = std::max({(int) triangle.p1.x, (int) triangle.p2.x, (int) triangle.p3.x});
-    double sy = std::min({(int) triangle.p1.y, (int) triangle.p2.y, (int) triangle.p3.y});
-    double ly = std::max({(int) triangle.p1.y, (int) triangle.p2.y, (int) triangle.p3.y});
-
     cv::Point2f X,a,b,a_later,b_later,X_later;
     double alpha,beta,det;
 
@@ -111,6 +105,56 @@ double getTriangleResidual(const cv::Mat ref_image, const cv::Mat &target_image,
 
     return squared_error;
 }
+
+
+/***
+ * @fn double getTriangleResidual(const cv::Mat &target_image, const cv::Mat ref_image, Point3Vec vec)
+ * @brief ある三角形を変形した際の残差を返す
+ * @param ref_image 参照画像
+ * @param target_image 対象画像
+ * @param triangle 三角パッチの座標
+ * @param vec 動きベクトル
+ * @return 残差
+ */
+double getTriangleResidual(unsigned char **ref_image, const cv::Mat &target_image, Point3Vec &triangle, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_triangle_pixels, cv::Rect rect){
+    cv::Point2f pp0, pp1, pp2;
+
+    pp0.x = triangle.p1.x + mv[0].x;
+    pp0.y = triangle.p1.y + mv[0].y;
+    pp1.x = triangle.p2.x + mv[1].x;
+    pp1.y = triangle.p2.y + mv[1].y;
+    pp2.x = triangle.p3.x + mv[2].x;
+    pp2.y = triangle.p3.y + mv[2].y;
+
+    cv::Point2f X,a,b,a_later,b_later,X_later;
+    double alpha,beta,det;
+
+    double squared_error = 0.0;
+
+    a = triangle.p3 - triangle.p1;
+    b = triangle.p2 - triangle.p1;
+    det = a.x * b.y - a.y * b.x;
+
+    for(const auto& pixel : in_triangle_pixels) {
+        X.x = pixel.x - triangle.p1.x;
+        X.y = pixel.y - triangle.p1.y;
+        alpha = (X.x * b.y - X.y * b.x) / det;
+        beta = (a.x * X.y - a.y * X.x) / det;
+        X.x += triangle.p1.x;
+        X.y += triangle.p1.y;
+
+        a_later = pp2 - pp0;
+        b_later = pp1 - pp0;
+        X_later = alpha * a_later + beta * b_later + pp0;
+
+        int y = img_ip(ref_image, rect, X_later.x, X_later.y, 2);
+
+        squared_error += pow((M(target_image, (int)pixel.x, (int)pixel.y) - (0.299 * y + 0.587 * y + 0.114 * y)), 2);
+    }
+
+    return squared_error;
+}
+
 
 /**
  * @fn std::vector<std::vector<cv::Mat>> getRefImages(const cv::Mat ref_image, const cv::Mat gauss_ref_image)
@@ -175,7 +219,7 @@ std::vector<std::vector<cv::Mat>> getTargetImages(const cv::Mat target_image){
 
     // 対象画像のフィルタ処理（２）
     std::vector<cv::Mat> target2_levels;
-    cv::Mat target2_level_1 = target_image;
+    cv::Mat target2_level_1 = getAppliedLPFImage(target_image);
     cv::Mat target2_level_2 = half(target2_level_1, 2);
     cv::Mat target2_level_3 = half(target2_level_2, 1);
     cv::Mat target2_level_4 = half(target2_level_3, 1);
@@ -208,6 +252,7 @@ EXPAND_ARRAY_TYPE getExpandImages(std::vector<std::vector<cv::Mat>> ref_images, 
         }
     }
 
+    expand += 2;
     for(int filter = 0 ; filter < static_cast<int>(ref_images.size()) ; filter++){
         for(int step = 0 ; step < static_cast<int>(ref_images[filter].size()) ; step++){
             cv::Mat current_target_image = target_images[filter][step];
@@ -260,7 +305,7 @@ EXPAND_ARRAY_TYPE getExpandImages(std::vector<std::vector<cv::Mat>> ref_images, 
                     }
                 }
             }
-            int spread = 18;// 双3次補間を行うために、画像の周り(16+2)=18ピクセルだけ折り返し
+            int spread = expand;// 双3次補間を行うために、画像の周り(16+2)=18ピクセルだけ折り返し
             for (int j = 0; j < current_target_image.rows; j++) {
                 for (int i = 1; i <= spread; i++) {
                     current_target_expand[-i][j] = current_target_expand[0][j];
@@ -350,81 +395,13 @@ void freeExpandImages(EXPAND_ARRAY_TYPE expand_images, int expand, int filter_nu
 
 }
 
-/**
- * @fn cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit *> ctu)
- * @brief CodingTreeをもらって、三角形を書いた画像を返す
- * @param image 下地
- * @param ctu CodingTree
- * @return 画像
- */
-cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit *> ctu, int block_size_x, int block_size_y) {
-    Reconstruction rec(image);
-    rec.init(block_size_x, block_size_y, LEFT_DIVIDE);
-    puts("");
-    rec.reconstructionTriangle(ctu);
-    std::vector<Point3Vec> hoge = rec.getTriangleCoordinateList();
-
-    cv::Mat reconstructedImage = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_000413_limit.bmp");
-    for(const auto foo : hoge) {
-        drawTriangle(reconstructedImage, foo.p1, foo.p2, foo.p3, cv::Scalar(255, 255, 255));
-    }
-//    cv::imwrite(getProjectDirectory(OS) + "/img/minato/reconstruction_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", reconstructedImage);
-
-    return reconstructedImage;
-}
 
 /**
- * @fn cv::Mat getExpandImage(cv::Mat image, int k)
- * @brief k倍に拡張子，expansion_size分回りを拡張した画像を生成する
- * @param image 画像
- * @param k サイズの倍数
- * @param expansion_size 拡張する画素数
- * @return 拡張した画像
+ * @fn double w(double x)
+ * @brief bicubic補間で使う重みを計算する
+ * @param x 値
+ * @return 重み
  */
-unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size){
-    cv::Mat out = cv::Mat::zeros(image.rows, image.cols, CV_8UC3);
-    cv::resize(image, out, cv::Size(image.rows * k, image.cols * k), 0, 0, CV_INTER_CUBIC);
-
-    auto **expansion_image = (unsigned char **)malloc(sizeof(unsigned char *) * out.cols + expansion_size * 2);
-    expansion_image += expansion_size;
-
-    for(int i = -expansion_size ; i < out.cols + expansion_size ; i++) {
-        expansion_image[i] = (unsigned char *)malloc(sizeof(unsigned char) * out.rows + expansion_size * 2);
-        expansion_image[i] += expansion_size;
-    }
-
-    for(int y = 0 ; y < out.rows ; y++){
-        for(int x = 0 ; x < out.cols ; x++){
-            expansion_image[x][y] = M(out, x, y);
-        }
-    }
-
-    // y方向に埋める
-    for(int y = 0 ; y < out.rows ; y++) {
-        for (int x = -expansion_size; x < 0; x++) {
-            expansion_image[x][y] = M(out, 0, y);
-            expansion_image[out.cols - x - 1][y] = M(out, out.cols - 1, y);
-
-            expansion_image[x][y] = M(out, 0, y);
-            expansion_image[out.cols - x - 1][y] = M(out, out.cols - 1, y);
-        }
-    }
-
-    // x方向に埋める
-    for(int y = -expansion_size ; y < 0 ; y++) {
-        for (int x = -expansion_size; x < out.cols + expansion_size; x++) {
-            expansion_image[x][y] = expansion_image[x][0];
-            expansion_image[x][out.rows - y - 1] = expansion_image[x][out.rows - 1];
-
-            expansion_image[x][y] = expansion_image[x][0];
-            expansion_image[x][out.rows - y - 1] = expansion_image[x][out.rows - 1];
-        }
-    }
-
-    return expansion_image;
-}
-
-
 double w(double x){
     double absx = fabs(x);
 
@@ -437,14 +414,25 @@ double w(double x){
     }
 }
 
-int img_ip(unsigned char **img, int xs, int ys, double x, double y, int mode){
+/**
+ * @fn int img_ip(unsigned char **img, int xs, int ys, double x, double y, int mode)
+ * @brief x,yの座標の補間値を返す
+ * @param img 保管するための原画像
+ * @param xs xの最大値
+ * @param ys yの最大値
+ * @param x 補間するx座標
+ * @param y 補間するy座標
+ * @param mode 補間モード。モードはImageUtil.hにenumで定義してある
+ * @return 補間値
+ */
+int img_ip(unsigned char **img, cv::Rect rect, double x, double y, int mode){
     int x0, y0;          /* 補間点 (x, y) の整数部分 */
     double dx, dy;       /* 補間点 (x, y) の小数部分 */
     int nx, ny;          /* 双3次補間用のループ変数 */
     double val = 0.0, w(double);
 
     /*** 補間点(x, y)が原画像の領域外なら, 範囲外を示す -1 を返す ***/
-    if (x < -16 || x > xs || y < -16 || y > ys ) {
+    if (x < rect.x || x > rect.x + rect.width || y < rect.y || y > rect.y + rect.height ) {
         std::cout << "Error in img_ip!" << std::endl;
         std::cout << x << " " << y << std::endl;
         exit(1);
@@ -488,6 +476,242 @@ int img_ip(unsigned char **img, int xs, int ys, double x, double y, int mode){
     else return (int) (val + 0.5);
 }
 
+/**
+ * @fn cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit *> ctu)
+ * @brief CodingTreeをもらって、三角形を書いた画像を返す
+ * @param image 下地
+ * @param ctu CodingTree
+ * @return 画像
+ */
+cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit *> ctu, int block_size_x, int block_size_y) {
+    Reconstruction rec(image);
+    rec.init(block_size_x, block_size_y, LEFT_DIVIDE);
+    puts("");
+    rec.reconstructionTriangle(ctu);
+    std::vector<Point3Vec> hoge = rec.getTriangleCoordinateList();
+
+    cv::Mat reconstructedImage = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_000413_limit.bmp");
+    for(const auto foo : hoge) {
+        drawTriangle(reconstructedImage, foo.p1, foo.p2, foo.p3, cv::Scalar(255, 255, 255));
+    }
+
+    return reconstructedImage;
+}
+
+/**
+ * @fn cv::Mat getExpansionImage(cv::Mat image, int k)
+ * @brief k倍に拡張子，expansion_size分回りを拡張した画像を生成する
+ * @param image 画像
+ * @param k サイズの倍数
+ * @param expansion_size 拡張する画素数
+ * @return 拡張した画像
+ */
+unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size, IP_MODE mode){
+    if(mode == IP_MODE::BICUBIC) {
+        int scaled_expansion_size = expansion_size + 2;
+        auto **expansion_image_tmp = (unsigned char **) malloc(
+                sizeof(unsigned char *) * (image.cols + scaled_expansion_size * 2));
+        expansion_image_tmp += scaled_expansion_size;
+
+        for (int i = -scaled_expansion_size; i < image.cols + scaled_expansion_size; i++) {
+            expansion_image_tmp[i] = (unsigned char *) malloc(
+                    sizeof(unsigned char) * (image.rows + scaled_expansion_size * 2));
+            expansion_image_tmp[i] += scaled_expansion_size;
+        }
+
+        for (int y = 0; y < image.rows; y++) {
+            for (int x = 0; x < image.cols; x++) {
+                expansion_image_tmp[x][y] = M(image, x, y);
+            }
+        }
+
+        // y方向に埋める
+        for (int y = 0; y < image.rows; y++) {
+            for (int x = -scaled_expansion_size; x < 0; x++) {
+                expansion_image_tmp[x][y] = M(image, 0, y);
+                expansion_image_tmp[image.cols - x - 1][y] = M(image, image.cols - 1, y);
+            }
+        }
+
+        // x方向に埋める
+        for (int y = -scaled_expansion_size; y < 0; y++) {
+            for (int x = -scaled_expansion_size; x < image.cols + scaled_expansion_size; x++) {
+                expansion_image_tmp[x][y] = expansion_image_tmp[x][0];
+                expansion_image_tmp[x][image.rows - y - 1] = expansion_image_tmp[x][image.rows - 1];
+            }
+        }
+
+        auto **expansion_image = (unsigned char **) malloc(
+                sizeof(unsigned char *) * (k * image.cols + 2 * k * scaled_expansion_size));
+        expansion_image += (k * scaled_expansion_size);
+
+        for (int i = -k * expansion_size; i < k * image.cols + 2 * k * expansion_size; i++) {
+            expansion_image[i] = (unsigned char *) malloc(
+                    sizeof(unsigned char) * (k * image.rows + 2 * k * scaled_expansion_size));
+            expansion_image[i] += (k * scaled_expansion_size);
+        }
+
+        std::cout << "x: from " << -k * expansion_size << " to " << k * image.rows + k * expansion_size << std::endl;
+        for (int y = -k * expansion_size; y < k * image.rows + k * expansion_size; y++) {
+            for (int x = -k * expansion_size; x < k * image.cols + k * expansion_size; x++) {
+                expansion_image[x][y] = img_ip(expansion_image_tmp, cv::Rect(-expansion_size, -expansion_size, image.cols + 2 * expansion_size, image.rows + 2 * expansion_size), (double) x / k, (double) y / k, IP_MODE::BICUBIC);
+            }
+        }
+        return expansion_image;
+    }else if(mode == IP_MODE::HEVC){
+
+    }
+}
+
+
+unsigned char** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
+
+    // 引き伸ばし＋補間で使うため4画素余分に取る
+    int scaled_expansion_size = expansion_size + 4;
+    auto **expansion_image_tmp = (unsigned int **) malloc(sizeof(unsigned int *) * (image.cols + scaled_expansion_size * 2));
+    expansion_image_tmp += scaled_expansion_size;
+
+    for (int i = -scaled_expansion_size; i < image.cols + scaled_expansion_size; i++) {
+        expansion_image_tmp[i] = (unsigned int *) malloc(sizeof(unsigned int) * (image.rows + scaled_expansion_size * 2));
+        expansion_image_tmp[i] += scaled_expansion_size;
+    }
+
+    for (int y = 0; y < image.rows; y++) {
+        for (int x = 0; x < image.cols; x++) {
+            expansion_image_tmp[x][y] = M(image, x, y);
+        }
+    }
+
+    // y方向に埋める
+    for (int y = 0; y < image.rows; y++) {
+        for (int x = -scaled_expansion_size; x < 0; x++) {
+            expansion_image_tmp[x][y] = M(image, 0, y);
+            expansion_image_tmp[image.cols - x - 1][y] = M(image, image.cols - 1, y);
+        }
+    }
+
+    // x方向に埋める
+    for (int y = -scaled_expansion_size; y < 0; y++) {
+        for (int x = -scaled_expansion_size; x < image.cols + scaled_expansion_size; x++) {
+            expansion_image_tmp[x][y] = expansion_image_tmp[x][0];
+            expansion_image_tmp[x][image.rows - y - 1] = expansion_image_tmp[x][image.rows - 1];
+        }
+    }
+
+    auto **expansion_image = (unsigned int **) malloc(sizeof(unsigned int *) * (k * image.cols + 2 * k * scaled_expansion_size));
+    expansion_image += (k * scaled_expansion_size);
+
+    for (int i = -k * scaled_expansion_size; i < k * image.cols + k * scaled_expansion_size; i++) {
+        expansion_image[i] = (unsigned int *) malloc(sizeof(unsigned int) * (k * image.rows + 2 * k * scaled_expansion_size));
+        expansion_image[i] += (k * scaled_expansion_size);
+    }
+
+    // 左上に原画像つっこむ
+    int width = k * image.cols + k * scaled_expansion_size;
+    int height = k * image.rows + k * scaled_expansion_size;
+
+    for(int y = -k * scaled_expansion_size ; y < height ; y+=k){
+        for(int x = -k * scaled_expansion_size ; x < width ; x+=k) {
+            expansion_image[x][y] = expansion_image_tmp[x / k][y / k];
+
+            if (x >= -k * expansion_size && x < k * image.cols + k * expansion_size) {
+                // a
+                expansion_image[x + 1][y] = -expansion_image_tmp[x / k - 3][y / k] + 4 * expansion_image_tmp[x / k - 2][y / k] - 10 * expansion_image_tmp[x / k - 1][y / k] + 58 * expansion_image_tmp[x / k][y / k] + 17 * expansion_image_tmp[x / k + 1][y / k] - 5 * expansion_image_tmp[x / k + 2][y / k] + expansion_image_tmp[x / k + 3][y / k];
+                // b
+                expansion_image[x + 2][y] = -expansion_image_tmp[x / k - 3][y / k] + 4 * expansion_image_tmp[x / k - 2][y / k] - 11 * expansion_image_tmp[x / k - 1][y / k] + 40 * expansion_image_tmp[x / k][y / k] + 40 * expansion_image_tmp[x / k + 1][y / k] - 11 * expansion_image_tmp[x / k + 2][y / k] + 4 * expansion_image_tmp[x / k + 3][y / k] - expansion_image_tmp[x / k + 4][y / k];
+                // c
+                expansion_image[x + 3][y] =  expansion_image_tmp[x / k - 2][y / k] - 5 * expansion_image_tmp[x / k - 1][y / k] + 17 * expansion_image_tmp[x / k][y / k] + 58 * expansion_image_tmp[x / k + 1][y / k] - 10 * expansion_image_tmp[x / k + 2][y / k] + 4 * expansion_image_tmp[x / k + 3][y / k] - expansion_image_tmp[x / k + 4][y / k];
+                // d
+                expansion_image[x][y + 1] = -expansion_image_tmp[x / k][y / k - 3] + 4 * expansion_image_tmp[x / k][y / k - 2] -10 * expansion_image_tmp[x / k][y / k - 1] + 58 * expansion_image_tmp[x / k][y / k] + 17 * expansion_image_tmp[x / k][y / k + 1] - 5 * expansion_image_tmp[x / k][y / k + 2] + expansion_image_tmp[x / k][y / k + 3];
+                // h
+                expansion_image[x][y + 2] = -expansion_image_tmp[x / k][y / k - 3] + 4 * expansion_image_tmp[x / k][y / k - 2] - 11 * expansion_image_tmp[x / k][y / k - 1] + 40 * expansion_image_tmp[x / k][y / k] + 40 * expansion_image_tmp[x / k][y / k + 1] - 11 * expansion_image_tmp[x / k][y / k + 2] + 4 * expansion_image_tmp[x / k][y / k + 3] - expansion_image_tmp[x / k][y / k + 4];
+                // n
+                expansion_image[x][y + 3] = expansion_image_tmp[x / k][y / k - 2] - 5 * expansion_image_tmp[x / k][y / k - 1] + 17 * expansion_image_tmp[x / k][y / k] + 58 * expansion_image_tmp[x / k][y / k + 1] - 10 * expansion_image_tmp[x / k][y / k + 2] + 4 * expansion_image_tmp[x / k][y / k + 3] - expansion_image_tmp[x / k][y / k + 4];
+            }
+        }
+    }
+
+    width = k * (image.cols + expansion_size);
+    height = k * (image.rows + expansion_size);
+    for(int y = -k * expansion_size ; y < height ; y+=k) {
+        for (int x = -k * expansion_size; x < width; x+=k) {
+            // e
+            expansion_image[x + 1][y + 1] = -expansion_image[x + 1][y - 3 * k] + 4 * expansion_image[x + 1][y - 2 * k] - 10 * expansion_image[x + 1][y - k] + 58 * expansion_image[x + 1][    y] + 17 * expansion_image[x + 1][    y + k] -  5 * expansion_image[x + 1][y + 2 * k] +     expansion_image[x + 1][y + 3 * k];
+            // i
+            expansion_image[x + 1][y + 2] = -expansion_image[x + 1][y - 3 * k] + 4 * expansion_image[x + 1][y - 2 * k] - 11 * expansion_image[x + 1][y - k] + 40 * expansion_image[x + 1][    y] + 40 * expansion_image[x + 1][    y + k] - 11 * expansion_image[x + 1][y + 2 * k] + 4 * expansion_image[x + 1][y + 3 * k] - expansion_image[x + 1][y + 4 * k];
+            // p
+            expansion_image[x + 1][y + 3] =                                          expansion_image[x + 1][y - 2 * k] -  5 * expansion_image[x + 1][y - k] + 17 * expansion_image[x + 1][    y] + 58 * expansion_image[x + 1][    y + k] - 10 * expansion_image[x + 1][y + 2 * k] + 4 * expansion_image[x + 1][y + 3 * k] - expansion_image[x + 1][y + 4 * k];
+            // f
+            expansion_image[x + 2][y + 1] = -expansion_image[x + 2][y - 3 * k] + 4 * expansion_image[x + 2][y - 2 * k] - 10 * expansion_image[x + 2][y - k] + 58 * expansion_image[x + 2][    y] + 17 * expansion_image[x + 2][    y + k] -  5 * expansion_image[x + 2][y + 2 * k] +     expansion_image[x + 2][y + 3 * k];
+            // j
+            expansion_image[x + 2][y + 2] = -expansion_image[x + 2][y - 3 * k] + 4 * expansion_image[x + 2][y - 2 * k] - 11 * expansion_image[x + 2][y - k] + 40 * expansion_image[x + 2][    y] + 40 * expansion_image[x + 2][    y + k] - 11 * expansion_image[x + 2][y + 2 * k] + 4 * expansion_image[x + 2][y + 3 * k] - expansion_image[x + 2][y + 4 * k];
+            // q
+            expansion_image[x + 2][y + 3] =                                          expansion_image[x + 2][y - 2 * k] -  5 * expansion_image[x + 2][y - k] + 17 * expansion_image[x + 2][    y] + 58 * expansion_image[x + 2][    y + k] - 10 * expansion_image[x + 2][y + 2 * k] + 4 * expansion_image[x + 2][y + 3 * k] - expansion_image[x + 2][y + 4 * k];
+            // g
+            expansion_image[x + 3][y + 1] = -expansion_image[x + 3][y - 3 * k] + 4 * expansion_image[x + 3][y - 2 * k] - 10 * expansion_image[x + 3][y - k] + 58 * expansion_image[x + 3][    y] + 17 * expansion_image[x + 3][    y + k] -  5 * expansion_image[x + 3][y + 2 * k] +     expansion_image[x + 3][y + 3 * k];
+            // k
+            expansion_image[x + 3][y + 2] = -expansion_image[x + 3][y - 3 * k] + 4 * expansion_image[x + 3][y - 2 * k] - 11 * expansion_image[x + 3][y - k] + 40 * expansion_image[x + 3][    y] + 40 * expansion_image[x + 3][    y + k] - 11 * expansion_image[x + 3][y + 2 * k] + 4 * expansion_image[x + 3][y + 3 * k] - expansion_image[x + 3][y + 4 * k];
+            // r
+            expansion_image[x + 3][y + 3] =                                          expansion_image[x + 3][y - 2 * k] -  5 * expansion_image[x + 3][y - k] + 17 * expansion_image[x + 3][    y] + 58 * expansion_image[x + 3][    y + k] - 10 * expansion_image[x + 3][y + 2 * k] + 4 * expansion_image[x + 3][y + 3 * k] - expansion_image[x + 3][y + 4 * k];
+
+            for(int j = 1 ; j < 4 ; j++){
+                for(int i = 1 ; i < 4 ; i++){
+                    expansion_image[x + i][y + j] = (expansion_image[x + i][y + j] / 64 + 32) / 64;
+                }
+            }
+        }
+    }
+
+    //四捨五入(0～255へ)
+    for(int y = - k * expansion_size ; y < height ; y+=k){
+        for(int x = - k * expansion_size ; x < width ; x+=k){
+            // a
+            expansion_image[x + 1][    y] = (expansion_image[x + 1][    y] + 32) / 64;
+            // b
+            expansion_image[x + 2][    y] = (expansion_image[x + 2][    y] + 32) / 64;
+            // c
+            expansion_image[x + 3][    y] = (expansion_image[x + 3][    y] + 32) / 64;
+            // d
+            expansion_image[x    ][y + 1] = (expansion_image[x    ][y + 1] + 32) / 64;
+            // h
+            expansion_image[x    ][y + 2] = (expansion_image[x    ][y + 2] + 32) / 64;
+            // n
+            expansion_image[x    ][y + 3] = (expansion_image[x    ][y + 3] + 32) / 64;
+        }
+    }
+
+    unsigned char **ret = (unsigned char **)malloc(sizeof(unsigned char *) * k * (image.cols + 2 * expansion_size));
+    ret += k * expansion_size;
+
+    for(int x = -k * expansion_size ; x < k * (image.cols + expansion_size) ; x++) {
+        ret[x] = (unsigned char *)malloc(sizeof(unsigned char) * k * (image.rows + 2 * expansion_size));
+        ret[x] += k * expansion_size;
+    }
+
+    for(int y = -k * expansion_size ; y < k * (image.rows + expansion_size) ; y++){
+        for(int x = -k * expansion_size ; x < k * (image.cols + expansion_size) ; x++){
+            ret[x][y] = expansion_image[x][y];
+        }
+    }
+
+    return ret;
+}
+
+cv::Mat getExpansionMatHEVCImage(cv::Mat image, int k, int expansion_size){
+    unsigned char **expansion_image = getExpansionHEVCImage(image, k, expansion_size);
+
+    cv::Mat out = cv::Mat::zeros(k * (image.rows + 2 * expansion_size), k * (image.cols + 2 * expansion_size), CV_8UC3);
+
+    for(int y = 0 ; y < k * (image.rows + 2 * expansion_size) ; y++){
+        for(int x = 0 ; x < k * (image.cols + 2 * expansion_size) ; x++){
+            R(out, x, y) = expansion_image[x - k * expansion_size][y - k * expansion_size];
+            B(out, x, y) = expansion_image[x - k * expansion_size][y - k * expansion_size];
+            G(out, x, y) = expansion_image[x - k * expansion_size][y - k * expansion_size];
+        }
+    }
+
+    return out;
+}
 
 /**
  * @fn cv::Mat getExpandImage(cv::Mat image, int k)
@@ -497,9 +721,9 @@ int img_ip(unsigned char **img, int xs, int ys, double x, double y, int mode){
  * @param expansion_size 拡張する画素数
  * @return 拡張した画像
  */
-cv::Mat getExpansionMatImage(cv::Mat &image, int k, int expansion_size){
+cv::Mat getExpansionMatImage(cv::Mat &image, int k, int expansion_size, IP_MODE mode){
     unsigned char **img;
-    int scaled_expand_size = expansion_size + 1; // 折返しの分
+    int scaled_expand_size = expansion_size + 2; // 折返しの分
     if((img = (unsigned char **)malloc(sizeof(unsigned char *) * (image.cols + 2 * (scaled_expand_size)))) == NULL) {
         fprintf(stderr, "malloc error");
         exit(1);
@@ -533,15 +757,26 @@ cv::Mat getExpansionMatImage(cv::Mat &image, int k, int expansion_size){
 
     cv::Mat expansion_image = cv::Mat::zeros(image.rows * k + 2 * k * expansion_size, image.cols * k + 2 * k * expansion_size, CV_8UC3);
 
-    for(int y = 0 ; y < expansion_image.rows ; y++){
-        for(int x = 0 ; x < expansion_image.cols ; x++){
-            R(expansion_image, x, y) = img_ip(img, (image.cols + expansion_size), (image.rows + expansion_size), x / (double)k - expansion_size, y / (double)k - expansion_size, 1);
-            G(expansion_image, x, y) = img_ip(img, (image.cols + expansion_size), (image.rows + expansion_size), x / (double)k - expansion_size, y / (double)k - expansion_size, 1);
-            B(expansion_image, x, y) = img_ip(img, (image.cols + expansion_size), (image.rows + expansion_size), x / (double)k - expansion_size, y / (double)k - expansion_size, 1);
+    if(mode == IP_MODE::BICUBIC) {
+        for (int y = 0; y < expansion_image.rows; y++) {
+            for (int x = 0; x < expansion_image.cols; x++) {
+                R(expansion_image, x, y) = img_ip(img, cv::Rect(-expansion_size, -expansion_size, (image.cols + 2 * expansion_size), (image.rows + 2 * expansion_size)), x / (double) k - expansion_size, y / (double) k - expansion_size, 2);
+                G(expansion_image, x, y) = img_ip(img, cv::Rect(-expansion_size, -expansion_size, (image.cols + 2 * expansion_size), (image.rows + 2 * expansion_size)), x / (double) k - expansion_size, y / (double) k - expansion_size, 2);
+                B(expansion_image, x, y) = img_ip(img, cv::Rect(-expansion_size, -expansion_size, (image.cols + 2 * expansion_size), (image.rows + 2 * expansion_size)), x / (double) k - expansion_size, y / (double) k - expansion_size, 2);
+            }
+        }
+    }else if(mode == IP_MODE::BILINEAR){
+
+        for (int y = 0; y < expansion_image.rows; y++) {
+            for (int x = 0; x < expansion_image.cols; x++) {
+                R(expansion_image, x, y) = img_ip(img, cv::Rect(-expansion_size, -expansion_size, (image.cols + 2 * expansion_size), (image.rows + 2 * expansion_size)), x / (double) k - expansion_size, y / (double) k - expansion_size, 1);
+                G(expansion_image, x, y) = img_ip(img, cv::Rect(-expansion_size, -expansion_size, (image.cols + 2 * expansion_size), (image.rows + 2 * expansion_size)), x / (double) k - expansion_size, y / (double) k - expansion_size, 1);
+                B(expansion_image, x, y) = img_ip(img, cv::Rect(-expansion_size, -expansion_size, (image.cols + 2 * expansion_size), (image.rows + 2 * expansion_size)), x / (double) k - expansion_size, y / (double) k - expansion_size, 1);
+            }
         }
     }
 
-    for(int x = -scaled_expand_size ; x < image.cols + scaled_expand_size ; x++) {
+    for (int x = -scaled_expand_size; x < image.cols + scaled_expand_size; x++) {
         img[x] -= scaled_expand_size;
         free(img[x]);
     }
@@ -568,10 +803,11 @@ void freeImage(unsigned char **image, cv::Size image_size, int expansion_size){
 }
 
 /**
- *
- * @param ctu
- * @param triangle_index
- * @return
+ * @fn bool isMyTriangle(const CodingTreeUnit* ctu, int triangle_index)
+ * @brief CodingTreeUnitをさかのぼって、triangle_indexが親に含まれているか確認する
+ * @param ctu CTUのカレントノード
+ * @param triangle_index 調べるtriangle_index
+ * @return 存在していた場合true, 存在しない場合はfalseを返す
  */
 bool isMyTriangle(const CodingTreeUnit* ctu, int triangle_index){
     if(ctu == nullptr) return false;
@@ -612,17 +848,6 @@ std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const st
             xp.x = i;
             xp.y = j;
             if (isInTriangle(triangle, xp) == 1) {
-//                if(isPointOnTheLine(p0, p1, xp) || isPointOnTheLine(p1, p2, xp) || isPointOnTheLine(p2, p0, xp)){
-//                    if(xp.x != sx && xp.x != lx && xp.y != sy && xp.y != ly) {
-//                        if (area_flag[xp.x % block_size_x][xp.y % block_size_y] == triangle_index || isMyTriangle(ctu, area_flag[xp.x % block_size_x][xp.y % block_size_y])) {
-//                            pixels_in_triangle.emplace_back(xp);
-//                        }
-//                    }else{
-//                        pixels_in_triangle.emplace_back(xp);
-//                    }
-//                }else {
-//                    pixels_in_triangle.emplace_back(xp);//三角形の内部のピクセルを格納
-//                }
                 int pixel_index = area_flag[xp.x % block_size_x][xp.y % block_size_y];
                 if(pixel_index == -1 || pixel_index == triangle_index || isMyTriangle(ctu, pixel_index)){
                     pixels_in_triangle.emplace_back(xp);
@@ -631,4 +856,45 @@ std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const st
         }
     }
     return pixels_in_triangle;
+}
+
+/**
+ * @fn cv::Mat getAppliedLPFImage(cv::Mat &image)
+ * @brief 1:2:1のLPFを適用したMatを返す
+ * @param image
+ * @return フィルタを適用した画像
+ */
+cv::Mat getAppliedLPFImage(const cv::Mat &image){
+    unsigned char **expansion_image = getExpansionImage(image, 1, 2);
+
+    double weight[3][3];
+    weight[0][0] = 0.0625;
+    weight[1][0] = 0.125;
+    weight[2][0] = 0.0625;
+
+    weight[0][1] = 0.125;
+    weight[1][1] = 0.25;
+    weight[2][1] = 0.125;
+
+    weight[0][2] = 0.0625;
+    weight[1][2] = 0.125;
+    weight[2][2] = 0.0625;
+
+    cv::Mat out = cv::Mat::zeros(image.size(), CV_8UC3);
+    for(int y = 0 ; y < out.rows ; y++){
+        for(int x = 0 ; x < out.cols ; x++){
+            double sum = 0.0;
+            for(int j = 0 ; j < 3; j++){
+                for(int i = 0 ; i < 3 ; i++){
+                    sum += weight[i][j] * expansion_image[x + i - 1][y + i - 1];
+                }
+            }
+            sum = round(sum);
+            R(out, x, y) = (unsigned char)sum;
+            G(out, x, y) = (unsigned char)sum;
+            B(out, x, y) = (unsigned char)sum;
+        }
+    }
+
+    return out;
 }
