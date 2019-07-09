@@ -586,7 +586,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
     }
 
     initial_vector /= 2.0;
-    for(int filter_num = 1 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
+    for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
         std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(initial_vector.x, initial_vector.y));
         cv::Point2f tmp_mv_parallel(initial_vector.x, initial_vector.y);
 
