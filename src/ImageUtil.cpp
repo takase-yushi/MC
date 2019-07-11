@@ -187,7 +187,7 @@ std::vector<std::vector<cv::Mat>> getRefImages(const cv::Mat ref_image, const cv
     ref2_levels.emplace_back(ref2_level_4);
     ref2_levels.emplace_back(ref2_level_3);
     ref2_levels.emplace_back(ref2_level_2);
-    ref2_levels.emplace_back(ref_image);
+    ref2_levels.emplace_back(getAppliedLPFImage(ref_image));
 
     ref_images.emplace_back(ref1_levels);
     ref_images.emplace_back(ref2_levels);
