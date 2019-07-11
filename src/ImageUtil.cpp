@@ -295,8 +295,8 @@ EXPAND_ARRAY_TYPE getExpandImages(std::vector<std::vector<cv::Mat>> ref_images, 
                         current_target_expand[i][j] = M(current_target_image, i, j);
                         current_ref_expand[i][j] = M(current_ref_image, i, j);
 
-                        current_target_org_expand[i][j] = M(target_images[filter][step], i, j);
-                        current_ref_org_expand[i][j] = M(ref_images[filter][step], i, j);
+                        current_target_org_expand[i][j] = M(target_images[0][3], i, j);
+                        current_ref_org_expand[i][j] = M(ref_images[0][3], i, j);
                     } else {
                         current_target_expand[i][j] = 0;
                         current_ref_expand[i][j] = 0;
