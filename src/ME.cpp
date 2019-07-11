@@ -661,9 +661,11 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
             v_stack_warping.clear();
 
             double prev_error_warping = 1e6, prev_error_parallel = 1e6;
+            cv::Point2f prev_mv_parallel;
+            std::vector<cv::Point2f> prev_mv_warping;
+            bool warping_update_flag = true, parallel_update_flag = true;
 
             int iterate_counter = 0;
-            // 11回ガウス・ニュートン法をやる
             while(true){
                 // 移動後の座標を格納する
                 std::vector<cv::Point2f> ref_coordinates_warping;
@@ -680,6 +682,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                 cv::Point2f a = p2 - p0;
                 cv::Point2f b = p1 - p0;
                 double det = a.x * b.y - a.y * b.x;
+                // tmp_mv_warping, tmp_mv_parallelは現在の動きベクトル
+                // 初回は初期値が入ってる
                 cv::Point2f c = tmp_mv_warping[2] - tmp_mv_warping[0];
                 cv::Point2f d = tmp_mv_warping[1] - tmp_mv_warping[0];
 
@@ -707,6 +711,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                 double delta_g_parallel[parallel_matrix_dim] = {0};
 
                 cv::Point2f X;
+                double RMSE_warping_filter = 0;
+                double RMSE_parallel_filter = 0;
                 for(auto pixel : pixels_in_triangle) {
                     X.x = pixel.x - p0.x;
                     X.y = pixel.y - p0.y;
@@ -747,14 +753,11 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                         cv::Point2f a_later_warping, a_later_parallel;
                         cv::Point2f b_later_warping, b_later_parallel;
 
-                        a_later_warping.x = triangle_later_warping[2].x - triangle_later_warping[0].x;
-                        a_later_warping.y = triangle_later_warping[2].y - triangle_later_warping[0].y;
+                        a_later_warping  =  triangle_later_warping[2] -  triangle_later_warping[0];
                         a_later_parallel = triangle_later_parallel[2] - triangle_later_parallel[0];
-                        b_later_warping.x = triangle_later_warping[1].x - triangle_later_warping[0].x;
-                        b_later_warping.y = triangle_later_warping[1].y - triangle_later_warping[0].y;
+                        b_later_warping  =  triangle_later_warping[1] -  triangle_later_warping[0];
                         b_later_parallel = triangle_later_parallel[1] - triangle_later_parallel[0];
-                        X_later_warping.x = alpha * a_later_warping.x + beta * b_later_warping.x + triangle_later_warping[0].x;
-                        X_later_warping.y = alpha * a_later_warping.y + beta * b_later_warping.y + triangle_later_warping[0].y;
+                        X_later_warping  = alpha *  a_later_warping + beta *  b_later_warping +  triangle_later_warping[0];
                         X_later_parallel = alpha * a_later_parallel + beta * b_later_parallel + triangle_later_parallel[0];
 
                         if(X_later_warping.x >= current_ref_image.cols - 1 + scaled_spread) X_later_warping.x = current_ref_image.cols - 1.00 + scaled_spread;
@@ -762,35 +765,35 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                         if(X_later_warping.x < -scaled_spread) X_later_warping.x = -scaled_spread;
                         if(X_later_warping.y < -scaled_spread) X_later_warping.y = -scaled_spread;
 
-                        if((current_ref_image.cols - 1 + scaled_spread) <= X_later_parallel.x) X_later_parallel.x = current_ref_image.cols - 1 + scaled_spread;
+                        if(X_later_parallel.x >= (current_ref_image.cols - 1 + scaled_spread)) X_later_parallel.x = current_ref_image.cols - 1 + scaled_spread;
+                        if(X_later_parallel.y >= (current_ref_image.rows - 1 + scaled_spread)) X_later_parallel.y = current_ref_image.rows - 1 + scaled_spread;
                         if(X_later_parallel.x < -scaled_spread) X_later_parallel.x = -scaled_spread;
-                        if((current_ref_image.rows - 1 + scaled_spread) <= X_later_parallel.y) X_later_parallel.y = current_ref_image.rows - 1 + scaled_spread;
                         if(X_later_parallel.y < -scaled_spread) X_later_parallel.y = -scaled_spread;
 
                         // 頂点を動かしたときのパッチ内の変動量x軸y軸独立に計算(delta_gを求めるために必要)
                         double delta_x, delta_y;
                         switch (i) {//頂点ごとにxy軸独立に偏微分
-                            case 0:
+                            case 0: // u0
                                 delta_x = 1 - alpha - beta;
                                 delta_y = 0;
                                 break;
-                            case 1:
+                            case 1: // v0
                                 delta_x = 0;
                                 delta_y = 1 - alpha - beta;
                                 break;
-                            case 2:
+                            case 2: // u1
                                 delta_x = beta;
                                 delta_y = 0;
                                 break;
-                            case 3:
+                            case 3: // v1
                                 delta_x = 0;
                                 delta_y = beta;
                                 break;
-                            case 4:
+                            case 4: // u2
                                 delta_x = alpha;
                                 delta_y = 0;
                                 break;
-                            case 5:
+                            case 5: // v2
                                 delta_x = 0;
                                 delta_y = alpha;
                                 break;
@@ -812,18 +815,15 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                     delta_g_parallel[0] = g_x_parallel;
                     delta_g_parallel[1] = g_y_parallel;
 
-                    int x0_later_warping_integer = (int)floor(X_later_warping.x);
-                    int y0_later_warping_integer = (int)floor(X_later_warping.y);
-                    int x0_later_parallel_integer = (int)floor(X_later_parallel.x);
-                    int y0_later_parallel_integer = (int)floor(X_later_parallel.y);
-
-                    double f              = img_ip(current_target_expand    , cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread),                X.x,                X.y, 2);
-                    double f_org          = img_ip(current_target_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread),                X.x,                X.y, 2);
-                    double g_warping      = img_ip(current_ref_expand       , cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread),  X_later_warping.x,  X_later_warping.y, 2);
-                    double g_parallel     = img_ip(current_ref_expand       , cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread), X_later_parallel.x, X_later_parallel.y, 2);
+                    double f              = img_ip(current_target_expand    , cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)),                X.x,                X.y, 2);
+                    double f_org          = img_ip(current_target_org_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)),                X.x,                X.y, 2);
+                    double g_warping      = img_ip(current_ref_expand       , cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)),  X_later_warping.x,  X_later_warping.y, 2);
+                    double g_parallel     = img_ip(current_ref_expand       , cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_parallel.x, X_later_parallel.y, 2);
                     double g_org_warping;
                     double g_org_parallel;
 
+                    RMSE_warping_filter += fabs(f - g_warping);
+                    RMSE_parallel_filter += fabs(f - g_parallel);
 
                     cv::Point2f tmp_X_later_warping, tmp_X_later_parallel;
                     tmp_X_later_warping.x = X_later_warping.x;
@@ -860,6 +860,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                         }
                         B_parallel.at<double>(row, 0) += (f - g_parallel) * delta_g_parallel[row];
                     }
+
 
                     MSE_warping += fabs(f_org - g_org_warping);   // * (f_org - g_org_warping);
                     MSE_parallel += fabs(f_org - g_org_parallel); // * (f_org - g_org_parallel);
@@ -969,12 +970,15 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                 prev_mv_parallel = tmp_mv_parallel;
                 prev_mv_warping = tmp_mv_warping;
                 iterate_counter++;
-//                std::cout << "prev_error_parallel:" << prev_error_parallel << " prev_error_warping:" << prev_error_warping << std::endl;
             }
 
-            std::sort(v_stack_warping.begin(), v_stack_warping.end(), [](std::pair<std::vector<cv::Point2f>,double> a, std::pair<std::vector<cv::Point2f>,double> b){
-              return a.second < b.second;
-            });
+//            std::sort(v_stack_warping.begin(), v_stack_warping.end(), [](std::pair<std::vector<cv::Point2f>,double> a, std::pair<std::vector<cv::Point2f>,double> b){
+//              return a.second < b.second;
+//            });
+//
+//            std::sort(v_stack_parallel.begin(), v_stack_parallel.end(), [](std::pair<cv::Point2f,double> a, std::pair<cv::Point2f,double> b){
+//              return a.second < b.second;
+//            });
 
             std::reverse(v_stack_parallel.begin(), v_stack_parallel.end());
             std::reverse(v_stack_warping.begin(), v_stack_warping.end());
