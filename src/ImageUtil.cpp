@@ -679,17 +679,31 @@ unsigned char** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
         }
     }
 
-    unsigned char **ret = (unsigned char **)malloc(sizeof(unsigned char *) * k * (image.cols + 2 * expansion_size));
-    ret += k * expansion_size;
+    unsigned char **ret = (unsigned char **)malloc(sizeof(unsigned char *) * k * (image.cols + 2 * scaled_expansion_size));
+    ret += k * scaled_expansion_size;
 
-    for(int x = -k * expansion_size ; x < k * (image.cols + expansion_size) ; x++) {
-        ret[x] = (unsigned char *)malloc(sizeof(unsigned char) * k * (image.rows + 2 * expansion_size));
-        ret[x] += k * expansion_size;
+    for(int x = -k * scaled_expansion_size ; x < k * (image.cols + scaled_expansion_size) ; x++) {
+        ret[x] = (unsigned char *)malloc(sizeof(unsigned char) * k * (image.rows + 2 * scaled_expansion_size));
+        ret[x] += k * scaled_expansion_size;
     }
 
     for(int y = -k * expansion_size ; y < k * (image.rows + expansion_size) ; y++){
         for(int x = -k * expansion_size ; x < k * (image.cols + expansion_size) ; x++){
             ret[x][y] = expansion_image[x][y];
+        }
+    }
+
+    for(int y = -k * expansion_size ; y < k * (image.rows + expansion_size) ; y++){
+        for(int x = -k * scaled_expansion_size ; x <= -k * expansion_size ; x++){
+            ret[x][y] = ret[-k * expansion_size][y];
+            ret[k*(image.cols + scaled_expansion_size + expansion_size) + x - 1][y] = ret[k * image.cols - 1][y];
+        }
+    }
+
+    for(int y = -k * scaled_expansion_size ; y < -k * expansion_size ; y++){
+        for(int x = -k * scaled_expansion_size ; x < k * (image.cols + scaled_expansion_size); x++){
+            ret[x][y] = ret[x][-k * expansion_size + 1];
+            ret[x][k * (image.rows + scaled_expansion_size + expansion_size) + y - 1] = ret[x][k * (image.rows - 1 + expansion_size)];
         }
     }
 
