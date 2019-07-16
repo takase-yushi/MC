@@ -1722,8 +1722,8 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
             bool is_y_minus = mvd.y < 0 ? true : false;
 
             // 動きベクトル差分から2を引いたろ！
-            int mvd_x_minus_2 = mvd.x - 2;
-            int mvd_y_minus_2 = mvd.y - 2;
+            int mvd_x_minus_2 = (mvd.x - 2.0) * 4;
+            int mvd_y_minus_2 = (mvd.y - 2.0) * 4;
 
             int mvd_code_length = getExponentialGolombCodeLength((int) mvd_x_minus_2, 0) +
                                   getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
@@ -1733,7 +1733,7 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
             int reference_index_code_length = getUnaryCodeLength(reference_index);
 
             // 各種フラグ分を(3*2)bit足してます
-            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + 6 + 1);
+            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + 6  );
 
             // 結果に入れる
             results.emplace_back(rd, mvd_code_length + reference_index_code_length + 6 + 1, mvd, i, vector.second);
@@ -1762,8 +1762,8 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
                 bool is_y_minus = mvd.y < 0 ? true : false;
 
                 // 動きベクトル差分から2を引いたろ！
-                int mvd_x_minus_2 = mvd.x - 2;
-                int mvd_y_minus_2 = mvd.y - 2;
+                int mvd_x_minus_2 = (mvd.x - 2.0) * 4;
+                int mvd_y_minus_2 = (mvd.y - 2.0) * 4;
 
                 int mvd_code_length = getExponentialGolombCodeLength((int) mvd_x_minus_2, 0) +
                                       getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
@@ -1773,7 +1773,7 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
                 int reference_index_code_length = getUnaryCodeLength(reference_index);
 
                 // 各種フラグ分を(3*2)bit足してます
-                double rd = residual + lambda * (mvd_code_length + reference_index_code_length + 6 + 1);
+                double rd = residual + lambda * (mvd_code_length + reference_index_code_length + 6);
 
                 // 結果に入れる
                 results.emplace_back(rd, mvd_code_length + reference_index_code_length + 6 + 1, mvd, i, vector.second);
