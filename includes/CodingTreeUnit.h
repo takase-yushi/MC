@@ -14,6 +14,7 @@ public:
 
     int code_length;
     bool split_cu_flag;
+    bool parallel_flag;
     CodingTreeUnit *leftNode;
     CodingTreeUnit *rightNode;
     CodingTreeUnit *parentNode;
