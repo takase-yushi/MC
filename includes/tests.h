@@ -29,5 +29,6 @@ void test7();
 void testFilter();
 void test4xHEVCImage();
 void testRoundVecQuarter();
+void testHevcPSNR();
 
 #endif //ENCODER_TESTS_H

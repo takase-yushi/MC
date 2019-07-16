@@ -94,6 +94,8 @@ enum {
 #define GAUSS_NEWTON_INIT_VECTOR false
 #define HEVC_REF_IMAGE true
 
+#define MVD_DEBUG_LOG false
+
 const std::string OS = "Ubuntu";
 
 /**

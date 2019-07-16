@@ -278,3 +278,17 @@ void testRoundVecQuarter(){
     std::cout << roundVecQuarter(b) << std::endl;
     std::cout << roundVecQuarter(c) << std::endl;
 }
+
+void testHevcPSNR(){
+    cv::Mat qp22 = cv::imread(getProjectDirectory(OS) + "/img/minato/HM_22.png");
+    cv::Mat qp27 = cv::imread(getProjectDirectory(OS) + "/img/minato/HM_27.png");
+    cv::Mat qp32 = cv::imread(getProjectDirectory(OS) + "/img/minato/HM_32.png");
+    cv::Mat qp37 = cv::imread(getProjectDirectory(OS) + "/img/minato/HM_37.png");
+
+    cv::Mat target = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_000413_limit.bmp");
+
+    std::cout << "QP22:" << getPSNR(target, qp22) << std::endl;
+    std::cout << "QP27:" << getPSNR(target, qp27) << std::endl;
+    std::cout << "QP32:" << getPSNR(target, qp32) << std::endl;
+    std::cout << "QP37:" << getPSNR(target, qp37) << std::endl;
+}

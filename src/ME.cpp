@@ -517,7 +517,7 @@ double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::
  * @param block_size_y
  * @return ワーピングの動きベクトル・平行移動の動きベクトル・予測残差・面積・平行移動のフラグのtuple
  */
-std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char **>>> expand_image, Point3Vec target_corners, const std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, int block_size_x, int block_size_y, cv::Point2f init_vector, unsigned char **ref_hevc){
+std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewton(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char **>>> expand_image, Point3Vec target_corners, const std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, int block_size_x, int block_size_y, cv::Point2f init_vector, unsigned char **ref_hevc){
     // 画像の初期化 vector[filter][picture_number]
 
     const int warping_matrix_dim = 6; // 方程式の次元
@@ -876,13 +876,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                 double Error_warping = MSE_warping;
                 double Error_parallel = MSE_parallel;
 
-
-
-                if(prev_error_warping < MSE_warping && warping_update_flag){
-                    warping_update_flag  = false;
-                    tmp_mv_warping = prev_mv_warping;
-                }
-
                 if(warping_update_flag) {
                     cv::solve(gg_warping, B_warping, delta_uv_warping); //6x6の連立方程式を解いてdelta_uvに格納
                     v_stack_warping.emplace_back(tmp_mv_warping, Error_warping);
@@ -913,12 +906,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                         }
                     }
                 }
-
-                if(prev_error_parallel < MSE_parallel && parallel_update_flag){
-                    parallel_update_flag = false;
-                    tmp_mv_parallel = prev_mv_parallel;
-                }
-//                std::cout << iterate_counter + 1 << " " << MSE_parallel << " " << RMSE_parallel_filter << " " << tmp_mv_parallel << " " << parallel_update_flag << std::endl;
 
                 if(parallel_update_flag) {
                     cv::solve(gg_parallel, B_parallel, delta_uv_parallel);
@@ -960,7 +947,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                 }
 
                 double eps = 1e-3;
-//                std::cout << fabs(prev_error_warping - MSE_warping) << " " << MSE_warping << " " <<(fabs(prev_error_warping - MSE_warping) / MSE_warping) << std::endl;
                 if(((fabs(prev_error_parallel - MSE_parallel) / MSE_parallel) < eps && (fabs(prev_error_warping - MSE_warping) / MSE_warping < eps)) || (!parallel_update_flag && !warping_update_flag) || iterate_counter > 20){
                     break;
                 }
@@ -972,16 +958,13 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
                 iterate_counter++;
             }
 
-//            std::sort(v_stack_warping.begin(), v_stack_warping.end(), [](std::pair<std::vector<cv::Point2f>,double> a, std::pair<std::vector<cv::Point2f>,double> b){
-//              return a.second < b.second;
-//            });
-//
-//            std::sort(v_stack_parallel.begin(), v_stack_parallel.end(), [](std::pair<cv::Point2f,double> a, std::pair<cv::Point2f,double> b){
-//              return a.second < b.second;
-//            });
+            std::sort(v_stack_warping.begin(), v_stack_warping.end(), [](std::pair<std::vector<cv::Point2f>,double> a, std::pair<std::vector<cv::Point2f>,double> b){
+              return a.second < b.second;
+            });
 
-            std::reverse(v_stack_parallel.begin(), v_stack_parallel.end());
-            std::reverse(v_stack_warping.begin(), v_stack_warping.end());
+            std::sort(v_stack_parallel.begin(), v_stack_parallel.end(), [](std::pair<cv::Point2f,double> a, std::pair<cv::Point2f,double> b){
+              return a.second < b.second;
+            });
 
             tmp_mv_warping = v_stack_warping[0].first;//一番良い動きベクトルを採用
             double Error_warping = v_stack_warping[0].second;
@@ -1013,7 +996,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
         }
     }
 
-    parallel_flag = true;
     // 量子化
     double quantize_offset = 0.125;
     if(max_v_parallel.x < 0) {
@@ -1039,14 +1021,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
         max_v_warping[i].y = ((int)((max_v_warping[i].y) * 4) / 4.0);
     }
 
-    double error = 0.0;
-    if(parallel_flag) {
-        error = min_error_parallel; // / (double)pixels_in_triangle.size();
-    }else{
-        error = min_error_warping; // / (double)pixels_in_triangle.size();
-    }
 
-    return std::make_tuple(std::vector<cv::Point2f>{max_v_warping[0], max_v_warping[1], max_v_warping[2]}, max_v_parallel, error, pixels_in_triangle.size(),true);
+    return std::make_tuple(std::vector<cv::Point2f>{max_v_warping[0], max_v_warping[1], max_v_warping[2]}, max_v_parallel, min_error_warping, min_error_parallel, pixels_in_triangle.size());
 }
 
 /**
@@ -1379,7 +1355,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> Marquardt(s
 
                     for (int row = 0; row < warping_matrix_dim; row++) {
                         for (int col = 0; col < warping_matrix_dim; col++) {
-                            // TODO: マルカール法の導入
                             if(col == row) {
                                 gg_warping.at<double>(row, col) += (1 + lambda_warp) * delta_g_warping[row] * delta_g_warping[col];//A_0の行列を生成(左辺の6x6の行列に相当)
                             }else{
