@@ -1844,6 +1844,16 @@ void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &ou
         Point3Vec triangle(corners[triangle_corner_idx.p1_idx], corners[triangle_corner_idx.p2_idx], corners[triangle_corner_idx.p3_idx]);
 
         std::vector<cv::Point2f> mvs{mv, mv, mv};
+        if(ctu->parallel_flag){
+            mvs.emplace_back(mv);
+            mvs.emplace_back(mv);
+            mvs.emplace_back(mv);
+        }else{
+            mvs.emplace_back(ctu->mv1);
+            mvs.emplace_back(ctu->mv2);
+            mvs.emplace_back(ctu->mv3);
+        }
+
         getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, 16, area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
         return;
     }
