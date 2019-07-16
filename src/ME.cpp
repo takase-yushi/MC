@@ -1045,7 +1045,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
         error = min_error_warping;
     }
 
-    return std::make_tuple(std::vector<cv::Point2f>{max_v_warping[0], max_v_warping[1], max_v_warping[2]}, max_v_parallel, error, pixels_in_triangle.size(),true);
+    return std::make_tuple(std::vector<cv::Point2f>{max_v_warping[0], max_v_warping[1], max_v_warping[2]}, max_v_parallel, error, pixels_in_triangle.size(), parallel_flag);
 }
 
 /**
@@ -1378,7 +1378,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> Marquardt(s
 
                     for (int row = 0; row < warping_matrix_dim; row++) {
                         for (int col = 0; col < warping_matrix_dim; col++) {
-                            // TODO: マルカール法の導入
                             if(col == row) {
                                 gg_warping.at<double>(row, col) += (1 + lambda_warp) * delta_g_warping[row] * delta_g_warping[col];//A_0の行列を生成(左辺の6x6の行列に相当)
                             }else{
