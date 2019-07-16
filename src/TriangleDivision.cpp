@@ -986,6 +986,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     ctu->triangle_index = triangle_index;
     ctu->code_length = code_length;
     ctu->collocated_mv = cmt->mv1;
+    ctu->parallel_flag = parallel_flag;
 
     SplitResult split_triangles = getSplitTriangle(p1, p2, p3, type);
 
@@ -1172,8 +1173,8 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             ctu->leftNode->leftNode->mv2 = split_mv_result[0].mv_warping[1];
             ctu->leftNode->leftNode->mv3 = split_mv_result[0].mv_warping[2];
         }
-        ctu->leftNode->code_length = code_length1;
-
+        ctu->leftNode->leftNode->code_length = code_length1;
+        ctu->leftNode->leftNode->parallel_flag = split_mv_result[0].parallel_flag;
         triangle_gauss_results[t1_idx] = split_mv_result[0];
         isCodedTriangle[t1_idx] = true;
         bool result = split(expand_images, ctu->leftNode->leftNode, cmt_left_left, split_sub_triangles1.t1, t1_idx,split_sub_triangles1.t1_type, steps - 2, diagonal_line_area_flag);
@@ -1189,7 +1190,8 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             ctu->leftNode->rightNode->mv2 = split_mv_result[1].mv_warping[1];
             ctu->leftNode->rightNode->mv3 = split_mv_result[1].mv_warping[2];
         }
-        ctu->rightNode->code_length = code_length2;
+        ctu->rightNode->rightNode->code_length = code_length2;
+        ctu->rightNode->rightNode->parallel_flag = split_mv_result[1].parallel_flag;
 
         triangle_gauss_results[t2_idx] = split_mv_result[1];
         isCodedTriangle[t2_idx] = true;
@@ -1207,6 +1209,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             ctu->rightNode->leftNode->mv3 = split_mv_result[2].mv_warping[2];
         }
         ctu->rightNode->leftNode->code_length = code_length3;
+        ctu->rightNode->leftNode->parallel_flag = split_mv_result[2].parallel_flag;
 
         triangle_gauss_results[t3_idx] = split_mv_result[2];
         isCodedTriangle[t3_idx] = true;
@@ -1224,6 +1227,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             ctu->rightNode->rightNode->mv3 = split_mv_result[3].mv_warping[2];
         }
         ctu->rightNode->rightNode->code_length = code_length4;
+        ctu->rightNode->rightNode->parallel_flag = split_mv_result[3].parallel_flag;
 
         triangle_gauss_results[t4_idx] = split_mv_result[3];
         isCodedTriangle[t4_idx] = true;
