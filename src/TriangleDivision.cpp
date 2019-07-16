@@ -928,7 +928,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             triangle_gauss_results[triangle_index].mv_parallel = gauss_result_parallel;
             triangle_gauss_results[triangle_index].triangle_size = triangle_size;
             triangle_gauss_results[triangle_index].residual = RMSE_before_subdiv;
-            triangle_gauss_results[triangle_index].parallel_flag = true;
+            triangle_gauss_results[triangle_index].parallel_flag = parallel_flag;
         }else if(PRED_MODE == BM) {
             std::vector<cv::Point2f> tmp_bm_mv;
             std::vector<double> tmp_bm_errors;
@@ -951,8 +951,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             triangle_gauss_results[triangle_index].residual = RMSE_before_subdiv;
             triangle_gauss_results[triangle_index].parallel_flag = true;
         }
-
-        parallel_flag = true;
     }
 
     cv::Point2f mvd;
