@@ -876,13 +876,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 double Error_warping = MSE_warping;
                 double Error_parallel = MSE_parallel;
 
-
-
-//                if(prev_error_warping < MSE_warping && warping_update_flag){
-//                    warping_update_flag  = false;
-//                    tmp_mv_warping = prev_mv_warping;
-//                }
-
                 if(warping_update_flag) {
                     cv::solve(gg_warping, B_warping, delta_uv_warping); //6x6の連立方程式を解いてdelta_uvに格納
                     v_stack_warping.emplace_back(tmp_mv_warping, Error_warping);
@@ -913,12 +906,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                         }
                     }
                 }
-
-//                if(prev_error_parallel < MSE_parallel && parallel_update_flag){
-//                    parallel_update_flag = false;
-//                    tmp_mv_parallel = prev_mv_parallel;
-//                }
-//                std::cout << iterate_counter + 1 << " " << MSE_parallel << " " << RMSE_parallel_filter << " " << tmp_mv_parallel << " " << parallel_update_flag << std::endl;
 
                 if(parallel_update_flag) {
                     cv::solve(gg_parallel, B_parallel, delta_uv_parallel);
@@ -960,7 +947,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 }
 
                 double eps = 1e-3;
-//                std::cout << fabs(prev_error_warping - MSE_warping) << " " << MSE_warping << " " <<(fabs(prev_error_warping - MSE_warping) / MSE_warping) << std::endl;
                 if(((fabs(prev_error_parallel - MSE_parallel) / MSE_parallel) < eps && (fabs(prev_error_warping - MSE_warping) / MSE_warping < eps)) || (!parallel_update_flag && !warping_update_flag) || iterate_counter > 20){
                     break;
                 }
@@ -979,9 +965,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
             std::sort(v_stack_parallel.begin(), v_stack_parallel.end(), [](std::pair<cv::Point2f,double> a, std::pair<cv::Point2f,double> b){
               return a.second < b.second;
             });
-
-//            std::reverse(v_stack_parallel.begin(), v_stack_parallel.end());
-//            std::reverse(v_stack_warping.begin(), v_stack_warping.end());
 
             tmp_mv_warping = v_stack_warping[0].first;//一番良い動きベクトルを採用
             double Error_warping = v_stack_warping[0].second;
