@@ -1703,15 +1703,28 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
     Point3Vec coordinate = Point3Vec(p1, p2, p3);
     vectors.clear();
 
+    std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> merge_vectors;
     std::vector<cv::Point2f> pixels_in_triangle = getPixelsInTriangle(coordinate, area_flag, triangle_idx, ctu, block_size_x, block_size_y);
     for(int i = 0 ; i < spatial_triangle_size ; i++) {
-        // TODO: これ平行移動のみしか対応してないがどうする…？
-        if(!isMvExists(vectors, mv[0])) {
-            vectors.emplace_back(mv[0], MERGE);
-            double ret_residual = getTriangleResidual(ref_image, target_image, coordinate, mv, pixels_in_triangle);
-            double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
-            results.emplace_back(rd, getUnaryCodeLength(i) + 1, cv::Point2f(0, 0), results.size(), MERGE);
+        int spatial_triangle_index = spatial_triangles[i];
+        GaussResult spatial_triangle = triangle_gauss_results[spatial_triangle_index];
+
+        if(spatial_triangle.parallel_flag){
+            if(!isMvExists(merge_vectors, spatial_triangle.mv_parallel)) {
+                merge_vectors.emplace_back(spatial_triangle.mv_parallel, MERGE);
+                double ret_residual = getTriangleResidual(ref_image, target_image, coordinate, mv, pixels_in_triangle);
+                double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
+                results.emplace_back(rd, getUnaryCodeLength(i) + 1, cv::Point2f(0, 0), results.size(), MERGE);
+            }
+        }else{
+            if(!isMvExists(merge_vectors, spatial_triangle.mv_warping[0])) {
+                merge_vectors.emplace_back(spatial_triangle.mv_warping[0], MERGE);
+                double ret_residual = getTriangleResidual(ref_image, target_image, coordinate, mv, pixels_in_triangle);
+                double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
+                results.emplace_back(rd, getUnaryCodeLength(i) + 1, cv::Point2f(0, 0), results.size(), MERGE);
+            }
         }
+
     }
 
     // RDしたスコアが小さい順にソート
