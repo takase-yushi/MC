@@ -1736,8 +1736,8 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
             bool is_y_minus = mvd.y < 0 ? true : false;
 
             // 動きベクトル差分から2を引いたろ！
-            int mvd_x_minus_2 = (mvd.x - 2.0) * 4;
-            int mvd_y_minus_2 = (mvd.y - 2.0) * 4;
+            int mvd_x_minus_2 = mvd.x;
+            int mvd_y_minus_2 = mvd.y;
 
             int mvd_code_length = getExponentialGolombCodeLength((int) mvd_x_minus_2, 0) +
                                   getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
@@ -1780,8 +1780,8 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
                 bool is_y_minus = mvd.y < 0 ? true : false;
 
                 // 動きベクトル差分から2を引いたろ！
-                int mvd_x_minus_2 = (mvd.x - 2.0) * 4;
-                int mvd_y_minus_2 = (mvd.y - 2.0) * 4;
+                int mvd_x_minus_2 = mvd.x;
+                int mvd_y_minus_2 = mvd.y;
 
                 int mvd_code_length = getExponentialGolombCodeLength((int) mvd_x_minus_2, 0) +
                                       getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
