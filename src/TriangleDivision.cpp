@@ -1703,10 +1703,24 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
 
         if(triangle_gauss_results[triangle_idx].parallel_flag) { // 平行移動成分に関してはこれまで通りにやる
             cv::Point2f mvd = current_mv - mv[0];
-
+#if MVD_DEBUG_LOG
+            std::cout << "idx                 :" << i << std::endl;
+            std::cout << "current_mv(parallel):" << current_mv << std::endl;
+            std::cout << "mv[0](parallel)     :" << mv[0] << std::endl;
+#endif
             mvd = getQuantizedMv(mvd, 4);
+#if MVD_DEBUG_LOG
+            std::cout << "mvd:(parallel)      :" << mvd << std::endl;
+#endif
+            mvd.x = std::fabs(mvd.x) - 2.0;
+            mvd.y = std::fabs(mvd.y) - 2.0;
+#if MVD_DEBUG_LOG
+            std::cout << "mvd-2:(parallel)    :" << mvd << std::endl;
+#endif
             mvd *= 4;
-
+#if MVD_DEBUG_LOG
+            std::cout << "4 * mvd(parallel)   :" << mvd << std::endl;
+#endif
             /* 動きベクトル符号化 */
 
             // 動きベクトル差分の絶対値が0より大きいのか？
@@ -1727,7 +1741,9 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
 
             int mvd_code_length = getExponentialGolombCodeLength((int) mvd_x_minus_2, 0) +
                                   getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
-
+#if MVD_DEBUG_LOG
+            std::cout << " code_length:" << mvd_code_length << std::endl;
+#endif
             // 参照箇所符号化
             int reference_index = std::get<1>(vector);
             int reference_index_code_length = getUnaryCodeLength(reference_index);
@@ -1745,6 +1761,8 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
 
             for(auto &mvd : mvds){
                 mvd = getQuantizedMv(mvd, 4);
+                mvd.x = std::fabs(mvd.x) - 2.0;
+                mvd.y = std::fabs(mvd.y) - 2.0;
                 mvd *= 4;
 
                 /* 動きベクトル符号化 */
