@@ -959,7 +959,16 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
     double cost_before_subdiv;
     int code_length;
-    std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD({gauss_result_parallel,gauss_result_parallel,gauss_result_parallel}, RMSE_before_subdiv, triangle_index, cmt->mv1, diagonal_line_area_flag, ctu);
+
+    if(triangle_gauss_results[triangle_index].parallel_flag) {
+        std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
+                {gauss_result_parallel, gauss_result_parallel, gauss_result_parallel}, RMSE_before_subdiv,
+                triangle_index, cmt->mv1, diagonal_line_area_flag, ctu);
+    }else{
+        std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
+                triangle_gauss_results[triangle_index].mv_warping, RMSE_before_subdiv,
+                triangle_index, cmt->mv1, diagonal_line_area_flag, ctu);
+    }
 
     std::vector<cv::Point2i> ret_gauss2;
 
