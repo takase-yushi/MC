@@ -245,7 +245,7 @@ std::vector<Point3Vec> TriangleDivision::getTriangleCoordinateList() {
     std::vector<Point3Vec> vec;
 
     for(int i = 0 ; i < triangles.size() ; i++) {
-        if(delete_flag[i]) continue;
+        if(delete_flag[i] || !isCodedTriangle[i]) continue;
         Triangle triangle = triangles[i].first;
         vec.emplace_back(corners[triangle.p1_idx], corners[triangle.p2_idx], corners[triangle.p3_idx]);
     }

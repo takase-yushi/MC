@@ -187,7 +187,7 @@ std::vector<std::vector<cv::Mat>> getRefImages(const cv::Mat ref_image, const cv
     ref2_levels.emplace_back(ref2_level_4);
     ref2_levels.emplace_back(ref2_level_3);
     ref2_levels.emplace_back(ref2_level_2);
-    ref2_levels.emplace_back(ref_image);
+    ref2_levels.emplace_back(getAppliedLPFImage(ref_image));
 
     ref_images.emplace_back(ref1_levels);
     ref_images.emplace_back(ref2_levels);
@@ -295,8 +295,8 @@ EXPAND_ARRAY_TYPE getExpandImages(std::vector<std::vector<cv::Mat>> ref_images, 
                         current_target_expand[i][j] = M(current_target_image, i, j);
                         current_ref_expand[i][j] = M(current_ref_image, i, j);
 
-                        current_target_org_expand[i][j] = M(target_images[filter][step], i, j);
-                        current_ref_org_expand[i][j] = M(ref_images[filter][step], i, j);
+                        current_target_org_expand[i][j] = M(target_images[0][3], i, j);
+                        current_ref_org_expand[i][j] = M(ref_images[0][3], i, j);
                     } else {
                         current_target_expand[i][j] = 0;
                         current_ref_expand[i][j] = 0;
@@ -679,17 +679,31 @@ unsigned char** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
         }
     }
 
-    unsigned char **ret = (unsigned char **)malloc(sizeof(unsigned char *) * k * (image.cols + 2 * expansion_size));
-    ret += k * expansion_size;
+    unsigned char **ret = (unsigned char **)malloc(sizeof(unsigned char *) * k * (image.cols + 2 * scaled_expansion_size));
+    ret += k * scaled_expansion_size;
 
-    for(int x = -k * expansion_size ; x < k * (image.cols + expansion_size) ; x++) {
-        ret[x] = (unsigned char *)malloc(sizeof(unsigned char) * k * (image.rows + 2 * expansion_size));
-        ret[x] += k * expansion_size;
+    for(int x = -k * scaled_expansion_size ; x < k * (image.cols + scaled_expansion_size) ; x++) {
+        ret[x] = (unsigned char *)malloc(sizeof(unsigned char) * k * (image.rows + 2 * scaled_expansion_size));
+        ret[x] += k * scaled_expansion_size;
     }
 
     for(int y = -k * expansion_size ; y < k * (image.rows + expansion_size) ; y++){
         for(int x = -k * expansion_size ; x < k * (image.cols + expansion_size) ; x++){
             ret[x][y] = expansion_image[x][y];
+        }
+    }
+
+    for(int y = -k * expansion_size ; y < k * (image.rows + expansion_size) ; y++){
+        for(int x = -k * scaled_expansion_size ; x <= -k * expansion_size ; x++){
+            ret[x][y] = ret[-k * expansion_size][y];
+            ret[k*(image.cols + scaled_expansion_size + expansion_size) + x - 1][y] = ret[k * image.cols - 1][y];
+        }
+    }
+
+    for(int y = -k * scaled_expansion_size ; y < -k * expansion_size ; y++){
+        for(int x = -k * scaled_expansion_size ; x < k * (image.cols + scaled_expansion_size); x++){
+            ret[x][y] = ret[x][-k * expansion_size + 1];
+            ret[x][k * (image.rows + scaled_expansion_size + expansion_size) + y - 1] = ret[x][k * (image.rows - 1 + expansion_size)];
         }
     }
 
