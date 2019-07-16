@@ -1999,7 +1999,7 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
 //                G(out, (int)pixel.x, (int)pixel.y) = colors[5][1];
 //                B(out, (int)pixel.x, (int)pixel.y) = colors[5][2];
 //            }
-        if(ctu->error_newton > ctu->error_bm) {
+        if(!ctu->parallel_flag) {
             for(auto pixel : pixels) {
                 R(out, (int)pixel.x, (int)pixel.y) = 255;
                 G(out, (int)pixel.x, (int)pixel.y) = 0;
