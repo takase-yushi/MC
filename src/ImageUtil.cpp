@@ -340,10 +340,17 @@ EXPAND_ARRAY_TYPE getExpandImages(std::vector<std::vector<cv::Mat>> ref_images, 
                 }
             }
 
-            expand_images[filter][step][0] = current_ref_expand;
-            expand_images[filter][step][1] = current_ref_org_expand;
-            expand_images[filter][step][2] = current_target_expand;
-            expand_images[filter][step][3] = current_target_org_expand;
+            #if GAUSS_NEWTON_HEVC_IMAGE
+                expand_images[filter][step][0] = getExpansionHEVCImage(current_ref_image   , 4, expand);
+                expand_images[filter][step][1] = getExpansionHEVCImage(ref_images[0][3]    , 4, expand);
+                expand_images[filter][step][2] = getExpansionHEVCImage(current_target_image, 4, expand);
+                expand_images[filter][step][3] = getExpansionHEVCImage(target_images[0][3] , 4, expand);
+            #else
+                expand_images[filter][step][0] = current_ref_expand;
+                expand_images[filter][step][1] = current_ref_org_expand;
+                expand_images[filter][step][2] = current_target_expand;
+                expand_images[filter][step][3] = current_target_org_expand;
+            #endif
         }
     }
 
