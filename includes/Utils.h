@@ -92,6 +92,7 @@ enum {
 
 #define PRED_MODE NEWTON
 #define GAUSS_NEWTON_INIT_VECTOR false
+#define GAUSS_NEWTON_HEVC_IMAGE true
 #define HEVC_REF_IMAGE true
 
 #define MVD_DEBUG_LOG false
