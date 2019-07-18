@@ -982,7 +982,7 @@ std::vector<int> DelaunayTriangulation::getNeighborVertexNum(int pt) {
 
     for(const auto p : neighbor_vtx[pt + 4]){
         if(p < 4) continue;
-        ret.emplace_back(p);
+        ret.emplace_back(p - 4);
     }
 
     return ret;

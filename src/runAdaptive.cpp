@@ -374,14 +374,14 @@ void runAdaptive() {
 
         // 頂点の動きをブロックマッチングで求める -----------------------------------------------------------------------
         cv::Mat points = target_image.clone();
-        std::pair <std::vector<cv::Point2f>, std::priority_queue<int>> ret_ref_corners = getReferenceImageCoordinates(
-                ref_gauss, target_image, corners_org, points);
-        ref_corners_org = ret_ref_corners.first;
+//        std::pair <std::vector<cv::Point2f>, std::priority_queue<int>> ret_ref_corners = getReferenceImageCoordinates(
+//                ref_gauss, target_image, corners_org, points);
+//        ref_corners_org = ret_ref_corners.first;
 
         corners.clear();
         for (auto &i : corners_org) corners.emplace_back(i);
         ref_corners.clear();
-        for (auto &i : ref_corners_org) ref_corners.emplace_back(i);
+        for (auto &i : corners) ref_corners.emplace_back(i);
 
         {
 
@@ -462,8 +462,9 @@ void runAdaptive() {
 //            // ガウス分布と仮定すると、ここは変曲点（大嘘）
 //            double erase_th = (myu + sigma) * (myu + sigma);
 //            erase_th_global = erase_th;
-            bool erase_flag = false;
-            if(erase_flag) {
+            std::cout << "chek" << std::endl;
+            bool erase_corner_flag = false;
+            if(erase_corner_flag) {
                 for (int q = 0; q < 4; q++) {
                     md.insert(corners);
                     md.getTriangleList(triangles_mydelaunay);
@@ -475,8 +476,10 @@ void runAdaptive() {
                     // 頂点の数が変化するたびに、変曲点を求めていたが計算量がそれなりに掛かる(全三角パッチに対してやると5分ぐらい)
                     // TODO: 並列化できそうでは？
                     sigma_tmp.clear();
-#pragma omp parallel for
+                    std::cout << "triangles_t.size:" << triangles_t.size() << std::endl;
+//#pragma omp parallel for
                     for (int i = 0; i < (int) triangles_t.size(); i++) {
+                        std::cout << "i:" << i << std::endl;
                         cv::Point2f p1(corners[triangles_t[i].p1_idx]), p2(corners[triangles_t[i].p2_idx]), p3(
                                 corners[triangles_t[i].p3_idx]);
                         Point3Vec target_corners = Point3Vec(p1, p2, p3);
@@ -486,10 +489,12 @@ void runAdaptive() {
                         bool parallel_flag;
                         int triangle_size;
                         double MSE_tmp;
+                        std::cout << "check3" << std::endl;
                         std::tie(warping_mv, parallel_mv, MSE_tmp, triangle_size, parallel_flag) = GaussNewton(ref_image,
                                                                                                                target_image,
                                                                                                                ref_gauss,
                                                                                                                target_corners);
+                        std::cout << "check4" << std::endl;
                         std::vector<cv::Point2f> mv;
                         if (parallel_flag) {
                             mv.emplace_back(parallel_mv);
@@ -504,10 +509,12 @@ void runAdaptive() {
                         triangle_sum += triangle_size;
                         sigma_tmp.emplace_back(MSE_tmp);
                     }
+                    std::cout << "check1" << std::endl;
                     double myu = sqrt(MSE / triangle_sum);
                     double sigma = 0;
                     myu = sqrt(MSE / triangle_sum);
                     sigma = 0;
+                    std::cout << "check2" << std::endl;
                     for (double i : sigma_tmp) {
                         sigma += (sqrt(i) - myu) * (sqrt(i) - myu);
                     }
@@ -930,24 +937,24 @@ void runAdaptive() {
 //*/
 
 //            corners = triangle_division.getCorners();
-            if(erase_flag) {
+            if(erase_corner_flag) {
                 std::ofstream corner_list_later = std::ofstream("corner_list_" + corner_file_name + "_later.dat");
                 for (const cv::Point2f point : corners) {
                     corner_list_later << point.x << " " << point.y << std::endl;
                 }
             }
-            std::ifstream in_corner_list = std::ifstream("corner_list_" + corner_file_name + "_later.dat");
-            std::string str1;
-            int point_x,point_y;
-            corners.clear();
-            while (getline(in_corner_list, str1)) {
-                sscanf(str1.data(), "%d %d", &point_x,&point_y);
-                corners.emplace_back(cv::Point2f(point_x,point_y));
-            }
+//            std::ifstream in_corner_list = std::ifstream("corner_list_" + corner_file_name + "_later.dat");
+//            std::string str1;
+//            int point_x,point_y;
+//            corners.clear();
+//            while (getline(in_corner_list, str1)) {
+//                sscanf(str1.data(), "%d %d", &point_x,&point_y);
+//                corners.emplace_back(cv::Point2f(point_x,point_y));
+//            }
 
             std::cout << "corners's size :" << corners.size() << std::endl;
             std::cout << "ref_corners's size :" << ref_corners.size() << std::endl;
-            ret_ref_corners = getReferenceImageCoordinates(ref_gauss, target_image, corners, points);
+            std::pair <std::vector<cv::Point2f>, std::priority_queue<int>> ret_ref_corners = getReferenceImageCoordinates(ref_gauss, target_image, corners, points);
 
             ref_corners_org = ret_ref_corners.first;
             ref_corners.clear();

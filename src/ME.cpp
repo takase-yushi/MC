@@ -465,7 +465,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
     double max_PSNR_warping = -1, max_PSNR_parallel = -1;
 
     cv::Point2f p0, p1, p2;
-    std::vector<cv::Point2f> max_v_warping;
+    std::vector<cv::Point2f> max_v_warping(3,cv::Point2f(0,0));
     cv::Point2f max_v_parallel;
 
     std::vector<std::pair<std::vector<cv::Point2f>,double>> v_stack_warping;
@@ -953,6 +953,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
             free(current_ref_org_expand);
         }
     }
+    std::cout << "chek1" << std::endl;
     
     // 量子化
     double quantize_offset = 0.125;
@@ -967,17 +968,18 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> GaussNewton
     }else{
         max_v_parallel.y = ((int) ((max_v_parallel.y + quantize_offset) * 4) / 4.0);
     }
+    std::cout << "chek2" << std::endl;
+    for(int l = 0 ; l < 3 ; l++){
+        if(max_v_warping[l].x < 0) max_v_warping[l].x -= quantize_offset;
+        else max_v_warping[l].x += quantize_offset;
 
-    for(int i = 0 ; i < 3 ; i++){
-        if(max_v_warping[i].x < 0) max_v_warping[i].x -= quantize_offset;
-        else max_v_warping[i].x += quantize_offset;
+        if(max_v_warping[l].y < 0) max_v_warping[l].y -= quantize_offset;
+        else max_v_warping[l].y += quantize_offset;
 
-        if(max_v_warping[i].y < 0) max_v_warping[i].y -= quantize_offset;
-        else max_v_warping[i].y += quantize_offset;
-
-        max_v_warping[i].x = ((int)((max_v_warping[i].x) * 4) / 4.0);
-        max_v_warping[i].y = ((int)((max_v_warping[i].y) * 4) / 4.0);
+        max_v_warping[l].x = ((int)((max_v_warping[l].x) * 4) / 4.0);
+        max_v_warping[l].y = ((int)((max_v_warping[l].y) * 4) / 4.0);
     }
+    std::cout << "chek3" << std::endl;
 
     double error = 0.0;
     if(parallel_flag) {
@@ -2039,8 +2041,10 @@ std::vector<cv::Point2i> Gauss_Newton2(const cv::Mat& prev_color,const cv::Mat& 
             double scale = pow(2, 3-z),scale_x = scale,scale_y = scale;
             cv::Mat f_img = f_[blare][z].clone();//対照画像
             cv::Mat g_img = g_[blare][z].clone();//参照画像
-            f_img = mv_filter(f_img,2);
-            g_img = mv_filter(g_img,2);
+            if(z != 3) {
+                f_img = mv_filter(f_img, 2);
+                g_img = mv_filter(g_img, 2);
+            }
             const int expand = 500;
             unsigned char **f_expand,**f_org_expand;
             unsigned char **g_expand,**g_org_expand;

@@ -7221,3 +7221,778 @@ prev_id flag ---------------------
 golomb code      : 1187
 golomb code full : 3773
 
+C:\Users\takahiro\workspace\MC/img/minato/minato_QP22_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/01 Mon 16:01:41
+PSNR : 29.717488
+code amount : 17352[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+14m28sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 222
+triangles.size() : 421
+block_size_x     : 128
+block_size_y     : 128
+qp               : 37
+coordinate vector ---------------------
+golomb code(x)   : 1304
+golomb code(y)   : 1282
+motion vector ---------------------
+golomb code(x)   : 7231
+golomb code(y)   : 6348
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 1187
+golomb code full : 3773
+
+C:\Users\takahiro\workspace\MC/img/minato/minato_QP22_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/02 Tue 15:18:54
+PSNR : 30.267498
+code amount : 960[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+258m27sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 13
+triangles.size() : 16
+block_size_x     : 128
+block_size_y     : 128
+qp               : 22
+coordinate vector ---------------------
+golomb code(x)   : 112
+golomb code(y)   : 107
+motion vector ---------------------
+golomb code(x)   : 354
+golomb code(y)   : 320
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 67
+golomb code full : 286
+
+C:\Users\takahiro\workspace\MC/img/minato/minato_QP22_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/02 Tue 15:48:35
+PSNR : 30.267498
+code amount : 960[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+7m37sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 13
+triangles.size() : 16
+block_size_x     : 128
+block_size_y     : 128
+qp               : 22
+coordinate vector ---------------------
+golomb code(x)   : 112
+golomb code(y)   : 107
+motion vector ---------------------
+golomb code(x)   : 354
+golomb code(y)   : 320
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 67
+golomb code full : 286
+
+C:\Users\takahiro\workspace\MC/img/minato/minato_QP27_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/03 Wed 12:55:11
+PSNR : 30.056039
+code amount : 960[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+7m23sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 13
+triangles.size() : 16
+block_size_x     : 128
+block_size_y     : 128
+qp               : 27
+coordinate vector ---------------------
+golomb code(x)   : 112
+golomb code(y)   : 107
+motion vector ---------------------
+golomb code(x)   : 354
+golomb code(y)   : 320
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 67
+golomb code full : 286
+
+C:\Users\takahiro\workspace\MC/img/minato/minato_QP29_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/03 Wed 14:00:13
+PSNR : 29.801798
+code amount : 960[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+7m35sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 13
+triangles.size() : 16
+block_size_x     : 128
+block_size_y     : 128
+qp               : 29
+coordinate vector ---------------------
+golomb code(x)   : 112
+golomb code(y)   : 107
+motion vector ---------------------
+golomb code(x)   : 354
+golomb code(y)   : 320
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 67
+golomb code full : 286
+
+C:\Users\takahiro\workspace\MC/img/minato/minato_QP31_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/03 Wed 16:40:00
+PSNR : 29.535181
+code amount : 960[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+7m17sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 13
+triangles.size() : 16
+block_size_x     : 128
+block_size_y     : 128
+qp               : 31
+coordinate vector ---------------------
+golomb code(x)   : 112
+golomb code(y)   : 107
+motion vector ---------------------
+golomb code(x)   : 354
+golomb code(y)   : 320
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 67
+golomb code full : 286
+
+C:\Users\takahiro\workspace\MC/img/minato/minato_QP33_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/03 Wed 17:08:32
+PSNR : 29.135222
+code amount : 960[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+7m19sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 13
+triangles.size() : 16
+block_size_x     : 128
+block_size_y     : 128
+qp               : 33
+coordinate vector ---------------------
+golomb code(x)   : 112
+golomb code(y)   : 107
+motion vector ---------------------
+golomb code(x)   : 354
+golomb code(y)   : 320
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 67
+golomb code full : 286
+
+C:\Users\takahiro\workspace\MC/img/minato/minato_QP35_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/04 Thu 10:46:33
+PSNR : 28.620844
+code amount : 960[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+7m18sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 13
+triangles.size() : 16
+block_size_x     : 128
+block_size_y     : 128
+qp               : 35
+coordinate vector ---------------------
+golomb code(x)   : 112
+golomb code(y)   : 107
+motion vector ---------------------
+golomb code(x)   : 354
+golomb code(y)   : 320
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 67
+golomb code full : 286
+
+C:\Users\takahiro\workspace\MC/img/minato/minato_QP37_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/04 Thu 10:57:43
+PSNR : 28.209812
+code amount : 960[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+7m45sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 13
+triangles.size() : 16
+block_size_x     : 128
+block_size_y     : 128
+qp               : 37
+coordinate vector ---------------------
+golomb code(x)   : 112
+golomb code(y)   : 107
+motion vector ---------------------
+golomb code(x)   : 354
+golomb code(y)   : 320
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 67
+golomb code full : 286
+
+C:\Users\takahiro\workspace\MC/img/FungusZoom/Fungus_QP22_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/08 Mon 17:07:24
+PSNR : 41.380793
+code amount : 137[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+299m39sec
+reference        : limit_I22.bmp
+target_image     : Fungus_43_limit.bmp
+threshold        : 0
+corner size      : 4
+triangles.size() : 2
+block_size_x     : 128
+block_size_y     : 128
+qp               : 22
+coordinate vector ---------------------
+golomb code(x)   : 20
+golomb code(y)   : 14
+motion vector ---------------------
+golomb code(x)   : 48
+golomb code(y)   : 40
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 15
+golomb code full : 49
+
+C:\Users\takahiro\workspace\MC/img/FungusZoom/Fungus_QP22_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/09 Tue 17:06:52
+PSNR : 41.380793
+code amount : 137[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+294m13sec
+reference        : limit_I22.bmp
+target_image     : Fungus_43_limit.bmp
+threshold        : 0
+corner size      : 4
+triangles.size() : 2
+block_size_x     : 128
+block_size_y     : 128
+qp               : 22
+coordinate vector ---------------------
+golomb code(x)   : 20
+golomb code(y)   : 14
+motion vector ---------------------
+golomb code(x)   : 48
+golomb code(y)   : 40
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 15
+golomb code full : 49
+
+C:\Users\takahiro\workspace\MC/img/car/car_P22_test_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/09 Tue 19:52:23
+PSNR : 38.332101
+code amount : 2555[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+165m30sec
+reference        : car_limit_I22.bmp
+target_image     : car_000091_limit.bmp
+threshold        : 0
+corner size      : 37
+triangles.size() : 67
+block_size_x     : 128
+block_size_y     : 128
+qp               : 22
+coordinate vector ---------------------
+golomb code(x)   : 224
+golomb code(y)   : 217
+motion vector ---------------------
+golomb code(x)   : 1093
+golomb code(y)   : 864
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 157
+golomb code full : 598
+
+C:\Users\takahiro\workspace\MC/img/FungusZoom/Fungus_QP22_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/10 Wed 14:42:00
+PSNR : 41.380793
+code amount : 137[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+4m21sec
+reference        : limit_I22.bmp
+target_image     : Fungus_43_limit.bmp
+threshold        : 0
+corner size      : 4
+triangles.size() : 2
+block_size_x     : 128
+block_size_y     : 128
+qp               : 22
+coordinate vector ---------------------
+golomb code(x)   : 20
+golomb code(y)   : 14
+motion vector ---------------------
+golomb code(x)   : 48
+golomb code(y)   : 40
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 15
+golomb code full : 49
+
+C:\Users\takahiro\workspace\MC/img/car/car_P27_20_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/10 Wed 14:46:31
+PSNR : 37.391795
+code amount : 2518[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+4m29sec
+reference        : car_limit_I22.bmp
+target_image     : car_000091_limit.bmp
+threshold        : 0
+corner size      : 37
+triangles.size() : 67
+block_size_x     : 128
+block_size_y     : 128
+qp               : 27
+coordinate vector ---------------------
+golomb code(x)   : 224
+golomb code(y)   : 217
+motion vector ---------------------
+golomb code(x)   : 1074
+golomb code(y)   : 846
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 157
+golomb code full : 598
+
+C:\Users\takahiro\workspace\MC/img/FungusZoom/Fungus_QP22_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/10 Wed 15:14:11
+PSNR : 41.380793
+code amount : 137[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+4m25sec
+reference        : limit_I22.bmp
+target_image     : Fungus_43_limit.bmp
+threshold        : 0
+corner size      : 4
+triangles.size() : 2
+block_size_x     : 128
+block_size_y     : 128
+qp               : 22
+coordinate vector ---------------------
+golomb code(x)   : 20
+golomb code(y)   : 14
+motion vector ---------------------
+golomb code(x)   : 48
+golomb code(y)   : 40
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 15
+golomb code full : 49
+
+C:\Users\takahiro\workspace\MC/img/car/car_P29_20_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/10 Wed 15:18:38
+PSNR : 36.864480
+code amount : 2574[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+4m25sec
+reference        : car_limit_I22.bmp
+target_image     : car_000091_limit.bmp
+threshold        : 0
+corner size      : 37
+triangles.size() : 67
+block_size_x     : 128
+block_size_y     : 128
+qp               : 29
+coordinate vector ---------------------
+golomb code(x)   : 224
+golomb code(y)   : 217
+motion vector ---------------------
+golomb code(x)   : 1099
+golomb code(y)   : 877
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 157
+golomb code full : 598
+
+C:\Users\takahiro\workspace\MC/img/FungusZoom/Fungus_QP22_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/10 Wed 15:24:30
+PSNR : 41.380793
+code amount : 137[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+4m24sec
+reference        : limit_I22.bmp
+target_image     : Fungus_43_limit.bmp
+threshold        : 0
+corner size      : 4
+triangles.size() : 2
+block_size_x     : 128
+block_size_y     : 128
+qp               : 22
+coordinate vector ---------------------
+golomb code(x)   : 20
+golomb code(y)   : 14
+motion vector ---------------------
+golomb code(x)   : 48
+golomb code(y)   : 40
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 15
+golomb code full : 49
+
+C:\Users\takahiro\workspace\MC/img/car/car_P31_20_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/10 Wed 15:28:50
+PSNR : 36.307639
+code amount : 2515[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+4m19sec
+reference        : car_limit_I22.bmp
+target_image     : car_000091_limit.bmp
+threshold        : 0
+corner size      : 37
+triangles.size() : 67
+block_size_x     : 128
+block_size_y     : 128
+qp               : 31
+coordinate vector ---------------------
+golomb code(x)   : 224
+golomb code(y)   : 217
+motion vector ---------------------
+golomb code(x)   : 1071
+golomb code(y)   : 846
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 157
+golomb code full : 598
+
+C:\Users\takahiro\workspace\MC/img/FungusZoom/Fungus_QP22_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/10 Wed 16:16:04
+PSNR : 41.380793
+code amount : 137[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+4m20sec
+reference        : limit_I22.bmp
+target_image     : Fungus_43_limit.bmp
+threshold        : 0
+corner size      : 4
+triangles.size() : 2
+block_size_x     : 128
+block_size_y     : 128
+qp               : 22
+coordinate vector ---------------------
+golomb code(x)   : 20
+golomb code(y)   : 14
+motion vector ---------------------
+golomb code(x)   : 48
+golomb code(y)   : 40
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 15
+golomb code full : 49
+
+C:\Users\takahiro\workspace\MC/img/car/car_P33_20_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/10 Wed 16:20:26
+PSNR : 35.609764
+code amount : 2529[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+4m21sec
+reference        : car_limit_I22.bmp
+target_image     : car_000091_limit.bmp
+threshold        : 0
+corner size      : 37
+triangles.size() : 67
+block_size_x     : 128
+block_size_y     : 128
+qp               : 33
+coordinate vector ---------------------
+golomb code(x)   : 224
+golomb code(y)   : 217
+motion vector ---------------------
+golomb code(x)   : 1080
+golomb code(y)   : 851
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 157
+golomb code full : 598
+
+C:\Users\takahiro\workspace\MC/img/FungusZoom/Fungus_QP22_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/10 Wed 16:30:19
+PSNR : 41.380793
+code amount : 137[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+4m49sec
+reference        : limit_I22.bmp
+target_image     : Fungus_43_limit.bmp
+threshold        : 0
+corner size      : 4
+triangles.size() : 2
+block_size_x     : 128
+block_size_y     : 128
+qp               : 22
+coordinate vector ---------------------
+golomb code(x)   : 20
+golomb code(y)   : 14
+motion vector ---------------------
+golomb code(x)   : 48
+golomb code(y)   : 40
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 15
+golomb code full : 49
+
+C:\Users\takahiro\workspace\MC/img/car/car_P35_20_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/10 Wed 16:35:36
+PSNR : 34.912302
+code amount : 2557[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+5m16sec
+reference        : car_limit_I22.bmp
+target_image     : car_000091_limit.bmp
+threshold        : 0
+corner size      : 37
+triangles.size() : 67
+block_size_x     : 128
+block_size_y     : 128
+qp               : 35
+coordinate vector ---------------------
+golomb code(x)   : 224
+golomb code(y)   : 217
+motion vector ---------------------
+golomb code(x)   : 1095
+golomb code(y)   : 864
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 157
+golomb code full : 598
+
+C:\Users\takahiro\workspace\MC/img/FungusZoom/Fungus_QP22_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/10 Wed 16:46:59
+PSNR : 41.380793
+code amount : 137[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+4m21sec
+reference        : limit_I22.bmp
+target_image     : Fungus_43_limit.bmp
+threshold        : 0
+corner size      : 4
+triangles.size() : 2
+block_size_x     : 128
+block_size_y     : 128
+qp               : 22
+coordinate vector ---------------------
+golomb code(x)   : 20
+golomb code(y)   : 14
+motion vector ---------------------
+golomb code(x)   : 48
+golomb code(y)   : 40
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 15
+golomb code full : 49
+
+C:\Users\takahiro\workspace\MC/img/car/car_P37_20_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/10 Wed 16:51:31
+PSNR : 34.123266
+code amount : 2580[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+4m31sec
+reference        : car_limit_I22.bmp
+target_image     : car_000091_limit.bmp
+threshold        : 0
+corner size      : 37
+triangles.size() : 67
+block_size_x     : 128
+block_size_y     : 128
+qp               : 37
+coordinate vector ---------------------
+golomb code(x)   : 224
+golomb code(y)   : 217
+motion vector ---------------------
+golomb code(x)   : 1106
+golomb code(y)   : 876
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 157
+golomb code full : 598
+
+C:\Users\takahiro\workspace\MC/img/minato/minato_QP22_128_128_LEFT.bmp
+lambda:0.200000QUANTIZE_STEP:4
+2019/07/17 Wed 16:37:21
+PSNR : 30.455095
+code amount : 29983[bit]
+freq_block:0(nan%)
+freq_warp:0(nan%)
+BlockMatching's PSNR : nan
+Warping's PSNR : nan
+20m3sec
+reference        : minato_limit_2_I22.bmp
+target_image     : minato_000413_limit.bmp
+threshold        : 0
+corner size      : 475
+triangles.size() : 928
+block_size_x     : 128
+block_size_y     : 128
+qp               : 22
+coordinate vector ---------------------
+golomb code(x)   : 2628
+golomb code(y)   : 2359
+motion vector ---------------------
+golomb code(x)   : 12450
+golomb code(y)   : 10522
+diff vector ---------------------
+golomb code(x)   : 0
+golomb code(y)   : 0
+prev_id flag ---------------------
+golomb code      : 2024
+golomb code full : 7011
+
