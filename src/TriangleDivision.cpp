@@ -1713,16 +1713,20 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
 #if MVD_DEBUG_LOG
             std::cout << "mvd:(parallel)      :" << mvd << std::endl;
 #endif
-            mvd.x = std::fabs(mvd.x) - 2.0;
-            mvd.y = std::fabs(mvd.y) - 2.0;
+            mvd.x = std::fabs(mvd.x);
+            mvd.y = std::fabs(mvd.y);
 #if MVD_DEBUG_LOG
             std::cout << "mvd-2:(parallel)    :" << mvd << std::endl;
 #endif
             mvd *= 4;
+            mvd.x -= 2.0;
+            mvd.y -= 2.0;
 #if MVD_DEBUG_LOG
             std::cout << "4 * mvd(parallel)   :" << mvd << std::endl;
 #endif
             /* 動きベクトル符号化 */
+            (ctu->mvds).clear();
+            (ctu->mvds).emplace_back(mvd);
 
             // 動きベクトル差分の絶対値が0より大きいのか？
             bool is_x_greater_than_zero = mvd.x > 0 ? true : false;
@@ -1759,12 +1763,15 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
             mvds.emplace_back(current_mv - mv[0]);
             mvds.emplace_back(current_mv - mv[1]);
             mvds.emplace_back(current_mv - mv[2]);
-
+            (ctu->mvds).clear();
             for(auto &mvd : mvds){
                 mvd = getQuantizedMv(mvd, 4);
-                mvd.x = std::fabs(mvd.x) - 2.0;
-                mvd.y = std::fabs(mvd.y) - 2.0;
+                mvd.x = std::fabs(mvd.x);
+                mvd.y = std::fabs(mvd.y);
                 mvd *= 4;
+                mvd.x -= 2.0;
+                mvd.y -= 2.0;
+                (ctu->mvds).emplace_back(mvd);
 
                 /* 動きベクトル符号化 */
 
