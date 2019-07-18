@@ -1876,7 +1876,27 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
     int selected_idx = std::get<3>(results[0]);
     MV_CODE_METHOD method = std::get<4>(results[0]);
 
-    return {cost, code_length, mvd, selected_idx, method};
+    (ctu->mvds_x).clear();
+    (ctu->mvds_y).clear();
+    (ctu->original_mvds_x).clear();
+    (ctu->original_mvds_y).clear();
+
+    if(method != MERGE) {
+        if(mvds.empty()){
+            exit(-1);
+        }
+        if (parallel_flag) {
+            (ctu->mvds_x).emplace_back(mvds[0].x);
+            (ctu->mvds_y).emplace_back(mvds[0].y);
+        } else {
+            for (int i = 0; i < 3; i++) {
+                (ctu->mvds_x).emplace_back(mvds[i].x);
+                (ctu->mvds_y).emplace_back(mvds[i].y);
+            }
+        }
+    }
+
+    return {cost, code_length, mvds, selected_idx, method};
 }
 
 /**
