@@ -28,7 +28,7 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus) {
  * @param ctu
  */
 void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
-    if(ctu->leftNode != nullptr && ctu->rightNode != nullptr){
+    if(ctu->leftNode == nullptr && ctu->rightNode == nullptr && (ctu->mvds).size() > 0){
         if(ctu->parallel_flag){
             int x = ctu->mvds[0].x;
             int y = ctu->mvds[0].y;
