@@ -254,7 +254,7 @@ EXPAND_ARRAY_TYPE getExpandImages(std::vector<std::vector<cv::Mat>> ref_images, 
 
     expand += 2;
     for(int filter = 0 ; filter < static_cast<int>(ref_images.size()) ; filter++){
-        for(int step = 0 ; step < static_cast<int>(ref_images[filter].size()) ; step++){
+        for(int step = 3 ; step < static_cast<int>(ref_images[filter].size()) ; step++){
             cv::Mat current_target_image = target_images[filter][step];
             cv::Mat current_ref_image = ref_images[filter][step];
 
