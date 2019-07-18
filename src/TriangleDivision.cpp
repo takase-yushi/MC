@@ -1102,6 +1102,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     ctu->rightNode->rightNode = new CodingTreeUnit();
     ctu->rightNode->rightNode->parentNode = ctu->rightNode;
 
+    std::vector<CodingTreeUnit*> ctus{ctu->leftNode->leftNode, ctu->leftNode->rightNode, ctu->rightNode->leftNode, ctu->rightNode->rightNode};
 #pragma omp parallel for
     for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
         double error_warping_tmp, error_parallel_tmp;
@@ -1116,27 +1117,27 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             if(GAUSS_NEWTON_INIT_VECTOR) {
                 std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_triangles[j], target_image,
                                                                    expansion_ref, diagonal_line_area_flag,
-                                                                   triangle_indexes[j], ctu);
+                                                                   triangle_indexes[j], ctus[j]);
                 std::tie(mv_warping_tmp, mv_parallel_tmp, error_warping_tmp, error_parallel_tmp,triangle_size_tmp) = GaussNewton(
                         ref_images, target_images, expand_images, subdiv_target_triangles[j], diagonal_line_area_flag,
-                        triangle_indexes[j], (j == 0 ? ctu->leftNode : ctu->rightNode), block_size_x, block_size_y,
+                        triangle_indexes[j], ctus[j], block_size_x, block_size_y,
                         tmp_bm_mv[2], ref_hevc);
 
 
             }else{
                 std::tie(mv_warping_tmp, mv_parallel_tmp, error_warping_tmp, error_parallel_tmp, triangle_size_tmp) = GaussNewton(
                         ref_images, target_images, expand_images, subdiv_target_triangles[j], diagonal_line_area_flag,
-                        triangle_indexes[j], (j == 0 ? ctu->leftNode : ctu->rightNode), block_size_x, block_size_y,
+                        triangle_indexes[j], ctus[j], block_size_x, block_size_y,
                         cv::Point2f(-1000, -1000), ref_hevc);
             }
 
             std::tie(cost_parallel_tmp,std::ignore, std::ignore, std::ignore, std::ignore) = getMVD(
                     {mv_parallel_tmp, mv_parallel_tmp, mv_parallel_tmp}, error_parallel_tmp,
-                    triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctu);
+                    triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j]);
 
             std::tie(cost_warping_tmp, std::ignore, std::ignore, std::ignore, std::ignore) = getMVD(
                     mv_warping_tmp, error_warping_tmp,
-                    triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctu);
+                    triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j]);
 
             if(cost_parallel_tmp < cost_warping_tmp){
                 triangle_gauss_results[triangle_indexes[j]].parallel_flag = true;
@@ -1712,16 +1713,20 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
 #if MVD_DEBUG_LOG
             std::cout << "mvd:(parallel)      :" << mvd << std::endl;
 #endif
-            mvd.x = std::fabs(mvd.x) - 2.0;
-            mvd.y = std::fabs(mvd.y) - 2.0;
+            mvd.x = std::fabs(mvd.x);
+            mvd.y = std::fabs(mvd.y);
 #if MVD_DEBUG_LOG
             std::cout << "mvd-2:(parallel)    :" << mvd << std::endl;
 #endif
             mvd *= 4;
+            mvd.x -= 2.0;
+            mvd.y -= 2.0;
 #if MVD_DEBUG_LOG
             std::cout << "4 * mvd(parallel)   :" << mvd << std::endl;
 #endif
             /* 動きベクトル符号化 */
+            (ctu->mvds).clear();
+            (ctu->mvds).emplace_back(mvd);
 
             // 動きベクトル差分の絶対値が0より大きいのか？
             bool is_x_greater_than_zero = mvd.x > 0 ? true : false;
@@ -1758,12 +1763,15 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
             mvds.emplace_back(current_mv - mv[0]);
             mvds.emplace_back(current_mv - mv[1]);
             mvds.emplace_back(current_mv - mv[2]);
-
+            (ctu->mvds).clear();
             for(auto &mvd : mvds){
                 mvd = getQuantizedMv(mvd, 4);
-                mvd.x = std::fabs(mvd.x) - 2.0;
-                mvd.y = std::fabs(mvd.y) - 2.0;
+                mvd.x = std::fabs(mvd.x);
+                mvd.y = std::fabs(mvd.y);
                 mvd *= 4;
+                mvd.x -= 2.0;
+                mvd.y -= 2.0;
+                (ctu->mvds).emplace_back(mvd);
 
                 /* 動きベクトル符号化 */
 
