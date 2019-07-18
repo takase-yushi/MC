@@ -1211,11 +1211,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     if(split_mv_result[3].parallel_flag){
         std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag) = getMVD(
                 {split_mv_result[3].mv_parallel, split_mv_result[3].mv_parallel, split_mv_result[3].mv_parallel}, split_mv_result[3].residual,
-                triangle_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->rightNode);
+                triangle_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->rightNode, true);
     }else{
         std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag) = getMVD(
                 split_mv_result[3].mv_warping, split_mv_result[3].residual,
-                triangle_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->rightNode);
+                triangle_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->rightNode, false);
     }
 
     double alpha = 1;
