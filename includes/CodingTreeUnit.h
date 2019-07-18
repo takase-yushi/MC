@@ -8,6 +8,12 @@
 
 #include <opencv2/core/types.hpp>
 
+enum MV_CODE_METHOD {
+    SPATIAL,
+    Collocated,
+    MERGE
+};
+
 class CodingTreeUnit {
 public:
     virtual ~CodingTreeUnit();
@@ -24,6 +30,7 @@ public:
     std::vector<int> original_mvds_x, original_mvds_y;
     double error_bm, error_newton;
     cv::Point2f collocated_mv;
+    MV_CODE_METHOD method;
 };
 
 

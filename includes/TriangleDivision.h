@@ -92,11 +92,6 @@ enum DIVIDE {
     TYPE8
 };
 
-enum MV_CODE_METHOD {
-  SPATIAL,
-  Collocated,
-  MERGE
-};
 
 class TriangleDivision {
 
@@ -115,6 +110,7 @@ public:
         bool parallel_flag;
         double residual_bm;
         double residual_newton;
+        MV_CODE_METHOD method;
     };
 
     struct SplitResult {
@@ -195,8 +191,6 @@ private:
     int getCtuCodeLength(CodingTreeUnit *ctu);
     void drawMvImage(cv::Mat &out, CodingTreeUnit *ctu);
     void getPredictedDiagonalImageFromCtu(CodingTreeUnit* ctu, std::vector<std::vector<int>> &area_flag, const cv::Mat &out);
-
-
 };
 
 #endif //ENCODER_TRIANGLEDIVISION_H
