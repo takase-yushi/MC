@@ -20,6 +20,7 @@ public:
     CodingTreeUnit *parentNode;
     int triangle_index;
     cv::Point2f mv1, mv2, mv3;
+    std::vector<cv::Point2f> mvds;
     double error_bm, error_newton;
     cv::Point2f collocated_mv;
 };
