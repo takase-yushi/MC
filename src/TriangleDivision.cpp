@@ -1769,8 +1769,6 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
                 mvd.x = std::fabs(mvd.x);
                 mvd.y = std::fabs(mvd.y);
                 mvd *= 4;
-                mvd.x -= 2.0;
-                mvd.y -= 2.0;
                 (ctu->mvds).emplace_back(mvd);
 
                 /* 動きベクトル符号化 */
@@ -1787,22 +1785,34 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
                 bool is_x_minus = mvd.x < 0 ? true : false;
                 bool is_y_minus = mvd.y < 0 ? true : false;
 
-                // 動きベクトル差分から2を引いたろ！
-                int mvd_x_minus_2 = mvd.x;
-                int mvd_y_minus_2 = mvd.y;
+                int mvd_code_length = 2;
+                if(is_x_greater_than_zero){
+                    mvd_code_length += 1;
 
-                int mvd_code_length = getExponentialGolombCodeLength((int) mvd_x_minus_2, 0) +
-                                      getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
+                    if(is_x_greater_than_one){
+                        int mvd_x_minus_2 = mvd.x - 2.0;
+                        mvd_code_length += getExponentialGolombCodeLength((int) mvd_x_minus_2, 0);
+                    }
+                }
+
+                if(is_y_greater_than_zero){
+                    mvd_code_length += 1;
+
+                    if(is_x_greater_than_one){
+                        int mvd_y_minus_2 = mvd.y - 2.0;
+                        mvd_code_length +=  getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
+                    }
+                }
 
                 // 参照箇所符号化
                 int reference_index = std::get<1>(vector);
                 int reference_index_code_length = getUnaryCodeLength(reference_index);
 
                 // 各種フラグ分を(3*2)bit足してます
-                double rd = residual + lambda * (mvd_code_length + reference_index_code_length + 6);
+                double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
 
                 // 結果に入れる
-                results.emplace_back(rd, mvd_code_length + reference_index_code_length + 6 + 1, mvd, i, vector.second);
+                results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvd, i, vector.second);
             }
         }
     }
