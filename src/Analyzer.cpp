@@ -55,3 +55,4 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
     if(ctu->rightNode != nullptr) storeDistributionOfMv(ctu->rightNode);
 }
 
+Analyzer::Analyzer(const std::string &fileSuffix) : file_suffix(fileSuffix) {}
