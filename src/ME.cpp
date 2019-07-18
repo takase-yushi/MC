@@ -221,7 +221,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
                         ref_x = (i + ref_x + spread_quarter);
                         int ref_y = std::max((int)((4 * pixel.y)), 0);
                         ref_y = (j + ref_y + spread_quarter);
-                        e += fabs(M(expansion_ref_image, ref_x, ref_y) - M(target_image, (int)pixel.x, (int)pixel.y));
+                        e += fabs(R(expansion_ref_image, ref_x, ref_y) - R(target_image, (int)pixel.x, (int)pixel.y));
                         e_count++;
                     }
                 }
@@ -258,7 +258,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
                     ref_x = (i + ref_x + spread_quarter);
                     int ref_y = std::max((int)((4 * pixel.y)), 0);
                     ref_y = (j + ref_y + spread_quarter);
-                    e += fabs(M(expansion_ref_image, ref_x, ref_y) - M(target_image, (int)pixel.x, (int)pixel.y));
+                    e += fabs(R(expansion_ref_image, ref_x, ref_y) - R(target_image, (int)pixel.x, (int)pixel.y));
                     e_count++;
                 }
                 if(error_min > e && e_count > 0){
@@ -288,7 +288,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
                     ref_x = (i + ref_x + spread_quarter);
                     int ref_y = std::max((int)((4 * pixel.y)), 0);
                     ref_y = (j + ref_y + spread_quarter);
-                    e += fabs(M(expansion_ref_image, ref_x, ref_y) - M(target_image, (int)pixel.x, (int)pixel.y));
+                    e += fabs(R(expansion_ref_image, ref_x, ref_y) - R(target_image, (int)pixel.x, (int)pixel.y));
                 }
 
                 if(error_min > e){
