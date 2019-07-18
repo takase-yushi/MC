@@ -13,6 +13,7 @@
 #include <utility>
 #include <numeric>
 #include <cassert>
+#include "../includes/Analyzer.h"
 #include "../includes/Encode.h"
 #include "../includes/config.h"
 #include "../includes/ME.hpp"
@@ -218,6 +219,9 @@ void run(std::string config_path) {
         getReconstructionDivisionImage(gaussRefImage, foo, block_size_x, block_size_y);
         cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo, diagonal_line_area_flag);
         cv::Mat color = triangle_division.getPredictedColorImageFromCtu(foo, diagonal_line_area_flag, getPSNR(target_image, p_image));
+
+        Analyzer analayzer;
+        analayzer.storeDistributionOfMv(foo);
 
         int code_length = triangle_division.getCtuCodeLength(foo);
         std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
