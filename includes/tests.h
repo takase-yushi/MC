@@ -31,4 +31,11 @@ void test4xHEVCImage();
 void testRoundVecQuarter();
 void testHevcPSNR();
 
+std::vector<std::string> split(std::string str, char del);
+void getDiff_vector();
+void draw_mv();
+void getDiff_image();
+void filterTest();
+void test();
+
 #endif //ENCODER_TESTS_H
