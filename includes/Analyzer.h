@@ -6,8 +6,18 @@
 #define ENCODER_ANALYZER_H
 
 
-class Analyzer {
+#include <vector>
+#include <map>
+#include "CodingTreeUnit.h"
 
+class Analyzer {
+public:
+    void storeDistributionOfMv(std::vector<CodingTreeUnit*> ctus);
+
+private:
+    void storeDistributionOfMv(CodingTreeUnit *ctu);
+
+    std::map<int, int> counter;
 };
 
 
