@@ -188,7 +188,7 @@ private:
     std::vector<int> getDivideOrder(CodingTreeUnit* currentNode);
     void constructPreviousCodingTree(CodingTreeUnit* codingTree, CollocatedMvTree* constructedTree);
     static cv::Point2f getQuantizedMv(cv::Point2f &mv, double quantize_step);
-    std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu);
+    std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu);
     bool isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> &vectors, const cv::Point2f &mv);
     void eraseTriangle(int t_idx);
     void getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, std::vector<std::vector<int>> &area_Flag);
