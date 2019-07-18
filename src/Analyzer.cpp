@@ -40,25 +40,24 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus) {
  * @param ctu
  */
 void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
-    if(ctu->leftNode == nullptr && ctu->rightNode == nullptr && (ctu->mvds).size() > 0){
+    if(ctu->leftNode == nullptr && ctu->rightNode == nullptr){
         if(ctu->parallel_flag){
-            int x = ctu->mvds[0].x;
-            int y = ctu->mvds[0].y;
+            int x = (ctu->mvds_x)[0];
+            counter_x[x]++;
+            int y = (ctu->mvds_y)[0];
+            counter_y[y]++;
+
             counter[x]++;
             counter[y]++;
         }else{
-            int x = ctu->mvds[0].x;
-            int y = ctu->mvds[0].y;
-            counter[x]++;
-            counter[y]++;
-            x = ctu->mvds[1].x;
-            y = ctu->mvds[1].y;
-            counter[x]++;
-            counter[y]++;
-            x = ctu->mvds[2].x;
-            y = ctu->mvds[2].y;
-            counter[x]++;
-            counter[y]++;
+            for(int i = 0 ; i < 3 ; i++) {
+                int x = (ctu->mvds_x)[i];
+                counter_x[x]++;
+                int y = (ctu->mvds_y)[i];
+                counter_y[y]++;
+                counter[x]++;
+                counter[y]++;
+            }
         }
         return;
     }
