@@ -943,19 +943,20 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
             std::tie(cost_parallel, std::ignore, std::ignore, std::ignore, std::ignore) = getMVD(
                     {gauss_result_parallel, gauss_result_parallel, gauss_result_parallel}, error_parallel,
-                    triangle_index, cmt->mv1, diagonal_line_area_flag, ctu);
+                    triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, true);
 
             std::tie(cost_warping, std::ignore, std::ignore, std::ignore, std::ignore) = getMVD(
                     triangle_gauss_results[triangle_index].mv_warping, error_warping,
-                    triangle_index, cmt->mv1, diagonal_line_area_flag, ctu);
+                    triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, false);
 
             if(cost_parallel < cost_warping){
                 triangle_gauss_results[triangle_index].parallel_flag = true;
                 triangle_gauss_results[triangle_index].residual = error_parallel;
+                parallel_flag = true;
             }else{
                 triangle_gauss_results[triangle_index].parallel_flag = false;
                 triangle_gauss_results[triangle_index].residual = error_warping;
-//                std::cout << "warping!" << std::endl;
+                parallel_flag = false;
             }
 
         }else if(PRED_MODE == BM) {
@@ -987,11 +988,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     if(triangle_gauss_results[triangle_index].parallel_flag) {
         std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
                 {gauss_result_parallel, gauss_result_parallel, gauss_result_parallel}, error_parallel,
-                triangle_index, cmt->mv1, diagonal_line_area_flag, ctu);
+                triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, true);
     }else{
         std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
                 triangle_gauss_results[triangle_index].mv_warping, error_warping,
-                triangle_index, cmt->mv1, diagonal_line_area_flag, ctu);
+                triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, false);
     }
 
     std::vector<cv::Point2i> ret_gauss2;
@@ -1133,11 +1134,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
             std::tie(cost_parallel_tmp,std::ignore, std::ignore, std::ignore, std::ignore) = getMVD(
                     {mv_parallel_tmp, mv_parallel_tmp, mv_parallel_tmp}, error_parallel_tmp,
-                    triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j]);
+                    triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], true);
 
             std::tie(cost_warping_tmp, std::ignore, std::ignore, std::ignore, std::ignore) = getMVD(
                     mv_warping_tmp, error_warping_tmp,
-                    triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j]);
+                    triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], false);
 
             if(cost_parallel_tmp < cost_warping_tmp){
                 triangle_gauss_results[triangle_indexes[j]].parallel_flag = true;
@@ -1172,11 +1173,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag) = getMVD(
                 {split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel},
                 split_mv_result[0].residual,
-                triangle_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->leftNode);
+                triangle_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->leftNode, true);
     }else{
         std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag) = getMVD(
                 split_mv_result[0].mv_warping, split_mv_result[0].residual,
-                triangle_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->leftNode);
+                triangle_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->leftNode, false);
     }
 
     double cost_after_subdiv2;
@@ -1184,12 +1185,12 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     if(split_mv_result[1].parallel_flag){
         std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag) = getMVD(
                 {split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel}, split_mv_result[1].residual,
-                triangle_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->leftNode);
+                triangle_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->leftNode, true);
 
     }else{
         std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag) = getMVD(
                 split_mv_result[1].mv_warping, split_mv_result[1].residual,
-                triangle_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->leftNode);
+                triangle_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->leftNode, false);
     }
 
     double cost_after_subdiv3;
@@ -1198,11 +1199,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag) = getMVD(
                 {split_mv_result[2].mv_parallel, split_mv_result[2].mv_parallel, split_mv_result[2].mv_parallel},
                 split_mv_result[2].residual,
-                triangle_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->rightNode);
+                triangle_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->rightNode, true);
     }else{
         std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag) = getMVD(
                 split_mv_result[2].mv_warping, split_mv_result[2].residual,
-                triangle_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->rightNode);
+                triangle_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->rightNode, false);
     }
 
     double cost_after_subdiv4;
