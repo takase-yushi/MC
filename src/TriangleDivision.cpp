@@ -1102,6 +1102,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     ctu->rightNode->rightNode = new CodingTreeUnit();
     ctu->rightNode->rightNode->parentNode = ctu->rightNode;
 
+    std::vector<CodingTreeUnit*> ctus{ctu->leftNode->leftNode, ctu->leftNode->rightNode, ctu->rightNode->leftNode, ctu->rightNode->rightNode};
 #pragma omp parallel for
     for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
         double error_warping_tmp, error_parallel_tmp;
@@ -1116,27 +1117,27 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             if(GAUSS_NEWTON_INIT_VECTOR) {
                 std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_triangles[j], target_image,
                                                                    expansion_ref, diagonal_line_area_flag,
-                                                                   triangle_indexes[j], ctu);
+                                                                   triangle_indexes[j], ctus[j]);
                 std::tie(mv_warping_tmp, mv_parallel_tmp, error_warping_tmp, error_parallel_tmp,triangle_size_tmp) = GaussNewton(
                         ref_images, target_images, expand_images, subdiv_target_triangles[j], diagonal_line_area_flag,
-                        triangle_indexes[j], (j == 0 ? ctu->leftNode : ctu->rightNode), block_size_x, block_size_y,
+                        triangle_indexes[j], ctus[j], block_size_x, block_size_y,
                         tmp_bm_mv[2], ref_hevc);
 
 
             }else{
                 std::tie(mv_warping_tmp, mv_parallel_tmp, error_warping_tmp, error_parallel_tmp, triangle_size_tmp) = GaussNewton(
                         ref_images, target_images, expand_images, subdiv_target_triangles[j], diagonal_line_area_flag,
-                        triangle_indexes[j], (j == 0 ? ctu->leftNode : ctu->rightNode), block_size_x, block_size_y,
+                        triangle_indexes[j], ctus[j], block_size_x, block_size_y,
                         cv::Point2f(-1000, -1000), ref_hevc);
             }
 
             std::tie(cost_parallel_tmp,std::ignore, std::ignore, std::ignore, std::ignore) = getMVD(
                     {mv_parallel_tmp, mv_parallel_tmp, mv_parallel_tmp}, error_parallel_tmp,
-                    triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctu);
+                    triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j]);
 
             std::tie(cost_warping_tmp, std::ignore, std::ignore, std::ignore, std::ignore) = getMVD(
                     mv_warping_tmp, error_warping_tmp,
-                    triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctu);
+                    triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j]);
 
             if(cost_parallel_tmp < cost_warping_tmp){
                 triangle_gauss_results[triangle_indexes[j]].parallel_flag = true;
