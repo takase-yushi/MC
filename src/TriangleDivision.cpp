@@ -940,22 +940,25 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             triangle_gauss_results[triangle_index].residual = RMSE_before_subdiv;
 
             int cost_warping, cost_parallel;
+            MV_CODE_METHOD method_warping, method_parallel;
 
-            std::tie(cost_parallel, std::ignore, std::ignore, std::ignore, std::ignore) = getMVD(
+            std::tie(cost_parallel, std::ignore, std::ignore, std::ignore, method_parallel) = getMVD(
                     {gauss_result_parallel, gauss_result_parallel, gauss_result_parallel}, error_parallel,
                     triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, true);
 
-            std::tie(cost_warping, std::ignore, std::ignore, std::ignore, std::ignore) = getMVD(
+            std::tie(cost_warping, std::ignore, std::ignore, std::ignore, method_warping) = getMVD(
                     triangle_gauss_results[triangle_index].mv_warping, error_warping,
                     triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, false);
 
-            if(cost_parallel < cost_warping){
+            if(cost_parallel < cost_warping || GAUSS_NEWTON_PARALLEL_ONLY){
                 triangle_gauss_results[triangle_index].parallel_flag = true;
                 triangle_gauss_results[triangle_index].residual = error_parallel;
+                triangle_gauss_results[triangle_index].method = method_parallel;
                 parallel_flag = true;
             }else{
                 triangle_gauss_results[triangle_index].parallel_flag = false;
                 triangle_gauss_results[triangle_index].residual = error_warping;
+                triangle_gauss_results[triangle_index].method = method_warping;
                 parallel_flag = false;
             }
 
@@ -1012,6 +1015,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     ctu->code_length = code_length;
     ctu->collocated_mv = cmt->mv1;
     ctu->parallel_flag = parallel_flag;
+    ctu->method = method_flag;
 
     SplitResult split_triangles = getSplitTriangle(p1, p2, p3, type);
 
@@ -1114,6 +1118,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         std::vector<double> tmp_bm_errors;
         double cost_warping_tmp, cost_parallel_tmp;
         double tmp_error_newton;
+        MV_CODE_METHOD method_warping_tmp, method_parallel_tmp;
         if(PRED_MODE == NEWTON){
             if(GAUSS_NEWTON_INIT_VECTOR) {
                 std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_triangles[j], target_image,
@@ -1132,15 +1137,15 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                         cv::Point2f(-1000, -1000), ref_hevc);
             }
 
-            std::tie(cost_parallel_tmp,std::ignore, std::ignore, std::ignore, std::ignore) = getMVD(
+            std::tie(cost_parallel_tmp,std::ignore, std::ignore, std::ignore, method_parallel_tmp) = getMVD(
                     {mv_parallel_tmp, mv_parallel_tmp, mv_parallel_tmp}, error_parallel_tmp,
                     triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], true);
 
-            std::tie(cost_warping_tmp, std::ignore, std::ignore, std::ignore, std::ignore) = getMVD(
+            std::tie(cost_warping_tmp, std::ignore, std::ignore, std::ignore, method_warping_tmp) = getMVD(
                     mv_warping_tmp, error_warping_tmp,
                     triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], false);
 
-            if(cost_parallel_tmp < cost_warping_tmp){
+            if(cost_parallel_tmp < cost_warping_tmp || GAUSS_NEWTON_PARALLEL_ONLY){
                 triangle_gauss_results[triangle_indexes[j]].parallel_flag = true;
                 split_mv_result[j] = GaussResult(mv_warping_tmp, mv_parallel_tmp, error_parallel_tmp, triangle_size_tmp, true, error_parallel_tmp, error_warping_tmp);
             }else{
@@ -1169,13 +1174,14 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     cmt_right_left  = (cmt->rightNode == nullptr ? cmt : (cmt->rightNode->leftNode == nullptr ? cmt->rightNode : cmt->rightNode->leftNode));
     cmt_right_right  = (cmt->rightNode == nullptr ? cmt : (cmt->rightNode->rightNode == nullptr ? cmt->rightNode : cmt->rightNode->rightNode));
 
+    MV_CODE_METHOD method_flag1, method_flag2, method_flag3, method_flag4;
     if(split_mv_result[0].parallel_flag) {
-        std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag) = getMVD(
+        std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag1) = getMVD(
                 {split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel},
                 split_mv_result[0].residual,
                 triangle_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->leftNode, true);
     }else{
-        std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag) = getMVD(
+        std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag1) = getMVD(
                 split_mv_result[0].mv_warping, split_mv_result[0].residual,
                 triangle_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->leftNode, false);
     }
@@ -1183,12 +1189,12 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     double cost_after_subdiv2;
     int code_length2;
     if(split_mv_result[1].parallel_flag){
-        std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag) = getMVD(
+        std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
                 {split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel}, split_mv_result[1].residual,
                 triangle_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->leftNode, true);
 
     }else{
-        std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag) = getMVD(
+        std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
                 split_mv_result[1].mv_warping, split_mv_result[1].residual,
                 triangle_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->leftNode, false);
     }
@@ -1196,12 +1202,12 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     double cost_after_subdiv3;
     int code_length3;
     if(split_mv_result[2].parallel_flag) {
-        std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag) = getMVD(
+        std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag3) = getMVD(
                 {split_mv_result[2].mv_parallel, split_mv_result[2].mv_parallel, split_mv_result[2].mv_parallel},
                 split_mv_result[2].residual,
                 triangle_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->rightNode, true);
     }else{
-        std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag) = getMVD(
+        std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag3) = getMVD(
                 split_mv_result[2].mv_warping, split_mv_result[2].residual,
                 triangle_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->rightNode, false);
     }
@@ -1209,11 +1215,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     double cost_after_subdiv4;
     int code_length4;
     if(split_mv_result[3].parallel_flag){
-        std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag) = getMVD(
+        std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
                 {split_mv_result[3].mv_parallel, split_mv_result[3].mv_parallel, split_mv_result[3].mv_parallel}, split_mv_result[3].residual,
                 triangle_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->rightNode, true);
     }else{
-        std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag) = getMVD(
+        std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
                 split_mv_result[3].mv_warping, split_mv_result[3].residual,
                 triangle_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->rightNode, false);
     }
