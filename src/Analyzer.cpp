@@ -15,19 +15,19 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus) {
         storeDistributionOfMv(ctu);
     }
 
-    FILE *fp = std::fopen((getProjectDirectory(OS) + "/mvd_distribution.csv").c_str(), "w");
+    FILE *fp = std::fopen((getProjectDirectory(OS) + "/mvd_distribution" + file_suffix + ".csv").c_str(), "w");
     for(auto x : counter){
         fprintf(fp, "%d,%d\n", x.first, x.second);
     }
     fclose(fp);
 
-    fp = std::fopen((getProjectDirectory(OS) + "/mvd_distribution_x.csv").c_str(), "w");
+    fp = std::fopen((getProjectDirectory(OS) + "/mvd_distribution_x" + file_suffix + ".csv").c_str(), "w");
     for(auto x : counter_x){
         fprintf(fp, "%d,%d\n", x.first, x.second);
     }
     fclose(fp);
 
-    fp = std::fopen((getProjectDirectory(OS) + "/mvd_distribution_y.csv").c_str(), "w");
+    fp = std::fopen((getProjectDirectory(OS) + "/mvd_distribution_y" + file_suffix + ".csv").c_str(), "w");
     for(auto x : counter_y){
         fprintf(fp, "%d,%d\n", x.first, x.second);
     }
