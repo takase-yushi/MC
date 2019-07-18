@@ -978,7 +978,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         }
     }
 
-    cv::Point2f mvd;
+    std::vector<cv::Point2f> mvd;
     int selected_index;
     MV_CODE_METHOD method_flag;
     double cost_before_subdiv;
@@ -1665,7 +1665,7 @@ bool TriangleDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CO
  * @param[in] area_flag 含まれる画素のフラグ
  * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
  */
-std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu){
+std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu){
 //    std::cout << "triangle_index(getMVD):" << triangle_idx << std::endl;
     // 空間予測と時間予測の候補を取り出す
     std::vector<int> spatial_triangles = getSpatialTriangleList(triangle_idx);
@@ -1696,7 +1696,7 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
     double lambda = getLambdaPred(qp);
 
     //                      コスト, 差分ベクトル, 番号, タイプ
-    std::vector<std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> > results;
+    std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> > results;
     for(int i = 0 ; i < vectors.size() ; i++) {
         std::pair<cv::Point2f, MV_CODE_METHOD> vector = vectors[i];
         cv::Point2f current_mv = vector.first;
@@ -1756,8 +1756,9 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
             // 各種フラグ分を(3*2)bit足してます
             double rd = residual + lambda * (mvd_code_length + reference_index_code_length + 6  );
 
+            std::vector<cv::Point2f> mvds{mvd};
             // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length + 6 + 1, mvd, i, vector.second);
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second);
         }else{
             std::vector<cv::Point2f> mvds;
             mvds.emplace_back(current_mv - mv[0]);
@@ -1785,7 +1786,6 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
                 bool is_x_minus = mvd.x < 0 ? true : false;
                 bool is_y_minus = mvd.y < 0 ? true : false;
 
-                int mvd_code_length = 2;
                 if(is_x_greater_than_zero){
                     mvd_code_length += 1;
 
@@ -1798,22 +1798,22 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
                 if(is_y_greater_than_zero){
                     mvd_code_length += 1;
 
-                    if(is_x_greater_than_one){
+                    if(is_y_greater_than_one){
                         int mvd_y_minus_2 = mvd.y - 2.0;
                         mvd_code_length +=  getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
                     }
                 }
-
-                // 参照箇所符号化
-                int reference_index = std::get<1>(vector);
-                int reference_index_code_length = getUnaryCodeLength(reference_index);
-
-                // 各種フラグ分を(3*2)bit足してます
-                double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
-
-                // 結果に入れる
-                results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvd, i, vector.second);
             }
+
+            // 参照箇所符号化
+            int reference_index = std::get<1>(vector);
+            int reference_index_code_length = getUnaryCodeLength(reference_index);
+
+            // 各種フラグ分を(3*2)bit足してます
+            double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
+
+            // 結果に入れる
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second);
         }
     }
 
@@ -1837,26 +1837,28 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
                 merge_vectors.emplace_back(spatial_triangle.mv_parallel, MERGE);
                 double ret_residual = getTriangleResidual(ref_image, target_image, coordinate, mv, pixels_in_triangle);
                 double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
-                results.emplace_back(rd, getUnaryCodeLength(i) + 1, cv::Point2f(0, 0), results.size(), MERGE);
+                std::vector<cv::Point2f> mvds{cv::Point2f(0,0)};
+                results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, results.size(), MERGE);
             }
         }else{
             if(!isMvExists(merge_vectors, spatial_triangle.mv_warping[0])) {
                 merge_vectors.emplace_back(spatial_triangle.mv_warping[0], MERGE);
                 double ret_residual = getTriangleResidual(ref_image, target_image, coordinate, mv, pixels_in_triangle);
                 double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
-                results.emplace_back(rd, getUnaryCodeLength(i) + 1, cv::Point2f(0, 0), results.size(), MERGE);
+                std::vector<cv::Point2f> mvds{cv::Point2f(0,0)};
+                results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, results.size(), MERGE);
             }
         }
 
     }
 
     // RDしたスコアが小さい順にソート
-    std::sort(results.begin(), results.end(), [](const std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD >& a, const std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD>& b){
+    std::sort(results.begin(), results.end(), [](const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD >& a, const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD>& b){
         return std::get<0>(a) < std::get<0>(b);
     });
     double cost = std::get<0>(results[0]);
     int code_length = std::get<1>(results[0]);
-    cv::Point2f mvd = std::get<2>(results[0]);
+    std::vector<cv::Point2f> mvd = std::get<2>(results[0]);
     int selected_idx = std::get<3>(results[0]);
     MV_CODE_METHOD method = std::get<4>(results[0]);
 
