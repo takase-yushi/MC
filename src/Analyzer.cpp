@@ -40,7 +40,7 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus) {
  * @param ctu
  */
 void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
-    if(ctu->leftNode == nullptr && ctu->rightNode == nullptr){
+    if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr){
         if(ctu->method != MV_CODE_METHOD::MERGE){
             if(ctu->parallel_flag){
                 int x = (ctu->mvds_x)[0];
@@ -64,8 +64,10 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
         return;
     }
 
-    if(ctu->leftNode != nullptr) storeDistributionOfMv(ctu->leftNode);
-    if(ctu->rightNode != nullptr) storeDistributionOfMv(ctu->rightNode);
+    if(ctu->node1 != nullptr) storeDistributionOfMv(ctu->node1);
+    if(ctu->node2 != nullptr) storeDistributionOfMv(ctu->node2);
+    if(ctu->node3 != nullptr) storeDistributionOfMv(ctu->node3);
+    if(ctu->node4 != nullptr) storeDistributionOfMv(ctu->node4);
 }
 
 Analyzer::Analyzer(const std::string &fileSuffix) : file_suffix(fileSuffix) {}
