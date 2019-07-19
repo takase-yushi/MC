@@ -8,11 +8,14 @@
 
 #include <opencv2/core/types.hpp>
 
+class FlagsCodeSum;
+
 enum MV_CODE_METHOD {
     SPATIAL,
     Collocated,
     MERGE
 };
+
 
 class CodingTreeUnit {
 public:
@@ -30,6 +33,7 @@ public:
     double error_bm, error_newton;
     cv::Point2f collocated_mv;
     MV_CODE_METHOD method;
+    FlagsCodeSum *flags_code_sum;
 };
 
 
