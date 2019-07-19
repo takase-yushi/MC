@@ -1981,7 +1981,7 @@ cv::Mat TriangleDivision::getPredictedImageFromCtu(std::vector<CodingTreeUnit*> 
 }
 
 void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, std::vector<std::vector<int>> &area_flag){
-    if(ctu->leftNode == nullptr && ctu->rightNode == nullptr) {
+    if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
         int triangle_index = ctu->triangle_index;
         cv::Point2f mv = ctu->mv1;
         Triangle triangle_corner_idx = triangles[triangle_index].first;
@@ -2002,8 +2002,10 @@ void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &ou
         return;
     }
 
-    if(ctu->leftNode != nullptr) getPredictedImageFromCtu(ctu->leftNode, out, area_flag);
-    if(ctu->rightNode != nullptr) getPredictedImageFromCtu(ctu->rightNode, out, area_flag);
+    if(ctu->node1 != nullptr) getPredictedImageFromCtu(ctu->node1, out, area_flag);
+    if(ctu->node2 != nullptr) getPredictedImageFromCtu(ctu->node2, out, area_flag);
+    if(ctu->node3 != nullptr) getPredictedImageFromCtu(ctu->node3, out, area_flag);
+    if(ctu->node4 != nullptr) getPredictedImageFromCtu(ctu->node4, out, area_flag);
 }
 
 cv::Mat TriangleDivision::getPredictedColorImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag, double original_psnr){
