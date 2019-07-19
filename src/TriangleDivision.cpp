@@ -1164,10 +1164,10 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     int code_length1;
     CollocatedMvTree *cmt_left_left, *cmt_left_right, *cmt_right_left, *cmt_right_right;
 
-    cmt_left_left  = (cmt->leftNode == nullptr ? cmt : (cmt->leftNode->leftNode == nullptr ? cmt->leftNode : cmt->leftNode->leftNode));
-    cmt_left_right  = (cmt->leftNode == nullptr ? cmt : (cmt->leftNode->rightNode == nullptr ? cmt->rightNode : cmt->leftNode->rightNode));
-    cmt_right_left  = (cmt->rightNode == nullptr ? cmt : (cmt->rightNode->leftNode == nullptr ? cmt->rightNode : cmt->rightNode->leftNode));
-    cmt_right_right  = (cmt->rightNode == nullptr ? cmt : (cmt->rightNode->rightNode == nullptr ? cmt->rightNode : cmt->rightNode->rightNode));
+    cmt_left_left    = (cmt->node1 == nullptr ? cmt : cmt->node1);
+    cmt_left_right   = (cmt->node2 == nullptr ? cmt : cmt->node2);
+    cmt_right_left   = (cmt->node3 == nullptr ? cmt : cmt->node3);
+    cmt_right_right  = (cmt->node4 == nullptr ? cmt : cmt->node4);
 
     MV_CODE_METHOD method_flag1, method_flag2, method_flag3, method_flag4;
     if(split_mv_result[0].parallel_flag) {
