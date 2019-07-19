@@ -161,7 +161,7 @@ private:
     std::vector<std::pair<Square, int> > squares;
     cv::Mat target_image, ref_image, ref_gauss_image;
     std::vector<std::set<int> > neighbor_vtx;
-    std::vector<std::set<int> > covered_square;
+    std::vector<std::set<int> > covered_square;　　//ある頂点に含まれる四角形のインデックス　　　　添え字 : インデックス(頂点)番号　setは集合なので同じ要素は入らない
     std::vector<std::vector<int> > corner_flag;
     std::vector<bool> delete_flag;
     std::vector<bool> isCodedSquare;
