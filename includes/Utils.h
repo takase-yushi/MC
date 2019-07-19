@@ -85,12 +85,14 @@
  */
 #define SIDE_Y_MIN 400
 
+
 enum {
     BM,
     NEWTON,
 };
 
 #define PRED_MODE NEWTON
+#define GAUSS_NEWTON_PARALLEL_ONLY true
 #define GAUSS_NEWTON_INIT_VECTOR false
 #define GAUSS_NEWTON_HEVC_IMAGE true
 #define HEVC_REF_IMAGE true

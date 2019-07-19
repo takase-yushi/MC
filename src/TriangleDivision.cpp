@@ -940,22 +940,26 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             triangle_gauss_results[triangle_index].residual = RMSE_before_subdiv;
 
             int cost_warping, cost_parallel;
+            MV_CODE_METHOD method_warping, method_parallel;
 
-            std::tie(cost_parallel, std::ignore, std::ignore, std::ignore, std::ignore) = getMVD(
+            std::tie(cost_parallel, std::ignore, std::ignore, std::ignore, method_parallel) = getMVD(
                     {gauss_result_parallel, gauss_result_parallel, gauss_result_parallel}, error_parallel,
-                    triangle_index, cmt->mv1, diagonal_line_area_flag, ctu);
+                    triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, true);
 
-            std::tie(cost_warping, std::ignore, std::ignore, std::ignore, std::ignore) = getMVD(
+            std::tie(cost_warping, std::ignore, std::ignore, std::ignore, method_warping) = getMVD(
                     triangle_gauss_results[triangle_index].mv_warping, error_warping,
-                    triangle_index, cmt->mv1, diagonal_line_area_flag, ctu);
+                    triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, false);
 
-            if(cost_parallel < cost_warping){
+            if(cost_parallel < cost_warping || GAUSS_NEWTON_PARALLEL_ONLY){
                 triangle_gauss_results[triangle_index].parallel_flag = true;
                 triangle_gauss_results[triangle_index].residual = error_parallel;
+                triangle_gauss_results[triangle_index].method = method_parallel;
+                parallel_flag = true;
             }else{
                 triangle_gauss_results[triangle_index].parallel_flag = false;
                 triangle_gauss_results[triangle_index].residual = error_warping;
-//                std::cout << "warping!" << std::endl;
+                triangle_gauss_results[triangle_index].method = method_warping;
+                parallel_flag = false;
             }
 
         }else if(PRED_MODE == BM) {
@@ -978,7 +982,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         }
     }
 
-    cv::Point2f mvd;
+    std::vector<cv::Point2f> mvd;
     int selected_index;
     MV_CODE_METHOD method_flag;
     double cost_before_subdiv;
@@ -987,11 +991,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     if(triangle_gauss_results[triangle_index].parallel_flag) {
         std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
                 {gauss_result_parallel, gauss_result_parallel, gauss_result_parallel}, error_parallel,
-                triangle_index, cmt->mv1, diagonal_line_area_flag, ctu);
+                triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, true);
     }else{
         std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
                 triangle_gauss_results[triangle_index].mv_warping, error_warping,
-                triangle_index, cmt->mv1, diagonal_line_area_flag, ctu);
+                triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, false);
     }
 
     std::vector<cv::Point2i> ret_gauss2;
@@ -1011,6 +1015,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     ctu->code_length = code_length;
     ctu->collocated_mv = cmt->mv1;
     ctu->parallel_flag = parallel_flag;
+    ctu->method = method_flag;
 
     SplitResult split_triangles = getSplitTriangle(p1, p2, p3, type);
 
@@ -1113,6 +1118,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         std::vector<double> tmp_bm_errors;
         double cost_warping_tmp, cost_parallel_tmp;
         double tmp_error_newton;
+        MV_CODE_METHOD method_warping_tmp, method_parallel_tmp;
         if(PRED_MODE == NEWTON){
             if(GAUSS_NEWTON_INIT_VECTOR) {
                 std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_triangles[j], target_image,
@@ -1131,15 +1137,15 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                         cv::Point2f(-1000, -1000), ref_hevc);
             }
 
-            std::tie(cost_parallel_tmp,std::ignore, std::ignore, std::ignore, std::ignore) = getMVD(
+            std::tie(cost_parallel_tmp,std::ignore, std::ignore, std::ignore, method_parallel_tmp) = getMVD(
                     {mv_parallel_tmp, mv_parallel_tmp, mv_parallel_tmp}, error_parallel_tmp,
-                    triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j]);
+                    triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], true);
 
-            std::tie(cost_warping_tmp, std::ignore, std::ignore, std::ignore, std::ignore) = getMVD(
+            std::tie(cost_warping_tmp, std::ignore, std::ignore, std::ignore, method_warping_tmp) = getMVD(
                     mv_warping_tmp, error_warping_tmp,
-                    triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j]);
+                    triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], false);
 
-            if(cost_parallel_tmp < cost_warping_tmp){
+            if(cost_parallel_tmp < cost_warping_tmp || GAUSS_NEWTON_PARALLEL_ONLY){
                 triangle_gauss_results[triangle_indexes[j]].parallel_flag = true;
                 split_mv_result[j] = GaussResult(mv_warping_tmp, mv_parallel_tmp, error_parallel_tmp, triangle_size_tmp, true, error_parallel_tmp, error_warping_tmp);
             }else{
@@ -1168,53 +1174,54 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     cmt_right_left  = (cmt->rightNode == nullptr ? cmt : (cmt->rightNode->leftNode == nullptr ? cmt->rightNode : cmt->rightNode->leftNode));
     cmt_right_right  = (cmt->rightNode == nullptr ? cmt : (cmt->rightNode->rightNode == nullptr ? cmt->rightNode : cmt->rightNode->rightNode));
 
+    MV_CODE_METHOD method_flag1, method_flag2, method_flag3, method_flag4;
     if(split_mv_result[0].parallel_flag) {
-        std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag) = getMVD(
+        std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag1) = getMVD(
                 {split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel},
                 split_mv_result[0].residual,
-                triangle_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->leftNode);
+                triangle_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->leftNode, true);
     }else{
-        std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag) = getMVD(
+        std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag1) = getMVD(
                 split_mv_result[0].mv_warping, split_mv_result[0].residual,
-                triangle_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->leftNode);
+                triangle_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->leftNode, false);
     }
 
     double cost_after_subdiv2;
     int code_length2;
     if(split_mv_result[1].parallel_flag){
-        std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag) = getMVD(
+        std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
                 {split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel}, split_mv_result[1].residual,
-                triangle_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->leftNode);
+                triangle_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->leftNode, true);
 
     }else{
-        std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag) = getMVD(
+        std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
                 split_mv_result[1].mv_warping, split_mv_result[1].residual,
-                triangle_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->leftNode);
+                triangle_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->leftNode, false);
     }
 
     double cost_after_subdiv3;
     int code_length3;
     if(split_mv_result[2].parallel_flag) {
-        std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag) = getMVD(
+        std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag3) = getMVD(
                 {split_mv_result[2].mv_parallel, split_mv_result[2].mv_parallel, split_mv_result[2].mv_parallel},
                 split_mv_result[2].residual,
-                triangle_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->rightNode);
+                triangle_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->rightNode, true);
     }else{
-        std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag) = getMVD(
+        std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag3) = getMVD(
                 split_mv_result[2].mv_warping, split_mv_result[2].residual,
-                triangle_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->rightNode);
+                triangle_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->rightNode, false);
     }
 
     double cost_after_subdiv4;
     int code_length4;
     if(split_mv_result[3].parallel_flag){
-        std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag) = getMVD(
+        std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
                 {split_mv_result[3].mv_parallel, split_mv_result[3].mv_parallel, split_mv_result[3].mv_parallel}, split_mv_result[3].residual,
-                triangle_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->rightNode);
+                triangle_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->rightNode, true);
     }else{
-        std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag) = getMVD(
+        std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
                 split_mv_result[3].mv_warping, split_mv_result[3].residual,
-                triangle_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->rightNode);
+                triangle_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->rightNode, false);
     }
 
     double alpha = 1;
@@ -1240,6 +1247,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         }
         ctu->leftNode->leftNode->code_length = code_length1;
         ctu->leftNode->leftNode->parallel_flag = split_mv_result[0].parallel_flag;
+        ctu->leftNode->leftNode->method = method_flag1;
         triangle_gauss_results[t1_idx] = split_mv_result[0];
         isCodedTriangle[t1_idx] = true;
         bool result = split(expand_images, ctu->leftNode->leftNode, cmt_left_left, split_sub_triangles1.t1, t1_idx,split_sub_triangles1.t1_type, steps - 2, diagonal_line_area_flag);
@@ -1255,8 +1263,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             ctu->leftNode->rightNode->mv2 = split_mv_result[1].mv_warping[1];
             ctu->leftNode->rightNode->mv3 = split_mv_result[1].mv_warping[2];
         }
-        ctu->rightNode->rightNode->code_length = code_length2;
-        ctu->rightNode->rightNode->parallel_flag = split_mv_result[1].parallel_flag;
+        ctu->leftNode->rightNode->code_length = code_length2;
+        ctu->leftNode->rightNode->parallel_flag = split_mv_result[1].parallel_flag;
+        ctu->leftNode->rightNode->method = method_flag2;
 
         triangle_gauss_results[t2_idx] = split_mv_result[1];
         isCodedTriangle[t2_idx] = true;
@@ -1275,7 +1284,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         }
         ctu->rightNode->leftNode->code_length = code_length3;
         ctu->rightNode->leftNode->parallel_flag = split_mv_result[2].parallel_flag;
-
+        ctu->rightNode->leftNode->method = method_flag3;
         triangle_gauss_results[t3_idx] = split_mv_result[2];
         isCodedTriangle[t3_idx] = true;
         result = split(expand_images, ctu->rightNode->leftNode, cmt_right_left, split_sub_triangles2.t1, t3_idx, split_sub_triangles2.t1_type, steps - 2, diagonal_line_area_flag);
@@ -1293,7 +1302,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         }
         ctu->rightNode->rightNode->code_length = code_length4;
         ctu->rightNode->rightNode->parallel_flag = split_mv_result[3].parallel_flag;
-
+        ctu->rightNode->rightNode->method = method_flag4;
         triangle_gauss_results[t4_idx] = split_mv_result[3];
         isCodedTriangle[t4_idx] = true;
         result = split(expand_images, ctu->rightNode->rightNode, cmt_right_right, split_sub_triangles2.t2, t4_idx, split_sub_triangles2.t2_type, steps - 2, diagonal_line_area_flag);
@@ -1303,6 +1312,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         isCodedTriangle[triangle_index] = true;
         delete_flag[triangle_index] = false;
         ctu->leftNode = ctu->rightNode = nullptr;
+        ctu->method = method_flag;
         diagonal_line_area_flag = prev_area_flag;
         eraseTriangle(triangles.size() - 1);
         eraseTriangle(triangles.size() - 1);
@@ -1665,7 +1675,7 @@ bool TriangleDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CO
  * @param[in] area_flag 含まれる画素のフラグ
  * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
  */
-std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu){
+std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu, bool parallel_flag){
 //    std::cout << "triangle_index(getMVD):" << triangle_idx << std::endl;
     // 空間予測と時間予測の候補を取り出す
     std::vector<int> spatial_triangles = getSpatialTriangleList(triangle_idx);
@@ -1696,13 +1706,13 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
     double lambda = getLambdaPred(qp);
 
     //                      コスト, 差分ベクトル, 番号, タイプ
-    std::vector<std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> > results;
+    std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> > results;
     for(int i = 0 ; i < vectors.size() ; i++) {
         std::pair<cv::Point2f, MV_CODE_METHOD> vector = vectors[i];
         cv::Point2f current_mv = vector.first;
         // TODO: ワーピング対応
 
-        if(triangle_gauss_results[triangle_idx].parallel_flag) { // 平行移動成分に関してはこれまで通りにやる
+        if(parallel_flag) { // 平行移動成分に関してはこれまで通りにやる
             cv::Point2f mvd = current_mv - mv[0];
 #if MVD_DEBUG_LOG
             std::cout << "idx                 :" << i << std::endl;
@@ -1719,33 +1729,43 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
             std::cout << "mvd-2:(parallel)    :" << mvd << std::endl;
 #endif
             mvd *= 4;
-            mvd.x -= 2.0;
-            mvd.y -= 2.0;
+            int abs_x = mvd.x;
+            int abs_y = mvd.y;
 #if MVD_DEBUG_LOG
             std::cout << "4 * mvd(parallel)   :" << mvd << std::endl;
 #endif
-            /* 動きベクトル符号化 */
-            (ctu->mvds).clear();
-            (ctu->mvds).emplace_back(mvd);
 
             // 動きベクトル差分の絶対値が0より大きいのか？
-            bool is_x_greater_than_zero = mvd.x > 0 ? true : false;
-            bool is_y_greater_than_zero = mvd.y > 0 ? true : false;
+            bool is_x_greater_than_zero = abs_x > 0;
+            bool is_y_greater_than_zero = abs_y > 0;
 
             // 動きベクトル差分の絶対値が1より大きいのか？
-            bool is_x_greater_than_one = mvd.x > 1 ? true : false;
-            bool is_y_greater_than_one = mvd.y > 1 ? true : false;
+            bool is_x_greater_than_one = abs_x > 1;
+            bool is_y_greater_than_one = abs_y > 1;
 
-            // 正負の判定
-            bool is_x_minus = mvd.x < 0 ? true : false;
-            bool is_y_minus = mvd.y < 0 ? true : false;
+            // 正負の判定(使ってません！！！)
+            bool is_x_minus = mvd.x < 0;
+            bool is_y_minus = mvd.y < 0;
 
-            // 動きベクトル差分から2を引いたろ！
-            int mvd_x_minus_2 = mvd.x;
-            int mvd_y_minus_2 = mvd.y;
+            int mvd_code_length = 2;
+            if(is_x_greater_than_zero){
+                mvd_code_length += 1;
 
-            int mvd_code_length = getExponentialGolombCodeLength((int) mvd_x_minus_2, 0) +
-                                  getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
+                if(is_x_greater_than_one){
+                    int mvd_x_minus_2 = mvd.x - 2.0;
+                    mvd_code_length += getExponentialGolombCodeLength((int) mvd_x_minus_2, 0);
+                }
+            }
+
+            if(is_y_greater_than_zero){
+                mvd_code_length += 1;
+
+                if(is_y_greater_than_one){
+                    int mvd_y_minus_2 = mvd.y - 2.0;
+                    mvd_code_length += getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
+                }
+            }
+
 #if MVD_DEBUG_LOG
             std::cout << " code_length:" << mvd_code_length << std::endl;
 #endif
@@ -1754,38 +1774,41 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
             int reference_index_code_length = getUnaryCodeLength(reference_index);
 
             // 各種フラグ分を(3*2)bit足してます
-            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + 6  );
+            double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
 
+            std::vector<cv::Point2f> mvds{mvd};
             // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length + 6 + 1, mvd, i, vector.second);
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second);
         }else{
             std::vector<cv::Point2f> mvds;
             mvds.emplace_back(current_mv - mv[0]);
             mvds.emplace_back(current_mv - mv[1]);
             mvds.emplace_back(current_mv - mv[2]);
-            (ctu->mvds).clear();
-            for(auto &mvd : mvds){
-                mvd = getQuantizedMv(mvd, 4);
+
+            int mvd_code_length = 6;
+            for(int i = 0 ; i < mvds.size() ; i++){
+                cv::Point2f mvd = getQuantizedMv(mvds[i], 4);
                 mvd.x = std::fabs(mvd.x);
                 mvd.y = std::fabs(mvd.y);
                 mvd *= 4;
-                (ctu->mvds).emplace_back(mvd);
+                mvds[i] = mvd;
+                int abs_x = mvd.x;
+                int abs_y = mvd.y;
 
                 /* 動きベクトル符号化 */
 
                 // 動きベクトル差分の絶対値が0より大きいのか？
-                bool is_x_greater_than_zero = mvd.x > 0 ? true : false;
-                bool is_y_greater_than_zero = mvd.y > 0 ? true : false;
+                bool is_x_greater_than_zero = abs_x > 0;
+                bool is_y_greater_than_zero = abs_y > 0;
 
                 // 動きベクトル差分の絶対値が1より大きいのか？
-                bool is_x_greater_than_one = mvd.x > 1 ? true : false;
-                bool is_y_greater_than_one = mvd.y > 1 ? true : false;
+                bool is_x_greater_than_one = abs_x > 1;
+                bool is_y_greater_than_one = abs_y > 1;
 
-                // 正負の判定
-                bool is_x_minus = mvd.x < 0 ? true : false;
-                bool is_y_minus = mvd.y < 0 ? true : false;
+                // 正負の判定(これもつかってません！！！）
+                bool is_x_minus = mvd.x < 0;
+                bool is_y_minus = mvd.y < 0;
 
-                int mvd_code_length = 2;
                 if(is_x_greater_than_zero){
                     mvd_code_length += 1;
 
@@ -1798,22 +1821,22 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
                 if(is_y_greater_than_zero){
                     mvd_code_length += 1;
 
-                    if(is_x_greater_than_one){
+                    if(is_y_greater_than_one){
                         int mvd_y_minus_2 = mvd.y - 2.0;
                         mvd_code_length +=  getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
                     }
                 }
-
-                // 参照箇所符号化
-                int reference_index = std::get<1>(vector);
-                int reference_index_code_length = getUnaryCodeLength(reference_index);
-
-                // 各種フラグ分を(3*2)bit足してます
-                double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
-
-                // 結果に入れる
-                results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvd, i, vector.second);
             }
+
+            // 参照箇所符号化
+            int reference_index = std::get<1>(vector);
+            int reference_index_code_length = getUnaryCodeLength(reference_index);
+
+            // 各種フラグ分を(3*2)bit足してます
+            double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
+
+            // 結果に入れる
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second);
         }
     }
 
@@ -1837,30 +1860,52 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> TriangleDivision::getM
                 merge_vectors.emplace_back(spatial_triangle.mv_parallel, MERGE);
                 double ret_residual = getTriangleResidual(ref_image, target_image, coordinate, mv, pixels_in_triangle);
                 double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
-                results.emplace_back(rd, getUnaryCodeLength(i) + 1, cv::Point2f(0, 0), results.size(), MERGE);
+                std::vector<cv::Point2f> mvds{cv::Point2f(0,0)};
+                results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, results.size(), MERGE);
             }
         }else{
             if(!isMvExists(merge_vectors, spatial_triangle.mv_warping[0])) {
                 merge_vectors.emplace_back(spatial_triangle.mv_warping[0], MERGE);
                 double ret_residual = getTriangleResidual(ref_image, target_image, coordinate, mv, pixels_in_triangle);
                 double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
-                results.emplace_back(rd, getUnaryCodeLength(i) + 1, cv::Point2f(0, 0), results.size(), MERGE);
+                std::vector<cv::Point2f> mvds{cv::Point2f(0,0)};
+                results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, results.size(), MERGE);
             }
         }
 
     }
 
     // RDしたスコアが小さい順にソート
-    std::sort(results.begin(), results.end(), [](const std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD >& a, const std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD>& b){
+    std::sort(results.begin(), results.end(), [](const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD >& a, const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD>& b){
         return std::get<0>(a) < std::get<0>(b);
     });
     double cost = std::get<0>(results[0]);
     int code_length = std::get<1>(results[0]);
-    cv::Point2f mvd = std::get<2>(results[0]);
+    std::vector<cv::Point2f> mvds = std::get<2>(results[0]);
     int selected_idx = std::get<3>(results[0]);
     MV_CODE_METHOD method = std::get<4>(results[0]);
 
-    return {cost, code_length, mvd, selected_idx, method};
+    if(method != MERGE) {
+        (ctu->mvds_x).clear();
+        (ctu->mvds_y).clear();
+        (ctu->original_mvds_x).clear();
+        (ctu->original_mvds_y).clear();
+
+        if(mvds.empty()){
+            exit(-1);
+        }
+        if (parallel_flag) {
+            (ctu->mvds_x).emplace_back(mvds[0].x);
+            (ctu->mvds_y).emplace_back(mvds[0].y);
+        } else {
+            for (int i = 0; i < 3; i++) {
+                (ctu->mvds_x).emplace_back(mvds[i].x);
+                (ctu->mvds_y).emplace_back(mvds[i].y);
+            }
+        }
+    }
+
+    return {cost, code_length, mvds, selected_idx, method};
 }
 
 /**

@@ -15,8 +15,20 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus) {
         storeDistributionOfMv(ctu);
     }
 
-    FILE *fp = std::fopen((getProjectDirectory(OS) + "/mvd_distribution.csv").c_str(), "w");
+    FILE *fp = std::fopen((getProjectDirectory(OS) + "/mvd_distribution" + file_suffix + ".csv").c_str(), "w");
     for(auto x : counter){
+        fprintf(fp, "%d,%d\n", x.first, x.second);
+    }
+    fclose(fp);
+
+    fp = std::fopen((getProjectDirectory(OS) + "/mvd_distribution_x" + file_suffix + ".csv").c_str(), "w");
+    for(auto x : counter_x){
+        fprintf(fp, "%d,%d\n", x.first, x.second);
+    }
+    fclose(fp);
+
+    fp = std::fopen((getProjectDirectory(OS) + "/mvd_distribution_y" + file_suffix + ".csv").c_str(), "w");
+    for(auto x : counter_y){
         fprintf(fp, "%d,%d\n", x.first, x.second);
     }
     fclose(fp);
@@ -28,25 +40,26 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus) {
  * @param ctu
  */
 void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
-    if(ctu->leftNode != nullptr && ctu->rightNode != nullptr){
-        if(ctu->parallel_flag){
-            int x = ctu->mvds[0].x;
-            int y = ctu->mvds[0].y;
-            counter[x]++;
-            counter[y]++;
-        }else{
-            int x = ctu->mvds[0].x;
-            int y = ctu->mvds[0].y;
-            counter[x]++;
-            counter[y]++;
-            x = ctu->mvds[1].x;
-            y = ctu->mvds[1].y;
-            counter[x]++;
-            counter[y]++;
-            x = ctu->mvds[2].x;
-            y = ctu->mvds[2].y;
-            counter[x]++;
-            counter[y]++;
+    if(ctu->leftNode == nullptr && ctu->rightNode == nullptr){
+        if(ctu->method != MV_CODE_METHOD::MERGE){
+            if(ctu->parallel_flag){
+                int x = (ctu->mvds_x)[0];
+                counter_x[x]++;
+                int y = (ctu->mvds_y)[0];
+                counter_y[y]++;
+
+                counter[x]++;
+                counter[y]++;
+            }else{
+                for(int i = 0 ; i < 3 ; i++) {
+                    int x = (ctu->mvds_x)[i];
+                    counter_x[x]++;
+                    int y = (ctu->mvds_y)[i];
+                    counter_y[y]++;
+                    counter[x]++;
+                    counter[y]++;
+                }
+            }
         }
         return;
     }
@@ -55,3 +68,4 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
     if(ctu->rightNode != nullptr) storeDistributionOfMv(ctu->rightNode);
 }
 
+Analyzer::Analyzer(const std::string &fileSuffix) : file_suffix(fileSuffix) {}

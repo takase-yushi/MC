@@ -18,6 +18,11 @@ private:
     void storeDistributionOfMv(CodingTreeUnit *ctu);
 
     std::map<int, int> counter;
+    std::map<int, int> counter_x;
+    std::map<int, int> counter_y;
+    std::string file_suffix;
+public:
+    Analyzer(const std::string &fileSuffix);
 };
 
 
