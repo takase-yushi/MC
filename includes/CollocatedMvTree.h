@@ -16,8 +16,7 @@ public:
     cv::Point2f mv1;
     cv::Point2f mv2;
     cv::Point2f mv3;
-    CollocatedMvTree* leftNode;
-    CollocatedMvTree* rightNode;
+    CollocatedMvTree *node1, *node2, *node3, *node4;
 };
 
 

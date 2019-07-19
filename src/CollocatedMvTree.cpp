@@ -5,6 +5,8 @@
 #include "../includes/CollocatedMvTree.h"
 
 CollocatedMvTree::~CollocatedMvTree() {
-    delete leftNode;
-    delete rightNode;
+    delete node1;
+    delete node2;
+    delete node3;
+    delete node4;
 }
