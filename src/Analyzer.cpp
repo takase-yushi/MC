@@ -5,12 +5,15 @@
 #include "../includes/Analyzer.h"
 #include "../includes/Utils.h"
 #include <cstdio>
+#include <iostream>
 
 /**
  *
  * @param ctus
  */
 void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus) {
+    greater_0_flag_sum = greater_1_flag_sum = sign_flag_sum = mvd_code_sum = 0;
+
     for(auto ctu : ctus){
         storeDistributionOfMv(ctu);
     }
@@ -31,6 +34,14 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus) {
     for(auto x : mvd_counter_y){
         fprintf(fp, "%d,%d\n", x.first, x.second);
     }
+    fclose(fp);
+
+    fp = std::fopen((getProjectDirectory(OS) + "/mvd_result" + file_suffix + ".txt").c_str(), "w");
+    fprintf(fp, "greater_0_flag:%d\n", greater_0_flag_sum);
+    fprintf(fp, "greater_1_flag:%d\n", greater_1_flag_sum);
+    fprintf(fp, "sign_flag     :%d\n", sign_flag_sum);
+    fprintf(fp, "mvd_code      :%d\n", mvd_code_sum);
+
     fclose(fp);
 }
 
@@ -60,6 +71,11 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
                     mvd_counter[y]++;
                 }
             }
+
+            greater_0_flag_sum += ctu->flags_code_sum->getGreater0FlagCodeLength();
+            greater_1_flag_sum += ctu->flags_code_sum->getGreaterThanOneCodeLength();
+            sign_flag_sum += ctu->flags_code_sum->getSignFlagCodeLength();
+            mvd_code_sum += ctu->flags_code_sum->getMvdCodeLength();
         }
         return;
     }
@@ -72,8 +88,8 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
 
 Analyzer::Analyzer(const std::string &fileSuffix) : file_suffix(fileSuffix) {}
 
-FlagsCodeSum::FlagsCodeSum(int greater0FlagCode, int greaterThanOneCode, int signFlagCode) : greater_0_flag_code_length(
-        greater0FlagCode), greater_than_one_code_length(greaterThanOneCode), sign_flag_code_length(signFlagCode) {}
+FlagsCodeSum::FlagsCodeSum(int greater0FlagCode, int greaterThanOneCode, int signFlagCode, int mvdCodeLength) : greater_0_flag_code_length(
+        greater0FlagCode), greater_than_one_code_length(greaterThanOneCode), sign_flag_code_length(signFlagCode), mvd_code_length(mvdCodeLength) {}
 
 void FlagsCodeSum::countGreater0Code() {
     greater_0_flag_code_length++;
@@ -87,8 +103,8 @@ void FlagsCodeSum::countSignFlagCode() {
     sign_flag_code_length++;
 }
 
-void FlagsCodeSum::countMvdCode() {
-
+void FlagsCodeSum::addMvdCodeLength(int len){
+    mvd_code_length += len;
 }
 
 int FlagsCodeSum::getGreater0FlagCodeLength() const {
@@ -106,4 +122,28 @@ int FlagsCodeSum::getSignFlagCodeLength() const {
 
 int FlagsCodeSum::getMvdCodeLength() const {
     return mvd_code_length;
+}
+
+void FlagsCodeSum::setXGreater0Flag(bool xGreater0Flag) {
+    x_greater_0_flag = xGreater0Flag;
+}
+
+void FlagsCodeSum::setYGreater0Flag(bool yGreater0Flag) {
+    y_greater_0_flag = yGreater0Flag;
+}
+
+void FlagsCodeSum::setXGreater1Flag(bool xGreater1Flag) {
+    x_greater_1_flag = xGreater1Flag;
+}
+
+void FlagsCodeSum::setYGreater1Flag(bool yGreater1Flag) {
+    y_greater_1_flag = yGreater1Flag;
+}
+
+void FlagsCodeSum::setXSignFlag(bool xSignFlag) {
+    x_sign_flag = xSignFlag;
+}
+
+void FlagsCodeSum::setYSignFlag(bool ySignFlag) {
+    y_sign_flag = ySignFlag;
 }

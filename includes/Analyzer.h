@@ -10,6 +10,8 @@
 #include <map>
 #include "CodingTreeUnit.h"
 
+class CodingTreeUnit;
+
 class Analyzer {
 public:
     void storeDistributionOfMv(std::vector<CodingTreeUnit*> ctus);
@@ -35,6 +37,8 @@ private:
     std::map<int, int> sign_flag_counter;
     int sign_flag_sum;
 
+    int mvd_code_sum;
+
     // ファイルの最後につける値
     std::string file_suffix;
 
@@ -52,15 +56,34 @@ class FlagsCodeSum {
 
     int mvd_code_length;
 
+    bool x_greater_0_flag;
+    bool y_greater_0_flag;
+    bool x_greater_1_flag;
+    bool y_greater_1_flag;
+    bool x_sign_flag;
+    bool y_sign_flag;
 public:
-    FlagsCodeSum(int greater0FlagCode, int greaterThanOneCode, int signFlagCode);
+    void setXGreater0Flag(bool xGreater0Flag);
+
+    void setYGreater0Flag(bool yGreater0Flag);
+
+    void setXGreater1Flag(bool xGreater1Flag);
+
+    void setYGreater1Flag(bool yGreater1Flag);
+
+    void setXSignFlag(bool xSignFlag);
+
+    void setYSignFlag(bool ySignFlag);
+
+public:
+    FlagsCodeSum(int greater0FlagCode, int greaterThanOneCode, int signFlagCode, int mvdCodeLength);
     void countGreater0Code();
 
     void countGreater1Code();
 
     void countSignFlagCode();
 
-    void countMvdCode();
+    void addMvdCodeLength(int len);
 
     int getGreater0FlagCodeLength() const;
 
