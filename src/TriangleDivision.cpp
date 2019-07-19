@@ -1036,22 +1036,20 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     double RMSE_after_subdiv = 0.0;
     std::vector<GaussResult> split_mv_result(subdiv_target_triangles.size());
 
-    int p1_idx = addCorner(p1);
-    int p2_idx = addCorner(p2);
-    int p3_idx = addCorner(p3);
-    addCornerAndTriangle(Triangle(p1_idx, p2_idx, p3_idx), triangle_index, type);
+//    int p1_idx = addCorner(p1);
+//    int p2_idx = addCorner(p2);
+//    int p3_idx = addCorner(p3);
+//    addCornerAndTriangle(Triangle(p1_idx, p2_idx, p3_idx), triangle_index, type);
 
-    int t1_idx = (int)triangles.size() - 2;
-    int t2_idx = (int)triangles.size() - 1;
     int t1_p1_idx = addCorner(split_triangles.t1.p1);
     int t1_p2_idx = addCorner(split_triangles.t1.p2);
     int t1_p3_idx = addCorner(split_triangles.t1.p3);
-    addCornerAndTriangle(Triangle(t1_p1_idx, t1_p2_idx, t1_p3_idx), t1_idx, split_triangles.t1_type);
+    addCornerAndTriangle(Triangle(t1_p1_idx, t1_p2_idx, t1_p3_idx), triangle_index, split_triangles.t1_type);
 
     int t2_p1_idx = addCorner(split_triangles.t2.p1);
     int t2_p2_idx = addCorner(split_triangles.t2.p2);
     int t2_p3_idx = addCorner(split_triangles.t2.p3);
-    addCornerAndTriangle(Triangle(t2_p1_idx, t2_p2_idx, t2_p3_idx), t2_idx, split_triangles.t2_type);
+    addCornerAndTriangle(Triangle(t2_p1_idx, t2_p2_idx, t2_p3_idx), triangle_index, split_triangles.t2_type);
 
     int triangle_indexes[] = {(int)triangles.size() - 4, (int)triangles.size() - 3, (int)triangles.size() - 2, (int)triangles.size() - 1};
 
