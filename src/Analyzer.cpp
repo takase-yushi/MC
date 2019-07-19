@@ -86,3 +86,15 @@ void FlagsCodeSum::countGreater1Code() {
 void FlagsCodeSum::countSignFlagCode() {
     sign_flag_code++;
 }
+
+int FlagsCodeSum::getGreater0FlagCode() const {
+    return greater_0_flag_code;
+}
+
+int FlagsCodeSum::getGreaterThanOneCode() const {
+    return greater_than_one_code;
+}
+
+int FlagsCodeSum::getSignFlagCode() const {
+    return sign_flag_code;
+}

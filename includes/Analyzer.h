@@ -53,7 +53,15 @@ class FlagsCodeSum {
 public:
     FlagsCodeSum(int greater0FlagCode, int greaterThanOneCode, int signFlagCode);
     void countGreater0Code();
+
     void countGreater1Code();
+
+    int getGreater0FlagCode() const;
+
+    int getGreaterThanOneCode() const;
+
+    int getSignFlagCode() const;
+
     void countSignFlagCode();
 };
 
