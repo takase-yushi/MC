@@ -21,8 +21,7 @@ public:
     int code_length;
     bool split_cu_flag;
     bool parallel_flag;
-    CodingTreeUnit *leftNode;
-    CodingTreeUnit *rightNode;
+    CodingTreeUnit *node1, *node2, *node3, *node4;
     CodingTreeUnit *parentNode;
     int triangle_index;
     cv::Point2f mv1, mv2, mv3;

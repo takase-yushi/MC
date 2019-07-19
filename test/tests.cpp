@@ -132,7 +132,7 @@ void test5(){
     for (int i = 0; i < init_triangles.size(); i++) {
         foo[i] = new CodingTreeUnit();
         foo[i]->split_cu_flag = false;
-        foo[i]->leftNode = foo[i]->rightNode = nullptr;
+        foo[i]->node1 = foo[i]->node2 = foo[i]->node3 = foo[i]->node4 = nullptr;
         foo[i]->triangle_index = i;
     }
     // std::vector<std::vector<std::vector<int>>> area_flag_cache(init_triangles.size(), std::vector< std::vector<int> >(128, std::vector<int>(128)) );
