@@ -151,7 +151,7 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
 
     // 過去のMVを残すやつを初期化
     for(auto node : previousMvList[coded_picture_num]) {
-        node->leftNode = node->rightNode = nullptr;
+        node->node1 = node->node2 = node->node3 = node->node4 = nullptr;
         node->mv1 = cv::Point2f(0.0, 0.0);
         node->mv2 = cv::Point2f(0.0, 0.0);
         node->mv3 = cv::Point2f(0.0, 0.0);
