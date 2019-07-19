@@ -28,7 +28,7 @@ SquareDivision::SquareDivision(const cv::Mat &refImage, const cv::Mat &targetIma
                                                                                                                     ref_image(refImage), ref_gauss_image(refGaussImage) {}
 
 
-
+//TODO 四角形対応
 /**
  * @fn void SquareDivision::initSquare(int block_size_x, int block_size_y, int _divide_steps, int _qp, int divide_flag)
  * @brief 三角形を初期化する
@@ -42,8 +42,8 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
     block_size_x = _block_size_x;
     block_size_y = _block_size_y;
     qp = _qp;
-    int block_num_x = ceil((double)target_image.cols / (block_size_x));
-    int block_num_y = ceil((double)target_image.rows / (block_size_y));
+    int block_num_x = ceil((double)target_image.cols / (block_size_x));    //x方向のブロック数
+    int block_num_y = ceil((double)target_image.rows / (block_size_y));    //y方向のブロック数
     divide_steps = _divide_steps;
     coded_picture_num = 0;
 
@@ -79,9 +79,10 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
     previousMvList.emplace_back();
     // すべての頂点を入れる
     for(int block_y = 0 ; block_y <= block_num_y ; block_y++) {
+        //y列目の上側の頂点を入れる
         for (int block_x = 0 ; block_x <= block_num_x; block_x++) {
-            int nx = block_x * (block_size_x);
-            int ny = block_y * (block_size_y);
+            int nx = block_x * (block_size_x);    //ブロックの左上のx座標
+            int ny = block_y * (block_size_y);    //ブロックの左上のy座標
 
             if(nx < 0) nx = 0;
             if(target_image.cols <= nx) nx = target_image.cols - 1;
@@ -95,10 +96,10 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
 
-            if(block_x == block_num_x) continue;
+            if(block_x == block_num_x) continue;    //x座標が画像の端のときはcontinue
 
-            nx = (block_x + 1) * (block_size_x) - 1;
-            ny = (block_y) * (block_size_y);
+            nx = (block_x + 1) * (block_size_x) - 1;   //ブロックの右上のx座標
+            ny = (block_y) * (block_size_y);          //ブロックの右上のy座標
 
             if(nx < 0) nx = 0;
             if(target_image.cols <= nx) nx = target_image.cols - 1;
@@ -113,11 +114,11 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
         }
 
-        if(block_y == block_num_y) continue;
-
+        if(block_y == block_num_y) continue;    //y座標が画像の端のときはcontinue
+        //y列目の下側の頂点を入れる
         for (int block_x = 0 ; block_x <= block_num_x; block_x++) {
-            int nx = block_x * (block_size_x);
-            int ny = (block_y + 1) * (block_size_y) - 1;
+            int nx = block_x * (block_size_x);              //ブロックの左下のx座標
+            int ny = (block_y + 1) * (block_size_y) - 1;    //ブロックの左下のy座標
 
             if(nx < 0) nx = 0;
             if(target_image.cols <= nx) nx = target_image.cols - 1;
@@ -133,8 +134,8 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
 
             if(block_x == block_num_x) continue;
 
-            nx = (block_x + 1) * (block_size_x) - 1;
-            ny = (block_y + 1) * (block_size_y) - 1;
+            nx = (block_x + 1) * (block_size_x) - 1;    //ブロックの右下のx座標
+            ny = (block_y + 1) * (block_size_y) - 1;    //ブロックの右下のy座標
 
             if(nx < 0) nx = 0;
             if(target_image.cols <= nx) nx = target_image.cols - 1;
@@ -155,46 +156,38 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
     for(auto node : previousMvList[coded_picture_num]) {
         node->leftNode = node->rightNode = nullptr;
         node->mv1 = cv::Point2f(0.0, 0.0);
-        node->mv2 = cv::Point2f(0.0, 0.0);
-        node->mv3 = cv::Point2f(0.0, 0.0);
     }
 
     std::cout << "block_num_y:" << block_num_y << std::endl;
     std::cout << "block_num_x:" << block_num_x << std::endl;
 
-    covered_square.resize(static_cast<unsigned long>((block_num_x * 2 + 1) * (block_num_y * 2 + 1)));
+    covered_square.resize(static_cast<unsigned long>((block_num_x + 1) * (block_num_y + 1)));
 
+    //なにしてる？？？
     for(int block_y = 0 ; block_y < block_num_y ; block_y++) {
         for(int block_x = 0 ; block_x < block_num_x ; block_x++) {
+            //頂点番号
             int p1_idx;
             int p2_idx;
             int p3_idx;
             int p4_idx;
-            if(divide_flag == LEFT_DIVIDE) {
-                p1_idx = 2 * block_x + (2 * block_y) * ((block_num_x) * 2 + 1);
-                p2_idx = p1_idx + 1;
-                p3_idx = p1_idx + ((block_num_x) * 2 + 1 );
+            p1_idx = 2 * block_x + (2 * block_y) * (2 * (block_num_x) + 1);
+            p2_idx = p1_idx + 1;
+            p3_idx = p1_idx + ((block_num_x) * 2 + 1 );
+            p4_idx = p3_idx + 1;
 
-                int squareIndex = insertSquare(p1_idx, p2_idx, p3_idx, TYPE1);
-                addNeighborVertex(p1_idx, p2_idx, p3_idx);
-                addCoveredSquare(p1_idx, p2_idx, p3_idx, squareIndex); // p1/p2/p3はsquareIndex番目の三角形に含まれている
+            int squareIndex = insertSquare(p1_idx, p2_idx, p3_idx, TYPE1);
+            addNeighborVertex(p1_idx, p2_idx, p3_idx);
+            addCoveredSquare(p1_idx, p2_idx, p3_idx, squareIndex); // p1/p2/p3はsquareIndex番目の三角形に含まれている
 
-                int p4_idx = p2_idx;
-                int p5_idx = p3_idx;
-                int p6_idx = p3_idx + 1;
-
-                squareIndex = insertSquare(p4_idx, p5_idx, p6_idx, TYPE2);
-                addNeighborVertex(p4_idx, p5_idx, p6_idx);
-                addCoveredSquare(p4_idx, p5_idx, p6_idx, squareIndex);
-            }else{
-                int squareIndex = insertSquare(p1_idx, p2_idx, p4_idx, TYPE1);
-                addNeighborVertex(p1_idx, p2_idx, p4_idx);
-                addCoveredSquare(p1_idx, p2_idx, p4_idx, squareIndex);
-
-                squareIndex = insertSquare(p1_idx, p3_idx, p4_idx, TYPE2);
-                addNeighborVertex(p1_idx, p3_idx, p4_idx);
-                addCoveredSquare(p1_idx, p3_idx, p4_idx, squareIndex);
-            }
+//            int p4_idx = p2_idx;
+//            int p5_idx = p3_idx;
+//            int p6_idx = p3_idx + 1;
+//
+//            squareIndex = insertSquare(p4_idx, p5_idx, p6_idx, TYPE2);
+//            addNeighborVertex(p4_idx, p5_idx, p6_idx);
+//            addCoveredSquare(p4_idx, p5_idx, p6_idx, squareIndex);
+//
         }
     }
 
@@ -237,7 +230,7 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
         }
     }
 }
-
+//TODO 四角形対応
 /**
  * @fn std::vector<Point3Vec> getSquareCoordinateList()
  * @brief 現在存在する三角形の集合(座標)を返す
@@ -254,7 +247,7 @@ std::vector<Point3Vec> SquareDivision::getSquareCoordinateList() {
 
     return vec;
 }
-
+//TODO 四角形対応
 /**
  * @fn std::vector<Square> SquareDivision::getSquareIndexList()
  * @brief 現在存在する三角形の集合(インデックス)を返す
@@ -268,7 +261,7 @@ std::vector<Square> SquareDivision::getSquareIndexList() {
     }
     return v;
 }
-
+//TODO 四角形対応
 /**
  * @fn std::vector<Point3Vec> getAllSquareCoordinateList()
  * @brief 現在存在するすべての三角形の集合(座標)を返す（※論理削除されたパッチも含まれています）
@@ -284,7 +277,7 @@ std::vector<Point3Vec> SquareDivision::getAllSquareCoordinateList() {
 
     return vec;
 }
-
+//TODO 四角形対応
 /**
  * @fn std::vector<Square> SquareDivision::getAllSquareIndexList()
  * @brief 現在存在する三角形の集合(インデックス)を返す（※論理削除されたパッチも含まれています）
@@ -298,7 +291,7 @@ std::vector<Square> SquareDivision::getAllSquareIndexList() {
     return v;
 }
 
-
+//TODO 四角形対応
 std::vector<std::pair<Point3Vec, int> > SquareDivision::getSquares() {
     std::vector<std::pair<Point3Vec, int> > ts;
 
@@ -312,7 +305,7 @@ std::vector<std::pair<Point3Vec, int> > SquareDivision::getSquares() {
 
     return ts;
 }
-
+//TODO 四角形対応
 /**
  * @fn std::vector<cv::Point2f> SquareDivision::getCorners()
  * @brief 頂点の集合を返す
@@ -321,21 +314,22 @@ std::vector<std::pair<Point3Vec, int> > SquareDivision::getSquares() {
 std::vector<cv::Point2f> SquareDivision::getCorners() {
     return corners;
 }
-
+//TODO 四角形対応
 /**
  * @fn int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int type)
  * @brief 三角形を追加する
  * @param[in] p1_idx 頂点1の座標のインデックス
  * @param[in] p2_idx 頂点2の座標のインデックス
  * @param[in] p3_idx 頂点3の座標のインデックス
- * @param[in] type 分割タイプ
+ * @param[in] p4_idx 頂点4の座標のインデックス
  * @return 挿入した三角形が格納されているインデックス
  */
-int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int type) {
+int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx) {
     std::vector<std::pair<cv::Point2f, int> > v;
     v.emplace_back(corners[p1_idx], p1_idx);
     v.emplace_back(corners[p2_idx], p2_idx);
     v.emplace_back(corners[p3_idx], p3_idx);
+    v.emplace_back(corners[p4_idx], p4_idx);
 
     // ラスタスキャン順でソート
     sort(v.begin(), v.end(), [](const std::pair<cv::Point2f, int> &a1, const std::pair<cv::Point2f, int> &a2) {
@@ -348,7 +342,7 @@ int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int type) {
 
     Square square(v[0].second, v[1].second, v[2].second, static_cast<int>(squares.size()));
 
-    squares.emplace_back(square, type);
+//    squares.emplace_back(square, type);
     covered_square.emplace_back();
     isCodedSquare.emplace_back(false);
     square_gauss_results.emplace_back();
@@ -357,7 +351,7 @@ int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int type) {
 
     return static_cast<int>(squares.size() - 1);
 }
-
+//TODO 四角形対応
 /**
  * @fn void SquareDivision::eraseSquare(int t_idx)
  * @brief 三角パッチに関わる情報を削除する
@@ -373,7 +367,7 @@ void SquareDivision::eraseSquare(int t_idx){
     square_gauss_results.erase(square_gauss_results.begin() + t_idx);
     delete_flag.erase(delete_flag.begin() + t_idx);
 }
-
+//TODO 四角形対応
 /**
  * @fn void SquareDivision::addNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int divide_flag)
  * @brief p1, p2, p3の隣接頂点情報を更新する
@@ -392,7 +386,7 @@ void SquareDivision::addNeighborVertex(int p1_idx, int p2_idx, int p3_idx) {
     neighbor_vtx[p3_idx].emplace(p2_idx);
 
 }
-
+//TODO 四角形対応
 /***
  * @fn void SquareDivision::addCoveredSquare(int p1_idx, int p2_idx, int p3_idx, int square_no)
  * @brief ある頂点を含む三角形のインデックスの情報を更新する
@@ -406,7 +400,7 @@ void SquareDivision::addCoveredSquare(int p1_idx, int p2_idx, int p3_idx, int sq
     covered_square[p2_idx].emplace(square_no);
     covered_square[p3_idx].emplace(square_no);
 }
-
+//TODO 四角形対応
 /**
  * @fn double SquareDivision::getDistance(const cv::Point2f &a, const cv::Point2f &b)
  * @brief 2点間の距離を返す
@@ -418,7 +412,7 @@ double SquareDivision::getDistance(const cv::Point2f &a, const cv::Point2f &b){
     cv::Point2f v = a - b;
     return std::sqrt(v.x * v.x + v.y * v.y);
 }
-
+//TODO 四角形対応
 /**
  * @fn std::vector<int> SquareDivision::getNeighborVertexIndexList(int idx)
  * @brief 指定された頂点に隣接する頂点（インデックス）の集合を返す
@@ -435,7 +429,7 @@ std::vector<int> SquareDivision::getNeighborVertexIndexList(int idx) {
 
     return v;
 }
-
+//TODO 四角形対応
 /**
  * @fn std::vector<cv::Point2f> SquareDivision::getNeighborVertexCoordinateList(int idx)
  * @brief 指定された頂点に隣接する頂点の集合（座標）を返す
@@ -452,7 +446,7 @@ std::vector<cv::Point2f> SquareDivision::getNeighborVertexCoordinateList(int idx
 
     return v;
 }
-
+//TODO 四角形対応
 /**
  * @fn std::vector<Point3Vec> SquareDivision::getIdxCoveredSquareCoordinateList(int idx)
  * @brief 指定された頂点が含まれる三角形の集合を返す
@@ -470,7 +464,7 @@ std::vector<Point3Vec> SquareDivision::getIdxCoveredSquareCoordinateList(int tar
 
     return v;
 }
-
+//TODO 四角形対応
 /**
  * @fn std::vector<int> SquareDivision::getIdxCoveredSquareIndexList(int idx)
  * @brief 指定の頂点を含む三角形の集合（頂点番号）を返す
@@ -489,7 +483,7 @@ std::vector<int> SquareDivision::getIdxCoveredSquareIndexList(int target_vertex_
 
     return v;
 }
-
+//TODO 四角形対応
 /**
  * @fn void SquareDivision::removeSquareNeighborVertex(int p1_idx, int p2_idx, int p3_idx)
  * @brief 指定された三角形に含まれる頂点隣接ノード集合から、自分以外のノードを消す
@@ -506,7 +500,7 @@ void SquareDivision::removeSquareNeighborVertex(int p1_idx, int p2_idx, int p3_i
     neighbor_vtx[p3_idx].erase(p1_idx);
     neighbor_vtx[p3_idx].erase(p2_idx);
 }
-
+//TODO 四角形対応
 /**
  * @fn void SquareDivision::removeSquareCoveredSquare(int p1_idx, int p2_idx, int p3_idx, int square_idx)
  * @brief p1, p2, p3を含む三角形の集合から, square_idx番目の三角形を消す
@@ -520,7 +514,7 @@ void SquareDivision::removeSquareCoveredSquare(int p1_idx, int p2_idx, int p3_id
     covered_square[p2_idx].erase(square_idx);
     covered_square[p3_idx].erase(square_idx);
 }
-
+//TODO 四角形対応
 /**
  * @fn int SquareDivision::addCorner()
  * @param[in] p 追加する頂点の座標
@@ -534,7 +528,7 @@ int SquareDivision::addCorner(cv::Point2f p) {
     return static_cast<int>(corners.size() - 1);
 }
 
-
+//TODO 四角形対応
 /**
  *
  * @param square
@@ -870,7 +864,7 @@ void SquareDivision::addCornerAndSquare(Square square, int square_index, int typ
     isCodedSquare[square_index] = false;
     delete_flag[square_index] = true;
 }
-
+//TODO 四角形対応
 /**
  * @fn bool SquareDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3Vec square, int square_index, int type, int steps)
  * @brief 与えられたトライアングルを分割するか判定し，必要な場合は分割を行う
@@ -1317,7 +1311,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     }
 
 }
-
+//TODO 四角形対応
 /**
  * @fn SquareDivision::SplitResult SquareDivision::getSplitSquare(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type)
  * @details ３点の座標とtypeを受け取り，分割した形状を返す
@@ -1471,7 +1465,7 @@ SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1
             break;
     }
 }
-
+//TODO 四角形対応
 /**
  * @fn std::vector<int> getSpatialMvList()
  * @brief t_idx番目の三角形の空間予測動きベクトル候補を返す
@@ -1504,7 +1498,7 @@ std::vector<int> SquareDivision::getSpatialSquareList(int t_idx){
 
     return ret;
 }
-
+//TODO 四角形対応
 /**
  * @fn cv::Point2f SquareDivision::getCollocatedSquareList(int t_idx)
  * @brief 時間予測したベクトル候補を返す
@@ -1543,7 +1537,7 @@ cv::Point2f SquareDivision::getCollocatedSquareList(CodingTreeUnit* unit) {
 
     return previousNode->mv1;
 }
-
+//TODO 四角形対応
 /**
  * @fn std::vector<int> SquareDivision::getDivideOrder(CodingTreeUnit* currentNode)
  * @brief 木をたどって分割の順番を調べて返す
@@ -1569,7 +1563,7 @@ std::vector<int> SquareDivision::getDivideOrder(CodingTreeUnit* currentNode){
 
     return route;
 }
-
+//TODO 四角形対応
 /**
  * @fn void SquareDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num)
  * @brief 過去の動きベクトルを参照するためのTreeを構築する
@@ -1617,7 +1611,7 @@ void SquareDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> tr
 
 }
 
-
+//TODO 四角形対応
 /**
  * @fn void SquareDivision::constructPreviousCodingTree(std::vector<CollocatedMvTree*> trees)
  * @brief 木を再帰的に呼び出し構築する
@@ -1639,7 +1633,7 @@ void SquareDivision::constructPreviousCodingTree(CodingTreeUnit* codingTree, Col
     }
 
 }
-
+//TODO 四角形対応
 /**
  * @fn bool isVectorExists(const std::vector<std::tuple<cv::Point2f, int, MV_CODE_METHOD>> &vectors, const cv::Point2f &mv)
  * @brief mvがvectorsに含まれるか判定する
@@ -1655,7 +1649,7 @@ bool SquareDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE
     }
     return false;
 }
-
+//TODO 四角形対応
 /**
  * @fn std::tuple<cv::Point2f, int, MV_CODE_METHOD> RD(int square_idx, CodingTreeUnit* ctu)
  * @brief RDを行い，最適な差分ベクトルを返す
@@ -1846,7 +1840,7 @@ std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> SquareDivision::getMVD
 
     return {cost, code_length, mvd, selected_idx, method};
 }
-
+//TODO 四角形対応
 /**
  * @fn cv::Point2f SquareDivision::getQuantizedMv(cv::Point2f mv, int quantize_step)
  * @param mv 動きベクトル
@@ -1877,7 +1871,7 @@ cv::Point2f SquareDivision::getQuantizedMv(cv::Point2f &mv, double quantize_step
 
     return ret;
 }
-
+//TODO 四角形対応
 cv::Mat SquareDivision::getPredictedDiagonalImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag){
     cv::Mat out = cv::Mat::zeros(ref_image.size(), CV_8UC3);
     for(int i = 0 ; i < ctus.size() ; i++) {
@@ -1886,7 +1880,7 @@ cv::Mat SquareDivision::getPredictedDiagonalImageFromCtu(std::vector<CodingTreeU
 
     return out;
 }
-
+//TODO 四角形対応
 void SquareDivision::getPredictedDiagonalImageFromCtu(CodingTreeUnit* ctu, std::vector<std::vector<int>> &area_flag, const cv::Mat &out){
 
     if(ctu->leftNode == nullptr && ctu->rightNode == nullptr) {
@@ -1912,7 +1906,7 @@ void SquareDivision::getPredictedDiagonalImageFromCtu(CodingTreeUnit* ctu, std::
     if(ctu->leftNode != nullptr) getPredictedDiagonalImageFromCtu(ctu->leftNode, area_flag, out);
     if(ctu->leftNode != nullptr) getPredictedDiagonalImageFromCtu(ctu->rightNode, area_flag, out);
 }
-
+//TODO 四角形対応
 cv::Mat SquareDivision::getPredictedImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag){
     cv::Mat out = cv::Mat::zeros(ref_image.size(), CV_8UC3);
 
@@ -1923,7 +1917,7 @@ cv::Mat SquareDivision::getPredictedImageFromCtu(std::vector<CodingTreeUnit*> ct
 
     return out;
 }
-
+//TODO 四角形対応
 void SquareDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, std::vector<std::vector<int>> &area_flag){
     if(ctu->leftNode == nullptr && ctu->rightNode == nullptr) {
         int square_index = ctu->square_index;
@@ -1949,7 +1943,7 @@ void SquareDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out,
     if(ctu->leftNode != nullptr) getPredictedImageFromCtu(ctu->leftNode, out, area_flag);
     if(ctu->rightNode != nullptr) getPredictedImageFromCtu(ctu->rightNode, out, area_flag);
 }
-
+//TODO 四角形対応
 cv::Mat SquareDivision::getPredictedColorImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag, double original_psnr){
     cv::Mat out = cv::Mat::zeros(ref_image.size(), CV_8UC3);
 
@@ -1969,7 +1963,7 @@ cv::Mat SquareDivision::getPredictedColorImageFromCtu(std::vector<CodingTreeUnit
 
     return out;
 }
-
+//TODO 四角形対応
 void SquareDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, std::vector<std::vector<int>> &area_flag, double original_psnr, std::vector<cv::Scalar> &colors){
     if(ctu->leftNode == nullptr && ctu->rightNode == nullptr) {
         int square_index = ctu->square_index;
@@ -2034,7 +2028,7 @@ void SquareDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat 
     if(ctu->leftNode != nullptr) getPredictedColorImageFromCtu(ctu->leftNode, out, area_flag, original_psnr, colors);
     if(ctu->leftNode != nullptr) getPredictedColorImageFromCtu(ctu->rightNode, out, area_flag, original_psnr, colors);
 }
-
+//TODO 四角形対応
 int SquareDivision::getCtuCodeLength(std::vector<CodingTreeUnit*> ctus) {
     int code_length_sum = 0;
     for(int i = 0 ; i < ctus.size() ; i++){
@@ -2042,7 +2036,7 @@ int SquareDivision::getCtuCodeLength(std::vector<CodingTreeUnit*> ctus) {
     }
     return code_length_sum;
 }
-
+//TODO 四角形対応
 int SquareDivision::getCtuCodeLength(CodingTreeUnit *ctu){
 
     if(ctu->leftNode == nullptr && ctu->rightNode == nullptr) {
@@ -2053,7 +2047,7 @@ int SquareDivision::getCtuCodeLength(CodingTreeUnit *ctu){
     return 1 + getCtuCodeLength(ctu->leftNode) + getCtuCodeLength(ctu->rightNode);
 }
 
-
+//TODO 四角形対応
 cv::Mat SquareDivision::getMvImage(std::vector<CodingTreeUnit*> ctus){
     cv::Mat out = target_image.clone();
 
@@ -2067,7 +2061,7 @@ cv::Mat SquareDivision::getMvImage(std::vector<CodingTreeUnit*> ctus){
 
     return out;
 }
-
+//TODO 四角形対応
 void SquareDivision::drawMvImage(cv::Mat &out, CodingTreeUnit *ctu){
     if(ctu->leftNode == nullptr && ctu->rightNode == nullptr) {
         Square t = squares[ctu->square_index].first;
@@ -2083,14 +2077,14 @@ void SquareDivision::drawMvImage(cv::Mat &out, CodingTreeUnit *ctu){
     if(ctu->leftNode != nullptr) drawMvImage(out, ctu->leftNode);
     if(ctu->rightNode != nullptr) drawMvImage(out, ctu->rightNode);
 }
-
+//TODO 四角形対応
 SquareDivision::SplitResult::SplitResult(const Point3Vec &t1, const Point3Vec &t2, int t1Type, int t2Type) : t1(t1),
                                                                                                              t2(t2),
                                                                                                              t1_type(t1Type),
                                                                                                              t2_type(t2Type) {}
-
+//TODO 四角形対応
 SquareDivision::GaussResult::GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvParallel,
                                          double residual, int squareSize, bool parallelFlag, double residualBm, double residualNewton) : mv_warping(
         mvWarping), mv_parallel(mvParallel), residual(residual), square_size(squareSize), parallel_flag(parallelFlag), residual_bm(residualBm), residual_newton(residualNewton) {}
-
+//TODO 四角形対応
 SquareDivision::GaussResult::GaussResult() {}
