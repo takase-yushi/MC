@@ -41,22 +41,24 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus) {
  */
 void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
     if(ctu->leftNode == nullptr && ctu->rightNode == nullptr){
-        if(ctu->parallel_flag){
-            int x = (ctu->mvds_x)[0];
-            counter_x[x]++;
-            int y = (ctu->mvds_y)[0];
-            counter_y[y]++;
-
-            counter[x]++;
-            counter[y]++;
-        }else{
-            for(int i = 0 ; i < 3 ; i++) {
-                int x = (ctu->mvds_x)[i];
+        if(ctu->method != MV_CODE_METHOD::MERGE){
+            if(ctu->parallel_flag){
+                int x = (ctu->mvds_x)[0];
                 counter_x[x]++;
-                int y = (ctu->mvds_y)[i];
+                int y = (ctu->mvds_y)[0];
                 counter_y[y]++;
+
                 counter[x]++;
                 counter[y]++;
+            }else{
+                for(int i = 0 ; i < 3 ; i++) {
+                    int x = (ctu->mvds_x)[i];
+                    counter_x[x]++;
+                    int y = (ctu->mvds_y)[i];
+                    counter_y[y]++;
+                    counter[x]++;
+                    counter[y]++;
+                }
             }
         }
         return;
