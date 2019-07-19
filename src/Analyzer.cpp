@@ -16,19 +16,19 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus) {
     }
 
     FILE *fp = std::fopen((getProjectDirectory(OS) + "/mvd_distribution" + file_suffix + ".csv").c_str(), "w");
-    for(auto x : counter){
+    for(auto x : mvd_counter){
         fprintf(fp, "%d,%d\n", x.first, x.second);
     }
     fclose(fp);
 
     fp = std::fopen((getProjectDirectory(OS) + "/mvd_distribution_x" + file_suffix + ".csv").c_str(), "w");
-    for(auto x : counter_x){
+    for(auto x : mvd_counter_x){
         fprintf(fp, "%d,%d\n", x.first, x.second);
     }
     fclose(fp);
 
     fp = std::fopen((getProjectDirectory(OS) + "/mvd_distribution_y" + file_suffix + ".csv").c_str(), "w");
-    for(auto x : counter_y){
+    for(auto x : mvd_counter_y){
         fprintf(fp, "%d,%d\n", x.first, x.second);
     }
     fclose(fp);
@@ -44,20 +44,20 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
         if(ctu->method != MV_CODE_METHOD::MERGE){
             if(ctu->parallel_flag){
                 int x = (ctu->mvds_x)[0];
-                counter_x[x]++;
+                mvd_counter_x[x]++;
                 int y = (ctu->mvds_y)[0];
-                counter_y[y]++;
+                mvd_counter_y[y]++;
 
-                counter[x]++;
-                counter[y]++;
+                mvd_counter[x]++;
+                mvd_counter[y]++;
             }else{
                 for(int i = 0 ; i < 3 ; i++) {
                     int x = (ctu->mvds_x)[i];
-                    counter_x[x]++;
+                    mvd_counter_x[x]++;
                     int y = (ctu->mvds_y)[i];
-                    counter_y[y]++;
-                    counter[x]++;
-                    counter[y]++;
+                    mvd_counter_y[y]++;
+                    mvd_counter[x]++;
+                    mvd_counter[y]++;
                 }
             }
         }
