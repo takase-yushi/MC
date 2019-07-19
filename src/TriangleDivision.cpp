@@ -1091,23 +1091,20 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         }
     }
 
-    ctu->leftNode = new CodingTreeUnit();
-    ctu->leftNode->triangle_index = triangles.size() - 6;
-    ctu->leftNode->parentNode = ctu;
-    ctu->leftNode->leftNode = new CodingTreeUnit();
-    ctu->leftNode->leftNode->parentNode = ctu->leftNode;
-    ctu->leftNode->rightNode = new CodingTreeUnit();
-    ctu->leftNode->rightNode->parentNode = ctu->leftNode;
+    ctu->node1 = new CodingTreeUnit();
+    ctu->node1->triangle_index = triangles.size() - 4;
+    ctu->node1->parentNode = ctu;
+    ctu->node2 = new CodingTreeUnit();
+    ctu->node2->triangle_index = triangles.size() - 3;
+    ctu->node2->parentNode = ctu;
+    ctu->node3 = new CodingTreeUnit();
+    ctu->node3->triangle_index = triangles.size() - 2;
+    ctu->node3->parentNode = ctu;
+    ctu->node4 = new CodingTreeUnit();
+    ctu->node4->triangle_index = triangles.size() - 1;
+    ctu->node4->parentNode = ctu;
 
-    ctu->rightNode = new CodingTreeUnit();
-    ctu->rightNode->triangle_index = triangles.size() - 5;
-    ctu->rightNode->parentNode = ctu;
-    ctu->rightNode->leftNode = new CodingTreeUnit();
-    ctu->rightNode->leftNode->parentNode = ctu->rightNode;
-    ctu->rightNode->rightNode = new CodingTreeUnit();
-    ctu->rightNode->rightNode->parentNode = ctu->rightNode;
-
-    std::vector<CodingTreeUnit*> ctus{ctu->leftNode->leftNode, ctu->leftNode->rightNode, ctu->rightNode->leftNode, ctu->rightNode->rightNode};
+    std::vector<CodingTreeUnit*> ctus{ctu->node1, ctu->node2, ctu->node3, ctu->node4};
 #pragma omp parallel for
     for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
         double error_warping_tmp, error_parallel_tmp;
