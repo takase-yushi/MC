@@ -71,3 +71,18 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
 }
 
 Analyzer::Analyzer(const std::string &fileSuffix) : file_suffix(fileSuffix) {}
+
+FlagsCodeSum::FlagsCodeSum(int greater0FlagCode, int greaterThanOneCode, int signFlagCode) : greater_0_flag_code(
+        greater0FlagCode), greater_than_one_code(greaterThanOneCode), sign_flag_code(signFlagCode) {}
+
+void FlagsCodeSum::countGreater0Code() {
+    greater_0_flag_code++;
+}
+
+void FlagsCodeSum::countGreater1Code() {
+    greater_than_one_code++;
+}
+
+void FlagsCodeSum::countSignFlagCode() {
+    sign_flag_code++;
+}
