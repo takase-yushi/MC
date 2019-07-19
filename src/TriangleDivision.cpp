@@ -1765,6 +1765,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 }
 
                 flag_code_sum->countGreater1Code();
+                flag_code_sum->countSignFlagCode();
             }
 
             if(is_y_greater_than_zero){
@@ -1777,6 +1778,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 }
 
                 flag_code_sum->countGreater1Code();
+                flag_code_sum->countSignFlagCode();
             }
 
 #if MVD_DEBUG_LOG
@@ -1840,6 +1842,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                     }
 
                     flag_code_sum->countGreater1Code();
+                    flag_code_sum->countSignFlagCode();
                 }
 
                 if(is_y_greater_than_zero){
@@ -1851,6 +1854,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                         flag_code_sum->addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_y_minus_2, 0));
                     }
                     flag_code_sum->countGreater1Code();
+                    flag_code_sum->countSignFlagCode();
                 }
             }
 
