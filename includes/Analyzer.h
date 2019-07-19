@@ -42,15 +42,15 @@ private:
 
 class FlagsCodeSum {
     // 動きベクトル差分の絶対値が0より大きいのか？
-    int greater_0_flag_code;
+    int greater_0_flag_code_length;
 
     // 動きベクトル差分の絶対値が1より大きいのか？
-    int greater_than_one_code;
+    int greater_than_one_code_length;
 
     // 正負の判定
-    int sign_flag_code;
+    int sign_flag_code_length;
 
-    int mvd_code;
+    int mvd_code_length;
 
 public:
     FlagsCodeSum(int greater0FlagCode, int greaterThanOneCode, int signFlagCode);
@@ -62,13 +62,13 @@ public:
 
     void countMvdCode();
 
-    int getGreater0FlagCode() const;
+    int getGreater0FlagCodeLength() const;
 
-    int getGreaterThanOneCode() const;
+    int getGreaterThanOneCodeLength() const;
 
-    int getSignFlagCode() const;
+    int getSignFlagCodeLength() const;
 
-    int getMvdCode() const;
+    int getMvdCodeLength() const;
 };
 
 #endif //ENCODER_ANALYZER_H

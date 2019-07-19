@@ -72,38 +72,38 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
 
 Analyzer::Analyzer(const std::string &fileSuffix) : file_suffix(fileSuffix) {}
 
-FlagsCodeSum::FlagsCodeSum(int greater0FlagCode, int greaterThanOneCode, int signFlagCode) : greater_0_flag_code(
-        greater0FlagCode), greater_than_one_code(greaterThanOneCode), sign_flag_code(signFlagCode) {}
+FlagsCodeSum::FlagsCodeSum(int greater0FlagCode, int greaterThanOneCode, int signFlagCode) : greater_0_flag_code_length(
+        greater0FlagCode), greater_than_one_code_length(greaterThanOneCode), sign_flag_code_length(signFlagCode) {}
 
 void FlagsCodeSum::countGreater0Code() {
-    greater_0_flag_code++;
+    greater_0_flag_code_length++;
 }
 
 void FlagsCodeSum::countGreater1Code() {
-    greater_than_one_code++;
+    greater_than_one_code_length++;
 }
 
 void FlagsCodeSum::countSignFlagCode() {
-    sign_flag_code++;
+    sign_flag_code_length++;
 }
 
 void FlagsCodeSum::countMvdCode() {
 
 }
 
-int FlagsCodeSum::getGreater0FlagCode() const {
-    return greater_0_flag_code;
+int FlagsCodeSum::getGreater0FlagCodeLength() const {
+    return greater_0_flag_code_length;
 }
 
-int FlagsCodeSum::getGreaterThanOneCode() const {
-    return greater_than_one_code;
+int FlagsCodeSum::getGreaterThanOneCodeLength() const {
+    return greater_than_one_code_length;
 }
 
-int FlagsCodeSum::getSignFlagCode() const {
-    return sign_flag_code;
+int FlagsCodeSum::getSignFlagCodeLength() const {
+    return sign_flag_code_length;
 }
 
 
-int FlagsCodeSum::getMvdCode() const {
-    return mvd_code;
+int FlagsCodeSum::getMvdCodeLength() const {
+    return mvd_code_length;
 }
