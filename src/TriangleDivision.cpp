@@ -2091,20 +2091,20 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
 
 int TriangleDivision::getCtuCodeLength(std::vector<CodingTreeUnit*> ctus) {
     int code_length_sum = 0;
-    for(int i = 0 ; i < ctus.size() ; i++){
-        code_length_sum += getCtuCodeLength(ctus[i]);
+    for(auto & ctu : ctus){
+        code_length_sum += getCtuCodeLength(ctu);
     }
     return code_length_sum;
 }
 
 int TriangleDivision::getCtuCodeLength(CodingTreeUnit *ctu){
 
-    if(ctu->leftNode == nullptr && ctu->rightNode == nullptr) {
+    if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
         return 1+ctu->code_length;
     }
 
     // ここで足している1はsplit_cu_flag分です
-    return 1 + getCtuCodeLength(ctu->leftNode) + getCtuCodeLength(ctu->rightNode);
+    return 1 + getCtuCodeLength(ctu->node1) + getCtuCodeLength(ctu->node2) + getCtuCodeLength(ctu->node3) + getCtuCodeLength(ctu->node4);
 }
 
 
