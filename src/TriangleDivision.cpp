@@ -347,7 +347,6 @@ int TriangleDivision::insertTriangle(int p1_idx, int p2_idx, int p3_idx, int typ
     Triangle triangle(v[0].second, v[1].second, v[2].second, static_cast<int>(triangles.size()));
 
     triangles.emplace_back(triangle, type);
-    covered_triangle.emplace_back();
     isCodedTriangle.emplace_back(false);
     triangle_gauss_results.emplace_back();
     triangle_gauss_results[triangle_gauss_results.size() - 1].residual = -1.0;
@@ -367,7 +366,7 @@ void TriangleDivision::eraseTriangle(int t_idx){
     removeTriangleCoveredTriangle(triangle.p1_idx, triangle.p2_idx, triangle.p3_idx, t_idx);
     isCodedTriangle.erase(isCodedTriangle.begin() + t_idx);
     triangles.erase(triangles.begin() + t_idx);
-    covered_triangle.erase(covered_triangle.begin() + t_idx);
+//    covered_triangle.erase(covered_triangle.begin() + t_idx);
     triangle_gauss_results.erase(triangle_gauss_results.begin() + t_idx);
     delete_flag.erase(delete_flag.begin() + t_idx);
 }
@@ -528,6 +527,7 @@ int TriangleDivision::addCorner(cv::Point2f p) {
     if(corner_flag[(int)(p.y * 2)][(int)(p.x * 2)] != -1) return corner_flag[(int)(p.y * 2)][(int)(p.x * 2)];
     corners.emplace_back(p);
     neighbor_vtx.emplace_back();
+    covered_triangle.emplace_back();
     corner_flag[(int)(p.y * 2)][(int)(p.x * 2)] = static_cast<int>(corners.size() - 1);
     return static_cast<int>(corners.size() - 1);
 }
@@ -571,8 +571,6 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             addNeighborVertex(a_idx, b_idx, c_idx);
             addNeighborVertex(a_idx, c_idx, d_idx);
 
-            covered_triangle.emplace_back();
-            covered_triangle.emplace_back();
             addCoveredTriangle(a_idx, b_idx, c_idx, t1_idx);
             addCoveredTriangle(a_idx, c_idx, d_idx, t2_idx);
 
@@ -607,8 +605,6 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             addNeighborVertex(a_idx, b_idx, d_idx);
             addNeighborVertex(b_idx, c_idx, d_idx);
 
-            covered_triangle.emplace_back();
-            covered_triangle.emplace_back();
             addCoveredTriangle(a_idx, b_idx, d_idx, t1_idx);
             addCoveredTriangle(b_idx, c_idx, d_idx, t2_idx);
         }
@@ -642,8 +638,6 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             addNeighborVertex(a_idx, b_idx, c_idx);
             addNeighborVertex(b_idx, c_idx, d_idx);
 
-            covered_triangle.emplace_back();
-            covered_triangle.emplace_back();
             addCoveredTriangle(a_idx, b_idx, c_idx, t1_idx);
             addCoveredTriangle(b_idx, c_idx, d_idx, t2_idx);
 
@@ -678,8 +672,6 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             addNeighborVertex(a_idx, b_idx, c_idx);
             addNeighborVertex(b_idx, c_idx, d_idx);
 
-            covered_triangle.emplace_back();
-            covered_triangle.emplace_back();
             addCoveredTriangle(a_idx, b_idx, c_idx, t1_idx);
             addCoveredTriangle(b_idx, c_idx, d_idx, t2_idx);
 
@@ -724,8 +716,6 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             addNeighborVertex(a_idx, b1_idx, d1_idx);
             addNeighborVertex(b2_idx, c_idx, d2_idx);
 
-            covered_triangle.emplace_back();
-            covered_triangle.emplace_back();
             addCoveredTriangle(a_idx, b1_idx, d1_idx, t1_idx);
             addCoveredTriangle(b2_idx, c_idx, d2_idx, t2_idx);
 
@@ -768,8 +758,6 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             addNeighborVertex(a_idx, b1_idx, c1_idx);
             addNeighborVertex(b2_idx, c2_idx, d_idx);
 
-            covered_triangle.emplace_back();
-            covered_triangle.emplace_back();
             addCoveredTriangle(a_idx, b1_idx, c1_idx, t1_idx);
             addCoveredTriangle(b2_idx, c2_idx, d_idx, t2_idx);
         }
@@ -810,8 +798,6 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             addNeighborVertex(a1_idx, b_idx, c1_idx);
             addNeighborVertex(a2_idx, c2_idx, d_idx);
 
-            covered_triangle.emplace_back();
-            covered_triangle.emplace_back();
             addCoveredTriangle(a1_idx, b_idx, c1_idx, t1_idx);
             addCoveredTriangle(a2_idx, c2_idx, d_idx, t2_idx);
 
@@ -854,8 +840,6 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             addNeighborVertex(b_idx, a1_idx, c1_idx);
             addNeighborVertex(a2_idx, c2_idx, d_idx);
 
-            covered_triangle.emplace_back();
-            covered_triangle.emplace_back();
             addCoveredTriangle(b_idx, a1_idx, c1_idx, t1_idx);
             addCoveredTriangle(a2_idx, c2_idx, d_idx, t2_idx);
 
@@ -865,6 +849,7 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             break;
     }
 
+//    std::cout << corners.size() << " " << covered_triangle.size() << std::endl;
     isCodedTriangle[triangle_index] = false;
     delete_flag[triangle_index] = true;
 }
