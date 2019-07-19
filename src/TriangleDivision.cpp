@@ -519,11 +519,12 @@ void TriangleDivision::removeTriangleCoveredTriangle(int p1_idx, int p2_idx, int
 }
 
 /**
- * @fn int TriangleDivision::addCorner()
+ * @fn int TriangleDivision::getCornerIndex(cv::Point2f p)
+ * @brief 頂点が格納されているインデックスを返す。頂点が存在しない場合、その頂点を頂点集合に追加した後インデックスを返す
  * @param[in] p 追加する頂点の座標
- * @return 頂点番号を返す
+ * @return 頂点番号
  */
-int TriangleDivision::addCorner(cv::Point2f p) {
+int TriangleDivision::getCornerIndex(cv::Point2f p) {
     if(corner_flag[(int)(p.y * 2)][(int)(p.x * 2)] != -1) return corner_flag[(int)(p.y * 2)][(int)(p.x * 2)];
     corners.emplace_back(p);
     neighbor_vtx.emplace_back();
@@ -556,7 +557,7 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             cv::Point2f c = a + x + y;
             cv::Point2f d = p3;
 
-            int c_idx = addCorner(c);
+            int c_idx = getCornerIndex(c);
 
             int a_idx = triangle.p1_idx;
             int b_idx = triangle.p2_idx;
@@ -590,7 +591,7 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             cv::Point2f c = p2;
             cv::Point2f d = p3;
 
-            int b_idx = addCorner(b);
+            int b_idx = getCornerIndex(b);
 
             int a_idx = triangle.p1_idx;
             int c_idx = triangle.p2_idx;
@@ -623,7 +624,7 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             cv::Point2f c = p2 + x + y;
             cv::Point2f d = p3;
 
-            int c_idx = addCorner(c);
+            int c_idx = getCornerIndex(c);
 
             int a_idx = triangle.p1_idx;
             int b_idx = triangle.p2_idx;
@@ -657,7 +658,7 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             cv::Point2f c = p2;
             cv::Point2f d = p3;
 
-            int b_idx = addCorner(b);
+            int b_idx = getCornerIndex(b);
 
             int a_idx = triangle.p1_idx;
             int c_idx = triangle.p2_idx;
@@ -699,10 +700,10 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             d2.x = ceil(d2.x);
             d2.y = (int)(d2.y);
 
-            int b1_idx = addCorner(b1);
-            int b2_idx = addCorner(b2);
-            int d1_idx = addCorner(d1);
-            int d2_idx = addCorner(d2);
+            int b1_idx = getCornerIndex(b1);
+            int b2_idx = getCornerIndex(b2);
+            int d1_idx = getCornerIndex(d1);
+            int d2_idx = getCornerIndex(d2);
 
             int a_idx = triangle.p1_idx;
             int c_idx = triangle.p2_idx;
@@ -741,10 +742,10 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             c2.x = (int)(c2.x);
             c2.y = ceil(c2.y);
 
-            int b1_idx = addCorner(b1);
-            int b2_idx = addCorner(b2);
-            int c1_idx = addCorner(c1);
-            int c2_idx = addCorner(c2);
+            int b1_idx = getCornerIndex(b1);
+            int b2_idx = getCornerIndex(b2);
+            int c1_idx = getCornerIndex(c1);
+            int c2_idx = getCornerIndex(c2);
 
             int a_idx = triangle.p1_idx;
             int d_idx = triangle.p3_idx;
@@ -781,10 +782,10 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             cv::Point2f c2 = p2 + x;
             c2.x += 1;
 
-            int a1_idx = addCorner(a1);
-            int a2_idx = addCorner(a2);
-            int c1_idx = addCorner(c1);
-            int c2_idx = addCorner(c2);
+            int a1_idx = getCornerIndex(a1);
+            int a2_idx = getCornerIndex(a2);
+            int c1_idx = getCornerIndex(c1);
+            int c2_idx = getCornerIndex(c2);
 
             int b_idx = triangle.p2_idx;
             int d_idx = triangle.p3_idx;
@@ -823,10 +824,10 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             c1.y = (int)c1.y;
             c2.y = ceil(c2.y);
 
-            int a1_idx = addCorner(a1);
-            int a2_idx = addCorner(a2);
-            int c1_idx = addCorner(c1);
-            int c2_idx = addCorner(c2);
+            int a1_idx = getCornerIndex(a1);
+            int a2_idx = getCornerIndex(a2);
+            int c1_idx = getCornerIndex(c1);
+            int c2_idx = getCornerIndex(c2);
 
             int b_idx = triangle.p1_idx;
             int d_idx = triangle.p3_idx;
@@ -1021,19 +1022,19 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     double RMSE_after_subdiv = 0.0;
     std::vector<GaussResult> split_mv_result(subdiv_target_triangles.size());
 
-//    int p1_idx = addCorner(p1);
-//    int p2_idx = addCorner(p2);
-//    int p3_idx = addCorner(p3);
+//    int p1_idx = getCornerIndex(p1);
+//    int p2_idx = getCornerIndex(p2);
+//    int p3_idx = getCornerIndex(p3);
 //    addCornerAndTriangle(Triangle(p1_idx, p2_idx, p3_idx), triangle_index, type);
 
-    int t1_p1_idx = addCorner(split_triangles.t1.p1);
-    int t1_p2_idx = addCorner(split_triangles.t1.p2);
-    int t1_p3_idx = addCorner(split_triangles.t1.p3);
+    int t1_p1_idx = getCornerIndex(split_triangles.t1.p1);
+    int t1_p2_idx = getCornerIndex(split_triangles.t1.p2);
+    int t1_p3_idx = getCornerIndex(split_triangles.t1.p3);
     addCornerAndTriangle(Triangle(t1_p1_idx, t1_p2_idx, t1_p3_idx), triangle_index, split_triangles.t1_type);
 
-    int t2_p1_idx = addCorner(split_triangles.t2.p1);
-    int t2_p2_idx = addCorner(split_triangles.t2.p2);
-    int t2_p3_idx = addCorner(split_triangles.t2.p3);
+    int t2_p1_idx = getCornerIndex(split_triangles.t2.p1);
+    int t2_p2_idx = getCornerIndex(split_triangles.t2.p2);
+    int t2_p3_idx = getCornerIndex(split_triangles.t2.p3);
     addCornerAndTriangle(Triangle(t2_p1_idx, t2_p2_idx, t2_p3_idx), triangle_index, split_triangles.t2_type);
 
     int triangle_indexes[] = {(int)triangles.size() - 4, (int)triangles.size() - 3, (int)triangles.size() - 2, (int)triangles.size() - 1};

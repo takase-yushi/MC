@@ -179,7 +179,7 @@ private:
     void addCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_no);
     void removeTriangleNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
     void removeTriangleCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_idx);
-    int addCorner(cv::Point2f p);
+    int getCornerIndex(cv::Point2f p);
     void addCornerAndTriangle(Triangle triangle, int triangle_index, int type);
     std::vector<int> getDivideOrder(CodingTreeUnit* currentNode);
     void constructPreviousCodingTree(CodingTreeUnit* codingTree, CollocatedMvTree* constructedTree);
