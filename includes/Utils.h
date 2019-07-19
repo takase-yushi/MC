@@ -152,6 +152,22 @@ struct Triangle{
     Triangle(int p1_idx, int p2_idx, int p3_idx) : p1_idx(p1_idx), p2_idx(p2_idx), p3_idx(p3_idx) {}
     Triangle(int p1_idx, int p2_idx, int p3_idx, int idx) : p1_idx(p1_idx), p2_idx(p2_idx), p3_idx(p3_idx), idx(idx) {}
 };
+struct Square{
+    int p1_idx; ///< 三角形の頂点1のインデックス
+    int p2_idx; ///< 三角形の頂点2のインデックス
+    int p3_idx; ///< 三角形の頂点3のインデックス
+    int idx;
+    int depth;
+
+    /**
+     * コンストラクタ
+     * @param p1_idx 三角形の頂点1のインデックス
+     * @param p2_idx 三角形の頂点2のインデックス
+     * @param p3_idx 三角形の頂点3のインデックス
+     */
+    Square(int p1_idx, int p2_idx, int p3_idx) : p1_idx(p1_idx), p2_idx(p2_idx), p3_idx(p3_idx) {}
+    Square(int p1_idx, int p2_idx, int p3_idx, int idx) : p1_idx(p1_idx), p2_idx(p2_idx), p3_idx(p3_idx), idx(idx) {}
+};
 class TRIANGLE{
     int p1_idx; ///< 三角形の頂点1のインデックス
     int p2_idx; ///< 三角形の頂点2のインデックス
