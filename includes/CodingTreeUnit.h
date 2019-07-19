@@ -24,10 +24,13 @@ public:
     CodingTreeUnit *leftNode;
     CodingTreeUnit *rightNode;
     CodingTreeUnit *parentNode;
-    int triangle_index;
-    cv::Point2f mv1, mv2, mv3;
-    std::vector<int> mvds_x, mvds_y;
-    std::vector<int> original_mvds_x, original_mvds_y;
+//    int triangle_index;
+    int square_index;
+    cv::Point2f mv1; //, mv2, mv3;
+//    std::vector<int> mvds_x, mvds_y;
+//    std::vector<int> original_mvds_x, original_mvds_y;
+    int mvds_x, mvds_y;
+    int original_mvds_x, original_mvds_y;
     double error_bm, error_newton;
     cv::Point2f collocated_mv;
     MV_CODE_METHOD method;
