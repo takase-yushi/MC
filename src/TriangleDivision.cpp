@@ -2117,19 +2117,19 @@ int TriangleDivision::getCtuCodeLength(CodingTreeUnit *ctu){
 cv::Mat TriangleDivision::getMvImage(std::vector<CodingTreeUnit*> ctus){
     cv::Mat out = target_image.clone();
 
-    for(auto triangle : getTriangleCoordinateList()){
+    for(const auto& triangle : getTriangleCoordinateList()){
         drawTriangle(out, triangle.p1, triangle.p2, triangle.p3, cv::Scalar(255, 255, 255));
     }
 
-    for(int i = 0 ; i < ctus.size() ; i++){
-        drawMvImage(out, ctus[i]);
+    for(auto & ctu : ctus){
+        drawMvImage(out, ctu);
     }
 
     return out;
 }
 
 void TriangleDivision::drawMvImage(cv::Mat &out, CodingTreeUnit *ctu){
-    if(ctu->leftNode == nullptr && ctu->rightNode == nullptr) {
+    if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
         Triangle t = triangles[ctu->triangle_index].first;
         cv::Point2f p1 = corners[t.p1_idx];
         cv::Point2f p2 = corners[t.p2_idx];
@@ -2140,8 +2140,10 @@ void TriangleDivision::drawMvImage(cv::Mat &out, CodingTreeUnit *ctu){
         cv::line(out, g, g+ctu->mv1, GREEN);
     }
 
-    if(ctu->leftNode != nullptr) drawMvImage(out, ctu->leftNode);
-    if(ctu->rightNode != nullptr) drawMvImage(out, ctu->rightNode);
+    if(ctu->node1 != nullptr) drawMvImage(out, ctu->node1);
+    if(ctu->node2 != nullptr) drawMvImage(out, ctu->node2);
+    if(ctu->node3 != nullptr) drawMvImage(out, ctu->node3);
+    if(ctu->node4 != nullptr) drawMvImage(out, ctu->node4);
 }
 
 TriangleDivision::SplitResult::SplitResult(const Point3Vec &t1, const Point3Vec &t2, int t1Type, int t2Type) : t1(t1),
