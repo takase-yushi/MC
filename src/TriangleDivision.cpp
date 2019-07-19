@@ -1675,7 +1675,6 @@ bool TriangleDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CO
  * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
  */
 std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu, bool parallel_flag){
-//    std::cout << "triangle_index(getMVD):" << triangle_idx << std::endl;
     // 空間予測と時間予測の候補を取り出す
     std::vector<int> spatial_triangles = getSpatialTriangleList(triangle_idx);
     int spatial_triangle_size = static_cast<int>(spatial_triangles.size());
@@ -1890,9 +1889,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
         (ctu->original_mvds_x).clear();
         (ctu->original_mvds_y).clear();
 
-        if(mvds.empty()){
-            exit(-1);
-        }
         if (parallel_flag) {
             (ctu->mvds_x).emplace_back(mvds[0].x);
             (ctu->mvds_y).emplace_back(mvds[0].y);
