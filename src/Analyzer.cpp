@@ -87,6 +87,10 @@ void FlagsCodeSum::countSignFlagCode() {
     sign_flag_code++;
 }
 
+void FlagsCodeSum::countMvdCode() {
+
+}
+
 int FlagsCodeSum::getGreater0FlagCode() const {
     return greater_0_flag_code;
 }
@@ -97,4 +101,9 @@ int FlagsCodeSum::getGreaterThanOneCode() const {
 
 int FlagsCodeSum::getSignFlagCode() const {
     return sign_flag_code;
+}
+
+
+int FlagsCodeSum::getMvdCode() const {
+    return mvd_code;
 }

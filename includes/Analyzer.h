@@ -50,11 +50,17 @@ class FlagsCodeSum {
     // 正負の判定
     int sign_flag_code;
 
+    int mvd_code;
+
 public:
     FlagsCodeSum(int greater0FlagCode, int greaterThanOneCode, int signFlagCode);
     void countGreater0Code();
 
     void countGreater1Code();
+
+    void countSignFlagCode();
+
+    void countMvdCode();
 
     int getGreater0FlagCode() const;
 
@@ -62,7 +68,7 @@ public:
 
     int getSignFlagCode() const;
 
-    void countSignFlagCode();
+    int getMvdCode() const;
 };
 
 #endif //ENCODER_ANALYZER_H
