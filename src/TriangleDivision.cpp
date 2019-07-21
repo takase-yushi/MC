@@ -21,6 +21,7 @@
 #include <opencv2/imgproc.hpp>
 #include <random>
 #include "../includes/ImageUtil.h"
+#include "../includes/Analyzer.h"
 
 TriangleDivision::TriangleDivision(const cv::Mat &refImage, const cv::Mat &targetImage, const cv::Mat &refGaussImage) : target_image(targetImage),
                                                                                                                         ref_image(refImage), ref_gauss_image(refGaussImage) {}
@@ -1676,7 +1677,6 @@ bool TriangleDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CO
  * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
  */
 std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu, bool parallel_flag){
-//    std::cout << "triangle_index(getMVD):" << triangle_idx << std::endl;
     // 空間予測と時間予測の候補を取り出す
     std::vector<int> spatial_triangles = getSpatialTriangleList(triangle_idx);
     int spatial_triangle_size = static_cast<int>(spatial_triangles.size());
@@ -1706,13 +1706,14 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
     double lambda = getLambdaPred(qp);
 
     //                      コスト, 差分ベクトル, 番号, タイプ
-    std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> > results;
+    std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum*> > results;
     for(int i = 0 ; i < vectors.size() ; i++) {
         std::pair<cv::Point2f, MV_CODE_METHOD> vector = vectors[i];
         cv::Point2f current_mv = vector.first;
         // TODO: ワーピング対応
-
         if(parallel_flag) { // 平行移動成分に関してはこれまで通りにやる
+            FlagsCodeSum *flag_code_sum = new FlagsCodeSum(0, 0, 0, 0);
+
             cv::Point2f mvd = current_mv - mv[0];
 #if MVD_DEBUG_LOG
             std::cout << "idx                 :" << i << std::endl;
@@ -1739,6 +1740,11 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             bool is_x_greater_than_zero = abs_x > 0;
             bool is_y_greater_than_zero = abs_y > 0;
 
+            flag_code_sum->countGreater0Code();
+            flag_code_sum->countGreater0Code();
+            flag_code_sum->setXGreater0Flag(is_x_greater_than_zero);
+            flag_code_sum->setYGreater0Flag(is_y_greater_than_zero);
+
             // 動きベクトル差分の絶対値が1より大きいのか？
             bool is_x_greater_than_one = abs_x > 1;
             bool is_y_greater_than_one = abs_y > 1;
@@ -1754,7 +1760,12 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 if(is_x_greater_than_one){
                     int mvd_x_minus_2 = mvd.x - 2.0;
                     mvd_code_length += getExponentialGolombCodeLength((int) mvd_x_minus_2, 0);
+                    flag_code_sum->addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_x_minus_2, 0));
                 }
+
+                flag_code_sum->countGreater1Code();
+                flag_code_sum->setXGreater1Flag(is_x_greater_than_one);
+                flag_code_sum->countSignFlagCode();
             }
 
             if(is_y_greater_than_zero){
@@ -1763,7 +1774,12 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 if(is_y_greater_than_one){
                     int mvd_y_minus_2 = mvd.y - 2.0;
                     mvd_code_length += getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
+                    flag_code_sum->addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_y_minus_2, 0));
                 }
+
+                flag_code_sum->countGreater1Code();
+                flag_code_sum->setYGreater1Flag(is_y_greater_than_one);
+                flag_code_sum->countSignFlagCode();
             }
 
 #if MVD_DEBUG_LOG
@@ -1778,7 +1794,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 
             std::vector<cv::Point2f> mvds{mvd};
             // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second);
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum);
         }else{
             std::vector<cv::Point2f> mvds;
             mvds.emplace_back(current_mv - mv[0]);
@@ -1786,7 +1802,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             mvds.emplace_back(current_mv - mv[2]);
 
             int mvd_code_length = 6;
+            FlagsCodeSum *flag_code_sum = new FlagsCodeSum(0, 0, 0, 0);
+
             for(int i = 0 ; i < mvds.size() ; i++){
+
                 cv::Point2f mvd = getQuantizedMv(mvds[i], 4);
                 mvd.x = std::fabs(mvd.x);
                 mvd.y = std::fabs(mvd.y);
@@ -1795,15 +1814,19 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 int abs_x = mvd.x;
                 int abs_y = mvd.y;
 
-                /* 動きベクトル符号化 */
-
                 // 動きベクトル差分の絶対値が0より大きいのか？
                 bool is_x_greater_than_zero = abs_x > 0;
                 bool is_y_greater_than_zero = abs_y > 0;
 
+                flag_code_sum->countGreater0Code();
+                flag_code_sum->countGreater0Code();
+                flag_code_sum->setXGreater0Flag(is_x_greater_than_zero);
+                flag_code_sum->setYGreater0Flag(is_y_greater_than_zero);
+
                 // 動きベクトル差分の絶対値が1より大きいのか？
                 bool is_x_greater_than_one = abs_x > 1;
                 bool is_y_greater_than_one = abs_y > 1;
+
 
                 // 正負の判定(これもつかってません！！！）
                 bool is_x_minus = mvd.x < 0;
@@ -1815,7 +1838,12 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                     if(is_x_greater_than_one){
                         int mvd_x_minus_2 = mvd.x - 2.0;
                         mvd_code_length += getExponentialGolombCodeLength((int) mvd_x_minus_2, 0);
+                        flag_code_sum->addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_x_minus_2, 0));
                     }
+
+                    flag_code_sum->countGreater1Code();
+                    flag_code_sum->setXGreater1Flag(is_x_greater_than_one);
+                    flag_code_sum->countSignFlagCode();
                 }
 
                 if(is_y_greater_than_zero){
@@ -1824,7 +1852,11 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                     if(is_y_greater_than_one){
                         int mvd_y_minus_2 = mvd.y - 2.0;
                         mvd_code_length +=  getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
+                        flag_code_sum->addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_y_minus_2, 0));
                     }
+                    flag_code_sum->countGreater1Code();
+                    flag_code_sum->setYGreater1Flag(is_y_greater_than_one);
+                    flag_code_sum->countSignFlagCode();
                 }
             }
 
@@ -1836,7 +1868,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
 
             // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second);
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum);
         }
     }
 
@@ -1861,7 +1893,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 double ret_residual = getTriangleResidual(ref_image, target_image, coordinate, mv, pixels_in_triangle);
                 double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
                 std::vector<cv::Point2f> mvds{cv::Point2f(0,0)};
-                results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, results.size(), MERGE);
+                results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, results.size(), MERGE, new FlagsCodeSum(0, 0, 0, 0));
             }
         }else{
             if(!isMvExists(merge_vectors, spatial_triangle.mv_warping[0])) {
@@ -1869,14 +1901,14 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 double ret_residual = getTriangleResidual(ref_image, target_image, coordinate, mv, pixels_in_triangle);
                 double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
                 std::vector<cv::Point2f> mvds{cv::Point2f(0,0)};
-                results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, results.size(), MERGE);
+                results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, results.size(), MERGE, new FlagsCodeSum(0, 0, 0, 0));
             }
         }
 
     }
 
     // RDしたスコアが小さい順にソート
-    std::sort(results.begin(), results.end(), [](const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD >& a, const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD>& b){
+    std::sort(results.begin(), results.end(), [](const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum *>& a, const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum*>& b){
         return std::get<0>(a) < std::get<0>(b);
     });
     double cost = std::get<0>(results[0]);
@@ -1884,16 +1916,15 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
     std::vector<cv::Point2f> mvds = std::get<2>(results[0]);
     int selected_idx = std::get<3>(results[0]);
     MV_CODE_METHOD method = std::get<4>(results[0]);
+    FlagsCodeSum *flag_code_sum = std::get<5>(results[0]);
 
+    ctu->flags_code_sum = flag_code_sum;
     if(method != MERGE) {
         (ctu->mvds_x).clear();
         (ctu->mvds_y).clear();
         (ctu->original_mvds_x).clear();
         (ctu->original_mvds_y).clear();
 
-        if(mvds.empty()){
-            exit(-1);
-        }
         if (parallel_flag) {
             (ctu->mvds_x).emplace_back(mvds[0].x);
             (ctu->mvds_y).emplace_back(mvds[0].y);
@@ -1903,6 +1934,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 (ctu->mvds_y).emplace_back(mvds[i].y);
             }
         }
+    }
+
+    for(int i = 1 ; i < results.size() ; i++){
+        delete std::get<5>(results[i]);
     }
 
     return {cost, code_length, mvds, selected_idx, method};
