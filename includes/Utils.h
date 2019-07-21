@@ -316,4 +316,6 @@ void add_corner_edge(std::vector<cv::Point2f> &corners,cv::Mat &canny,double r1,
 
 std::vector<cv::Point2f> slide_corner_edge(std::vector<cv::Point2f> &corners,cv::Mat &canny,double r1);
 
+std::string getCurrentTimestamp();
+
 #endif //ENCODER_UTILS_H

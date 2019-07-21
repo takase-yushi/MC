@@ -1181,3 +1181,19 @@ std::vector<cv::Point2f> slide_corner_edge(std::vector<cv::Point2f> &corners,cv:
     }
     return ret_corners;
 }
+
+/**
+ * @fn std::string getCurrentTimestamp
+ * @brief 現在のタイムスタンプをすべてつなげた文字列を返す
+ * @return タイムスタンプ文字列
+ */
+std::string getCurrentTimestamp(){
+    time_t timer;
+    struct tm* tm;
+    char datetime[30];
+    timer = time(NULL);
+    tm = localtime(&timer);
+    strftime(datetime, 30, "%Y%m%d%H%M%S",tm );
+
+    return std::string(datetime);
+}
