@@ -56,12 +56,26 @@ class FlagsCodeSum {
 
     int mvd_code_length;
 
-    bool x_greater_0_flag;
-    bool y_greater_0_flag;
-    bool x_greater_1_flag;
-    bool y_greater_1_flag;
-    bool x_sign_flag;
-    bool y_sign_flag;
+    std::vector<bool> x_greater_0_flag;
+    std::vector<bool> y_greater_0_flag;
+    std::vector<bool> x_greater_1_flag;
+public:
+    const std::vector<bool> &getXGreater0Flag() const;
+
+    const std::vector<bool> &getYGreater0Flag() const;
+
+    const std::vector<bool> &getXGreater1Flag() const;
+
+    const std::vector<bool> &getYGreater1Flag() const;
+
+    const std::vector<bool> &getXSignFlag() const;
+
+    const std::vector<bool> &getYSignFlag() const;
+
+private:
+    std::vector<bool> y_greater_1_flag;
+    std::vector<bool> x_sign_flag;
+    std::vector<bool> y_sign_flag;
 public:
     void setXGreater0Flag(bool xGreater0Flag);
 

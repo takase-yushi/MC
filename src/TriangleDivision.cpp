@@ -1742,13 +1742,11 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             flag_code_sum->countGreater0Code();
             flag_code_sum->countGreater0Code();
             flag_code_sum->setXGreater0Flag(is_x_greater_than_zero);
-            flag_code_sum->setYGreater1Flag(is_y_greater_than_zero);
+            flag_code_sum->setYGreater0Flag(is_y_greater_than_zero);
 
             // 動きベクトル差分の絶対値が1より大きいのか？
             bool is_x_greater_than_one = abs_x > 1;
             bool is_y_greater_than_one = abs_y > 1;
-            flag_code_sum->setXGreater1Flag(is_x_greater_than_one);
-            flag_code_sum->setYGreater1Flag(is_y_greater_than_one);
 
             // 正負の判定(使ってません！！！)
             bool is_x_minus = mvd.x < 0;
@@ -1765,6 +1763,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 }
 
                 flag_code_sum->countGreater1Code();
+                flag_code_sum->setXGreater1Flag(is_x_greater_than_one);
                 flag_code_sum->countSignFlagCode();
             }
 
@@ -1778,6 +1777,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 }
 
                 flag_code_sum->countGreater1Code();
+                flag_code_sum->setYGreater1Flag(is_y_greater_than_one);
                 flag_code_sum->countSignFlagCode();
             }
 
@@ -1820,13 +1820,12 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 flag_code_sum->countGreater0Code();
                 flag_code_sum->countGreater0Code();
                 flag_code_sum->setXGreater0Flag(is_x_greater_than_zero);
-                flag_code_sum->setYGreater1Flag(is_y_greater_than_zero);
+                flag_code_sum->setYGreater0Flag(is_y_greater_than_zero);
 
                 // 動きベクトル差分の絶対値が1より大きいのか？
                 bool is_x_greater_than_one = abs_x > 1;
                 bool is_y_greater_than_one = abs_y > 1;
-                flag_code_sum->setXGreater1Flag(is_x_greater_than_one);
-                flag_code_sum->setYGreater1Flag(is_y_greater_than_one);
+
 
                 // 正負の判定(これもつかってません！！！）
                 bool is_x_minus = mvd.x < 0;
@@ -1842,6 +1841,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                     }
 
                     flag_code_sum->countGreater1Code();
+                    flag_code_sum->setXGreater1Flag(is_x_greater_than_one);
                     flag_code_sum->countSignFlagCode();
                 }
 
@@ -1854,6 +1854,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                         flag_code_sum->addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_y_minus_2, 0));
                     }
                     flag_code_sum->countGreater1Code();
+                    flag_code_sum->setYGreater1Flag(is_y_greater_than_one);
                     flag_code_sum->countSignFlagCode();
                 }
             }

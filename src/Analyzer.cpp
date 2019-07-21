@@ -36,6 +36,18 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus) {
     }
     fclose(fp);
 
+    fp = std::fopen((getProjectDirectory(OS) + "/mvd_greater_0_flag_distribution" + file_suffix + ".csv").c_str(), "w");
+    for(auto x : greater_0_flag_counter){
+        fprintf(fp, "%d,%d\n", x.first, x.second);
+    }
+    fclose(fp);
+
+    fp = std::fopen((getProjectDirectory(OS) + "/mvd_greater_1_flag_distribution" + file_suffix + ".csv").c_str(), "w");
+    for(auto x : greater_1_flag_counter){
+        fprintf(fp, "%d,%d\n", x.first, x.second);
+    }
+    fclose(fp);
+
     fp = std::fopen((getProjectDirectory(OS) + "/mvd_result" + file_suffix + ".txt").c_str(), "w");
     fprintf(fp, "greater_0_flag:%d\n", greater_0_flag_sum);
     fprintf(fp, "greater_1_flag:%d\n", greater_1_flag_sum);
@@ -61,6 +73,16 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
 
                 mvd_counter[x]++;
                 mvd_counter[y]++;
+
+                greater_0_flag_counter[(int)(ctu->flags_code_sum->getXGreater0Flag()[0])]++;
+                greater_0_flag_counter[(int)(ctu->flags_code_sum->getYGreater0Flag()[0])]++;
+
+                if(ctu->flags_code_sum->getXGreater0Flag()[0]) {
+                    greater_1_flag_counter[(int)(ctu->flags_code_sum->getXGreater1Flag()[0])]++;
+                }
+                if(ctu->flags_code_sum->getYGreater0Flag()[0]) {
+                    greater_1_flag_counter[(int)(ctu->flags_code_sum->getYGreater1Flag()[0])]++;
+                }
             }else{
                 for(int i = 0 ; i < 3 ; i++) {
                     int x = (ctu->mvds_x)[i];
@@ -69,6 +91,13 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
                     mvd_counter_y[y]++;
                     mvd_counter[x]++;
                     mvd_counter[y]++;
+
+                    if(ctu->flags_code_sum->getXGreater0Flag()[i]) {
+                        greater_1_flag_counter[(int)(ctu->flags_code_sum->getXGreater1Flag()[i])]++;
+                    }
+                    if(ctu->flags_code_sum->getYGreater0Flag()[i]) {
+                        greater_1_flag_counter[(int)(ctu->flags_code_sum->getYGreater1Flag()[i])]++;
+                    }
                 }
             }
 
@@ -125,25 +154,49 @@ int FlagsCodeSum::getMvdCodeLength() const {
 }
 
 void FlagsCodeSum::setXGreater0Flag(bool xGreater0Flag) {
-    x_greater_0_flag = xGreater0Flag;
+    x_greater_0_flag.emplace_back(xGreater0Flag);
 }
 
 void FlagsCodeSum::setYGreater0Flag(bool yGreater0Flag) {
-    y_greater_0_flag = yGreater0Flag;
+    y_greater_0_flag.emplace_back(yGreater0Flag);
 }
 
 void FlagsCodeSum::setXGreater1Flag(bool xGreater1Flag) {
-    x_greater_1_flag = xGreater1Flag;
+    x_greater_1_flag.emplace_back(xGreater1Flag);
 }
 
 void FlagsCodeSum::setYGreater1Flag(bool yGreater1Flag) {
-    y_greater_1_flag = yGreater1Flag;
+    y_greater_1_flag.emplace_back(yGreater1Flag);
 }
 
 void FlagsCodeSum::setXSignFlag(bool xSignFlag) {
-    x_sign_flag = xSignFlag;
+    x_sign_flag.emplace_back(xSignFlag);
 }
 
 void FlagsCodeSum::setYSignFlag(bool ySignFlag) {
-    y_sign_flag = ySignFlag;
+    y_sign_flag.emplace_back(ySignFlag);
+}
+
+const std::vector<bool> &FlagsCodeSum::getXGreater0Flag() const {
+    return x_greater_0_flag;
+}
+
+const std::vector<bool> &FlagsCodeSum::getYGreater0Flag() const {
+    return y_greater_0_flag;
+}
+
+const std::vector<bool> &FlagsCodeSum::getXGreater1Flag() const {
+    return x_greater_1_flag;
+}
+
+const std::vector<bool> &FlagsCodeSum::getYGreater1Flag() const {
+    return y_greater_1_flag;
+}
+
+const std::vector<bool> &FlagsCodeSum::getXSignFlag() const {
+    return x_sign_flag;
+}
+
+const std::vector<bool> &FlagsCodeSum::getYSignFlag() const {
+    return y_sign_flag;
 }
