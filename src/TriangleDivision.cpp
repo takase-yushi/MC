@@ -934,10 +934,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                     {gauss_result_parallel, gauss_result_parallel, gauss_result_parallel}, error_parallel,
                     triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, true, dummy);
 
+#if !GAUSS_NEWTON_PARALLEL_ONLY
             std::tie(cost_warping, std::ignore, std::ignore, std::ignore, method_warping) = getMVD(
                     triangle_gauss_results[triangle_index].mv_warping, error_warping,
                     triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, false, dummy);
-
+#endif
             if(cost_parallel < cost_warping || GAUSS_NEWTON_PARALLEL_ONLY){
                 triangle_gauss_results[triangle_index].parallel_flag = true;
                 triangle_gauss_results[triangle_index].residual = error_parallel;
@@ -1092,7 +1093,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     ctu->node4->parentNode = ctu;
 
     std::vector<CodingTreeUnit*> ctus{ctu->node1, ctu->node2, ctu->node3, ctu->node4};
-//#pragma omp parallel for
+#if !MVD_DEBUG_LOG
+    #pragma omp parallel for
+#endif
     for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
         double error_warping_tmp, error_parallel_tmp;
         int triangle_size_tmp;
@@ -1124,10 +1127,12 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             std::tie(cost_parallel_tmp,std::ignore, std::ignore, std::ignore, method_parallel_tmp) = getMVD(
                     {mv_parallel_tmp, mv_parallel_tmp, mv_parallel_tmp}, error_parallel_tmp,
                     triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], true, dummy);
+#if !GAUSS_NEWTON_PARALLEL_ONLY
 
             std::tie(cost_warping_tmp, std::ignore, std::ignore, std::ignore, method_warping_tmp) = getMVD(
                     mv_warping_tmp, error_warping_tmp,
                     triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], false, dummy);
+#endif
 
             if(cost_parallel_tmp < cost_warping_tmp || GAUSS_NEWTON_PARALLEL_ONLY){
                 triangle_gauss_results[triangle_indexes[j]].parallel_flag = true;
@@ -1304,6 +1309,12 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         eraseTriangle(triangles.size() - 1);
         addNeighborVertex(triangles[triangle_index].first.p1_idx,triangles[triangle_index].first.p2_idx,triangles[triangle_index].first.p3_idx);
         addCoveredTriangle(triangles[triangle_index].first.p1_idx,triangles[triangle_index].first.p2_idx,triangles[triangle_index].first.p3_idx, triangle_index);
+#if MVD_DEBUG_LOG
+        std::cout << "triangle_index:" << triangle_index << std::endl;
+        std::cout << "p1_idx:" << triangles[triangle_index].first.p1_idx << " p2_idx:" << triangles[triangle_index].first.p2_idx << " p3_idx:" << triangles[triangle_index].first.p3_idx << std::endl;
+        std::cout << "p1:" << corners[triangles[triangle_index].first.p1_idx] << " p2:" << corners[triangles[triangle_index].first.p2_idx] << " p3:" << corners[triangles[triangle_index].first.p3_idx] << std::endl;
+#endif
+
         return false;
     }
 
@@ -1472,12 +1483,33 @@ TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(const cv::Point
 std::vector<int> TriangleDivision::getSpatialTriangleList(int t_idx){
     std::pair<Triangle, int> triangle = triangles[t_idx];
     std::set<int> spatialTriangles;
-//    std::cout << triangle.first.p1_idx << " " << triangle.first.p2_idx << " " << triangle.first.p3_idx << std::endl;
     std::vector<int> list1 = getIdxCoveredTriangleIndexList(triangle.first.p1_idx);
     std::vector<int> list2 = getIdxCoveredTriangleIndexList(triangle.first.p2_idx);
     std::vector<int> list3 = getIdxCoveredTriangleIndexList(triangle.first.p3_idx);
 
     std::set<int> mutualIndexSet1, mutualIndexSet2, mutualIndexSet3;
+
+#if MVD_DEBUG_LOG
+    std::cout << "p1:" << triangles[t_idx].first.p1_idx << std::endl;
+    for(auto item : list1){
+        std::cout << item << std::endl;
+    }
+    puts("");
+
+    std::cout << "p2:" << triangles[t_idx].first.p2_idx << std::endl;
+    for(auto item : list2){
+        std::cout << item << std::endl;
+    }
+    puts("");
+    std::cout << "p3:" << triangles[t_idx].first.p3_idx << std::endl;
+
+    for(auto item : list3){
+        std::cout << item << std::endl;
+    }
+    std::cout << "t_idx:" << t_idx << std::endl;
+    puts("");
+
+#endif
 
     for(auto idx : list1) if(isCodedTriangle[idx] && idx != t_idx) mutualIndexSet1.emplace(idx);
     for(auto idx : list2) if(isCodedTriangle[idx] && idx != t_idx) mutualIndexSet2.emplace(idx);
@@ -1701,6 +1733,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
         }
     }
 
+#if MVD_DEBUG_LOG
+    std::cout << corners[triangles[triangle_idx].first.p1_idx] << " " << corners[triangles[triangle_idx].first.p2_idx] << " " << corners[triangles[triangle_idx].first.p3_idx] << std::endl;
+    #endif
+
     if(!isMvExists(vectors, collocated_mv)) vectors.emplace_back(collocated_mv, SPATIAL);
 
     if(vectors.size() < 2) vectors.emplace_back(cv::Point2f(0.0, 0.0), Collocated);
@@ -1718,24 +1754,22 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 
             cv::Point2f mvd = current_mv - mv[0];
 #if MVD_DEBUG_LOG
-            std::cout << "idx                 :" << i << std::endl;
-            std::cout << "current_mv(parallel):" << current_mv << std::endl;
-            std::cout << "mv[0](parallel)     :" << mv[0] << std::endl;
+            std::cout << "target_vector_idx       :" << i << std::endl;
+            std::cout << "diff_target_mv(parallel):" << current_mv << std::endl;
+            std::cout << "encode_mv(parallel)     :" << mv[0] << std::endl;
 #endif
             mvd = getQuantizedMv(mvd, 4);
 #if MVD_DEBUG_LOG
-            std::cout << "mvd:(parallel)      :" << mvd << std::endl;
+            std::cout << "mvd(parallel)           :" << mvd << std::endl;
 #endif
             mvd.x = std::fabs(mvd.x);
             mvd.y = std::fabs(mvd.y);
-#if MVD_DEBUG_LOG
-            std::cout << "mvd-2:(parallel)    :" << mvd << std::endl;
-#endif
+
             mvd *= 4;
             int abs_x = mvd.x;
             int abs_y = mvd.y;
 #if MVD_DEBUG_LOG
-            std::cout << "4 * mvd(parallel)   :" << mvd << std::endl;
+            std::cout << "4 * mvd(parallel)       :" << mvd << std::endl;
 #endif
 
             // 動きベクトル差分の絶対値が0より大きいのか？
@@ -1784,9 +1818,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 flag_code_sum.countSignFlagCode();
             }
 
-#if MVD_DEBUG_LOG
-            std::cout << " code_length:" << mvd_code_length << std::endl;
-#endif
             // 参照箇所符号化
             int reference_index = std::get<1>(vector);
             int reference_index_code_length = getUnaryCodeLength(reference_index);
@@ -1806,13 +1837,26 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             int mvd_code_length = 6;
             FlagsCodeSum flag_code_sum(0, 0, 0, 0);
 
-            for(int i = 0 ; i < mvds.size() ; i++){
+            for(int j = 0 ; j < mvds.size() ; j++){
 
-                cv::Point2f mvd = getQuantizedMv(mvds[i], 4);
+#if MVD_DEBUG_LOG
+                std::cout << "target_vector_idx       :" << j << std::endl;
+                std::cout << "diff_target_mv(warping) :" << current_mv << std::endl;
+                std::cout << "encode_mv(warping)      :" << mv[j] << std::endl;
+#endif
+
+                cv::Point2f mvd = getQuantizedMv(mvds[j], 4);
                 mvd.x = std::fabs(mvd.x);
                 mvd.y = std::fabs(mvd.y);
+#if MVD_DEBUG_LOG
+                std::cout << "mvd(warping)            :" << mvd << std::endl;
+#endif
                 mvd *= 4;
-                mvds[i] = mvd;
+                mvds[j] = mvd;
+
+#if MVD_DEBUG_LOG
+                std::cout << "4 * mvd(warping)        :" << mvd << std::endl;
+#endif
                 int abs_x = mvd.x;
                 int abs_y = mvd.y;
 
@@ -1925,6 +1969,22 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
     int selected_idx = std::get<3>(results[0]);
     MV_CODE_METHOD method = std::get<4>(results[0]);
     FlagsCodeSum flag_code_sum = std::get<5>(results[0]);
+
+#if MVD_DEBUG_LOG
+    puts("Result ===========================================");
+    std::cout << "code_length:" << code_length << std::endl;
+    std::cout << "cost       :" << cost << std::endl;
+    if(method != MERGE){
+        if(parallel_flag) {
+            std::cout << "mvd        :" << mvds[0] << std::endl;
+        }else{
+            for(auto mvd : mvds){
+                std::cout << "mvd        :" << mvd << std::endl;
+            }
+        }
+    }
+    puts("");
+#endif
 
     ctu->flags_code_sum = flag_code_sum;
     if(method != MERGE) {
