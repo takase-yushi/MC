@@ -42,6 +42,9 @@ private:
     // ファイルの最後につける値
     std::string file_suffix;
 
+    int warping_patch_num;
+    int parallel_patch_num;
+
 };
 
 

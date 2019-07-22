@@ -12,7 +12,7 @@
  * @param ctus
  */
 void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus) {
-    greater_0_flag_sum = greater_1_flag_sum = sign_flag_sum = mvd_code_sum = 0;
+    greater_0_flag_sum = greater_1_flag_sum = sign_flag_sum = mvd_code_sum = warping_patch_num = parallel_patch_num = 0;
 
     for(auto ctu : ctus){
         storeDistributionOfMv(ctu);
@@ -53,6 +53,8 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus) {
     fprintf(fp, "greater_1_flag:%d\n", greater_1_flag_sum);
     fprintf(fp, "sign_flag     :%d\n", sign_flag_sum);
     fprintf(fp, "mvd_code      :%d\n", mvd_code_sum);
+    fprintf(fp, "parallel_patch:%d\n", parallel_patch_num);
+    fprintf(fp, "warping_patch :%d\n", warping_patch_num);
 
     fclose(fp);
 }
@@ -106,6 +108,10 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
             sign_flag_sum += ctu->flags_code_sum.getSignFlagCodeLength();
             mvd_code_sum += ctu->flags_code_sum.getMvdCodeLength();
         }
+
+        if(ctu->parallel_flag) parallel_patch_num++;
+        else warping_patch_num++;
+
         return;
     }
 
