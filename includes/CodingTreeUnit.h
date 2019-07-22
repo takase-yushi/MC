@@ -7,8 +7,8 @@
 
 
 #include <opencv2/core/types.hpp>
+#include "FlagsCodeSum.h"
 
-class FlagsCodeSum;
 
 enum MV_CODE_METHOD {
     SPATIAL,
@@ -19,6 +19,7 @@ enum MV_CODE_METHOD {
 
 class CodingTreeUnit {
 public:
+
     virtual ~CodingTreeUnit();
 
     int code_length;
@@ -33,7 +34,7 @@ public:
     double error_bm, error_newton;
     cv::Point2f collocated_mv;
     MV_CODE_METHOD method;
-    FlagsCodeSum *flags_code_sum;
+    FlagsCodeSum flags_code_sum;
 };
 
 
