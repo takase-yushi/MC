@@ -315,15 +315,15 @@ std::vector<Point4Vec> SquareDivision::getSquares() {
 std::vector<cv::Point2f> SquareDivision::getCorners() {
     return corners;
 }
-//TODO 四角形対応
+
 /**
- * @fn int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int type)
- * @brief 三角形を追加する
+ * @fn int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx)
+ * @brief 四角形を追加する
  * @param[in] p1_idx 頂点1の座標のインデックス
  * @param[in] p2_idx 頂点2の座標のインデックス
  * @param[in] p3_idx 頂点3の座標のインデックス
  * @param[in] p4_idx 頂点4の座標のインデックス
- * @return 挿入した三角形が格納されているインデックス
+ * @return 挿入した四角形が格納されているインデックス
  */
 int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx) {
     std::vector<std::pair<cv::Point2f, int> > v;
@@ -341,9 +341,9 @@ int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx)
         }
     });
 
-    Square square(v[0].second, v[1].second, v[2].second, static_cast<int>(squares.size()));
+    Square square(v[0].second, v[1].second, v[2].second, v[3].second, static_cast<int>(squares.size()));
 
-//    squares.emplace_back(square, type);
+    squares.emplace_back(square);
     covered_square.emplace_back();
     isCodedSquare.emplace_back(false);
     square_gauss_results.emplace_back();
