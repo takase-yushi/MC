@@ -526,14 +526,14 @@ void SquareDivision::removeSquareCoveredSquare(int p1_idx, int p2_idx, int p3_id
     covered_square[p3_idx].erase(square_idx);
     covered_square[p4_idx].erase(square_idx);
 }
-//TODO 四角形対応
+
 /**
  * @fn int SquareDivision::addCorner()
  * @param[in] p 追加する頂点の座標
  * @return 頂点番号を返す
  */
 int SquareDivision::addCorner(cv::Point2f p) {
-    if(corner_flag[(int)(p.y * 2)][(int)(p.x * 2)] != -1) return corner_flag[(int)(p.y * 2)][(int)(p.x * 2)];
+    if(corner_flag[(int)(p.y * 2)][(int)(p.x * 2)] != -1) return corner_flag[(int)(p.y * 2)][(int)(p.x * 2)]; //すでに頂点がある場合
     corners.emplace_back(p);
     neighbor_vtx.emplace_back();
     corner_flag[(int)(p.y * 2)][(int)(p.x * 2)] = static_cast<int>(corners.size() - 1);
