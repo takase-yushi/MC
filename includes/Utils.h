@@ -187,6 +187,23 @@ class TRIANGLE{
 public: TRIANGLE(Triangle t) { p1_idx = t.p1_idx; p2_idx = t.p2_idx; p3_idx = t.p3_idx; }
 
 };
+class SQUARE{
+    int p1_idx; ///< 四角形の頂点1のインデックス
+    int p2_idx; ///< 四角形の頂点2のインデックス
+    int p3_idx; ///< 四角形の頂点3のインデックス
+    int p4_idx; ///< 四角形の頂点4のインデックス
+
+    /**
+     * コンストラクタ
+     * @param p1_idx 四角形の頂点1のインデックス
+     * @param p2_idx 四角形の頂点2のインデックス
+     * @param p3_idx 四角形の頂点3のインデックス
+     * @param p4_idx 四角形の頂点4のインデックス
+     */
+public: SQUARE(Square t) { p1_idx = t.p1_idx; p2_idx = t.p2_idx; p3_idx = t.p3_idx; p4_idx = t.p4_idx; }
+
+};
+
 //double log_2(double num);
 //TODO 四角形対応
 void drawTriangle(cv::Mat &img, cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, cv::Scalar color);
