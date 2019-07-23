@@ -220,8 +220,10 @@ void run(std::string config_path) {
         cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo, diagonal_line_area_flag);
         cv::Mat color = triangle_division.getPredictedColorImageFromCtu(foo, diagonal_line_area_flag, getPSNR(target_image, p_image));
 
-        Analyzer analayzer("_bm_fullsearch_" + std::to_string(qp) + "_" + getCurrentTimestamp());
-        analayzer.storeDistributionOfMv(foo);
+#if STORE_MVD_DISTRIBUTION_LOG
+        Analyzer analayzer("_test_" + std::to_string(qp) + "_" + getCurrentTimestamp());
+        analayzer.storeDistributionOfMv(foo, getProjectDirectory(OS) + "/log/minato");
+#endif
 
         int code_length = triangle_division.getCtuCodeLength(foo);
         std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;

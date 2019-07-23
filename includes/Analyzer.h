@@ -14,7 +14,7 @@ class CodingTreeUnit;
 
 class Analyzer {
 public:
-    void storeDistributionOfMv(std::vector<CodingTreeUnit*> ctus);
+    void storeDistributionOfMv(std::vector<CodingTreeUnit*> ctus, std::string log_path);
     Analyzer(const std::string &fileSuffix);
 
 private:
