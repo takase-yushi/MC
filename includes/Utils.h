@@ -102,6 +102,37 @@ enum {
 const std::string OS = "Ubuntu";
 
 /**
+ * @struct struct Point3Vec
+ * @brief 三点を保持する構造体
+ */
+struct Point3Vec{
+    cv::Point2f p1; ///< 三角形の頂点1の座標
+    cv::Point2f p2; ///< 三角形の頂点2の座標
+    cv::Point2f p3; ///< 三角形の頂点3の座標
+
+
+    /**
+     * コンストラクタ
+     * @param p1 三角形の頂点1の座標
+     * @param p2 三角形の頂点2の座標
+     * @param p3 三角形の頂点3の座標
+     */
+    Point3Vec(const cv::Point2f &p1, const cv::Point2f &p2, const cv::Point2f &p3) : p1(p1), p2(p2), p3(p3) {}
+
+    Point3Vec() {}
+
+    bool operator==(const Point3Vec &rhs) const {
+        return p1 == rhs.p1 &&
+               p2 == rhs.p2 &&
+               p3 == rhs.p3;
+    }
+
+    bool operator!=(const Point3Vec &rhs) const {
+        return !(rhs == *this);
+    }
+};
+
+/**
  * @struct struct Point4Vec
  * @brief 四点を保持する構造体
  */
@@ -353,5 +384,7 @@ std::vector<Triangle> inter_div(std::vector<Triangle> &triangles, std::vector<cv
 void add_corner_edge(std::vector<cv::Point2f> &corners,cv::Mat &canny,double r1,double r2);
 
 std::vector<cv::Point2f> slide_corner_edge(std::vector<cv::Point2f> &corners,cv::Mat &canny,double r1);
+
+std::string getCurrentTimestamp();
 
 #endif //ENCODER_UTILS_H

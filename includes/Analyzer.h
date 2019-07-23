@@ -10,19 +10,41 @@
 #include <map>
 #include "CodingTreeUnit.h"
 
+class CodingTreeUnit;
+
 class Analyzer {
 public:
     void storeDistributionOfMv(std::vector<CodingTreeUnit*> ctus);
+    Analyzer(const std::string &fileSuffix);
 
 private:
     void storeDistributionOfMv(CodingTreeUnit *ctu);
 
-    std::map<int, int> counter;
-    std::map<int, int> counter_x;
-    std::map<int, int> counter_y;
+    // mvdのカウンター
+    std::map<int, int> mvd_counter;
+    std::map<int, int> mvd_counter_x;
+    std::map<int, int> mvd_counter_y;
+
+    // greater_0フラグの頻度
+    std::map<int, int> greater_0_flag_counter;
+    int greater_0_flag_sum;
+
+    // greater_1フラグの頻度
+    std::map<int, int> greater_1_flag_counter;
+    int greater_1_flag_sum;
+
+    // サインフラグの頻度
+    std::map<int, int> sign_flag_counter;
+    int sign_flag_sum;
+
+    int mvd_code_sum;
+
+    // ファイルの最後につける値
     std::string file_suffix;
-public:
-    Analyzer(const std::string &fileSuffix);
+
+    int warping_patch_num;
+    int parallel_patch_num;
+
 };
 
 

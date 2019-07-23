@@ -122,6 +122,9 @@ public:
     };
 
     TriangleDivision(const cv::Mat &refImage, const cv::Mat &targetImage, const cv::Mat &refGaussImage);
+
+    TriangleDivision();
+
     void initTriangle(int block_size_x, int block_size_y, int _divide_steps, int _qp, int divide_flag = LEFT_DIVIDE);
     std::vector<std::pair<Point3Vec, int> > getTriangles();
     std::vector<Point3Vec> getTriangleCoordinateList();
@@ -148,9 +151,12 @@ public:
     int divide_steps; // 分割回数
 
     cv::Mat getMvImage(std::vector<CodingTreeUnit*> ctus);
+    std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Vec triangle, const cv::Mat& target_image, cv::Mat expansion_ref_image, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Point2f fullpell_initial_vector = cv::Point2f(-10000, -10000));
 
     cv::Mat getPredictedDiagonalImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag);
     cv::Mat getPredictedColorImageFromCtu(std::vector<CodingTreeUnit*> ctus,std::vector<std::vector<std::vector<int>>> &area_flag, double original_psnr);
+    std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu, bool parallel_flag, std::vector<cv::Point2f> &pixels);
+//    std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> getMVD(std::vector<cv::Point2f> mv, double residual, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> &vectors, cv::Point2f &collocated_mv, const CodingTreeUnit *ctu, bool parallel_flag);
 
 private:
     std::vector<cv::Point2f> corners;
@@ -179,12 +185,11 @@ private:
     void addCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_no);
     void removeTriangleNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
     void removeTriangleCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_idx);
-    int addCorner(cv::Point2f p);
+    int getCornerIndex(cv::Point2f p);
     void addCornerAndTriangle(Triangle triangle, int triangle_index, int type);
     std::vector<int> getDivideOrder(CodingTreeUnit* currentNode);
     void constructPreviousCodingTree(CodingTreeUnit* codingTree, CollocatedMvTree* constructedTree);
     static cv::Point2f getQuantizedMv(cv::Point2f &mv, double quantize_step);
-    std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu, bool parallel_flag);
     bool isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> &vectors, const cv::Point2f &mv);
     void eraseTriangle(int t_idx);
     void getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, std::vector<std::vector<int>> &area_Flag);

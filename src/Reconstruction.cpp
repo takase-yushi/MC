@@ -64,7 +64,7 @@ void Reconstruction::reconstructionTriangle(std::vector<CodingTreeUnit*> ctu) {
 
 void Reconstruction::reconstructionTriangle(CodingTreeUnit* ctu, Point3Vec triangle, int type){
 
-    if(ctu->leftNode == nullptr && ctu->rightNode == nullptr) {
+    if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
         int p1_idx, p2_idx, p3_idx;
         if(isAdditionalPoint(triangle.p1)) {
             p1_idx = addCorner(triangle.p1) - 1;
@@ -95,8 +95,13 @@ void Reconstruction::reconstructionTriangle(CodingTreeUnit* ctu, Point3Vec trian
     triangle.p3 = ret[2].first;
     TriangleDivision::SplitResult result = TriangleDivision::getSplitTriangle(triangle.p1, triangle.p2, triangle.p3, type);
 
-    if(ctu->leftNode != nullptr) reconstructionTriangle(ctu->leftNode, result.t1, result.t1_type);
-    if(ctu->rightNode != nullptr) reconstructionTriangle(ctu->rightNode, result.t2, result.t2_type);
+    TriangleDivision::SplitResult result_subdiv_1 = TriangleDivision::getSplitTriangle(result.t1.p1, result.t1.p2, result.t1.p3, result.t1_type);
+    TriangleDivision::SplitResult result_subdiv_2 = TriangleDivision::getSplitTriangle(result.t2.p1, result.t2.p2, result.t2.p3, result.t2_type);
+
+    if(ctu->node1 != nullptr) reconstructionTriangle(ctu->node1, result_subdiv_1.t1, result_subdiv_1.t1_type);
+    if(ctu->node2 != nullptr) reconstructionTriangle(ctu->node2, result_subdiv_1.t2, result_subdiv_1.t2_type);
+    if(ctu->node3 != nullptr) reconstructionTriangle(ctu->node3, result_subdiv_2.t1, result_subdiv_2.t1_type);
+    if(ctu->node4 != nullptr) reconstructionTriangle(ctu->node4, result_subdiv_2.t2, result_subdiv_2.t2_type);
 }
 
 bool Reconstruction::isAdditionalPoint(cv::Point2f p){
