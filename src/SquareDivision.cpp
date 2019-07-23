@@ -277,16 +277,16 @@ std::vector<Point4Vec> SquareDivision::getAllSquareCoordinateList() {
 
     return vec;
 }
-//TODO 四角形対応
+
 /**
  * @fn std::vector<Square> SquareDivision::getAllSquareIndexList()
- * @brief 現在存在する三角形の集合(インデックス)を返す（※論理削除されたパッチも含まれています）
- * @return 三角形の集合（インデックス）
+ * @brief 現在存在する四角形の集合(インデックス)を返す（※論理削除されたパッチも含まれています）
+ * @return 四角形の集合（インデックス）
  */
 std::vector<Square> SquareDivision::getAllSquareIndexList() {
     std::vector<Square> v;
     for(int i = 0 ; i < squares.size() ; i++) {
-        v.emplace_back(squares[i].first);
+        v.emplace_back(squares[i]);
     }
     return v;
 }
