@@ -1943,7 +1943,7 @@ void SquareDivision::drawMvImage(cv::Mat &out, CodingTreeUnit *ctu){
     if(ctu->node4 != nullptr) drawMvImage(out, ctu->node4);
 }
 
-SquareDivision::TriangleDivision() {}
+SquareDivision::SquareDivision() {}
 
 SquareDivision::SplitResult::SplitResult(const Point3Vec &t1, const Point3Vec &t2, int t1Type, int t2Type) : t1(t1),
                                                                                                                t2(t2),
