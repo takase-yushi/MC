@@ -11,44 +11,44 @@
  *
  * @param ctus
  */
-void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus) {
+void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::string log_path) {
     greater_0_flag_sum = greater_1_flag_sum = sign_flag_sum = mvd_code_sum = warping_patch_num = parallel_patch_num = 0;
 
     for(auto ctu : ctus){
         storeDistributionOfMv(ctu);
     }
 
-    FILE *fp = std::fopen((getProjectDirectory(OS) + "/mvd_distribution" + file_suffix + ".csv").c_str(), "w");
+    FILE *fp = std::fopen(log_path + "/mvd_distribution" + file_suffix + ".csv").c_str(), "w");
     for(auto x : mvd_counter){
         fprintf(fp, "%d,%d\n", x.first, x.second);
     }
     fclose(fp);
 
-    fp = std::fopen((getProjectDirectory(OS) + "/mvd_distribution_x" + file_suffix + ".csv").c_str(), "w");
+    fp = std::fopen((log_path + "/mvd_distribution_x" + file_suffix + ".csv").c_str(), "w");
     for(auto x : mvd_counter_x){
         fprintf(fp, "%d,%d\n", x.first, x.second);
     }
     fclose(fp);
 
-    fp = std::fopen((getProjectDirectory(OS) + "/mvd_distribution_y" + file_suffix + ".csv").c_str(), "w");
+    fp = std::fopen((log_path + "/mvd_distribution_y" + file_suffix + ".csv").c_str(), "w");
     for(auto x : mvd_counter_y){
         fprintf(fp, "%d,%d\n", x.first, x.second);
     }
     fclose(fp);
 
-    fp = std::fopen((getProjectDirectory(OS) + "/mvd_greater_0_flag_distribution" + file_suffix + ".csv").c_str(), "w");
+    fp = std::fopen((log_path + "/mvd_greater_0_flag_distribution" + file_suffix + ".csv").c_str(), "w");
     for(auto x : greater_0_flag_counter){
         fprintf(fp, "%d,%d\n", x.first, x.second);
     }
     fclose(fp);
 
-    fp = std::fopen((getProjectDirectory(OS) + "/mvd_greater_1_flag_distribution" + file_suffix + ".csv").c_str(), "w");
+    fp = std::fopen((log_path + "/mvd_greater_1_flag_distribution" + file_suffix + ".csv").c_str(), "w");
     for(auto x : greater_1_flag_counter){
         fprintf(fp, "%d,%d\n", x.first, x.second);
     }
     fclose(fp);
 
-    fp = std::fopen((getProjectDirectory(OS) + "/mvd_result" + file_suffix + ".txt").c_str(), "w");
+    fp = std::fopen(log_path + "/mvd_result" + file_suffix + ".txt").c_str(), "w");
     fprintf(fp, "greater_0_flag:%d\n", greater_0_flag_sum);
     fprintf(fp, "greater_1_flag:%d\n", greater_1_flag_sum);
     fprintf(fp, "sign_flag     :%d\n", sign_flag_sum);
