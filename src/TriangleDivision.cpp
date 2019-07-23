@@ -1767,8 +1767,13 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             }
         }else{
             // 隣接パッチがワーピングで予想されている場合、そのパッチの0番の動きベクトルを候補とする
-            if(!isMvExists(vectors, spatial_triangle.mv_warping[0])){
-                vectors.emplace_back(spatial_triangle.mv_warping[0], SPATIAL);
+            cv::Point2f p1 = spatial_triangle.mv_warping[0];
+            cv::Point2f p2 = spatial_triangle.mv_warping[1];
+            cv::Point2f p3 = spatial_triangle.mv_warping[2];
+            cv::Point2f mv_average((p1.x + p2.x + p3.x) / 3.0, (p1.y + p2.y + p3.y) / 3.0);
+            mv_average = roundVecQuarter(mv_average);
+            if(!isMvExists(vectors, mv_average)){
+                vectors.emplace_back(mv_average, SPATIAL);
             }
         }
     }
