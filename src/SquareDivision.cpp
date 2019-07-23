@@ -291,16 +291,17 @@ std::vector<Square> SquareDivision::getAllSquareIndexList() {
     return v;
 }
 
-//TODO 四角形対応
-std::vector<std::pair<Point3Vec, int> > SquareDivision::getSquares() {
-    std::vector<std::pair<Point3Vec, int> > ts;
 
-    cv::Point2f p1, p2, p3;
+std::vector<Point4Vec> SquareDivision::getSquares() {
+    std::vector<Point4Vec> ts;
+
+    cv::Point2f p1, p2, p3, p4;
     for(auto & square : squares){
-        p1 = corners[square.first.p1_idx];
-        p2 = corners[square.first.p2_idx];
-        p3 = corners[square.first.p3_idx];
-        ts.emplace_back(Point3Vec(p1, p2, p3), square.second);
+        p1 = corners[square.p1_idx];
+        p2 = corners[square.p2_idx];
+        p3 = corners[square.p3_idx];
+        p4 = corners[square.p4_idx];
+        ts.emplace_back(Point4Vec(p1, p2, p3, p4));
     }
 
     return ts;
