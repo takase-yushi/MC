@@ -164,6 +164,7 @@ private:
     cv::Mat target_image, ref_image, ref_gauss_image;
     std::vector<std::set<int> > neighbor_vtx;
     std::vector<std::set<int> > covered_triangle;
+    std::vector<std::set<int> > same_corner_list; // 実数頂点になった場合、同じ頂点であるとみなす感じの逆引き
     std::vector<std::vector<int> > corner_flag;
     std::vector<bool> delete_flag;
     std::vector<bool> isCodedTriangle;
