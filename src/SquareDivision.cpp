@@ -230,19 +230,19 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
         }
     }
 }
-//TODO 四角形対応
+
 /**
  * @fn std::vector<Point3Vec> getSquareCoordinateList()
  * @brief 現在存在する三角形の集合(座標)を返す
  * @return 三角形の集合（座標）
  */
-std::vector<Point3Vec> SquareDivision::getSquareCoordinateList() {
-    std::vector<Point3Vec> vec;
+std::vector<Point4Vec> SquareDivision::getSquareCoordinateList() {
+    std::vector<Point4Vec> vec;
 
     for(int i = 0 ; i < squares.size() ; i++) {
         if(delete_flag[i] || !isCodedSquare[i]) continue;
-        Square square = squares[i].first;
-        vec.emplace_back(corners[square.p1_idx], corners[square.p2_idx], corners[square.p3_idx]);
+        Square square = squares[i];
+        vec.emplace_back(corners[square.p1_idx], corners[square.p2_idx], corners[square.p3_idx], corners[square.p4_idx]);
     }
 
     return vec;
