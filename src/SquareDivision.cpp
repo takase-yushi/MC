@@ -306,7 +306,7 @@ std::vector<Point4Vec> SquareDivision::getSquares() {
 
     return ts;
 }
-//TODO 四角形対応
+
 /**
  * @fn std::vector<cv::Point2f> SquareDivision::getCorners()
  * @brief 頂点の集合を返す
