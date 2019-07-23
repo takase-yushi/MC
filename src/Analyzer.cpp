@@ -55,9 +55,9 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     fprintf(fp, "sign_flag     :%d\n", sign_flag_sum);
     fprintf(fp, "mvd_code      :%d\n", mvd_code_sum);
     fprintf(fp, "warping_code  :%d\n", mvd_warping_code_sum);
+    fprintf(fp, "warping_patch :%d\n", warping_patch_num);
     fprintf(fp, "parallel_code :%d\n", mvd_parallel_code_sum);
     fprintf(fp, "parallel_patch:%d\n", parallel_patch_num);
-    fprintf(fp, "warping_patch :%d\n", warping_patch_num);
 
     fclose(fp);
 }
