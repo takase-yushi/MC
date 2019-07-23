@@ -510,19 +510,21 @@ void SquareDivision::removeSquareNeighborVertex(int p1_idx, int p2_idx, int p3_i
     neighbor_vtx[p4_idx].erase(p2_idx);
     neighbor_vtx[p4_idx].erase(p3_idx);
 }
-//TODO 四角形対応
+
 /**
- * @fn void SquareDivision::removeSquareCoveredSquare(int p1_idx, int p2_idx, int p3_idx, int square_idx)
- * @brief p1, p2, p3を含む三角形の集合から, square_idx番目の三角形を消す
+ * @fn void SquareDivision::removeSquareCoveredSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx, int square_idx)
+ * @brief p1, p2, p3, p4を含む四角形の集合から, square_idx番目の四角形を消す
  * @param p1_idx 頂点1のインデックス
  * @param p2_idx 頂点2のインデックス
  * @param p3_idx 頂点3のインデックス
- * @param square_idx 削除対象の三角形のインデックス
+ * @param p4_idx 頂点4のインデックス
+ * @param square_idx 削除対象の四角形のインデックス
  */
-void SquareDivision::removeSquareCoveredSquare(int p1_idx, int p2_idx, int p3_idx, int square_idx) {
+void SquareDivision::removeSquareCoveredSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx, int square_idx) {
     covered_square[p1_idx].erase(square_idx);
     covered_square[p2_idx].erase(square_idx);
     covered_square[p3_idx].erase(square_idx);
+    covered_square[p4_idx].erase(square_idx);
 }
 //TODO 四角形対応
 /**
