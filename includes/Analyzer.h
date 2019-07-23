@@ -37,7 +37,10 @@ private:
     std::map<int, int> sign_flag_counter;
     int sign_flag_sum;
 
+    // 符号量関連
     int mvd_code_sum;
+    int mvd_warping_code_sum;
+    int mvd_parallel_code_sum;
 
     // ファイルの最後につける値
     std::string file_suffix;

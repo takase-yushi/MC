@@ -164,6 +164,7 @@ private:
     cv::Mat target_image, ref_image, ref_gauss_image;
     std::vector<std::set<int> > neighbor_vtx;
     std::vector<std::set<int> > covered_triangle;
+    std::vector<std::set<int> > same_corner_list; // 実数頂点になった場合、同じ頂点であるとみなす感じの逆引き
     std::vector<std::vector<int> > corner_flag;
     std::vector<bool> delete_flag;
     std::vector<bool> isCodedTriangle;
@@ -187,7 +188,6 @@ private:
     void removeTriangleCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_idx);
     int getCornerIndex(cv::Point2f p);
     void addCornerAndTriangle(Triangle triangle, int triangle_index, int type);
-    std::vector<int> getDivideOrder(CodingTreeUnit* currentNode);
     void constructPreviousCodingTree(CodingTreeUnit* codingTree, CollocatedMvTree* constructedTree);
     static cv::Point2f getQuantizedMv(cv::Point2f &mv, double quantize_step);
     bool isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> &vectors, const cv::Point2f &mv);

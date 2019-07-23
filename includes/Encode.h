@@ -19,6 +19,6 @@ int getGolombCodeLength(int data, int m);
 int getBinaryLength(int x);
 int getExponentialGolombCodeLength(int data, int k);
 double getLambdaMode(int qp);
-double getLambdaPred(int qp);
+double getLambdaPred(int qp, double k = 1.0);
 
 #endif //ENCODER_ENCODE_H
