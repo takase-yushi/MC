@@ -258,11 +258,25 @@ EXPAND_ARRAY_TYPE getExpandImages(std::vector<std::vector<cv::Mat>> ref_images, 
             cv::Mat current_target_image = target_images[filter][step];
             cv::Mat current_ref_image = ref_images[filter][step];
 #if GAUSS_NEWTON_HEVC_IMAGE
+            clock_t e1, s1;
+
             if(step == 3) {
+                s1 = clock();
                 expand_images[filter][step][0] = getExpansionHEVCImage(current_ref_image, 4, expand);
+                e1 = clock();
+                printf("time: %lf[sec]\n", static_cast<double>(e1 - s1) / CLOCKS_PER_SEC);
+                s1 = clock();
                 expand_images[filter][step][1] = getExpansionHEVCImage(ref_images[0][3], 4, expand);
+                e1 = clock();
+                printf("time: %lf[sec]\n", static_cast<double>(e1 - s1) / CLOCKS_PER_SEC);
+                s1 = clock();
                 expand_images[filter][step][2] = getExpansionHEVCImage(current_target_image, 4, expand);
+                e1 = clock();
+                printf("time: %lf[sec]\n", static_cast<double>(e1 - s1) / CLOCKS_PER_SEC);
+                s1 = clock();
                 expand_images[filter][step][3] = getExpansionHEVCImage(target_images[0][3], 4, expand);
+                e1 = clock();
+                printf("time: %lf[sec]\n", static_cast<double>(e1 - s1) / CLOCKS_PER_SEC);
             } else{
                 unsigned char **dummy;
                 expand_images[filter][step][0] = dummy;
