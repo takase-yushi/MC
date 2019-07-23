@@ -539,6 +539,8 @@ int TriangleDivision::getCornerIndex(cv::Point2f p) {
     neighbor_vtx.emplace_back();
     covered_triangle.emplace_back();
     corner_flag[(int)(p.y * 2)][(int)(p.x * 2)] = static_cast<int>(corners.size() - 1);
+    same_corner_list.emplace_back();
+    same_corner_list[(int)corners.size() - 1].emplace(corners.size() - 1);
     return static_cast<int>(corners.size() - 1);
 }
 
