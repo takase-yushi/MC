@@ -391,19 +391,21 @@ void SquareDivision::addNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int p
     neighbor_vtx[p4_idx].emplace(p3_idx);
 
 }
-//TODO 四角形対応
+
 /***
- * @fn void SquareDivision::addCoveredSquare(int p1_idx, int p2_idx, int p3_idx, int square_no)
- * @brief ある頂点を含む三角形のインデックスの情報を更新する
+ * @fn void SquareDivision::addCoveredSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx, int square_no)
+ * @brief ある頂点を含む四角形のインデックスの情報を更新する
  * @param[in] p1_idx 頂点1の座標のインデックス
  * @param[in] p2_idx 頂点2の座標のインデックス
  * @param[in] p3_idx 頂点3の座標のインデックス
- * @param[in] square_no 三角形のインデックス
+ * @param[in] p4_idx 頂点4の座標のインデックス
+ * @param[in] square_no 四角形のインデックス
  */
-void SquareDivision::addCoveredSquare(int p1_idx, int p2_idx, int p3_idx, int square_no) {
+void SquareDivision::addCoveredSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx, int square_no) {
     covered_square[p1_idx].emplace(square_no);
     covered_square[p2_idx].emplace(square_no);
     covered_square[p3_idx].emplace(square_no);
+    covered_square[p4_idx].emplace(square_no);
 }
 //TODO 四角形対応
 /**
