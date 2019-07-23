@@ -257,7 +257,15 @@ EXPAND_ARRAY_TYPE getExpandImages(std::vector<std::vector<cv::Mat>> ref_images, 
         for(int step = 3 ; step < static_cast<int>(ref_images[filter].size()) ; step++){
             cv::Mat current_target_image = target_images[filter][step];
             cv::Mat current_ref_image = ref_images[filter][step];
+#if GAUSS_NEWTON_HEVC_IMAGE
 
+            if(step == 3) {
+                expand_images[filter][step][0] = getExpansionHEVCImage(current_ref_image, 4, expand);
+                expand_images[filter][step][1] = getExpansionHEVCImage(ref_images[0][3], 4, expand);
+                expand_images[filter][step][2] = getExpansionHEVCImage(current_target_image, 4, expand);
+                expand_images[filter][step][3] = getExpansionHEVCImage(target_images[0][3], 4, expand);
+            } 
+#else
             auto **current_target_expand = (unsigned char **) std::malloc(
                     sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
             current_target_expand += expand;
@@ -339,18 +347,11 @@ EXPAND_ARRAY_TYPE getExpandImages(std::vector<std::vector<cv::Mat>> ref_images, 
                             current_target_image.rows - 1];
                 }
             }
-
-            #if GAUSS_NEWTON_HEVC_IMAGE
-                expand_images[filter][step][0] = getExpansionHEVCImage(current_ref_image   , 4, expand);
-                expand_images[filter][step][1] = getExpansionHEVCImage(ref_images[0][3]    , 4, expand);
-                expand_images[filter][step][2] = getExpansionHEVCImage(current_target_image, 4, expand);
-                expand_images[filter][step][3] = getExpansionHEVCImage(target_images[0][3] , 4, expand);
-            #else
                 expand_images[filter][step][0] = current_ref_expand;
                 expand_images[filter][step][1] = current_ref_org_expand;
                 expand_images[filter][step][2] = current_target_expand;
                 expand_images[filter][step][3] = current_target_org_expand;
-            #endif
+#endif
         }
     }
 
@@ -571,7 +572,6 @@ unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size, IP_M
 
 
 unsigned char** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
-
     // 引き伸ばし＋補間で使うため4画素余分に取る
     int scaled_expansion_size = expansion_size + 4;
     auto **expansion_image_tmp = (unsigned int **) malloc(sizeof(unsigned int *) * (image.cols + scaled_expansion_size * 2));
@@ -603,7 +603,6 @@ unsigned char** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
             expansion_image_tmp[x][image.rows - y - 1] = expansion_image_tmp[x][image.rows - 1];
         }
     }
-
     auto **expansion_image = (unsigned int **) malloc(sizeof(unsigned int *) * (k * image.cols + 2 * k * scaled_expansion_size));
     expansion_image += (k * scaled_expansion_size);
 
@@ -616,6 +615,7 @@ unsigned char** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
     int width = k * image.cols + k * scaled_expansion_size;
     int height = k * image.rows + k * scaled_expansion_size;
 
+#pragma omp parallel for
     for(int y = -k * scaled_expansion_size ; y < height ; y+=k){
         for(int x = -k * scaled_expansion_size ; x < width ; x+=k) {
             expansion_image[x][y] = expansion_image_tmp[x / k][y / k];
@@ -639,6 +639,7 @@ unsigned char** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
 
     width = k * (image.cols + expansion_size);
     height = k * (image.rows + expansion_size);
+#pragma omp parallel for
     for(int y = -k * expansion_size ; y < height ; y+=k) {
         for (int x = -k * expansion_size; x < width; x+=k) {
             // e
@@ -669,6 +670,7 @@ unsigned char** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
     }
 
     //四捨五入(0～255へ)
+#pragma omp parallel for
     for(int y = - k * expansion_size ; y < height ; y+=k){
         for(int x = - k * expansion_size ; x < width ; x+=k){
             // a
@@ -685,35 +687,32 @@ unsigned char** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
             expansion_image[x    ][y + 3] = (expansion_image[x    ][y + 3] + 32) / 64;
         }
     }
-
     unsigned char **ret = (unsigned char **)malloc(sizeof(unsigned char *) * k * (image.cols + 2 * scaled_expansion_size));
     ret += k * scaled_expansion_size;
-
+#pragma omp parallel for
     for(int x = -k * scaled_expansion_size ; x < k * (image.cols + scaled_expansion_size) ; x++) {
         ret[x] = (unsigned char *)malloc(sizeof(unsigned char) * k * (image.rows + 2 * scaled_expansion_size));
         ret[x] += k * scaled_expansion_size;
     }
-
+#pragma omp parallel for
     for(int y = -k * expansion_size ; y < k * (image.rows + expansion_size) ; y++){
         for(int x = -k * expansion_size ; x < k * (image.cols + expansion_size) ; x++){
             ret[x][y] = expansion_image[x][y];
         }
     }
-
     for(int y = -k * expansion_size ; y < k * (image.rows + expansion_size) ; y++){
         for(int x = -k * scaled_expansion_size ; x <= -k * expansion_size ; x++){
             ret[x][y] = ret[-k * expansion_size][y];
             ret[k*(image.cols + scaled_expansion_size + expansion_size) + x - 1][y] = ret[k * image.cols - 1][y];
         }
     }
-
     for(int y = -k * scaled_expansion_size ; y < -k * expansion_size ; y++){
         for(int x = -k * scaled_expansion_size ; x < k * (image.cols + scaled_expansion_size); x++){
             ret[x][y] = ret[x][-k * expansion_size + 1];
             ret[x][k * (image.rows + scaled_expansion_size + expansion_size) + y - 1] = ret[x][k * (image.rows - 1 + expansion_size)];
         }
     }
-
+  
     return ret;
 }
 
