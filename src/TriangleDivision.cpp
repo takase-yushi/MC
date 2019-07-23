@@ -731,6 +731,12 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             addCoveredTriangle(a_idx, b1_idx, d1_idx, t1_idx);
             addCoveredTriangle(b2_idx, c_idx, d2_idx, t2_idx);
 
+            same_corner_list[b1_idx].emplace(b2_idx);
+            same_corner_list[b2_idx].emplace(b1_idx);
+
+            same_corner_list[d1_idx].emplace(d2_idx);
+            same_corner_list[d2_idx].emplace(d1_idx);
+
         }
             break;
         case DIVIDE::TYPE6:
@@ -772,6 +778,12 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
 
             addCoveredTriangle(a_idx, b1_idx, c1_idx, t1_idx);
             addCoveredTriangle(b2_idx, c2_idx, d_idx, t2_idx);
+
+            same_corner_list[b1_idx].emplace(b2_idx);
+            same_corner_list[b2_idx].emplace(b1_idx);
+
+            same_corner_list[c1_idx].emplace(c2_idx);
+            same_corner_list[c2_idx].emplace(c1_idx);
         }
             break;
         case DIVIDE::TYPE7:
@@ -812,6 +824,12 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
 
             addCoveredTriangle(a1_idx, b_idx, c1_idx, t1_idx);
             addCoveredTriangle(a2_idx, c2_idx, d_idx, t2_idx);
+
+            same_corner_list[a1_idx].emplace(a2_idx);
+            same_corner_list[a2_idx].emplace(a1_idx);
+
+            same_corner_list[c1_idx].emplace(c2_idx);
+            same_corner_list[c2_idx].emplace(c1_idx);
 
         }
             break;
@@ -855,13 +873,17 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
             addCoveredTriangle(b_idx, a1_idx, c1_idx, t1_idx);
             addCoveredTriangle(a2_idx, c2_idx, d_idx, t2_idx);
 
+            same_corner_list[a1_idx].emplace(a2_idx);
+            same_corner_list[a2_idx].emplace(a1_idx);
+
+            same_corner_list[c1_idx].emplace(c2_idx);
+            same_corner_list[c2_idx].emplace(c1_idx);
         }
             break;
         default:
             break;
     }
 
-//    std::cout << corners.size() << " " << covered_triangle.size() << std::endl;
     isCodedTriangle[triangle_index] = false;
     delete_flag[triangle_index] = true;
 }
