@@ -178,7 +178,7 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
 
             int squareIndex = insertSquare(p1_idx, p2_idx, p3_idx, TYPE1);
             addNeighborVertex(p1_idx, p2_idx, p3_idx, p4_idx);
-            addCoveredSquare(p1_idx, p2_idx, p3_idx, squareIndex); // p1/p2/p3はsquareIndex番目の三角形に含まれている
+            addCoveredSquare(p1_idx, p2_idx, p3_idx, p4_idx, squareIndex); // p1/p2/p3はsquareIndex番目の三角形に含まれている
 
 //            int p4_idx = p2_idx;
 //            int p5_idx = p3_idx;
@@ -407,7 +407,7 @@ void SquareDivision::addCoveredSquare(int p1_idx, int p2_idx, int p3_idx, int p4
     covered_square[p3_idx].emplace(square_no);
     covered_square[p4_idx].emplace(square_no);
 }
-//TODO 四角形対応
+
 /**
  * @fn double SquareDivision::getDistance(const cv::Point2f &a, const cv::Point2f &b)
  * @brief 2点間の距離を返す
@@ -419,7 +419,7 @@ double SquareDivision::getDistance(const cv::Point2f &a, const cv::Point2f &b){
     cv::Point2f v = a - b;
     return std::sqrt(v.x * v.x + v.y * v.y);
 }
-//TODO 四角形対応
+
 /**
  * @fn std::vector<int> SquareDivision::getNeighborVertexIndexList(int idx)
  * @brief 指定された頂点に隣接する頂点（インデックス）の集合を返す
@@ -436,7 +436,7 @@ std::vector<int> SquareDivision::getNeighborVertexIndexList(int idx) {
 
     return v;
 }
-//TODO 四角形対応
+
 /**
  * @fn std::vector<cv::Point2f> SquareDivision::getNeighborVertexCoordinateList(int idx)
  * @brief 指定された頂点に隣接する頂点の集合（座標）を返す
@@ -453,9 +453,9 @@ std::vector<cv::Point2f> SquareDivision::getNeighborVertexCoordinateList(int idx
 
     return v;
 }
-//TODO 四角形対応
+
 /**
- * @fn std::vector<Point3Vec> SquareDivision::getIdxCoveredSquareCoordinateList(int idx)
+ * @fn std::vector<Point4Vec> SquareDivision::getIdxCoveredSquareCoordinateList(int idx)
  * @brief 指定された頂点が含まれる四角形の集合を返す
  * @param[in] target_vertex_idx 頂点のインデックス
  * @return 四角形の集合(座標で返される)
@@ -471,12 +471,12 @@ std::vector<Point4Vec> SquareDivision::getIdxCoveredSquareCoordinateList(int tar
 
     return v;
 }
-//TODO 四角形対応
+
 /**
  * @fn std::vector<int> SquareDivision::getIdxCoveredSquareIndexList(int idx)
- * @brief 指定の頂点を含む三角形の集合（頂点番号）を返す
+ * @brief 指定の頂点を含む四角形の集合（頂点番号）を返す
  * @param[in] idx 頂点のインデックス
- * @return 三角形の集合（座標）
+ * @return 四角形の集合（座標）
  */
 std::vector<int> SquareDivision::getIdxCoveredSquareIndexList(int target_vertex_idx) {
     std::set<int> s = covered_square[target_vertex_idx];
@@ -490,22 +490,25 @@ std::vector<int> SquareDivision::getIdxCoveredSquareIndexList(int target_vertex_
 
     return v;
 }
-//TODO 四角形対応
+
 /**
- * @fn void SquareDivision::removeSquareNeighborVertex(int p1_idx, int p2_idx, int p3_idx)
- * @brief 指定された三角形に含まれる頂点隣接ノード集合から、自分以外のノードを消す
+ * @fn void SquareDivision::removeSquareNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int p4_idx)
+ * @brief 指定された四角形に含まれる頂点隣接ノード集合から、自分以外のノードを消す
  * @details 日本語が難しいからコードで理解して
  * @param p1_idx
  * @param p2_idx
  * @param p3_idx
+ * @param p4_idx
  */
-void SquareDivision::removeSquareNeighborVertex(int p1_idx, int p2_idx, int p3_idx) {
+void SquareDivision::removeSquareNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int p4_idx) {
     neighbor_vtx[p1_idx].erase(p2_idx);
     neighbor_vtx[p1_idx].erase(p3_idx);
     neighbor_vtx[p2_idx].erase(p1_idx);
-    neighbor_vtx[p2_idx].erase(p3_idx);
+    neighbor_vtx[p2_idx].erase(p4_idx);
     neighbor_vtx[p3_idx].erase(p1_idx);
-    neighbor_vtx[p3_idx].erase(p2_idx);
+    neighbor_vtx[p3_idx].erase(p4_idx);
+    neighbor_vtx[p4_idx].erase(p2_idx);
+    neighbor_vtx[p4_idx].erase(p3_idx);
 }
 //TODO 四角形対応
 /**
