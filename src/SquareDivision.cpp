@@ -450,17 +450,17 @@ std::vector<cv::Point2f> SquareDivision::getNeighborVertexCoordinateList(int idx
 //TODO 四角形対応
 /**
  * @fn std::vector<Point3Vec> SquareDivision::getIdxCoveredSquareCoordinateList(int idx)
- * @brief 指定された頂点が含まれる三角形の集合を返す
+ * @brief 指定された頂点が含まれる四角形の集合を返す
  * @param[in] target_vertex_idx 頂点のインデックス
- * @return 三角形の集合(座標で返される)
+ * @return 四角形の集合(座標で返される)
  */
-std::vector<Point3Vec> SquareDivision::getIdxCoveredSquareCoordinateList(int target_vertex_idx) {
+std::vector<Point4Vec> SquareDivision::getIdxCoveredSquareCoordinateList(int target_vertex_idx) {
     std::set<int> s = covered_square[target_vertex_idx];
-    std::vector<Point3Vec> v(s.size());
+    std::vector<Point4Vec> v(s.size());
 
     for(auto square_idx : s) {
-        Square square = squares[square_idx].first;
-        v.emplace_back(corners[square.p1_idx], corners[square.p2_idx], corners[square.p3_idx]);
+        Square square = squares[square_idx];
+        v.emplace_back(corners[square.p1_idx], corners[square.p2_idx], corners[square.p3_idx], corners[square.p4_idx]);
     }
 
     return v;
