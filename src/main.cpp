@@ -28,11 +28,7 @@
 #include "../includes/tests.h"
 
 void run(std::string config_path);
-
-// 問題は差分ベクトルどうするの…？って
-std::vector<int> count_all_diff_x_mv(1001, 0);
-std::vector<int> count_all_diff_y_mv(1001, 0);
-cv::Mat triangle_error_img;
+void tests();
 
 #define HARRIS false
 #define THRESHOLD true
@@ -41,19 +37,26 @@ cv::Mat triangle_error_img;
 
 #define DIVIDE_MODE LEFT_DIVIDE
 
-
 int qp;
 int block_size_x;
 int block_size_y;
 int division_steps;
+std::string out_file_suffix = "_debug";
 
 int main(int argc, char *argv[]){
     // Write test codes below
-
+#if TEST_MODE
+    tests();
+#else
     std::string config_path = std::string(argv[1]);
     run(config_path);
+#endif
+
 }
-std::string out_file_suffix = "_debug";
+
+void tests(){
+    testCoveredPatch();
+}
 
 void run(std::string config_path) {
 

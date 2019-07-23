@@ -98,6 +98,7 @@ enum {
 #define HEVC_REF_IMAGE true
 #define STORE_MVD_DISTRIBUTION_LOG true
 #define MVD_DEBUG_LOG false
+#define TEST_MODE true
 
 const std::string OS = "Ubuntu";
 
