@@ -88,6 +88,8 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
             if(target_image.rows <= ny) ny = target_image.rows - 1;
             corners.emplace_back(nx, ny);
             corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
+            same_corner_list.emplace_back();
+            same_corner_list[(int)corners.size() - 1].emplace(corners.size() - 1); // 他と共有している頂点は、自分の番号だけ入れる
             neighbor_vtx.emplace_back();
 
             // 前の動きベクトルを保持しておくやつ
@@ -105,6 +107,8 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
             if(target_image.rows <= ny) ny = target_image.rows - 1;
             corners.emplace_back(nx, ny);
             corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
+            same_corner_list.emplace_back();
+            same_corner_list[(int)corners.size() - 1].emplace(corners.size() - 1);
             neighbor_vtx.emplace_back();
 
             // 前の動きベクトルを保持しておくやつ
@@ -124,6 +128,8 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
             if(target_image.rows <= ny) ny = target_image.rows - 1;
             corners.emplace_back(nx, ny);
             corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
+            same_corner_list.emplace_back();
+            same_corner_list[(int)corners.size() - 1].emplace(corners.size() - 1);
             neighbor_vtx.emplace_back();
 
             // 前の動きベクトルを保持しておくやつ
@@ -141,6 +147,8 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
             if(target_image.rows <= ny) ny = target_image.rows - 1;
             corners.emplace_back(nx, ny);
             corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
+            same_corner_list.emplace_back();
+            same_corner_list[(int)corners.size() - 1].emplace(corners.size() - 1);
             neighbor_vtx.emplace_back();
 
             // 前の動きベクトルを保持しておくやつ
