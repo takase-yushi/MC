@@ -222,6 +222,7 @@ void run(std::string config_path) {
         cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo, diagonal_line_area_flag);
         cv::Mat color = triangle_division.getPredictedColorImageFromCtu(foo, diagonal_line_area_flag, getPSNR(target_image, p_image));
 
+#if STORE_DISTRIBUTION_LOG
 #if STORE_MVD_DISTRIBUTION_LOG
 #if GAUSS_NEWTON_PARALLEL_ONLY
         Analyzer analayzer("_warping_and_parallel_" + std::to_string(qp) + "_" + getCurrentTimestamp());
@@ -229,6 +230,7 @@ void run(std::string config_path) {
 #else
         Analyzer analayzer("_warping_and_parallel_average_mv_" + std::to_string(qp) + "_" + getCurrentTimestamp());
         analayzer.storeDistributionOfMv(foo, getProjectDirectory(OS) + "/log/minato");
+#endif
 #endif
 #endif
 
