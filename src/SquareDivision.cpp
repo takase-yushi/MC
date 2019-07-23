@@ -177,7 +177,7 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
             p4_idx = p3_idx + 1;
 
             int squareIndex = insertSquare(p1_idx, p2_idx, p3_idx, TYPE1);
-            addNeighborVertex(p1_idx, p2_idx, p3_idx);
+            addNeighborVertex(p1_idx, p2_idx, p3_idx, p4_idx);
             addCoveredSquare(p1_idx, p2_idx, p3_idx, squareIndex); // p1/p2/p3はsquareIndex番目の三角形に含まれている
 
 //            int p4_idx = p2_idx;
@@ -368,23 +368,27 @@ void SquareDivision::eraseSquare(int t_idx){
     square_gauss_results.erase(square_gauss_results.begin() + t_idx);
     delete_flag.erase(delete_flag.begin() + t_idx);
 }
-//TODO 四角形対応
+
 /**
- * @fn void SquareDivision::addNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int divide_flag)
- * @brief p1, p2, p3の隣接頂点情報を更新する
+ * @fn void SquareDivision::addNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int p4_idx)
+ * @brief p1, p2, p3, p4の隣接頂点情報を更新する
  * @param[in] p1_idx 頂点1の座標のインデックス
  * @param[in] p2_idx 頂点2の座標のインデックス
  * @param[in] p3_idx 頂点3の座標のインデックス
+ * @param[in] p4_idx 頂点4の座標のインデックス
  */
-void SquareDivision::addNeighborVertex(int p1_idx, int p2_idx, int p3_idx) {
+void SquareDivision::addNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int p4_idx) {
     neighbor_vtx[p1_idx].emplace(p2_idx);
     neighbor_vtx[p2_idx].emplace(p1_idx);
 
     neighbor_vtx[p1_idx].emplace(p3_idx);
     neighbor_vtx[p3_idx].emplace(p1_idx);
 
-    neighbor_vtx[p2_idx].emplace(p3_idx);
-    neighbor_vtx[p3_idx].emplace(p2_idx);
+    neighbor_vtx[p2_idx].emplace(p4_idx);
+    neighbor_vtx[p4_idx].emplace(p2_idx);
+
+    neighbor_vtx[p3_idx].emplace(p4_idx);
+    neighbor_vtx[p4_idx].emplace(p3_idx);
 
 }
 //TODO 四角形対応
