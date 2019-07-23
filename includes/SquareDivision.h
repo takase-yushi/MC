@@ -119,35 +119,35 @@ public:
 
     struct SplitResult {
     public:
-        Point3Vec t1, t2;
+        Point4Vec t1, t2;
         int t1_type, t2_type;
 
-        SplitResult(const Point3Vec &t1, const Point3Vec &t2, int t1Type, int t2Type);
+        SplitResult(const Point4Vec &t1, const Point4Vec &t2, int t1Type, int t2Type);
     };
 
     SquareDivision(const cv::Mat &refImage, const cv::Mat &targetImage, const cv::Mat &refGaussImage);
     void initSquare(int block_size_x, int block_size_y, int _divide_steps, int _qp, int divide_flag = LEFT_DIVIDE);
-    std::vector<std::pair<Point3Vec, int> > getSquares();
-    std::vector<Point3Vec> getSquareCoordinateList();
+    std::vector<Point4Vec> getSquares();
+    std::vector<Point4Vec> getSquareCoordinateList();
     std::vector<Square> getSquareIndexList();
     std::vector<cv::Point2f> getCorners();
     std::vector<int> getNeighborVertexIndexList(int idx);
     std::vector<cv::Point2f> getNeighborVertexCoordinateList(int idx);
     double getDistance(const cv::Point2f &a, const cv::Point2f &b);
 
-    std::vector<Point3Vec> getIdxCoveredSquareCoordinateList(int target_vertex_idx);
+    std::vector<Point4Vec> getIdxCoveredSquareCoordinateList(int target_vertex_idx);
     std::vector<int> getIdxCoveredSquareIndexList(int idx);
 
     void constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num = 0);
 
     static SplitResult getSplitSquare(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, int type);
-    bool split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point3Vec square, int square_index, int type, int steps, std::vector<std::vector<int>> &diagonal_line_area_flag);
+    bool split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point4Vec square, int square_index, int type, int steps, std::vector<std::vector<int>> &diagonal_line_area_flag);
     std::vector<int> getSpatialSquareList(int t_idx);
     cv::Point2f getCollocatedSquareList(CodingTreeUnit* unit);
     int getCtuCodeLength(std::vector<CodingTreeUnit*> ctus);
 
     cv::Mat getPredictedImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag);
-    std::vector<Point3Vec> getAllSquareCoordinateList();
+    std::vector<Point4Vec> getAllSquareCoordinateList();
     std::vector<Square> getAllSquareIndexList();
     int divide_steps; // 分割回数
 
@@ -158,7 +158,7 @@ public:
 
 private:
     std::vector<cv::Point2f> corners;
-    std::vector<std::pair<Square, int> > squares;
+    std::vector<Square> squares;
     cv::Mat target_image, ref_image, ref_gauss_image;
     std::vector<std::set<int> > neighbor_vtx;
     std::vector<std::set<int> > covered_square;　　//ある頂点に含まれる四角形のインデックス　　　　添え字 : インデックス(頂点)番号　setは集合なので同じ要素は入らない
