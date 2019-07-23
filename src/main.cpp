@@ -223,8 +223,13 @@ void run(std::string config_path) {
         cv::Mat color = triangle_division.getPredictedColorImageFromCtu(foo, diagonal_line_area_flag, getPSNR(target_image, p_image));
 
 #if STORE_MVD_DISTRIBUTION_LOG
-        Analyzer analayzer("_test_" + std::to_string(qp) + "_" + getCurrentTimestamp());
+#if GAUSS_NEWTON_PARALLEL_ONLY
+        Analyzer analayzer("_warping_and_parallel_" + std::to_string(qp) + "_" + getCurrentTimestamp());
         analayzer.storeDistributionOfMv(foo, getProjectDirectory(OS) + "/log/minato");
+#else
+        Analyzer analayzer("_warping_and_parallel_average_mv_" + std::to_string(qp) + "_" + getCurrentTimestamp());
+        analayzer.storeDistributionOfMv(foo, getProjectDirectory(OS) + "/log/minato");
+#endif
 #endif
 
         int code_length = triangle_division.getCtuCodeLength(foo);
@@ -235,6 +240,6 @@ void run(std::string config_path) {
         cv::imwrite( img_directory + "p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
         cv::imwrite(img_directory + "p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", triangle_division.getMvImage(foo));
         cv::imwrite(img_directory + "p_color_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
-        std::cout << triangle_division.getTriangleCoordinateList().size() << std::endl;
+        std::cout << "triangle_size:" << triangle_division.getTriangleCoordinateList().size() << std::endl;
     }
 }
