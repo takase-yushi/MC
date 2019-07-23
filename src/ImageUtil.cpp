@@ -257,7 +257,20 @@ EXPAND_ARRAY_TYPE getExpandImages(std::vector<std::vector<cv::Mat>> ref_images, 
         for(int step = 3 ; step < static_cast<int>(ref_images[filter].size()) ; step++){
             cv::Mat current_target_image = target_images[filter][step];
             cv::Mat current_ref_image = ref_images[filter][step];
-
+#if GAUSS_NEWTON_HEVC_IMAGE
+            if(step == 3) {
+                expand_images[filter][step][0] = getExpansionHEVCImage(current_ref_image, 4, expand);
+                expand_images[filter][step][1] = getExpansionHEVCImage(ref_images[0][3], 4, expand);
+                expand_images[filter][step][2] = getExpansionHEVCImage(current_target_image, 4, expand);
+                expand_images[filter][step][3] = getExpansionHEVCImage(target_images[0][3], 4, expand);
+            } else{
+                unsigned char **dummy;
+                expand_images[filter][step][0] = dummy;
+                expand_images[filter][step][1] = dummy;
+                expand_images[filter][step][2] = dummy;
+                expand_images[filter][step][3] = dummy;
+            }
+#else
             auto **current_target_expand = (unsigned char **) std::malloc(
                     sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
             current_target_expand += expand;
@@ -339,18 +352,11 @@ EXPAND_ARRAY_TYPE getExpandImages(std::vector<std::vector<cv::Mat>> ref_images, 
                             current_target_image.rows - 1];
                 }
             }
-
-            #if GAUSS_NEWTON_HEVC_IMAGE
-                expand_images[filter][step][0] = getExpansionHEVCImage(current_ref_image   , 4, expand);
-                expand_images[filter][step][1] = getExpansionHEVCImage(ref_images[0][3]    , 4, expand);
-                expand_images[filter][step][2] = getExpansionHEVCImage(current_target_image, 4, expand);
-                expand_images[filter][step][3] = getExpansionHEVCImage(target_images[0][3] , 4, expand);
-            #else
                 expand_images[filter][step][0] = current_ref_expand;
                 expand_images[filter][step][1] = current_ref_org_expand;
                 expand_images[filter][step][2] = current_target_expand;
                 expand_images[filter][step][3] = current_target_org_expand;
-            #endif
+#endif
         }
     }
 
