@@ -73,10 +73,11 @@ double getLambdaMode(int qp){
  * @brief 予測モードのRDで使うQPに応じたラムダの値を返す
  * @see H.265/HEVC教科書 P234
  * @param qp 参照画像のQP
+ * @param k QP値をk倍するパラメタ
  * @return lambdaの値
  */
-double getLambdaPred(int qp){
-    return sqrt(getLambdaMode(qp));
+double getLambdaPred(int qp, double k){
+    return k * sqrt(getLambdaMode(qp));
 }
 
 /**
