@@ -18,7 +18,7 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
         storeDistributionOfMv(ctu);
     }
 
-    FILE *fp = std::fopen(log_path + "/mvd_distribution" + file_suffix + ".csv").c_str(), "w");
+    FILE *fp = std::fopen((log_path + "/mvd_distribution" + file_suffix + ".csv").c_str(), "w");
     for(auto x : mvd_counter){
         fprintf(fp, "%d,%d\n", x.first, x.second);
     }
@@ -48,7 +48,7 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     }
     fclose(fp);
 
-    fp = std::fopen(log_path + "/mvd_result" + file_suffix + ".txt").c_str(), "w");
+    fp = std::fopen((log_path + "/mvd_result" + file_suffix + ".txt").c_str(), "w");
     fprintf(fp, "greater_0_flag:%d\n", greater_0_flag_sum);
     fprintf(fp, "greater_1_flag:%d\n", greater_1_flag_sum);
     fprintf(fp, "sign_flag     :%d\n", sign_flag_sum);
