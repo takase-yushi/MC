@@ -267,12 +267,12 @@ std::vector<Square> SquareDivision::getSquareIndexList() {
  * @brief 現在存在するすべての三角形の集合(座標)を返す（※論理削除されたパッチも含まれています）
  * @return 三角形の集合（座標）
  */
-std::vector<Point3Vec> SquareDivision::getAllSquareCoordinateList() {
-    std::vector<Point3Vec> vec;
+std::vector<Point4Vec> SquareDivision::getAllSquareCoordinateList() {
+    std::vector<Point4Vec> vec;
 
     for(int i = 0 ; i < squares.size() ; i++) {
-        Square square = squares[i].first;
-        vec.emplace_back(corners[square.p1_idx], corners[square.p2_idx], corners[square.p3_idx]);
+        Square square = squares[i];
+        vec.emplace_back(corners[square.p1_idx], corners[square.p2_idx], corners[square.p3_idx], corners[square.p4_idx]);
     }
 
     return vec;
