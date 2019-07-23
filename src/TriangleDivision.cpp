@@ -933,6 +933,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     std::vector<cv::Point2f> gauss_result_warping;
     cv::Point2f gauss_result_parallel;
 
+    int warping_limit = 6;
 
     if(cmt == nullptr) {
         cmt = previousMvList[0][triangle_index];
@@ -985,7 +986,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                     triangle_gauss_results[triangle_index].mv_warping, error_warping,
                     triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, false, dummy);
 #endif
-            if(cost_parallel < cost_warping || GAUSS_NEWTON_PARALLEL_ONLY){
+            if(cost_parallel < cost_warping || (steps <= warping_limit)|| GAUSS_NEWTON_PARALLEL_ONLY){
                 triangle_gauss_results[triangle_index].parallel_flag = true;
                 triangle_gauss_results[triangle_index].residual = error_parallel;
                 triangle_gauss_results[triangle_index].method = method_parallel;
@@ -1178,8 +1179,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                     mv_warping_tmp, error_warping_tmp,
                     triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], false, dummy);
 #endif
-
-            if(cost_parallel_tmp < cost_warping_tmp || GAUSS_NEWTON_PARALLEL_ONLY){
+            if(cost_parallel_tmp < cost_warping_tmp || (steps <= warping_limit) || GAUSS_NEWTON_PARALLEL_ONLY){
                 triangle_gauss_results[triangle_indexes[j]].parallel_flag = true;
                 split_mv_result[j] = GaussResult(mv_warping_tmp, mv_parallel_tmp, error_parallel_tmp, triangle_size_tmp, true, error_parallel_tmp, error_warping_tmp);
             }else{
@@ -1354,11 +1354,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         eraseTriangle(triangles.size() - 1);
         addNeighborVertex(triangles[triangle_index].first.p1_idx,triangles[triangle_index].first.p2_idx,triangles[triangle_index].first.p3_idx);
         addCoveredTriangle(triangles[triangle_index].first.p1_idx,triangles[triangle_index].first.p2_idx,triangles[triangle_index].first.p3_idx, triangle_index);
-#if MVD_DEBUG_LOG
-        std::cout << "triangle_index:" << triangle_index << std::endl;
-        std::cout << "p1_idx:" << triangles[triangle_index].first.p1_idx << " p2_idx:" << triangles[triangle_index].first.p2_idx << " p3_idx:" << triangles[triangle_index].first.p3_idx << std::endl;
-        std::cout << "p1:" << corners[triangles[triangle_index].first.p1_idx] << " p2:" << corners[triangles[triangle_index].first.p2_idx] << " p3:" << corners[triangles[triangle_index].first.p3_idx] << std::endl;
-#endif
 
         return false;
     }
