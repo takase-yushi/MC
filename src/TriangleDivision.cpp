@@ -466,7 +466,14 @@ std::vector<cv::Point2f> TriangleDivision::getNeighborVertexCoordinateList(int i
  * @return 三角形の集合(座標で返される)
  */
 std::vector<Point3Vec> TriangleDivision::getIdxCoveredTriangleCoordinateList(int target_vertex_idx) {
-    std::set<int> s = covered_triangle[target_vertex_idx];
+    std::set<int> same_corners = same_corner_list[target_vertex_idx];
+
+    std::set<int> s;
+    std::set<int> tmp_s;
+    for(auto same_corner : same_corners){
+        tmp_s = covered_triangle[same_corner];
+        for(auto idx : tmp_s) s.emplace(idx);
+    }
     std::vector<Point3Vec> v(s.size());
 
     for(auto triangle_idx : s) {
@@ -484,7 +491,14 @@ std::vector<Point3Vec> TriangleDivision::getIdxCoveredTriangleCoordinateList(int
  * @return 三角形の集合（座標）
  */
 std::vector<int> TriangleDivision::getIdxCoveredTriangleIndexList(int target_vertex_idx) {
-    std::set<int> s = covered_triangle[target_vertex_idx];
+    std::set<int> same_corners = same_corner_list[target_vertex_idx];
+
+    std::set<int> s;
+    std::set<int> tmp_s;
+    for(auto same_corner : same_corners){
+        tmp_s = covered_triangle[same_corner];
+        for(auto idx : tmp_s) s.emplace(idx);
+    }
     std::vector<int> v(s.size());
 
     for(auto triangle_idx : s) {
