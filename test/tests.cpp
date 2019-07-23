@@ -370,17 +370,7 @@ void getDiff_vector(){
         q.x = stod(b[1]); q.y = stod(b[2]);
 
         if(diff < g.x) diff = g.x;
-
-//        diff_x[(int)(4 * abs(g.x - q.x))]++;
-//        diff_y[(int)(4 * abs(g.y - q.y))]++;
     }
-//    for(int i = 0 ; i < 200 ; i++) {
-//        diff_list << (double)i / 4 << " = " << diff_x[i] << ", " << diff_y[i] << std::endl;
-//    }
-//    for(int i = 1 ; i < 200 ; i++){
-//        if(diff < g.x) diff = g.x;
-//    }
-    std::cout << diff <<std::endl;
 }
 
 void draw_mv(){
@@ -506,7 +496,6 @@ void draw_mv(){
                 cv::line(mc_image, cog2, cog2 + q2, CV_RGB(0, 0, 255));
                 cv::line(mc_image, cog2, cog2 + g2, CV_RGB(0, 255, 0));
             }
-            std::cout << j * nw + i <<std::endl;
         }
     }
     cv::imwrite(img_directory + "full_pel_gauss_mv.bmp", mc_image);
