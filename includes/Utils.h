@@ -100,15 +100,16 @@ enum {
 #define MVD_DEBUG_LOG false
 
 const std::string OS = "Ubuntu";
-//TODO 四角形対応
+
 /**
- * @struct struct Point3Vec
- * @brief 三点を保持する構造体
+ * @struct struct Point4Vec
+ * @brief 四点を保持する構造体
  */
-struct Point3Vec{
-    cv::Point2f p1; ///< 三角形の頂点1の座標
-    cv::Point2f p2; ///< 三角形の頂点2の座標
-    cv::Point2f p3; ///< 三角形の頂点3の座標
+struct Point4Vec{
+    cv::Point2f p1; ///< 四角形の頂点1の座標
+    cv::Point2f p2; ///< 四角形の頂点2の座標
+    cv::Point2f p3; ///< 四角形の頂点3の座標
+    cv::Point2f p4; ///< 四角形の頂点4の座標
 
 
     /**
@@ -117,17 +118,18 @@ struct Point3Vec{
      * @param p2 三角形の頂点2の座標
      * @param p3 三角形の頂点3の座標
      */
-    Point3Vec(const cv::Point2f &p1, const cv::Point2f &p2, const cv::Point2f &p3) : p1(p1), p2(p2), p3(p3) {}
+    Point4Vec(const cv::Point2f &p1, const cv::Point2f &p2, const cv::Point2f &p3, const cv::Point2f &p4) : p1(p1), p2(p2), p3(p3), p4() {}
 
-    Point3Vec() {}
+    Point4Vec() {}
 
-    bool operator==(const Point3Vec &rhs) const {
+    bool operator==(const Point4Vec &rhs) const {
         return p1 == rhs.p1 &&
                p2 == rhs.p2 &&
-               p3 == rhs.p3;
+               p3 == rhs.p3 &&
+               p4 == rhs.p4;
     }
 
-    bool operator!=(const Point3Vec &rhs) const {
+    bool operator!=(const Point4Vec &rhs) const {
         return !(rhs == *this);
     }
 };
@@ -152,13 +154,14 @@ struct Triangle{
     Triangle(int p1_idx, int p2_idx, int p3_idx) : p1_idx(p1_idx), p2_idx(p2_idx), p3_idx(p3_idx) {}
     Triangle(int p1_idx, int p2_idx, int p3_idx, int idx) : p1_idx(p1_idx), p2_idx(p2_idx), p3_idx(p3_idx), idx(idx) {}
 };
+
 struct Square{
     int p1_idx; ///< 四角形の頂点1のインデックス
     int p2_idx; ///< 四角形の頂点2のインデックス
     int p3_idx; ///< 四角形の頂点3のインデックス
     int p4_idx; ///< 四角形の頂点4のインデックス
     int idx;
-    int depth;
+//    int depth;
 
     /**
      * コンストラクタ
