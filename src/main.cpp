@@ -164,7 +164,7 @@ void run(std::string config_path) {
         for (int i = 0; i < init_triangles.size(); i++) {
             foo[i] = new CodingTreeUnit();
             foo[i]->split_cu_flag = false;
-            foo[i]->leftNode = foo[i]->rightNode = nullptr;
+            foo[i]->node1 = foo[i]->node2 = foo[i]->node3 = foo[i]->node4 = nullptr;
             foo[i]->triangle_index = i;
         }
 
@@ -220,7 +220,7 @@ void run(std::string config_path) {
         cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo, diagonal_line_area_flag);
         cv::Mat color = triangle_division.getPredictedColorImageFromCtu(foo, diagonal_line_area_flag, getPSNR(target_image, p_image));
 
-        Analyzer analayzer("_" + std::to_string(qp));
+        Analyzer analayzer("_bm_fullsearch_" + std::to_string(qp) + "_" + getCurrentTimestamp());
         analayzer.storeDistributionOfMv(foo);
 
         int code_length = triangle_division.getCtuCodeLength(foo);
