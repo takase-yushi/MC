@@ -55,7 +55,6 @@ int main(int argc, char *argv[]){
 }
 
 void tests(){
-    testCoveredPatch();
 }
 
 void run(std::string config_path) {
