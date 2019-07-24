@@ -1327,12 +1327,13 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
             if(!isMvExists(vectors, spatial_square.mv_parallel)) {
                 vectors.emplace_back(spatial_square.mv_parallel, SPATIAL);
             }
-        }else{
-            // 隣接パッチがワーピングで予想されている場合、そのパッチの0番の動きベクトルを候補とする
-            if(!isMvExists(vectors, spatial_square.mv_warping[0])){
-                vectors.emplace_back(spatial_square.mv_warping[0], SPATIAL);
-            }
         }
+//        else{
+//            // 隣接パッチがワーピングで予想されている場合、そのパッチの0番の動きベクトルを候補とする
+//            if(!isMvExists(vectors, spatial_square.mv_warping[0])){
+//                vectors.emplace_back(spatial_square.mv_warping[0], SPATIAL);
+//            }
+//        }
     }
 
 #if MVD_DEBUG_LOG
@@ -1526,39 +1527,39 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     cv::Point2f p1 = corners[current_square_coordinate.p1_idx];
     cv::Point2f p2 = corners[current_square_coordinate.p2_idx];
     cv::Point2f p3 = corners[current_square_coordinate.p3_idx];
-    Point3Vec coordinate = Point3Vec(p1, p2, p3);
+    cv::Point2f p4 = corners[current_square_coordinate.p4_idx];
+    Point4Vec coordinate = Point4Vec(p1, p2, p3, p4);
     vectors.clear();
 
-    std::vector<cv::Point2f> pixels_in_triangle;
+    std::vector<cv::Point2f> pixels_in_square;
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> merge_vectors;
     if(pixels.empty()) {
-         pixels_in_square = getPixelsInSquare(coordinate, area_flag, square_idx, ctu,
-                                                                          block_size_x, block_size_y);
+         pixels_in_square = getPixelsInSquare(coordinate);
     }else{
         pixels_in_square = pixels;
     }
 
     for(int i = 0 ; i < spatial_square_size ; i++) {
-        int spatial_triangle_index = spatial_squares[i];
-        GaussResult spatial_triangle = square_gauss_results[spatial_triangle_index];
+        int spatial_square_index = spatial_squares[i];
+        GaussResult spatial_square = square_gauss_results[spatial_square_index];
         std::vector<cv::Point2f> mvds;
 
-        if(spatial_triangle.parallel_flag){
-            if(!isMvExists(merge_vectors, spatial_triangle.mv_parallel)) {
-                merge_vectors.emplace_back(spatial_triangle.mv_parallel, MERGE);
-                double ret_residual = getTriangleResidual(ref_image, target_image, coordinate, mv, pixels_in_triangle);
-                double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
-                results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, results.size(), MERGE, FlagsCodeSum(0, 0, 0, 0));
-            }
-        }else{
-            if(!isMvExists(merge_vectors, spatial_square.mv_warping[0])) {
-                merge_vectors.emplace_back(spatial_square.mv_warping[0], MERGE);
+        if(spatial_square.parallel_flag){
+            if(!isMvExists(merge_vectors, spatial_square.mv_parallel)) {
+                merge_vectors.emplace_back(spatial_square.mv_parallel, MERGE);
                 double ret_residual = getSquareResidual(ref_image, target_image, coordinate, mv, pixels_in_square);
                 double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
                 results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, results.size(), MERGE, FlagsCodeSum(0, 0, 0, 0));
             }
         }
-
+//        else{
+//            if(!isMvExists(merge_vectors, spatial_square.mv_warping[0])) {
+//                merge_vectors.emplace_back(spatial_square.mv_warping[0], MERGE);
+//                double ret_residual = getSquareResidual(ref_image, target_image, coordinate, mv, pixels_in_square);
+//                double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
+//                results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, results.size(), MERGE, FlagsCodeSum(0, 0, 0, 0));
+//            }
+//        }
     }
 
     // RDしたスコアが小さい順にソート
