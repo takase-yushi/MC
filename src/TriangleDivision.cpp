@@ -129,7 +129,7 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
             corners.emplace_back(nx, ny);
             corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
             same_corner_list.emplace_back();
-            same_corner_list[(int)corners.size() - 1].emplace(corners.size() - 1);
+            same_corner_list[(int)corners.size() - 1].emplace(corners.size() - 1);;
             neighbor_vtx.emplace_back();
 
             // 前の動きベクトルを保持しておくやつ
@@ -242,6 +242,48 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
         for(int x = 0 ; x < tmp_mat.cols ; x++){
             expansion_ref_uchar[x - scaled_expansion_size][y - scaled_expansion_size] = M(tmp_mat, x, y);
         }
+    }
+
+    // 0行目
+    for(int block_x = 1 ; block_x < (block_num_x * 2) - 1; block_x+=2){
+        int p1_idx = block_x;
+        int p2_idx = block_x + 1;
+        same_corner_list[p1_idx].emplace(p2_idx);
+        same_corner_list[p2_idx].emplace(p1_idx);
+    }
+
+    for(int block_y = 0 ; block_y < 2 * block_num_y ; block_y+=2){
+        for(int block_x = 1 ; block_x < (block_num_x * 2) - 1; block_x+=2){
+            int p1_idx = block_x +     2 * block_num_x * block_y;
+            int p2_idx = block_x + 1 + 2 * block_num_x * block_y;
+            same_corner_list[p1_idx].emplace(p2_idx);
+            same_corner_list[p2_idx].emplace(p1_idx);
+
+            if(block_y == 0 || block_y == (block_num_y - 1)) continue;
+
+            int p3_idx = p1_idx + 2 * block_num_x;
+            int p4_idx = p3_idx + 1;
+
+            same_corner_list[p1_idx].emplace(p3_idx);
+            same_corner_list[p1_idx].emplace(p4_idx);
+            same_corner_list[p2_idx].emplace(p3_idx);
+            same_corner_list[p2_idx].emplace(p4_idx);
+            same_corner_list[p3_idx].emplace(p1_idx);
+            same_corner_list[p3_idx].emplace(p2_idx);
+            same_corner_list[p3_idx].emplace(p4_idx);
+            same_corner_list[p4_idx].emplace(p1_idx);
+            same_corner_list[p4_idx].emplace(p2_idx);
+            same_corner_list[p4_idx].emplace(p3_idx);
+        }
+    }
+
+    std::cout << same_corner_list.size() << std::endl;
+    // 0行目
+    for(int block_x = 1 ; block_x < (block_num_x * 2) - 1; block_x+=2){
+        int p1_idx = block_x + 2 * block_num_x * (2 * block_num_y - 1);
+        int p2_idx = block_x + 1;
+        same_corner_list[p1_idx].emplace(p2_idx);
+        same_corner_list[p2_idx].emplace(p1_idx);
     }
 }
 
