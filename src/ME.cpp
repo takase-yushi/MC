@@ -821,7 +821,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                             g_y_parallel = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_parallel.x    , X_later_parallel.y + 1, 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_parallel.x    , X_later_parallel.y - 1, 1)) / 2.0;  // (current_ref_expand[x_parallel_tmp    ][y_parallel_tmp + 4] - current_ref_expand[x_parallel_tmp    ][y_parallel_tmp - 4]) / 2.0;
                         #endif
                         spread-=1;
-                        
+
                         // 式(28)～(33)
                         delta_g_warping[i] = g_x * delta_x + g_y * delta_y;
                     }
@@ -904,73 +904,67 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
                 double Error_warping = MSE_warping;
                 double Error_parallel = MSE_parallel;
+                double mu2 = pixels_in_triangle.size() * 0.1;
+                gg_parallel.at<double>(0, 0) += mu2;
+                gg_parallel.at<double>(1, 1) += mu2;
+                B_parallel.at<double>(0, 0) -= (mu2 * tmp_mv_parallel.x);
+                B_parallel.at<double>(1, 0) -= (mu2 * tmp_mv_parallel.y);
+                cv::solve(gg_warping, B_warping, delta_uv_warping); //6x6の連立方程式を解いてdelta_uvに格納
+                v_stack_warping.emplace_back(tmp_mv_warping, Error_warping);
 
-                if(warping_update_flag) {
-                    cv::solve(gg_warping, B_warping, delta_uv_warping); //6x6の連立方程式を解いてdelta_uvに格納
-                    v_stack_warping.emplace_back(tmp_mv_warping, Error_warping);
+                for (int k = 0; k < 6; k++) {
 
-                    for (int k = 0; k < 6; k++) {
-
-                        if (k % 2 == 0) {
-                            if ((-scaled_spread <=
-                                 scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x +
-                                 delta_uv_warping.at<double>(k, 0)) &&
-                                (target_images[0][step].cols - 1 + scaled_spread >=
-                                 scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x +
-                                 delta_uv_warping.at<double>(k, 0))) {
-                                tmp_mv_warping[(int) (k / 2)].x = tmp_mv_warping[(int) (k / 2)].x +
-                                                                  delta_uv_warping.at<double>(k,
-                                                                                              0);//動きベクトルを更新(画像の外に出ないように)
-                            }
-                        } else {
-                            if ((-scaled_spread <=
-                                 scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y +
-                                 delta_uv_warping.at<double>(k, 0)) &&
-                                (target_images[0][step].rows - 1 + scaled_spread >=
-                                 scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y +
-                                 delta_uv_warping.at<double>(k, 0))) {
-                                tmp_mv_warping[(int) (k / 2)].y =
-                                        tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0);
-                            }
+                    if (k % 2 == 0) {
+                        if ((-scaled_spread <= scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x +delta_uv_warping.at<double>(k, 0)) &&
+                            (target_images[0][step].cols - 1 + scaled_spread >=scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0))) {
+                            tmp_mv_warping[(int) (k / 2)].x = tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0);//動きベクトルを更新(画像の外に出ないように)
+                        }
+                    } else {
+                        if ((-scaled_spread <=
+                             scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y +
+                             delta_uv_warping.at<double>(k, 0)) &&
+                            (target_images[0][step].rows - 1 + scaled_spread >=
+                             scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y +
+                             delta_uv_warping.at<double>(k, 0))) {
+                            tmp_mv_warping[(int) (k / 2)].y =
+                                    tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0);
                         }
                     }
                 }
 
-                if(parallel_update_flag) {
-                    cv::solve(gg_parallel, B_parallel, delta_uv_parallel);
-                    v_stack_parallel.emplace_back(tmp_mv_parallel, Error_parallel);
+                cv::solve(gg_parallel, B_parallel, delta_uv_parallel);
+                v_stack_parallel.emplace_back(tmp_mv_parallel, Error_parallel);
 
-                    for (int k = 0; k < 2; k++) {
-                        if (k % 2 == 0) {
-                            if ((-scaled_spread <=
-                                 scaled_coordinates[0].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
-                                (target_images[0][step].cols - 1 + scaled_spread >=
-                                 scaled_coordinates[0].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
-                                (-scaled_spread <=
-                                 scaled_coordinates[1].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
-                                (target_images[0][step].cols - 1 + scaled_spread >=
-                                 scaled_coordinates[1].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
-                                (-scaled_spread <=
-                                 scaled_coordinates[2].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
-                                (target_images[0][step].cols - 1 + scaled_spread >=
-                                 scaled_coordinates[2].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0))) {
-                                tmp_mv_parallel.x = tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0);
-                            }
-                        } else {
-                            if ((-scaled_spread <=
-                                 scaled_coordinates[0].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
-                                (target_images[0][step].rows - 1 + scaled_spread >=
-                                 scaled_coordinates[0].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
-                                (-scaled_spread <=
-                                 scaled_coordinates[1].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
-                                (target_images[0][step].rows - 1 + scaled_spread >=
-                                 scaled_coordinates[1].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
-                                (-scaled_spread <=
-                                 scaled_coordinates[2].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
-                                (target_images[0][step].rows - 1 + scaled_spread >=
-                                 scaled_coordinates[2].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0))) {
-                                tmp_mv_parallel.y = tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0);
-                            }
+                for (int k = 0; k < 2; k++) {
+                    if (k % 2 == 0) {
+                        if ((-scaled_spread <=
+                             scaled_coordinates[0].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
+                            (target_images[0][step].cols - 1 + scaled_spread >=
+                             scaled_coordinates[0].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
+                            (-scaled_spread <=
+                             scaled_coordinates[1].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
+                            (target_images[0][step].cols - 1 + scaled_spread >=
+                             scaled_coordinates[1].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
+                            (-scaled_spread <=
+                             scaled_coordinates[2].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0)) &&
+                            (target_images[0][step].cols - 1 + scaled_spread >=
+                             scaled_coordinates[2].x + tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0))) {
+                            tmp_mv_parallel.x = tmp_mv_parallel.x + delta_uv_parallel.at<double>(k, 0);
+                        }
+                    } else {
+                        if ((-scaled_spread <=
+                             scaled_coordinates[0].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
+                            (target_images[0][step].rows - 1 + scaled_spread >=
+                             scaled_coordinates[0].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
+                            (-scaled_spread <=
+                             scaled_coordinates[1].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
+                            (target_images[0][step].rows - 1 + scaled_spread >=
+                             scaled_coordinates[1].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
+                            (-scaled_spread <=
+                             scaled_coordinates[2].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0)) &&
+                            (target_images[0][step].rows - 1 + scaled_spread >=
+                             scaled_coordinates[2].y + tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0))) {
+                            tmp_mv_parallel.y = tmp_mv_parallel.y + delta_uv_parallel.at<double>(k, 0);
                         }
                     }
                 }
