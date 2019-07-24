@@ -5,6 +5,8 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
+#include <vector>
+#include <numeric>
 #include "../includes/Encode.h"
 
 /**
@@ -143,4 +145,27 @@ int getExponentialGolombCodeLength(int data, int k){
     }
 
     return p_length + q_length;
+}
+
+/**
+ * @fn double getEntropy(std::vector<int> items)
+ * @brief エントロピーを計算する
+ * @param items 要素
+ * @return 計算されたエントロピー
+ */
+double getEntropy(std::vector<int> items) {
+    int sum = std::accumulate(items.begin(), items.end(), 0);
+
+    std::vector<double> v;
+    v.reserve(items.size());
+for(auto item : items){
+        v.emplace_back(item / (double)sum);
+    }
+
+    double entropy = 0.0;
+    for(auto p : v){
+        entropy += (- p * log2(p));
+    }
+
+    return entropy;
 }

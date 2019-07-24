@@ -4,6 +4,7 @@
 
 #include "../includes/Analyzer.h"
 #include "../includes/Utils.h"
+#include "../includes/Encode.h"
 #include <cstdio>
 #include <iostream>
 
@@ -50,14 +51,16 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     fclose(fp);
 
     fp = std::fopen((log_path + "/mvd_result" + file_suffix + ".txt").c_str(), "w");
-    fprintf(fp, "greater_0_flag:%d\n", greater_0_flag_sum);
-    fprintf(fp, "greater_1_flag:%d\n", greater_1_flag_sum);
-    fprintf(fp, "sign_flag     :%d\n", sign_flag_sum);
-    fprintf(fp, "mvd_code      :%d\n", mvd_code_sum);
-    fprintf(fp, "warping_code  :%d\n", mvd_warping_code_sum);
-    fprintf(fp, "warping_patch :%d\n", warping_patch_num);
-    fprintf(fp, "parallel_code :%d\n", mvd_parallel_code_sum);
-    fprintf(fp, "parallel_patch:%d\n", parallel_patch_num);
+    fprintf(fp, "greater_0_flag        :%d\n", greater_0_flag_sum);
+    fprintf(fp, "greater_0_flag entropy:%f\n", getEntropy({greater_0_flag_counter[0], greater_0_flag_counter[1]}));
+    fprintf(fp, "greater_1_flag        :%d\n", greater_1_flag_sum);
+    fprintf(fp, "greater_1_flag entropy:%f\n", getEntropy({greater_1_flag_counter[0], greater_1_flag_counter[1]}));
+    fprintf(fp, "sign_flag             :%d\n", sign_flag_sum);
+    fprintf(fp, "mvd_code              :%d\n", mvd_code_sum);
+    fprintf(fp, "warping_code          :%d\n", mvd_warping_code_sum);
+    fprintf(fp, "warping_patch         :%d\n", warping_patch_num);
+    fprintf(fp, "parallel_code         :%d\n", mvd_parallel_code_sum);
+    fprintf(fp, "parallel_patch        :%d\n", parallel_patch_num);
 
     fclose(fp);
 }
@@ -105,6 +108,9 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
                     if(ctu->flags_code_sum.getYGreater0Flag()[i]) {
                         greater_1_flag_counter[(int)(ctu->flags_code_sum.getYGreater1Flag()[i])]++;
                     }
+
+                    greater_0_flag_counter[(int)(ctu->flags_code_sum.getXGreater0Flag()[i])]++;
+                    greater_0_flag_counter[(int)(ctu->flags_code_sum.getYGreater0Flag()[i])]++;
                 }
                 mvd_warping_code_sum += ctu->flags_code_sum.getMvdCodeLength();
             }
