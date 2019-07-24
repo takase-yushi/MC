@@ -177,7 +177,7 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
 
             int squareIndex = insertSquare(p1_idx, p2_idx, p3_idx, p4_idx);
             addNeighborVertex(p1_idx, p2_idx, p3_idx, p4_idx);
-            addCoveredSquare(p1_idx, p2_idx, p3_idx, p4_idx, squareIndex); // p1/p2/p3はsquareIndex番目の三角形に含まれている
+            addCoveredSquare(p1_idx, p2_idx, p3_idx, p4_idx, squareIndex); // p1/p2/p3はsquareIndex番目の四角形に含まれている
 
 //            int p4_idx = p2_idx;
 //            int p5_idx = p3_idx;
