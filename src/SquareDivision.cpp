@@ -354,8 +354,8 @@ int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx)
 //TODO 四角形対応
 /**
  * @fn void SquareDivision::eraseSquare(int t_idx)
- * @brief 三角パッチに関わる情報を削除する
- * @param t_idx 三角パッチの番号
+ * @brief 四角パッチに関わる情報を削除する
+ * @param t_idx 四角パッチの番号
  */
 void SquareDivision::eraseSquare(int t_idx){
     Square square = squares[t_idx];
@@ -587,19 +587,19 @@ void SquareDivision::addCornerAndSquare(Square square, int square_index){
 }
 //TODO 四角形対応
 /**
- * @fn bool SquareDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point3Vec square, int square_index, int type, int steps)
+ * @fn bool SquareDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point4Vec square, int square_index, int type, int steps)
  * @brief 与えられたトライアングルを分割するか判定し，必要な場合は分割を行う
  * @details この関数は再帰的に呼び出され，そのたびに分割を行う
  * @param gaussRefImage ガウス・ニュートン法の参照画像
  * @param ctu CodingTreeUnitのrootノード
  * @oaran cmt 時間予測用のCollocatedMvTreeのノード(collocatedmvtree→cmt)
- * @param square 三角形の各点の座標
+ * @param square 四角形の各点の座標
  * @param square_index 三角形のindex
  * @param type 分割方向
  * @param steps 分割回数
  * @return 分割した場合はtrue, そうでない場合falseを返す
  */
-bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point3Vec square, int square_index, int type, int steps, std::vector<std::vector<int>> &diagonal_line_area_flag) {
+bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point4Vec square, int square_index, int type, int steps, std::vector<std::vector<int>> &diagonal_line_area_flag) {
     if(steps <= 0) return false;
 
     double RMSE_before_subdiv = 0.0;
@@ -729,8 +729,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         mv = gauss_result_warping;
     }
     ctu->mv1 = mv[0];
-    ctu->mv2 = mv[1];
-    ctu->mv3 = mv[2];
     ctu->square_index = square_index;
     ctu->code_length = code_length;
     ctu->collocated_mv = cmt->mv1;
@@ -739,19 +737,19 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
     SplitResult split_squares = getSplitSquare(p1, p2, p3, type);
 
-    SplitResult split_sub_squares1 = getSplitsquare(split_squares.t1.p1, split_squares.t1.p2, split_squares.t1.p3, split_squares.t1_type);
-    SplitResult split_sub_squares2 = getSplitsquare(split_squares.t2.p1, split_squares.t2.p2, split_squares.t2.p3, split_squares.t2_type);
+    SplitResult split_sub_squares1 = getSplitSquare(split_squares.s1.p1, split_squares.s1.p2, split_squares.s1.p3, split_squares.s1.p4, split_squares.s_type);
+    SplitResult split_sub_squares2 = getSplitSquare(split_squares.s2.p1, split_squares.s2.p2, split_squares.s2.p3, split_squares.s2.p4, split_squares.s_type);
 
     std::vector<Point3Vec> subdiv_ref_squares, subdiv_target_squares;
-    subdiv_ref_squares.emplace_back(split_sub_squares1.t1);
-    subdiv_ref_squares.emplace_back(split_sub_squares1.t2);
-    subdiv_ref_squares.emplace_back(split_sub_squares2.t1);
-    subdiv_ref_squares.emplace_back(split_sub_squares2.t2);
+    subdiv_ref_squares.emplace_back(split_sub_squares1.s1);
+    subdiv_ref_squares.emplace_back(split_sub_squares1.s2);
+    subdiv_ref_squares.emplace_back(split_sub_squares2.s1);
+    subdiv_ref_squares.emplace_back(split_sub_squares2.s2);
 
-    subdiv_target_squares.emplace_back(split_sub_squares1.t1);
-    subdiv_target_squares.emplace_back(split_sub_squares1.t2);
-    subdiv_target_squares.emplace_back(split_sub_squares2.t1);
-    subdiv_target_squares.emplace_back(split_sub_squares2.t2);
+    subdiv_target_squares.emplace_back(split_sub_squares1.s1);
+    subdiv_target_squares.emplace_back(split_sub_squares1.s2);
+    subdiv_target_squares.emplace_back(split_sub_squares2.s1);
+    subdiv_target_squares.emplace_back(split_sub_squares2.s2);
 
     double RMSE_after_subdiv = 0.0;
     std::vector<GaussResult> split_mv_result(subdiv_target_squares.size());
@@ -786,27 +784,17 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
     bool flag = true;
     int a, b, c, d;
-    if(type == TYPE1) {
+    if(type == 1) {    //四角形
         for (int x = 0 ; x < width  ; x++) {
             diagonal_line_area_flag[(x + sx) % block_size_x][(x + sy) % block_size_y] = (x % 2 == 0 ? square_indexes[0] : square_indexes[2]);
             flag = !flag;
         }
-    }else if(type == TYPE2) {
+    }else if(type == 2) {    //長方形
         for (int x = 0 ; x < width ; x++) {
             diagonal_line_area_flag[(sx + width + x) % block_size_x][(sy + height + x) % block_size_y] = (x % 2 == 0 ? square_indexes[1] : square_indexes[3]);
             flag = !flag;
         }
 
-    }else if(type == TYPE3){
-        for(int x = 0 ; x < width ; x++){
-            diagonal_line_area_flag[(sx + width + x) % block_size_x][(sy + height - x - 1) % block_size_y] = (x % 2 == 0 ? square_indexes[1] : square_indexes[2]);
-            flag = !flag;
-        }
-    }else if(type == TYPE4){
-        for(int x = 0 ; x < width ; x++){
-            diagonal_line_area_flag[(x + sx) % block_size_x][(ly - x) % block_size_y] = (x % 2 == 0 ? square_indexes[1] : square_indexes[2]);
-            flag = !flag;
-        }
     }
 
     ctu->node1 = new CodingTreeUnit();
@@ -1051,157 +1039,49 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 }
 //TODO 四角形対応
 /**
- * @fn SquareDivision::SplitResult SquareDivision::getSplitSquare(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type)
+ * @fn SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, const cv::Point2f& p4, int type)
  * @details ３点の座標とtypeを受け取り，分割した形状を返す
  * @param p1 頂点１の座標
  * @param p2 頂点２の座標
  * @param p3 頂点３の座標
+ * @param p3 頂点4の座標
  * @param type 分割形状
  * @return 分割結果
  */
-SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, int type){
-    cv::Point2f a, b, c, d;
+SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, const cv::Point2f& p4, int type){
+    cv::Point2f a, b, c, d, e, f;
 
     switch(type) {
-        case DIVIDE::TYPE1:
+        case 1:
         {
-            cv::Point2f x = (p2 - p1) / 2;
-            cv::Point2f y = (p3 - p1) / 2;
+            cv::Point2f x = (p2 - p1) / 2;           //  a        e        b
+                                                     //   -----------------
+            a = p1;                                  //   |               |
+            b = p2;                                  //   |               |
+            c = p3;                                  //   |               |
+            d = p4;                                  //   |               |
+            e = a + x;                               //   -----------------
+            f = c + x;                               //  c        f        d
 
-            a = p1;
-            b = p2;
-            c = a + x + y;
-            d = p3;
-
-            return {Point3Vec(a, b, c), Point3Vec(a, c, d), TYPE5, TYPE6};
+            return {Point4Vec(a, e, c, f), Point4Vec(e, b, f, d), 2};
         }
-        case DIVIDE::TYPE2:
+        case 2:
         {
-            cv::Point2f x = (p2 - p3) / 2.0;
-            cv::Point2f y = (p1 - p3) / 2.0;
-            a = p1;
-            b = p3 + x + y;
-            c = p2;
-            d = p3;
-
-            return {Point3Vec(a, b, d), Point3Vec(b, c, d), TYPE8, TYPE7};
-        }
-        case DIVIDE::TYPE3:
-        {
-            cv::Point2f x = (p1 - p2) / 2.0;
-            cv::Point2f y = (p3 - p2) / 2.0;
-
-            a = p1;
-            b = p2;
-            c = p2 + x + y;
-            d = p3;
-
-            return {Point3Vec(a, b, c), Point3Vec(b, c, d), TYPE5, TYPE8};
-        }
-        case DIVIDE::TYPE4:
-        {
-            cv::Point2f x = (p3 - p2) / 2.0;
-            cv::Point2f y = (p1 - p2) / 2.0;
-
-            a = p1;
-            b = p2 + x + y;
-            c = p2;
-            d = p3;
-
-            return {Point3Vec(a, b, c), Point3Vec(b, c, d), TYPE6, TYPE7};
-        }
-        case DIVIDE::TYPE5:
-        {
-            cv::Point2f x = (p2 - p1) / 2.0;
-            x.x = (int)x.x;
-
-            a = p1;
-
-            cv::Point2f b1 = p1 + x;
-            cv::Point2f b2 = p1 + x;
-            b2.x += 1;
-            b1.y = (int)b1.y;
-            b2.y = (int)b2.y;
-
-            c = p2;
-
-            cv::Point2f d1 = p3;
-            cv::Point2f d2 = p3;
-            d1.x = (int)d1.x;
-            d1.y = (int)d1.y;
-            d2.x = ceil(d2.x);
-            d2.y = (int)(d2.y);
-
-            return {Point3Vec(a, b1, d1), Point3Vec(b2, c, d2), TYPE3, TYPE1};
-        }
-        case DIVIDE::TYPE6:
-        {
-            cv::Point2f y = (p3 - p1) / 2.0;
-            y.y = (int)y.y;
-
-            a = p1;
-            cv::Point2f b1 = p1 + y;
-            cv::Point2f b2 = p1 + y;
-            b2.y += 1;
-
-            cv::Point2f c1 = p2;
-            cv::Point2f c2 = p2;
-            c1.x = (int)c1.x;
-            c1.y = (int)c1.y;
-            c2.x = (int)(c2.x);
-            c2.y = ceil(c2.y);
-
-            d = p3;
-
-            return {Point3Vec(a, b1, c1), Point3Vec(b2, c2, d), TYPE4, TYPE1};
-        }
-        case DIVIDE::TYPE7:
-        {
-            cv::Point2f x = (p3 - p2) / 2.0;
-            x.x = (int)x.x;
-
-            cv::Point2f a1 = p1;
-            cv::Point2f a2 = p1;
-            a1.x = (int)a1.x;
-            a1.y = ceil(a1.y);
-            a2.x = ceil(a2.x);
-            a2.y = ceil(a2.y);
-
-            b = p2;
-
-            cv::Point2f c1 = p2 + x;
-            cv::Point2f c2 = p2 + x;
-            c2.x += 1;
-
-            d = p3;
-
-            return {Point3Vec(a1, b, c1), Point3Vec(a2, c2, d), TYPE2, TYPE4};
-        }
-        case DIVIDE::TYPE8:
-        {
-            cv::Point2f y = (p3 - p1) / 2.0;
-
-            cv::Point2f a1 = p2;
-            cv::Point2f a2 = p2;
-            a1.x = ceil(a1.x);
-            a1.y = (int)a1.y;
-            a2.x = ceil(a2.x);
-            a2.y = ceil(a2.y);
-
-            b = p1;
-
-            cv::Point2f c1 = p1 + y;
-            cv::Point2f c2 = p1 + y;
-            c1.y = (int)c1.y;
-            c2.y = ceil(c2.y);
-
-            d = p3;
-
-            return {Point3Vec(b, a1, c1), Point3Vec(a2, c2, d), TYPE2, TYPE3};
+            cv::Point2f y = (p1 - p3) / 2;            //    a         b
+                                                      //     ---------
+            a = p1;                                   //     |       |
+            b = p2;                                   //     |       |
+            c = p3;                                   //   e |       | f
+            d = p4;                                   //     |       |
+            e = a + y;                                //     ---------
+            f = b + y;                                //    c         d
+            //
+            return {Point4Vec(a, b, e, f), Point4Vec(e, f, c, d), 1};
         }
         default:
             break;
     }
+
 }
 //TODO 四角形対応
 /**
