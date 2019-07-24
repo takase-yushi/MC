@@ -1106,51 +1106,62 @@ SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1
     }
 
 }
-//TODO 四角形対応
+
 /**
- * @fn std::vector<int> getSpatialMvList()
+ * @fn std::vector<int> SquareDivision::getSpatialSquareList(int s_idx)
  * @brief t_idx番目の四角形の空間予測動きベクトル候補を返す
  * @param[in] t_idx 四角パッチのインデックス
  * @return 候補のパッチの番号を返す
  */
-std::vector<int> SquareDivision::getSpatialSquareList(int t_idx){
-    Square square = squares[t_idx];
-    std::set<int> spatialTriangles;
+std::vector<int> SquareDivision::getSpatialSquareList(int s_idx){
+    Square square = squares[s_idx];
+    std::set<int> spatialSquares;
     std::vector<int> list1 = getIdxCoveredSquareIndexList(square.p1_idx);
     std::vector<int> list2 = getIdxCoveredSquareIndexList(square.p2_idx);
     std::vector<int> list3 = getIdxCoveredSquareIndexList(square.p3_idx);
+    std::vector<int> list4 = getIdxCoveredSquareIndexList(square.p4_idx);
 
-    std::set<int> mutualIndexSet1, mutualIndexSet2, mutualIndexSet3;
+    std::set<int> mutualIndexSet1, mutualIndexSet2, mutualIndexSet3, mutualIndexSet4;
 
 #if MVD_DEBUG_LOG
-    std::cout << "p1:" << squares[t_idx].p1_idx << std::endl;
+    std::cout << "p1:" << squares[s_idx].p1_idx << std::endl;
     for(auto item : list1){
         std::cout << item << std::endl;
     }
     puts("");
 
-    std::cout << "p2:" << squares[t_idx].p2_idx << std::endl;
+    std::cout << "p2:" << squares[s_idx].p2_idx << std::endl;
     for(auto item : list2){
         std::cout << item << std::endl;
     }
     puts("");
-    std::cout << "p3:" << squares[t_idx].p3_idx << std::endl;
 
+    std::cout << "p3:" << squares[s_idx].p3_idx << std::endl;
     for(auto item : list3){
         std::cout << item << std::endl;
     }
-    std::cout << "t_idx:" << t_idx << std::endl;
+    puts("");
+
+    std::cout << "p4:" << squares[s_idx].p4_idx << std::endl;
+    for(auto item : list4){
+        std::cout << item << std::endl;
+    }
+    puts("");
+
+    std::cout << "s_idx:" << t_idx << std::endl;
     puts("");
 
 #endif
 
-    for(auto idx : list1) if(isCodedSquare[idx] && idx != t_idx) mutualIndexSet1.emplace(idx);
-    for(auto idx : list2) if(isCodedSquare[idx] && idx != t_idx) mutualIndexSet2.emplace(idx);
-    for(auto idx : list3) if(isCodedSquare[idx] && idx != t_idx) mutualIndexSet3.emplace(idx);
+    for(auto idx : list1) if(isCodedSquare[idx] && idx != s_idx) mutualIndexSet1.emplace(idx);
+    for(auto idx : list2) if(isCodedSquare[idx] && idx != s_idx) mutualIndexSet2.emplace(idx);
+    for(auto idx : list3) if(isCodedSquare[idx] && idx != s_idx) mutualIndexSet3.emplace(idx);
+    for(auto idx : list4) if(isCodedSquare[idx] && idx != s_idx) mutualIndexSet4.emplace(idx);
 
     for(auto idx : mutualIndexSet1) spatialSquares.emplace(idx);
     for(auto idx : mutualIndexSet2) spatialSquares.emplace(idx);
     for(auto idx : mutualIndexSet3) spatialSquares.emplace(idx);
+    for(auto idx : mutualIndexSet4) spatialSquares.emplace(idx);
 
     std::vector<int> ret;
 
