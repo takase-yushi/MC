@@ -30,7 +30,7 @@ SquareDivision::SquareDivision(const cv::Mat &refImage, const cv::Mat &targetIma
 //TODO 四角形対応
 /**
  * @fn void SquareDivision::initSquare(int block_size_x, int block_size_y, int _divide_steps, int _qp, int divide_flag)
- * @brief 三角形を初期化する
+ * @brief 四角形を初期化する
  * @param[in] _block_size_x
  * @param[in] _block_size_y
  * @param[in] _divide_steps
@@ -541,9 +541,10 @@ int SquareDivision::getCornerIndex(cv::Point2f p) {
     return static_cast<int>(corners.size() - 1);
 }
 
-//TODO 四角形対応
+
 /**
- *
+ * @fn void SquareDivision::addCornerAndSquare(Square square, int square_index)
+ * @brief
  * @param square
  * @param square_index
  * @param type
@@ -561,26 +562,34 @@ void SquareDivision::addCornerAndSquare(Square square, int square_index){
 
     cv::Point2f a = p1;
     cv::Point2f b = p2;
-    cv::Point2f c = a + x + y;
-    cv::Point2f d = p3;
+    cv::Point2f c = p3;
+    cv::Point2f d = p4;
+    cv::Point2f e = a + y;
+    cv::Point2f f = b + y;
+    cv::Point2f g = a + y;    g.y++;
+    cv::Point2f h = b + y;    h.y++;
 
-    int c_idx = getCornerIndex(c);
+    int e_idx = getCornerIndex(e);
+    int f_idx = getCornerIndex(f);
+    int g_idx = getCornerIndex(g);
+    int h_idx = getCornerIndex(h);
 
     int a_idx = square.p1_idx;
     int b_idx = square.p2_idx;
-    int d_idx = square.p3_idx;
+    int c_idx = square.p3_idx;
+    int d_idx = square.p4_idx;
 
-    int t1_idx = insertSquare(a_idx, b_idx, c_idx, TYPE5);
-    int t2_idx = insertSquare(a_idx, c_idx, d_idx, TYPE6);
+    int s1_idx = insertSquare(a_idx, b_idx, e_idx, f_idx);
+    int s2_idx = insertSquare(g_idx, h_idx, c_idx, d_idx);
 
-    removeSquareNeighborVertex(square.p1_idx, square.p2_idx, square.p3_idx);
-    removeSquareCoveredSquare(square.p1_idx, square.p2_idx, square.p3_idx, square_index);
+    removeSquareNeighborVertex(square.p1_idx, square.p2_idx, square.p3_idx, square.p4_idx);
+    removeSquareCoveredSquare( square.p1_idx, square.p2_idx, square.p3_idx, square.p3_idx, square_index);
 
-    addNeighborVertex(a_idx, b_idx, c_idx);
-    addNeighborVertex(a_idx, c_idx, d_idx);
+    addNeighborVertex(a_idx, b_idx, e_idx, f_idx);
+    addNeighborVertex(g_idx, h_idx, c_idx, d_idx);
 
-    addCoveredSquare(a_idx, b_idx, c_idx, t1_idx);
-    addCoveredSquare(a_idx, c_idx, d_idx, t2_idx);
+    addCoveredSquare(a_idx, b_idx, e_idx, f_idx, s1_idx);
+    addCoveredSquare(g_idx, h_idx, c_idx, d_idx, s2_idx);
 
     isCodedSquare[square_index] = false;
     delete_flag[square_index] = true;
