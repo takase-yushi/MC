@@ -650,9 +650,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         if(PRED_MODE == NEWTON) {
             if(GAUSS_NEWTON_INIT_VECTOR) {
                 std::vector<cv::Point2f> tmp_bm_mv;
-                std::vector<double> tmp_bm_errors;
-                std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(square, target_image, expansion_ref,
-                                                                   diagonal_line_area_flag, square_index, ctu);
+                double tmp_bm_error;
+                std::tie(tmp_bm_mv, tmp_bm_error) = blockMatching(square, target_image, expansion_ref);
                 std::tie(gauss_result_warping, gauss_result_parallel, error_warping, error_parallel, square_size) = GaussNewton(ref_images, target_images, expand_images, targetSquare,
                                                                                                                                 diagonal_line_area_flag, square_index, ctu, block_size_x,
                                                                                                                                 block_size_y, tmp_bm_mv[2], ref_hevc);
@@ -693,15 +692,14 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
         }else if(PRED_MODE == BM) {
             std::vector<cv::Point2f> tmp_bm_mv;
-            std::vector<double> tmp_bm_errors;
-            std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(square, target_image, expansion_ref,
-                                                               diagonal_line_area_flag, square_index, ctu);
-            square_gauss_results[square_index].residual_bm = tmp_bm_errors[2];
-            ctu->error_bm = tmp_bm_errors[2];
+            double tmp_bm_error;
+            std::tie(tmp_bm_mv, tmp_bm_error) = blockMatching(square, target_image, expansion_ref);
+            square_gauss_results[square_index].residual_bm = tmp_bm_error;
+            ctu->error_bm = tmp_bm_error;
             gauss_result_warping = tmp_bm_mv;
             gauss_result_parallel = tmp_bm_mv[2];
-            RMSE_before_subdiv = tmp_bm_errors[2];
-            error_parallel = tmp_bm_errors[2];
+            RMSE_before_subdiv = tmp_bm_error;
+            error_parallel = tmp_bm_error;
 //            square_gauss_results[square_index].mv_warping = gauss_result_warping;
             square_gauss_results[square_index].mv_parallel = gauss_result_parallel;
             square_gauss_results[square_index].square_size = square_size;
@@ -831,15 +829,14 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         cv::Point2f mv_parallel_tmp;
         std::vector<cv::Point2f> mv_warping_tmp;
         std::vector<cv::Point2f> tmp_bm_mv;
-        std::vector<double> tmp_bm_errors;
+        double tmp_bm_error;
         double cost_warping_tmp, cost_parallel_tmp;
         double tmp_error_newton;
         MV_CODE_METHOD method_warping_tmp, method_parallel_tmp;
         if(PRED_MODE == NEWTON){
             if(GAUSS_NEWTON_INIT_VECTOR) {
-                std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_squares[j], target_image,
-                                                                   expansion_ref, diagonal_line_area_flag,
-                                                                   square_indexes[j], ctus[j]);
+                std::tie(tmp_bm_mv, tmp_bm_error) = blockMatching(subdiv_target_squares[j], target_image,
+                                                                   expansion_ref);
                 std::tie(mv_warping_tmp, mv_parallel_tmp, error_warping_tmp, error_parallel_tmp,square_size_tmp) = GaussNewton(
                         ref_images, target_images, expand_images, subdiv_target_squares[j], diagonal_line_area_flag,
                         square_indexes[j], ctus[j], block_size_x, block_size_y,
@@ -872,13 +869,13 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             }
 
         }else if(PRED_MODE == BM){
-            std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_squares[j], target_image, expansion_ref, diagonal_line_area_flag, square_indexes[j], ctu);
+            std::tie(tmp_bm_mv, tmp_bm_error) = blockMatching(subdiv_target_squares[j], target_image, expansion_ref);
             mv_warping_tmp = tmp_bm_mv;
             mv_parallel_tmp = tmp_bm_mv[2];
-            error_parallel_tmp = tmp_bm_errors[2];
+            error_parallel_tmp = tmp_bm_error;
             square_size_tmp = (double)1e6;
 
-            split_mv_result[j] = GaussResult(mv_warping_tmp, mv_parallel_tmp, error_parallel_tmp, square_size_tmp, true, tmp_bm_errors[2], tmp_error_newton);
+            split_mv_result[j] = GaussResult(mv_warping_tmp, mv_parallel_tmp, error_parallel_tmp, square_size_tmp, true, tmp_bm_error, tmp_error_newton);
         }
 
     }
@@ -1339,7 +1336,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     }
 
 #if MVD_DEBUG_LOG
-    std::cout << corners[triangles[triangle_idx].first.p1_idx] << " " << corners[triangles[triangle_idx].first.p2_idx] << " " << corners[triangles[triangle_idx].first.p3_idx] << std::endl;
+    std::cout << corners[squares[square_idx].first.p1_idx] << " " << corners[squares[square_idx].first.p2_idx] << " " << corners[squares[square_idx].first.p3_idx] << std::endl;
     #endif
 
     if(!isMvExists(vectors, collocated_mv)) vectors.emplace_back(collocated_mv, SPATIAL);
@@ -1655,10 +1652,10 @@ cv::Mat SquareDivision::getPredictedDiagonalImageFromCtu(std::vector<CodingTreeU
 void SquareDivision::getPredictedDiagonalImageFromCtu(CodingTreeUnit* ctu, std::vector<std::vector<int>> &area_flag, const cv::Mat &out){
 
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
-        int triangle_index = ctu->triangle_index;
-        Square square_corner_idx = squares[triangle_index];
+        int square_index = ctu->square_index;
+        Square square_corner_idx = squares[square_index];
         Point4Vec square(corners[square_corner_idx.p1_idx], corners[square_corner_idx.p2_idx], corners[square_corner_idx.p3_idx], corners[square_corner_idx.p4_idx]);
-        std::vector<cv::Point2f> pixels = getPixelsInSquare(square, area_flag, triangle_index, ctu, block_size_x, block_size_y);
+        std::vector<cv::Point2f> pixels = getPixelsInSquare(square, area_flag, square_index, ctu, block_size_x, block_size_y);
         std::random_device rnd;     // 非決定的な乱数生成器
         std::mt19937 mt(rnd());
         int r = mt() % 256;
@@ -1709,7 +1706,7 @@ void SquareDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out,
             mvs.emplace_back(ctu->mv3);
         }
 
-        getPredictedImage(expansion_ref_uchar, target_image, out, square, mvs, 16, area_flag, ctu->square_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
+        getPredictedImage(expansion_ref_uchar, target_image, out, square, mv, ref_hevc);
         return;
     }
 
@@ -1741,7 +1738,7 @@ cv::Mat SquareDivision::getPredictedColorImageFromCtu(std::vector<CodingTreeUnit
 //TODO 四角形対応
 void SquareDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, std::vector<std::vector<int>> &area_flag, double original_psnr, std::vector<cv::Scalar> &colors){
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
-        int square_index = ctu->triangle_index;
+        int square_index = ctu->square_index;
         cv::Point2f mv = ctu->mv1;
         Square square_corner_idx = squares[square_index];
         Point4Vec square(corners[square_corner_idx.p1_idx], corners[square_corner_idx.p2_idx], corners[square_corner_idx.p3_idx], corners[square_corner_idx.p4_idx]);
@@ -1841,7 +1838,7 @@ cv::Mat SquareDivision::getMvImage(std::vector<CodingTreeUnit*> ctus){
 //TODO 四角形対応
 void SquareDivision::drawMvImage(cv::Mat &out, CodingTreeUnit *ctu){
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
-        Square t = squares[ctu->triangle_index];
+        Square t = squares[ctu->square_index];
         cv::Point2f p1 = corners[t.p1_idx];
         cv::Point2f p2 = corners[t.p2_idx];
         cv::Point2f p3 = corners[t.p3_idx];
@@ -1865,7 +1862,7 @@ SquareDivision::SplitResult::SplitResult(const Point3Vec &t1, const Point3Vec &t
                                                                                                                t2_type(t2Type) {}
 
 SquareDivision::GaussResult::GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvParallel,
-                                           double residual, int triangleSize, bool parallelFlag, double residualBm, double residualNewton) : mv_warping(
+                                           double residual, int squareSize, bool parallelFlag, double residualBm, double residualNewton) : mv_warping(
         mvWarping), mv_parallel(mvParallel), residual(residual), square_size(squareSize), parallel_flag(parallelFlag), residual_bm(residualBm), residual_newton(residualNewton) {}
 
 SquareDivision::GaussResult::GaussResult() {}
