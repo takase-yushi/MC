@@ -20,5 +20,6 @@ int getBinaryLength(int x);
 int getExponentialGolombCodeLength(int data, int k);
 double getLambdaMode(int qp);
 double getLambdaPred(int qp, double k = 1.0);
+double getEntropy(std::vector<int> items);
 
 #endif //ENCODER_ENCODE_H
