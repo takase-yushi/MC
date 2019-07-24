@@ -877,6 +877,33 @@ std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const st
     }
     return pixels_in_triangle;
 }
+/**
+ * @fn std::vector<cv::Point2f> getPixelsInSquare(const Point4Vec& square, int triangle_index, CodingTreeUnit* ctu, int block_size_x, int block_size_y)
+ * @brief ブロック内に含まれる画素を返す
+ * @param aquare 四角形
+ * @return 画素の集合
+ */
+std::vector<cv::Point2f> getPixelsInSquare(const Point4Vec& square){
+    std::vector<cv::Point2f> pixels_in_square;
+    cv::Point2f p0 = square.p1, p1 = square.p2, p2 = square.p3, p3 = square.p4;
+
+    int sx = ceil(std::min({p0.x, p1.x, p2.x, p3.x}));
+    int lx = floor(std::max({p0.x, p1.x, p2.x, p3.x}));
+    int sy = ceil(std::min({p0.y, p1.y, p2.y, p3.y}));
+    int ly = floor(std::max({p0.y, p1.y, p2.y, p3.y}));
+
+    pixels_in_square.clear();
+    cv::Point2i xp;
+
+    for (int j = sy ; j <= ly ; j++) {
+        for (int i = sx ; i <= lx; i++) {
+            xp.x = i;
+            xp.y = j;
+            pixels_in_square.emplace_back(xp);
+        }
+    }
+    return pixels_in_square;
+}
 
 /**
  * @fn cv::Mat getAppliedLPFImage(cv::Mat &image)

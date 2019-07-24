@@ -28,6 +28,7 @@ unsigned char ** getExpansionImage(cv::Mat image, int k, int expansion_size, IP_
 cv::Mat getExpansionMatImage(cv::Mat &image, int k, int expansion_size, IP_MODE mode = IP_MODE::BICUBIC);
 bool isMyTriangle(const CodingTreeUnit* ctu, int triangle_index);
 std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const std::vector<std::vector<int>>& area_flag, int triangle_index, CodingTreeUnit* ctu, int block_size_x, int block_size_y);
+std::vector<cv::Point2f> getPixelsInSquare(const Point4Vec& square);
 double w(double x);
 int img_ip(unsigned char **img, cv::Rect rect, double x, double y, int mode);
 unsigned char** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size);
