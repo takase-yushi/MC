@@ -27,6 +27,7 @@
  *
  */
 std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point3Vec tr, const cv::Mat& current, cv::Mat expansion_image);
+std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point4Vec sq, const cv::Mat& current, cv::Mat expansion_image);
 std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Vec triangle, const cv::Mat& target_image, cv::Mat expansion_ref_image, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Point2f fullpell_initial_vector = cv::Point2f(-10000, -10000));
 
 /**
