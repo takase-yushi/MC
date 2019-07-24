@@ -14,72 +14,26 @@
 #define LEFT_DIVIDE 1
 #define RIGHT_DIVIDE 2
 
-/**
- * （初期の分割を，右上から左下に対角線を引くタイプの場合と仮定すると）
- * --------------
- * TYPE1の分割
+/*
+ *
+ * 1の分割
  *   -----------------
- *   |             *
- *   |          *
- *   |       *
- *   |   *
- *   |*
+ *   |               |
+ *   |               |
+ *   |               |
+ *   |               |
+ *   -----------------
  *
- * TYPE2の分割
+ * 2の分割
  *
- *                  * |
- *             *      |
- *         *          |
- *     *              |
- *  ------------------|
+ *   ---------
+ *   |       |
+ *   |       |
+ *   |       |
+ *   |       |
+ *   ---------
  *
- * TYPE3の分割
- *    -----------------
- *     *              |
- *         *          |
- *             *      |
- *                *   |
- *                    |
- * TYPE4の分割
- *
- *    | *
- *    |     *
- *    |        *
- *    |            *
- *    ----------------|
- *
- * TYPE5の分割
- *  ------------------
- *   *             *
- *     *         *
- *        *   *
- *          *
- *
- * TYPE6の分割
- *  |*
- *  |  *
- *  |     *
- *  |        *
- *  |     *
- *  |  *
- *  |*
- *
- * TYPE7の分割
- *           *
- *        *     *
- *      *         *
- *   *              *
- *  ------------------
- *
- * TYPE8の分割
- *                 |
- *              *  |
- *           *     |
- *         *       |
- *           *     |
- *              *  |
- *                 |
- */
+**/
 
 //enum DIVIDE {
 //    TYPE1,
@@ -108,7 +62,6 @@ public:
 
         GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvParallel, double residual,
                     int squareSize, bool parallelFlag, double residual_bm, double residual_newton);
-        std::vector<cv::Point2f> mv_warping;
         cv::Point2f mv_parallel;
         double residual;
         int square_size;
@@ -120,10 +73,10 @@ public:
 
     struct SplitResult {
     public:
-        Point4Vec t1, t2;
-        int t1_type, t2_type;
+        Point4Vec s1, s2;
+        int s_type; //, t2_type;
 
-        SplitResult(const Point4Vec &t1, const Point4Vec &t2, int t1Type, int t2Type);
+        SplitResult(const Point4Vec &s1, const Point4Vec &s2, int type);
     };
 
     SquareDivision(const cv::Mat &refImage, const cv::Mat &targetImage, const cv::Mat &refGaussImage);
@@ -144,7 +97,7 @@ public:
 
     void constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num = 0);
 
-    static SplitResult getSplitSquare(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, int type);
+    static SplitResult getSplitSquare(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, const cv::Point2f& p4, int type);
     bool split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point4Vec square, int square_index, int type, int steps, std::vector<std::vector<int>> &diagonal_line_area_flag);
     std::vector<int> getSpatialSquareList(int t_idx);
     cv::Point2f getCollocatedSquareList(CodingTreeUnit* unit);
