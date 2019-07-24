@@ -603,7 +603,7 @@ void SquareDivision::addCornerAndSquare(Square square, int square_index){
  * @param ctu CodingTreeUnitのrootノード
  * @oaran cmt 時間予測用のCollocatedMvTreeのノード(collocatedmvtree→cmt)
  * @param square 四角形の各点の座標
- * @param square_index 三角形のindex
+ * @param square_index 四角形のindex
  * @param type 分割方向
  * @param steps 分割回数
  * @return 分割した場合はtrue, そうでない場合falseを返す
@@ -616,6 +616,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     cv::Point2f p1 = square.p1;
     cv::Point2f p2 = square.p2;
     cv::Point2f p3 = square.p3;
+    cv::Point2f p4 = square.p4;
 
     Point3Vec targetSquare(p1, p2, p3);
     int square_size = 0;
@@ -633,7 +634,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
     if(square_gauss_results[square_index].residual > 0) {
         GaussResult result_before = square_gauss_results[square_index];
-        gauss_result_warping = result_before.mv_warping;
+//        gauss_result_warping = result_before.mv_warping;
         gauss_result_parallel = result_before.mv_parallel;
         RMSE_before_subdiv = result_before.residual;
         square_size = result_before.square_size;
@@ -661,7 +662,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                                                                                                                                 block_size_y, cv::Point2f(-1000, -1000), ref_hevc);
             }
 
-            square_gauss_results[square_index].mv_warping = gauss_result_warping;
+//            square_gauss_results[square_index].mv_warping = gauss_result_warping;
             square_gauss_results[square_index].mv_parallel = gauss_result_parallel;
             square_gauss_results[square_index].square_size = square_size;
             square_gauss_results[square_index].residual = RMSE_before_subdiv;
@@ -675,8 +676,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
 #if !GAUSS_NEWTON_PARALLEL_ONLY
             std::tie(cost_warping, std::ignore, std::ignore, std::ignore, method_warping) = getMVD(
-                    triangle_gauss_results[triangle_index].mv_warping, error_warping,
-                    triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, false, dummy);
+                    square_gauss_results[square_index].mv_warping, error_warping,
+                    square_index, cmt->mv1, diagonal_line_area_flag, ctu, false, dummy);
 #endif
             if(cost_parallel < cost_warping || GAUSS_NEWTON_PARALLEL_ONLY){
                 square_gauss_results[square_index].parallel_flag = true;
@@ -701,7 +702,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             gauss_result_parallel = tmp_bm_mv[2];
             RMSE_before_subdiv = tmp_bm_errors[2];
             error_parallel = tmp_bm_errors[2];
-            square_gauss_results[square_index].mv_warping = gauss_result_warping;
+//            square_gauss_results[square_index].mv_warping = gauss_result_warping;
             square_gauss_results[square_index].mv_parallel = gauss_result_parallel;
             square_gauss_results[square_index].square_size = square_size;
             square_gauss_results[square_index].residual = RMSE_before_subdiv;
@@ -720,12 +721,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
                 {gauss_result_parallel, gauss_result_parallel, gauss_result_parallel}, error_parallel,
                 square_index, cmt->mv1, diagonal_line_area_flag, ctu, true, dummy);
-    }else{
-        std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
-                square_gauss_results[square_index].mv_warping, error_warping,
-                square_index, cmt->mv1, diagonal_line_area_flag, ctu, false, dummy);
-        std::cout << cost_before_subdiv << std::endl;
     }
+//    else{
+//        std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
+//                square_gauss_results[square_index].mv_warping, error_warping,
+//                square_index, cmt->mv1, diagonal_line_area_flag, ctu, false, dummy);
+//    }
 
     std::vector<cv::Point2i> ret_gauss2;
 
@@ -768,15 +769,17 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 //    int p3_idx = getCornerIndex(p3);
 //    addCornerAndSquare(Square(p1_idx, p2_idx, p3_idx), square_index, type);
 
-    int t1_p1_idx = getCornerIndex(split_squares.t1.p1);
-    int t1_p2_idx = getCornerIndex(split_squares.t1.p2);
-    int t1_p3_idx = getCornerIndex(split_squares.t1.p3);
-    addCornerAndSquare(Square(t1_p1_idx, t1_p2_idx, t1_p3_idx), square_index, split_squares.t1_type);
+    int s1_p1_idx = getCornerIndex(split_squares.s1.p1);
+    int s1_p2_idx = getCornerIndex(split_squares.s1.p2);
+    int s1_p3_idx = getCornerIndex(split_squares.s1.p3);
+    int s1_p4_idx = getCornerIndex(split_squares.s1.p4);
+    addCornerAndSquare(Square(s1_p1_idx, s1_p2_idx, s1_p3_idx, s1_p4_idx), square_index);
 
-    int t2_p1_idx = getCornerIndex(split_squares.t2.p1);
-    int t2_p2_idx = getCornerIndex(split_squares.t2.p2);
-    int t2_p3_idx = getCornerIndex(split_squares.t2.p3);
-    addCornerAndSquare(Square(t2_p1_idx, t2_p2_idx, t2_p3_idx), square_index, split_squares.t2_type);
+    int s2_p1_idx = getCornerIndex(split_squares.s2.p1);
+    int s2_p2_idx = getCornerIndex(split_squares.s2.p2);
+    int s2_p3_idx = getCornerIndex(split_squares.s2.p3);
+    int s2_p4_idx = getCornerIndex(split_squares.s2.p3);
+    addCornerAndSquare(Square(s2_p1_idx, s2_p2_idx, s2_p3_idx, s2_p4_idx), square_index);
 
     int square_indexes[] = {(int)squares.size() - 4, (int)squares.size() - 3, (int)squares.size() - 2, (int)squares.size() - 1};
 
@@ -792,31 +795,30 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     int height = (ly - sy) / 2 + 1;
 
     bool flag = true;
-    int a, b, c, d;
-    if(type == 1) {    //四角形
-        for (int x = 0 ; x < width  ; x++) {
-            diagonal_line_area_flag[(x + sx) % block_size_x][(x + sy) % block_size_y] = (x % 2 == 0 ? square_indexes[0] : square_indexes[2]);
-            flag = !flag;
-        }
-    }else if(type == 2) {    //長方形
-        for (int x = 0 ; x < width ; x++) {
-            diagonal_line_area_flag[(sx + width + x) % block_size_x][(sy + height + x) % block_size_y] = (x % 2 == 0 ? square_indexes[1] : square_indexes[3]);
-            flag = !flag;
-        }
-
-    }
+//    int a, b, c, d;
+//    if(type == 1) {    //四角形
+//        for (int x = 0 ; x < width  ; x++) {
+//            diagonal_line_area_flag[(x + sx) % block_size_x][(x + sy) % block_size_y] = (x % 2 == 0 ? square_indexes[0] : square_indexes[2]);
+//            flag = !flag;
+//        }
+//    }else if(type == 2) {    //長方形
+//        for (int x = 0 ; x < width ; x++) {
+//            diagonal_line_area_flag[(sx + width + x) % block_size_x][(sy + height + x) % block_size_y] = (x % 2 == 0 ? square_indexes[1] : square_indexes[3]);
+//            flag = !flag;
+//        }
+//    }
 
     ctu->node1 = new CodingTreeUnit();
-    ctu->node1->triangle_index = squares.size() - 4;
+    ctu->node1->square_index = squares.size() - 4;
     ctu->node1->parentNode = ctu;
     ctu->node2 = new CodingTreeUnit();
-    ctu->node2->triangle_index = squares.size() - 3;
+    ctu->node2->square_index = squares.size() - 3;
     ctu->node2->parentNode = ctu;
     ctu->node3 = new CodingTreeUnit();
-    ctu->node3->triangle_index = squares.size() - 2;
+    ctu->node3->square_index = squares.size() - 2;
     ctu->node3->parentNode = ctu;
     ctu->node4 = new CodingTreeUnit();
-    ctu->node4->triangle_index = squares.size() - 1;
+    ctu->node4->square_index = squares.size() - 1;
     ctu->node4->parentNode = ctu;
 
     std::vector<CodingTreeUnit*> ctus{ctu->node1, ctu->node2, ctu->node3, ctu->node4};
@@ -858,7 +860,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
             std::tie(cost_warping_tmp, std::ignore, std::ignore, std::ignore, method_warping_tmp) = getMVD(
                     mv_warping_tmp, error_warping_tmp,
-                    triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], false, dummy);
+                    square_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], false, dummy);
 #endif
 
             if(cost_parallel_tmp < cost_warping_tmp || GAUSS_NEWTON_PARALLEL_ONLY){
@@ -896,11 +898,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 {split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel},
                 split_mv_result[0].residual,
                 square_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->node1, true, dummy);
-    }else{
-        std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag1) = getMVD(
-                split_mv_result[0].mv_warping, split_mv_result[0].residual,
-                square_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->node1, false, dummy);
     }
+//    else{
+//        std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag1) = getMVD(
+//                split_mv_result[0].mv_warping, split_mv_result[0].residual,
+//                square_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->node1, false, dummy);
+//    }
 
     double cost_after_subdiv2;
     int code_length2;
@@ -909,11 +912,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 {split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel}, split_mv_result[1].residual,
                 square_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->node2, true, dummy);
 
-    }else{
-        std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
-                split_mv_result[1].mv_warping, split_mv_result[1].residual,
-                square_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->node2, false, dummy);
     }
+//    else{
+//        std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
+//                split_mv_result[1].mv_warping, split_mv_result[1].residual,
+//                square_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->node2, false, dummy);
+//    }
 
     double cost_after_subdiv3;
     int code_length3;
@@ -922,11 +926,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 {split_mv_result[2].mv_parallel, split_mv_result[2].mv_parallel, split_mv_result[2].mv_parallel},
                 split_mv_result[2].residual,
                 square_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->node3, true, dummy);
-    }else{
-        std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag3) = getMVD(
-                split_mv_result[2].mv_warping, split_mv_result[2].residual,
-                square_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->node3, false, dummy);
     }
+//    else{
+//        std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag3) = getMVD(
+//                split_mv_result[2].mv_warping, split_mv_result[2].residual,
+//                square_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->node3, false, dummy);
+//    }
 
     double cost_after_subdiv4;
     int code_length4;
@@ -934,11 +939,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
                 {split_mv_result[3].mv_parallel, split_mv_result[3].mv_parallel, split_mv_result[3].mv_parallel}, split_mv_result[3].residual,
                 square_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->node4, true, dummy);
-    }else{
-        std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
-                split_mv_result[3].mv_warping, split_mv_result[3].residual,
-                square_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->node4, false, dummy);
     }
+//    else{
+//        std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
+//                split_mv_result[3].mv_warping, split_mv_result[3].residual,
+//                square_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->node4, false, dummy);
+//    }
 
     double alpha = 1;
     std::cout << "before:" << cost_before_subdiv << " after:" << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4) << std::endl;
@@ -951,77 +957,81 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         int t4_idx = squares.size() - 1;
 
         // 1つ目の頂点追加
-        ctu->node1->triangle_index = t1_idx;
+        ctu->node1->square_index = t1_idx;
         if(split_mv_result[0].parallel_flag) {
             ctu->node1->mv1 = split_mv_result[0].mv_parallel;
             ctu->node1->mv2 = split_mv_result[0].mv_parallel;
             ctu->node1->mv3 = split_mv_result[0].mv_parallel;
-        }else{
-            ctu->node1->mv1 = split_mv_result[0].mv_warping[0];
-            ctu->node1->mv2 = split_mv_result[0].mv_warping[1];
-            ctu->node1->mv3 = split_mv_result[0].mv_warping[2];
         }
+//        else{
+//            ctu->node1->mv1 = split_mv_result[0].mv_warping[0];
+//            ctu->node1->mv2 = split_mv_result[0].mv_warping[1];
+//            ctu->node1->mv3 = split_mv_result[0].mv_warping[2];
+//        }
         ctu->node1->code_length = code_length1;
         ctu->node1->parallel_flag = split_mv_result[0].parallel_flag;
         ctu->node1->method = method_flag1;
         square_gauss_results[t1_idx] = split_mv_result[0];
         isCodedSquare[t1_idx] = true;
-        bool result = split(expand_images, ctu->node1, cmt_left_left, split_sub_squares1.t1, t1_idx,split_sub_squares1.t1_type, steps - 2, diagonal_line_area_flag);
+        bool result = split(expand_images, ctu->node1, cmt_left_left, split_sub_squares1.s1, t1_idx, 1, steps - 2, diagonal_line_area_flag);
 
-        // 2つ目の三角形
-        ctu->node2->triangle_index = t2_idx;
+        // 2つ目の四角形
+        ctu->node2->square_index = t2_idx;
         if(split_mv_result[1].parallel_flag){
             ctu->node2->mv1 = split_mv_result[1].mv_parallel;
             ctu->node2->mv2 = split_mv_result[1].mv_parallel;
             ctu->node2->mv3 = split_mv_result[1].mv_parallel;
-        }else{
-            ctu->node2->mv1 = split_mv_result[1].mv_warping[0];
-            ctu->node2->mv2 = split_mv_result[1].mv_warping[1];
-            ctu->node2->mv3 = split_mv_result[1].mv_warping[2];
         }
+//        else{
+//            ctu->node2->mv1 = split_mv_result[1].mv_warping[0];
+//            ctu->node2->mv2 = split_mv_result[1].mv_warping[1];
+//            ctu->node2->mv3 = split_mv_result[1].mv_warping[2];
+//        }
         ctu->node2->code_length = code_length2;
         ctu->node2->parallel_flag = split_mv_result[1].parallel_flag;
         ctu->node2->method = method_flag2;
 
         square_gauss_results[t2_idx] = split_mv_result[1];
         isCodedSquare[t2_idx] = true;
-        result = split(expand_images, ctu->node2, cmt_left_right, split_sub_squares1.t2, t2_idx, split_sub_squares1.t2_type, steps - 2, diagonal_line_area_flag);
+        result = split(expand_images, ctu->node2, cmt_left_right, split_sub_squares1.s2, t2_idx, 1, steps - 2, diagonal_line_area_flag);
 
-        // 3つ目の三角形
-        ctu->node3->triangle_index = t3_idx;
+        // 3つ目の四角形
+        ctu->node3->square_index = t3_idx;
         if(split_mv_result[2].parallel_flag) {
             ctu->node3->mv1 = split_mv_result[2].mv_parallel;
             ctu->node3->mv2 = split_mv_result[2].mv_parallel;
             ctu->node3->mv3 = split_mv_result[2].mv_parallel;
-        }else{
-            ctu->node3->mv1 = split_mv_result[2].mv_warping[0];
-            ctu->node3->mv2 = split_mv_result[2].mv_warping[1];
-            ctu->node3->mv3 = split_mv_result[2].mv_warping[2];
         }
+//        else{
+//            ctu->node3->mv1 = split_mv_result[2].mv_warping[0];
+//            ctu->node3->mv2 = split_mv_result[2].mv_warping[1];
+//            ctu->node3->mv3 = split_mv_result[2].mv_warping[2];
+//        }
         ctu->node3->code_length = code_length3;
         ctu->node3->parallel_flag = split_mv_result[2].parallel_flag;
         ctu->node3->method = method_flag3;
         square_gauss_results[t3_idx] = split_mv_result[2];
         isCodedSquare[t3_idx] = true;
-        result = split(expand_images, ctu->node3, cmt_right_left, split_sub_squares2.t1, t3_idx, split_sub_squares2.t1_type, steps - 2, diagonal_line_area_flag);
+        result = split(expand_images, ctu->node3, cmt_right_left, split_sub_squares2.s1, t3_idx, 1, steps - 2, diagonal_line_area_flag);
 
-        // 4つ目の三角形
-        ctu->node4->triangle_index = t4_idx;
+        // 4つ目の四角形
+        ctu->node4->square_index = t4_idx;
         if(split_mv_result[3].parallel_flag) {
             ctu->node4->mv1 = split_mv_result[3].mv_parallel;
             ctu->node4->mv2 = split_mv_result[3].mv_parallel;
             ctu->node4->mv3 = split_mv_result[3].mv_parallel;
-        }else{
-            ctu->node4->mv1 = split_mv_result[3].mv_warping[0];
-            ctu->node4->mv2 = split_mv_result[3].mv_warping[1];
-            ctu->node4->mv3 = split_mv_result[3].mv_warping[2];
         }
+//        else{
+//            ctu->node4->mv1 = split_mv_result[3].mv_warping[0];
+//            ctu->node4->mv2 = split_mv_result[3].mv_warping[1];
+//            ctu->node4->mv3 = split_mv_result[3].mv_warping[2];
+//        }
         ctu->node4->code_length = code_length4;
         ctu->node4->parallel_flag = split_mv_result[3].parallel_flag;
         ctu->node4->method = method_flag4;
         square_gauss_results[t4_idx] = split_mv_result[3];
         isCodedSquare[t4_idx] = true;
-        result = split(expand_images, ctu->node4, cmt_right_right, split_sub_squares2.t2, t4_idx, split_sub_squares2.t2_type, steps - 2, diagonal_line_area_flag);
+        result = split(expand_images, ctu->node4, cmt_right_right, split_sub_squares2.s2, t4_idx, 1, steps - 2, diagonal_line_area_flag);
 
         return true;
     }else{
@@ -1037,9 +1047,9 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         addNeighborVertex(squares[square_index].p1_idx,squares[square_index].p2_idx,squares[square_index].p3_idx,squares[square_index].p4_idx);
         addCoveredSquare(squares[square_index].p1_idx,squares[square_index].p2_idx,squares[square_index].p3_idx,squares[square_index].p4_idx, square_index);
         #if MVD_DEBUG_LOG
-        std::cout << "triangle_index:" << triangle_index << std::endl;
-        std::cout << "p1_idx:" << triangles[triangle_index].first.p1_idx << " p2_idx:" << triangles[triangle_index].first.p2_idx << " p3_idx:" << triangles[triangle_index].first.p3_idx << std::endl;
-        std::cout << "p1:" << corners[triangles[triangle_index].first.p1_idx] << " p2:" << corners[triangles[triangle_index].first.p2_idx] << " p3:" << corners[triangles[triangle_index].first.p3_idx] << std::endl;
+        std::cout << "square_index:" << square_index << std::endl;
+        std::cout << "p1_idx:" << squares[square_index].first.p1_idx << " p2_idx:" << squares[square_index].first.p2_idx << " p3_idx:" << squares[square_index].first.p3_idx << std::endl;
+        std::cout << "p1:" << corners[squares[square_index].first.p1_idx] << " p2:" << corners[squares[square_index].first.p2_idx] << " p3:" << corners[squares[square_index].first.p3_idx] << std::endl;
 #endif
 
         return false;
@@ -1049,7 +1059,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
 /**
  * @fn SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, const cv::Point2f& p4, int type)
- * @details ３点の座標とtypeを受け取り，分割した形状を返す
+ * @details ４点の座標とtypeを受け取り，分割した形状を返す
  * @param p1 頂点１の座標
  * @param p2 頂点２の座標
  * @param p3 頂点３の座標
@@ -1099,8 +1109,8 @@ SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1
 //TODO 四角形対応
 /**
  * @fn std::vector<int> getSpatialMvList()
- * @brief t_idx番目の三角形の空間予測動きベクトル候補を返す
- * @param[in] t_idx 三角パッチのインデックス
+ * @brief t_idx番目の四角形の空間予測動きベクトル候補を返す
+ * @param[in] t_idx 四角パッチのインデックス
  * @return 候補のパッチの番号を返す
  */
 std::vector<int> SquareDivision::getSpatialSquareList(int t_idx){
@@ -1288,7 +1298,7 @@ bool SquareDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE
  * @fn std::tuple<cv::Point2f, int, MV_CODE_METHOD> RD(int square_idx, CodingTreeUnit* ctu)
  * @brief RDを行い，最適な差分ベクトルを返す
  * @param[in] mv 動きベクトル
- * @param[in] square_idx 三角パッチの番号
+ * @param[in] square_idx 四角パッチの番号
  * @param[in] residual そのパッチの残差
  * @param[in] ctu CodingTreeUnit 符号木
  * @param[in] area_flag 含まれる画素のフラグ
@@ -1869,7 +1879,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
     lx = sx + width * 4 - 1;
     ly = sy + height * 4 - 1;
 
-    cv::Point2f mv_tmp(0.0, 0.0); //三角パッチの動きベクトル
+    cv::Point2f mv_tmp(0.0, 0.0); //四角パッチの動きベクトル
     int SX = 16; // ブロックマッチングの探索範囲(X)
     int SY = 16; // ブロックマッチングの探索範囲(Y)
 
