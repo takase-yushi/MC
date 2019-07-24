@@ -735,7 +735,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     ctu->parallel_flag = parallel_flag;
     ctu->method = method_flag;
 
-    SplitResult split_squares = getSplitSquare(p1, p2, p3, type);
+    SplitResult split_squares = getSplitSquare(p1, p2, p3, p4, type);
 
     SplitResult split_sub_squares1 = getSplitSquare(split_squares.s1.p1, split_squares.s1.p2, split_squares.s1.p3, split_squares.s1.p4, split_squares.s_type);
     SplitResult split_sub_squares2 = getSplitSquare(split_squares.s2.p1, split_squares.s2.p2, split_squares.s2.p3, split_squares.s2.p4, split_squares.s_type);
@@ -1037,7 +1037,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     }
 
 }
-//TODO 四角形対応
+
 /**
  * @fn SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, const cv::Point2f& p4, int type)
  * @details ３点の座標とtypeを受け取り，分割した形状を返す
@@ -1049,34 +1049,38 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
  * @return 分割結果
  */
 SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, const cv::Point2f& p4, int type){
-    cv::Point2f a, b, c, d, e, f;
+    cv::Point2f a, b, c, d, e, f, g, h;
 
     switch(type) {
         case 1:
         {
-            cv::Point2f x = (p2 - p1) / 2;           //  a        e        b
+            cv::Point2f x = (p2 - p1) / 2;           //  a       e g      b
                                                      //   -----------------
             a = p1;                                  //   |               |
             b = p2;                                  //   |               |
             c = p3;                                  //   |               |
             d = p4;                                  //   |               |
-            e = a + x;                               //   -----------------
-            f = c + x;                               //  c        f        d
+            e = g = a + x;                           //   -----------------
+            f = h = c + x;                           //  c       f h      d
+            g.x++;
+            h.x++;
 
-            return {Point4Vec(a, e, c, f), Point4Vec(e, b, f, d), 2};
+            return {Point4Vec(a, e, c, f), Point4Vec(g, b, h, d), 2};
         }
         case 2:
         {
             cv::Point2f y = (p1 - p3) / 2;            //    a         b
                                                       //     ---------
             a = p1;                                   //     |       |
-            b = p2;                                   //     |       |
-            c = p3;                                   //   e |       | f
+            b = p2;                                   //   e |       | f
+            c = p3;                                   //   g |       | h
             d = p4;                                   //     |       |
-            e = a + y;                                //     ---------
-            f = b + y;                                //    c         d
-            //
-            return {Point4Vec(a, b, e, f), Point4Vec(e, f, c, d), 1};
+            e = g = a + y;                            //     ---------
+            f = h = b + y;                            //    c         d
+            g.y++;
+            h.y++;
+
+            return {Point4Vec(a, b, e, f), Point4Vec(g, h, c, d), 1};
         }
         default:
             break;
