@@ -1677,13 +1677,13 @@ void SquareDivision::getPredictedDiagonalImageFromCtu(CodingTreeUnit* ctu, const
     if(ctu->node3 != nullptr) getPredictedDiagonalImageFromCtu(ctu->node3, area_flag, out);
     if(ctu->node4 != nullptr) getPredictedDiagonalImageFromCtu(ctu->node4, area_flag, out);
 }
-//TODO 四角形対応
-cv::Mat SquareDivision::getPredictedImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag){
+
+cv::Mat SquareDivision::getPredictedImageFromCtu(std::vector<CodingTreeUnit*> ctus){
     cv::Mat out = cv::Mat::zeros(ref_image.size(), CV_8UC3);
 
 #pragma omp parallel for
     for(int i = 0 ; i < ctus.size() ; i++) {
-        getPredictedImageFromCtu(ctus[i], out, area_flag[i/2]);
+        getPredictedImageFromCtu(ctus[i], out);
     }
 
     return out;
