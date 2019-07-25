@@ -98,7 +98,7 @@ public:
     void constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num = 0);
 
     static SplitResult getSplitSquare(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, const cv::Point2f& p4, int type);
-    bool split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point4Vec square, int square_index, int type, int steps, std::vector<std::vector<int>> &diagonal_line_area_flag);
+    bool split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point4Vec square, int square_index, int type, int steps);
     std::vector<int> getSpatialSquareList(int s_idx);
 //    cv::Point2f getCollocatedSquareList(CodingTreeUnit* unit);
     int getCtuCodeLength(std::vector<CodingTreeUnit*> ctus);
