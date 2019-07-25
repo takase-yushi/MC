@@ -236,20 +236,20 @@ public: SQUARE(Square t) { p1_idx = t.p1_idx; p2_idx = t.p2_idx; p3_idx = t.p3_i
 };
 
 //double log_2(double num);
-//TODO 四角形対応
+
 void drawTriangle(cv::Mat &img, cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, cv::Scalar color);
-void drawSquare(cv::Mat &img, const cv::Point2f p1, const cv::Point2f p2, const cv::Point2f p3, const cv::Point2f p4, const cv::Scalar color)
+void drawSquare(cv::Mat &img, const cv::Point2f p1, const cv::Point2f p2, const cv::Point2f p3, const cv::Point2f p4, const cv::Scalar color);
 
 void drawTriangle_residual(cv::Mat &img, const cv::Point2f p1, const cv::Point2f p2, const cv::Point2f p3, const cv::Scalar color,cv::Mat &residual);
-//TODO 四角形対応
+
 void interpolation(cv::Mat &in, double x, double y, unsigned char& rr1, unsigned char& gg1, unsigned char& bb1);
 
 void drawRectangle(cv::Mat &img, cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, cv::Point2f p4);
 
 bool check_coordinate(cv::Point2f coordinate, cv::Vec4f range);
-//TODO 四角形対応
+
 double intersectM(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, cv::Point2f p4);
-//TODO 四角形対応
+
 void drawPoint(cv::Mat &img, cv::Point2f p, cv::Scalar color, int size);
 
 double round2(double dIn, int nLen);
@@ -314,7 +314,7 @@ inline int BB(cv::Mat &img, int i, int j) {
 inline double MM(cv::Mat &img, int i, int j) {
     return 0.299 * RR(img, i, j) + 0.587 * GG(img, i, j) + 0.114 * BB(img, i, j);
 }
-//TODO 四角形対応
+
 /**
  * @fn inline bool isInTriangle(const Point3Vec& trig, const cv::Point2d& p)
  * @brief 座標pが三角形trigの内部にあるか判定する.
@@ -339,7 +339,7 @@ inline bool isInTriangle(const Point3Vec& trig, const cv::Point2d& p) {
     return !(intersectM(tp1, tp2, p, ret) < 0 || intersectM(tp1, tp3, p, ret) < 0 || intersectM(tp2, tp3, p, ret) < 0);
 }
 
-//TODO 四角形対応
+
 bool isPointOnTheLine(cv::Point2f a, cv::Point2f b, cv::Point2f p);
 
 inline int myRound(double x, int delta){
