@@ -31,11 +31,6 @@
 void run(std::string config_path);
 void run_square(std::string config_path);
 
-// 問題は差分ベクトルどうするの…？って
-std::vector<int> count_all_diff_x_mv(1001, 0);
-std::vector<int> count_all_diff_y_mv(1001, 0);
-cv::Mat triangle_error_img;
-
 #define HARRIS false
 #define THRESHOLD true
 #define LAMBDA 0.2
@@ -223,8 +218,8 @@ void run(std::string config_path) {
         cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo, diagonal_line_area_flag);
         cv::Mat color = triangle_division.getPredictedColorImageFromCtu(foo, diagonal_line_area_flag, getPSNR(target_image, p_image));
 
-        Analyzer analayzer("_bm_fullsearch_" + std::to_string(qp) + "_" + getCurrentTimestamp());
-        analayzer.storeDistributionOfMv(foo);
+//        Analyzer analayzer("_bm_fullsearch_" + std::to_string(qp) + "_" + getCurrentTimestamp());
+//        analayzer.storeDistributionOfMv(foo);
 
         int code_length = triangle_division.getCtuCodeLength(foo);
         std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
@@ -404,8 +399,8 @@ void run_square(std::string config_path) {
         cv::Mat p_image = square_division.getPredictedImageFromCtu(foo);
         cv::Mat color = square_division.getPredictedColorImageFromCtu(foo, getPSNR(target_image, p_image));
 
-        Analyzer analayzer("_bm_fullsearch_" + std::to_string(qp) + "_" + getCurrentTimestamp());
-        analayzer.storeDistributionOfMv(foo);
+//        Analyzer analayzer("_bm_fullsearch_" + std::to_string(qp) + "_" + getCurrentTimestamp());
+//        analayzer.storeDistributionOfMv(foo);
 
         int code_length = square_division.getCtuCodeLength(foo);
         std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
