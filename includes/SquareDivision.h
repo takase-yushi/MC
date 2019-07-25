@@ -154,7 +154,7 @@ private:
     void getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out);
     int getCtuCodeLength(CodingTreeUnit *ctu);
     void drawMvImage(cv::Mat &out, CodingTreeUnit *ctu);
-    void getPredictedDiagonalImageFromCtu(CodingTreeUnit* ctu, std::vector<std::vector<int>> &area_flag, const cv::Mat &out);
+    void getPredictedDiagonalImageFromCtu(CodingTreeUnit* ctu, const cv::Mat &out);
 
 
 };

@@ -1650,13 +1650,13 @@ cv::Mat SquareDivision::getPredictedDiagonalImageFromCtu(std::vector<CodingTreeU
     return out;
 }
 
-void SquareDivision::getPredictedDiagonalImageFromCtu(CodingTreeUnit* ctu, std::vector<std::vector<int>> &area_flag, const cv::Mat &out){
+void SquareDivision::getPredictedDiagonalImageFromCtu(CodingTreeUnit* ctu, const cv::Mat &out){
 
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
         int square_index = ctu->square_index;
         Square square_corner_idx = squares[square_index];
         Point4Vec square(corners[square_corner_idx.p1_idx], corners[square_corner_idx.p2_idx], corners[square_corner_idx.p3_idx], corners[square_corner_idx.p4_idx]);
-        std::vector<cv::Point2f> pixels = getPixelsInSquare(square, area_flag, square_index, ctu, block_size_x, block_size_y);
+        std::vector<cv::Point2f> pixels = getPixelsInSquare(square);
         std::random_device rnd;     // 非決定的な乱数生成器
         std::mt19937 mt(rnd());
         int r = mt() % 256;
