@@ -262,7 +262,7 @@ std::vector<Square> SquareDivision::getSquareIndexList() {
 }
 
 /**
- * @fn std::vector<Point3Vec> getAllSquareCoordinateList()
+ * @fn std::vector<Point4Vec> getAllSquareCoordinateList()
  * @brief 現在存在するすべての四角形の集合(座標)を返す（※論理削除されたパッチも含まれています）
  * @return 四角形の集合（座標）
  */
@@ -596,7 +596,7 @@ void SquareDivision::addCornerAndSquare(Square square, int square_index){
 }
 //TODO 四角形対応
 /**
- * @fn bool SquareDivision::split(cv::Mat &gaussRefImage, CodingTreeUnit* ctu, Point4Vec square, int square_index, int type, int steps)
+ * @fn bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point4Vec square, int square_index, int type, int steps)
  * @brief 与えられたトライアングルを分割するか判定し，必要な場合は分割を行う
  * @details この関数は再帰的に呼び出され，そのたびに分割を行う
  * @param gaussRefImage ガウス・ニュートン法の参照画像
@@ -608,7 +608,7 @@ void SquareDivision::addCornerAndSquare(Square square, int square_index){
  * @param steps 分割回数
  * @return 分割した場合はtrue, そうでない場合falseを返す
  */
-bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point4Vec square, int square_index, int type, int steps, std::vector<std::vector<int>> &diagonal_line_area_flag) {
+bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point4Vec square, int square_index, int type, int steps) {
     if(steps <= 0) return false;
 
     double RMSE_before_subdiv = 0.0;
@@ -618,7 +618,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     cv::Point2f p3 = square.p3;
     cv::Point2f p4 = square.p4;
 
-    Point3Vec targetSquare(p1, p2, p3);
+    Point4Vec targetSquare(p1, p2, p3, p4);
     int square_size = 0;
     bool parallel_flag;
     int num;
@@ -647,53 +647,10 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         ctu->error_bm = result_before.residual_bm;
         ctu->error_newton = result_before.residual_newton;
     }else {
-        if(PRED_MODE == NEWTON) {
-            if(GAUSS_NEWTON_INIT_VECTOR) {
-                std::vector<cv::Point2f> tmp_bm_mv;
-                double tmp_bm_error;
-                std::tie(tmp_bm_mv, tmp_bm_error) = blockMatching(square, target_image, expansion_ref);
-                std::tie(gauss_result_warping, gauss_result_parallel, error_warping, error_parallel, square_size) = GaussNewton(ref_images, target_images, expand_images, targetSquare,
-                                                                                                                                diagonal_line_area_flag, square_index, ctu, block_size_x,
-                                                                                                                                block_size_y, tmp_bm_mv[2], ref_hevc);
-            }else{
-                std::tie(gauss_result_warping, gauss_result_parallel, error_warping, error_parallel, square_size) = GaussNewton(ref_images, target_images, expand_images, targetSquare,
-                                                                                                                                diagonal_line_area_flag, square_index, ctu, block_size_x,
-                                                                                                                                block_size_y, cv::Point2f(-1000, -1000), ref_hevc);
-            }
-
-//            square_gauss_results[square_index].mv_warping = gauss_result_warping;
-            square_gauss_results[square_index].mv_parallel = gauss_result_parallel;
-            square_gauss_results[square_index].square_size = square_size;
-            square_gauss_results[square_index].residual = RMSE_before_subdiv;
-
-            int cost_warping, cost_parallel;
-            MV_CODE_METHOD method_warping, method_parallel;
-
-            std::tie(cost_parallel, std::ignore, std::ignore, std::ignore, std::ignore) = getMVD(
-                    {gauss_result_parallel, gauss_result_parallel, gauss_result_parallel}, error_parallel,
-                    square_index, cmt->mv1, diagonal_line_area_flag, ctu);
-
-#if !GAUSS_NEWTON_PARALLEL_ONLY
-            std::tie(cost_warping, std::ignore, std::ignore, std::ignore, method_warping) = getMVD(
-                    square_gauss_results[square_index].mv_warping, error_warping,
-                    square_index, cmt->mv1, diagonal_line_area_flag, ctu, false, dummy);
-#endif
-            if(cost_parallel < cost_warping || GAUSS_NEWTON_PARALLEL_ONLY){
-                square_gauss_results[square_index].parallel_flag = true;
-                square_gauss_results[square_index].residual = error_parallel;
-                square_gauss_results[square_index].method = method_parallel;
-                parallel_flag = true;
-            }else{
-                square_gauss_results[square_index].parallel_flag = false;
-                square_gauss_results[square_index].residual = error_warping;
-                square_gauss_results[square_index].method = method_warping;
-                parallel_flag = false;
-            }
-
-        }else if(PRED_MODE == BM) {
+        if(PRED_MODE == BM) {
             std::vector<cv::Point2f> tmp_bm_mv;
             double tmp_bm_error;
-            std::tie(tmp_bm_mv, tmp_bm_error) = blockMatching(square, target_image, expansion_ref);
+            std::tie(tmp_bm_mv, tmp_bm_error) = ::blockMatching(square, target_image, expansion_ref);
             square_gauss_results[square_index].residual_bm = tmp_bm_error;
             ctu->error_bm = tmp_bm_error;
             gauss_result_warping = tmp_bm_mv;
@@ -717,8 +674,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
     if(square_gauss_results[square_index].parallel_flag) {
         std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
-                {gauss_result_parallel, gauss_result_parallel, gauss_result_parallel}, error_parallel,
-                square_index, cmt->mv1, diagonal_line_area_flag, ctu, true, dummy);
+                gauss_result_parallel, error_parallel,
+                square_index, cmt->mv1, ctu, dummy);
     }
 //    else{
 //        std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
@@ -728,15 +685,11 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
     std::vector<cv::Point2i> ret_gauss2;
 
-    std::vector<cv::Point2f> mv;
+    cv::Point2f mv;
     if(parallel_flag){
-        mv.emplace_back(gauss_result_parallel);
-        mv.emplace_back(gauss_result_parallel);
-        mv.emplace_back(gauss_result_parallel);
-    }else{
-        mv = gauss_result_warping;
+        mv = gauss_result_parallel;
     }
-    ctu->mv1 = mv[0];
+    ctu->mv1 = mv;
     ctu->square_index = square_index;
     ctu->code_length = code_length;
     ctu->collocated_mv = cmt->mv1;
@@ -748,7 +701,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     SplitResult split_sub_squares1 = getSplitSquare(split_squares.s1.p1, split_squares.s1.p2, split_squares.s1.p3, split_squares.s1.p4, split_squares.s_type);
     SplitResult split_sub_squares2 = getSplitSquare(split_squares.s2.p1, split_squares.s2.p2, split_squares.s2.p3, split_squares.s2.p4, split_squares.s_type);
 
-    std::vector<Point3Vec> subdiv_ref_squares, subdiv_target_squares;
+    std::vector<Point4Vec> subdiv_ref_squares, subdiv_target_squares;
     subdiv_ref_squares.emplace_back(split_sub_squares1.s1);
     subdiv_ref_squares.emplace_back(split_sub_squares1.s2);
     subdiv_ref_squares.emplace_back(split_sub_squares2.s1);
@@ -780,8 +733,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     addCornerAndSquare(Square(s2_p1_idx, s2_p2_idx, s2_p3_idx, s2_p4_idx), square_index);
 
     int square_indexes[] = {(int)squares.size() - 4, (int)squares.size() - 3, (int)squares.size() - 2, (int)squares.size() - 1};
-
-    std::vector<std::vector<int>> prev_area_flag(diagonal_line_area_flag);
 
     // 分割回数が偶数回目のとき斜線の更新を行う
     int sx = ceil( std::min({square.p1.x, square.p2.x, square.p3.x}));
@@ -833,49 +784,13 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         double cost_warping_tmp, cost_parallel_tmp;
         double tmp_error_newton;
         MV_CODE_METHOD method_warping_tmp, method_parallel_tmp;
-        if(PRED_MODE == NEWTON){
-            if(GAUSS_NEWTON_INIT_VECTOR) {
-                std::tie(tmp_bm_mv, tmp_bm_error) = blockMatching(subdiv_target_squares[j], target_image,
-                                                                   expansion_ref);
-                std::tie(mv_warping_tmp, mv_parallel_tmp, error_warping_tmp, error_parallel_tmp,square_size_tmp) = GaussNewton(
-                        ref_images, target_images, expand_images, subdiv_target_squares[j], diagonal_line_area_flag,
-                        square_indexes[j], ctus[j], block_size_x, block_size_y,
-                        tmp_bm_mv[2], ref_hevc);
-
-
-            }else{
-                std::tie(mv_warping_tmp, mv_parallel_tmp, error_warping_tmp, error_parallel_tmp, square_size_tmp) = GaussNewton(
-                        ref_images, target_images, expand_images, subdiv_target_squares[j], diagonal_line_area_flag,
-                        square_indexes[j], ctus[j], block_size_x, block_size_y,
-                        cv::Point2f(-1000, -1000), ref_hevc);
-            }
-
-            std::tie(cost_parallel_tmp,std::ignore, std::ignore, std::ignore, method_parallel_tmp) = getMVD(
-                    {mv_parallel_tmp, mv_parallel_tmp, mv_parallel_tmp}, error_parallel_tmp,
-                    square_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], true, dummy);
-#if !GAUSS_NEWTON_PARALLEL_ONLY
-
-            std::tie(cost_warping_tmp, std::ignore, std::ignore, std::ignore, method_warping_tmp) = getMVD(
-                    mv_warping_tmp, error_warping_tmp,
-                    square_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], false, dummy);
-#endif
-
-            if(cost_parallel_tmp < cost_warping_tmp || GAUSS_NEWTON_PARALLEL_ONLY){
-                square_gauss_results[square_indexes[j]].parallel_flag = true;
-                split_mv_result[j] = GaussResult(mv_warping_tmp, mv_parallel_tmp, error_parallel_tmp, square_size_tmp, true, error_parallel_tmp, error_warping_tmp);
-            }else{
-                square_gauss_results[square_indexes[j]].parallel_flag = false;
-                split_mv_result[j] = GaussResult(mv_warping_tmp, mv_parallel_tmp, error_warping_tmp, square_size_tmp, false, error_parallel_tmp, error_warping_tmp);
-            }
-
-        }else if(PRED_MODE == BM){
-            std::tie(tmp_bm_mv, tmp_bm_error) = blockMatching(subdiv_target_squares[j], target_image, expansion_ref);
-            mv_warping_tmp = tmp_bm_mv;
+        if(PRED_MODE == BM){
+            std::tie(tmp_bm_mv, tmp_bm_error) = ::blockMatching(subdiv_target_squares[j], target_image, expansion_ref);
             mv_parallel_tmp = tmp_bm_mv[2];
             error_parallel_tmp = tmp_bm_error;
             square_size_tmp = (double)1e6;
 
-            split_mv_result[j] = GaussResult(mv_warping_tmp, mv_parallel_tmp, error_parallel_tmp, square_size_tmp, true, tmp_bm_error, tmp_error_newton);
+            split_mv_result[j] = GaussResult(mv_parallel_tmp, error_parallel_tmp, square_size_tmp, true, tmp_bm_error, tmp_error_newton);
         }
 
     }
@@ -892,9 +807,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     MV_CODE_METHOD method_flag1, method_flag2, method_flag3, method_flag4;
     if(split_mv_result[0].parallel_flag) {
         std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag1) = getMVD(
-                {split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel},
-                split_mv_result[0].residual,
-                square_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->node1, true, dummy);
+                split_mv_result[0].mv_parallel, split_mv_result[0].residual, square_indexes[0], cmt_left_left->mv1, ctu->node1, dummy);
     }
 //    else{
 //        std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag1) = getMVD(
@@ -906,8 +819,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     int code_length2;
     if(split_mv_result[1].parallel_flag){
         std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
-                {split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel}, split_mv_result[1].residual,
-                square_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->node2, true, dummy);
+                split_mv_result[1].mv_parallel, split_mv_result[1].residual,
+                square_indexes[1], cmt_left_right->mv1, ctu->node2, dummy);
 
     }
 //    else{
@@ -920,9 +833,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     int code_length3;
     if(split_mv_result[2].parallel_flag) {
         std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag3) = getMVD(
-                {split_mv_result[2].mv_parallel, split_mv_result[2].mv_parallel, split_mv_result[2].mv_parallel},
-                split_mv_result[2].residual,
-                square_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->node3, true, dummy);
+                split_mv_result[2].mv_parallel, split_mv_result[2].residual,
+                square_indexes[2], cmt_right_left->mv1, ctu->node3, dummy);
     }
 //    else{
 //        std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag3) = getMVD(
@@ -934,8 +846,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     int code_length4;
     if(split_mv_result[3].parallel_flag){
         std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
-                {split_mv_result[3].mv_parallel, split_mv_result[3].mv_parallel, split_mv_result[3].mv_parallel}, split_mv_result[3].residual,
-                square_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->node4, true, dummy);
+                split_mv_result[3].mv_parallel, split_mv_result[3].residual,
+                square_indexes[3], cmt_right_right->mv1, ctu->node4, dummy);
     }
 //    else{
 //        std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
@@ -970,7 +882,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         ctu->node1->method = method_flag1;
         square_gauss_results[t1_idx] = split_mv_result[0];
         isCodedSquare[t1_idx] = true;
-        bool result = split(expand_images, ctu->node1, cmt_left_left, split_sub_squares1.s1, t1_idx, 1, steps - 2, diagonal_line_area_flag);
+        bool result = split(expand_images, ctu->node1, cmt_left_left, split_sub_squares1.s1, t1_idx, 1, steps - 2);
 
         // 2つ目の四角形
         ctu->node2->square_index = t2_idx;
@@ -990,7 +902,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
         square_gauss_results[t2_idx] = split_mv_result[1];
         isCodedSquare[t2_idx] = true;
-        result = split(expand_images, ctu->node2, cmt_left_right, split_sub_squares1.s2, t2_idx, 1, steps - 2, diagonal_line_area_flag);
+        result = split(expand_images, ctu->node2, cmt_left_right, split_sub_squares1.s2, t2_idx, 1, steps - 2);
 
         // 3つ目の四角形
         ctu->node3->square_index = t3_idx;
@@ -1009,7 +921,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         ctu->node3->method = method_flag3;
         square_gauss_results[t3_idx] = split_mv_result[2];
         isCodedSquare[t3_idx] = true;
-        result = split(expand_images, ctu->node3, cmt_right_left, split_sub_squares2.s1, t3_idx, 1, steps - 2, diagonal_line_area_flag);
+        result = split(expand_images, ctu->node3, cmt_right_left, split_sub_squares2.s1, t3_idx, 1, steps - 2);
 
         // 4つ目の四角形
         ctu->node4->square_index = t4_idx;
@@ -1028,7 +940,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         ctu->node4->method = method_flag4;
         square_gauss_results[t4_idx] = split_mv_result[3];
         isCodedSquare[t4_idx] = true;
-        result = split(expand_images, ctu->node4, cmt_right_right, split_sub_squares2.s2, t4_idx, 1, steps - 2, diagonal_line_area_flag);
+        result = split(expand_images, ctu->node4, cmt_right_right, split_sub_squares2.s2, t4_idx, 1, steps - 2);
 
         return true;
     }else{
@@ -1036,7 +948,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         delete_flag[square_index] = false;
         ctu->node1 = ctu->node2 = ctu->node3 = ctu->node4 = nullptr;
         ctu->method = method_flag;
-        diagonal_line_area_flag = prev_area_flag;
         eraseSquare(squares.size() - 1);
         eraseSquare(squares.size() - 1);
         eraseSquare(squares.size() - 1);
@@ -1179,8 +1090,6 @@ void SquareDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> tr
 
     for(int i = 0 ; i < squares.size() ; i++) {
         previousMvList[0][i]->mv1 = cv::Point2f(0, 0);
-        previousMvList[0][i]->mv2 = cv::Point2f(0, 0);
-        previousMvList[0][i]->mv3 = cv::Point2f(0, 0);
 
         auto* node1 = new CollocatedMvTree();
         node1->mv1 = cv::Point2f(0, 0);
@@ -1254,7 +1163,7 @@ void SquareDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> tr
 
 }
 
-//TODO 四角形対応
+
 /**
  * @fn void SquareDivision::constructPreviousCodingTree(std::vector<CollocatedMvTree*> trees)
  * @brief 木を再帰的に呼び出し構築する
@@ -1285,7 +1194,7 @@ void SquareDivision::constructPreviousCodingTree(CodingTreeUnit* codingTree, Col
 
 
 }
-//TODO 四角形対応
+
 /**
  * @fn bool isVectorExists(const std::vector<std::tuple<cv::Point2f, int, MV_CODE_METHOD>> &vectors, const cv::Point2f &mv)
  * @brief mvがvectorsに含まれるか判定する
