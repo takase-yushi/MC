@@ -644,25 +644,25 @@ double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::
  * @return 2乗誤差
  */
 double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::Mat& output_image, Point4Vec& square, cv::Point2f& mv, unsigned char **ref_hevc) {
-    cv::Point2f pp0, pp1, pp2, pp3;
+//    cv::Point2f pp0, pp1, pp2, pp3;
+//
+//    pp0.x = square.p1.x + mv.x;
+//    pp0.y = square.p1.y + mv.y;
+//    pp1.x = square.p2.x + mv.x;
+//    pp1.y = square.p2.y + mv.y;
+//    pp2.x = square.p3.x + mv.x;
+//    pp2.y = square.p3.y + mv.y;
+//    pp3.x = square.p4.x + mv.x;
+//    pp3.y = square.p4.y + mv.y;
 
-    pp0.x = square.p1.x + mv.x;
-    pp0.y = square.p1.y + mv.y;
-    pp1.x = square.p2.x + mv.x;
-    pp1.y = square.p2.y + mv.y;
-    pp2.x = square.p3.x + mv.x;
-    pp2.y = square.p3.y + mv.y;
-    pp3.x = square.p4.x + mv.x;
-    pp3.y = square.p4.y + mv.y;
 
-
-    std::vector<cv::Point2f> in_triangle_pixels = getPixelsInSquare(square);
+    std::vector<cv::Point2f> in_square_pixels = getPixelsInSquare(square);
 
     cv::Point2f X_later;
 
     double squared_error = 0.0;
 
-    for(const auto& pixel : in_triangle_pixels) {
+    for(const auto& pixel : in_square_pixels) {
         X_later = pixel + mv;
 
         int y;
