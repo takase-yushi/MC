@@ -1836,15 +1836,16 @@ cv::Mat SquareDivision::getMvImage(std::vector<CodingTreeUnit*> ctus){
 
     return out;
 }
-//TODO 四角形対応
+
 void SquareDivision::drawMvImage(cv::Mat &out, CodingTreeUnit *ctu){
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
         Square t = squares[ctu->square_index];
         cv::Point2f p1 = corners[t.p1_idx];
         cv::Point2f p2 = corners[t.p2_idx];
         cv::Point2f p3 = corners[t.p3_idx];
+        cv::Point2f p4 = corners[t.p4_idx];
 
-        cv::Point2f g = (p1 + p2 + p3) / 3.0;
+        cv::Point2f g = (p1 + p2 + p3 + p4) / 4.0;
 
         cv::line(out, g, g+ctu->mv1, GREEN);
     }
