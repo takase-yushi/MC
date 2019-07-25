@@ -1688,33 +1688,22 @@ cv::Mat SquareDivision::getPredictedImageFromCtu(std::vector<CodingTreeUnit*> ct
 
     return out;
 }
-//TODO 四角形対応
-void SquareDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, std::vector<std::vector<int>> &area_flag){
+
+void SquareDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out){
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
         int square_index = ctu->square_index;
         cv::Point2f mv = ctu->mv1;
         Square square_corner_idx = squares[square_index];
         Point4Vec square(corners[square_corner_idx.p1_idx], corners[square_corner_idx.p2_idx], corners[square_corner_idx.p3_idx], corners[square_corner_idx.p4_idx]);
 
-        std::vector<cv::Point2f> mvs;
-        if(ctu->parallel_flag){
-            mvs.emplace_back(mv);
-            mvs.emplace_back(mv);
-            mvs.emplace_back(mv);
-        }else{
-            mvs.emplace_back(ctu->mv1);
-            mvs.emplace_back(ctu->mv2);
-            mvs.emplace_back(ctu->mv3);
-        }
-
         getPredictedImage(expansion_ref_uchar, target_image, out, square, mv, ref_hevc);
         return;
     }
 
-    if(ctu->node1 != nullptr) getPredictedImageFromCtu(ctu->node1, out, area_flag);
-    if(ctu->node2 != nullptr) getPredictedImageFromCtu(ctu->node2, out, area_flag);
-    if(ctu->node3 != nullptr) getPredictedImageFromCtu(ctu->node3, out, area_flag);
-    if(ctu->node4 != nullptr) getPredictedImageFromCtu(ctu->node4, out, area_flag);
+    if(ctu->node1 != nullptr) getPredictedImageFromCtu(ctu->node1, out);
+    if(ctu->node2 != nullptr) getPredictedImageFromCtu(ctu->node2, out);
+    if(ctu->node3 != nullptr) getPredictedImageFromCtu(ctu->node3, out);
+    if(ctu->node4 != nullptr) getPredictedImageFromCtu(ctu->node4, out);
 }
 
 cv::Mat SquareDivision::getPredictedColorImageFromCtu(std::vector<CodingTreeUnit*> ctus, double original_psnr){
