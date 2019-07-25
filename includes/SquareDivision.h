@@ -103,7 +103,7 @@ public:
 //    cv::Point2f getCollocatedSquareList(CodingTreeUnit* unit);
     int getCtuCodeLength(std::vector<CodingTreeUnit*> ctus);
 
-    cv::Mat getPredictedImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag);
+    cv::Mat getPredictedImageFromCtu(std::vector<CodingTreeUnit*> ctus);
     std::vector<Point4Vec> getAllSquareCoordinateList();
     std::vector<Square> getAllSquareIndexList();
     int divide_steps; // 分割回数

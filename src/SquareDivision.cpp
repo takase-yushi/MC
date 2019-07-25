@@ -1716,8 +1716,8 @@ void SquareDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out,
     if(ctu->node3 != nullptr) getPredictedImageFromCtu(ctu->node3, out, area_flag);
     if(ctu->node4 != nullptr) getPredictedImageFromCtu(ctu->node4, out, area_flag);
 }
-//TODO 四角形対応
-cv::Mat SquareDivision::getPredictedColorImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag, double original_psnr){
+
+cv::Mat SquareDivision::getPredictedColorImageFromCtu(std::vector<CodingTreeUnit*> ctus, double original_psnr){
     cv::Mat out = cv::Mat::zeros(ref_image.size(), CV_8UC3);
 
     std::vector<cv::Scalar> colors;
@@ -1731,7 +1731,7 @@ cv::Mat SquareDivision::getPredictedColorImageFromCtu(std::vector<CodingTreeUnit
 
 //#pragma omp parallel for
     for(int i = 0 ; i < ctus.size() ; i++) {
-        getPredictedColorImageFromCtu(ctus[i], out, area_flag[i/2], original_psnr, colors);
+        getPredictedColorImageFromCtu(ctus[i], out, original_psnr, colors);
     }
 
     return out;
