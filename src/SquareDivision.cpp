@@ -1737,7 +1737,7 @@ cv::Mat SquareDivision::getPredictedColorImageFromCtu(std::vector<CodingTreeUnit
     return out;
 }
 
-void SquareDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, std::vector<std::vector<int>> &area_flag, double original_psnr, std::vector<cv::Scalar> &colors){
+void SquareDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, double original_psnr, std::vector<cv::Scalar> &colors){
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
         int square_index = ctu->square_index;
         cv::Point2f mv = ctu->mv1;
@@ -1797,10 +1797,10 @@ void SquareDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat 
         return;
     }
 
-    if(ctu->node1 != nullptr) getPredictedColorImageFromCtu(ctu->node1, out, area_flag, original_psnr, colors);
-    if(ctu->node2 != nullptr) getPredictedColorImageFromCtu(ctu->node2, out, area_flag, original_psnr, colors);
-    if(ctu->node3 != nullptr) getPredictedColorImageFromCtu(ctu->node3, out, area_flag, original_psnr, colors);
-    if(ctu->node4 != nullptr) getPredictedColorImageFromCtu(ctu->node4, out, area_flag, original_psnr, colors);
+    if(ctu->node1 != nullptr) getPredictedColorImageFromCtu(ctu->node1, out, original_psnr, colors);
+    if(ctu->node2 != nullptr) getPredictedColorImageFromCtu(ctu->node2, out, original_psnr, colors);
+    if(ctu->node3 != nullptr) getPredictedColorImageFromCtu(ctu->node3, out, original_psnr, colors);
+    if(ctu->node4 != nullptr) getPredictedColorImageFromCtu(ctu->node4, out, original_psnr, colors);
 }
 
 int SquareDivision::getCtuCodeLength(std::vector<CodingTreeUnit*> ctus) {
