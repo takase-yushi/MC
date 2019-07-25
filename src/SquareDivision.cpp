@@ -1736,7 +1736,7 @@ cv::Mat SquareDivision::getPredictedColorImageFromCtu(std::vector<CodingTreeUnit
 
     return out;
 }
-//TODO 四角形対応
+
 void SquareDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, std::vector<std::vector<int>> &area_flag, double original_psnr, std::vector<cv::Scalar> &colors){
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
         int square_index = ctu->square_index;
@@ -1744,8 +1744,7 @@ void SquareDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat 
         Square square_corner_idx = squares[square_index];
         Point4Vec square(corners[square_corner_idx.p1_idx], corners[square_corner_idx.p2_idx], corners[square_corner_idx.p3_idx], corners[square_corner_idx.p4_idx]);
 
-        std::vector<cv::Point2f> mvs{mv, mv, mv};
-        std::vector<cv::Point2f> pixels = getPixelsInSquare(square, area_flag, square_index, ctu, block_size_x, block_size_y);
+        std::vector<cv::Point2f> pixels = getPixelsInSquare(square);
 //        double residual = getSquareResidual(expansion_ref_uchar, target_image, square, mvs, pixels, cv::Rect(-16, -16, target_image.cols + 2 * 16, target_image.rows + 2 * 16));
 //        double mse = residual / (pixels.size());
 //        double psnr = 10 * std::log10(255.0 * 255.0 / mse);
@@ -1793,7 +1792,7 @@ void SquareDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat 
                 B(out, (int)pixel.x, (int)pixel.y) = 0;
             }
         }else{
-            getPredictedImage(expansion_ref_uchar, target_image, out, square, mvs, 16, area_flag, ctu->square_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
+            getPredictedImage(expansion_ref_uchar, target_image, out, square, mv, ref_hevc);
         }
         return;
     }
@@ -1803,7 +1802,7 @@ void SquareDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat 
     if(ctu->node3 != nullptr) getPredictedColorImageFromCtu(ctu->node3, out, area_flag, original_psnr, colors);
     if(ctu->node4 != nullptr) getPredictedColorImageFromCtu(ctu->node4, out, area_flag, original_psnr, colors);
 }
-//TODO 四角形対応
+
 int SquareDivision::getCtuCodeLength(std::vector<CodingTreeUnit*> ctus) {
     int code_length_sum = 0;
     for(auto & ctu : ctus){
