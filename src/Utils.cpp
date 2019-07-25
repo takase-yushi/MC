@@ -57,13 +57,13 @@ void drawPoint(cv::Mat &img, const cv::Point2f p, const cv::Scalar color, int si
  */
 void drawTriangle(cv::Mat &img, const cv::Point2f p1, const cv::Point2f p2, const cv::Point2f p3, const cv::Scalar color){
 
-    drawPoint(img, p1, RED, 4);
-    drawPoint(img, p2, RED, 4);
-    drawPoint(img, p3, RED, 4);
+  drawPoint(img, p1, RED, 4);
+  drawPoint(img, p2, RED, 4);
+  drawPoint(img, p3, RED, 4);
 
-    cv::line(img, p1, p2, color, 2);
-    cv::line(img, p2, p3, color, 2);
-    cv::line(img, p3, p1, color, 2);
+  cv::line(img, p1, p2, color, 2);
+  cv::line(img, p2, p3, color, 2);
+  cv::line(img, p3, p1, color, 2);
 
 }
 
@@ -1222,13 +1222,13 @@ std::vector<cv::Point2f> slide_corner_edge(std::vector<cv::Point2f> &corners,cv:
  * @brief 現在のタイムスタンプをすべてつなげた文字列を返す
  * @return タイムスタンプ文字列
  */
-std::string getCurrentTimestamp(){
-    time_t timer;
-    struct tm* tm;
-    char datetime[30];
-    timer = time(NULL);
-    tm = localtime(&timer);
-    strftime(datetime, 30, "%Y%m%d%H%M%S",tm );
-
-    return std::string(datetime);
-}
+//std::string getCurrentTimestamp(){
+//    time_t timer;
+//    struct tm* tm;
+//    char datetime[30];
+//    timer = time(NULL);
+//    tm = localtime(&timer);
+//    strftime(datetime, 30, "%Y%m%d%H%M%S",tm );
+//
+//    return std::string(datetime);
+//}
