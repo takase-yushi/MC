@@ -60,7 +60,7 @@ public:
     public:
         GaussResult();
 
-        GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvParallel, double residual,
+        GaussResult(const cv::Point2f &mvParallel, double residual,
                     int squareSize, bool parallelFlag, double residual_bm, double residual_newton);
         cv::Point2f mv_parallel;
         double residual;
@@ -150,7 +150,7 @@ private:
     static cv::Point2f getQuantizedMv(cv::Point2f &mv, double quantize_step);
     std::tuple<double, int, cv::Point2f, int, MV_CODE_METHOD> getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu);
     bool isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> &vectors, const cv::Point2f &mv);
-    void eraseSquare(int t_idx);
+    void eraseSquare(int s_idx);
     void getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, std::vector<std::vector<int>> &area_Flag);
     int getCtuCodeLength(CodingTreeUnit *ctu);
     void drawMvImage(cv::Mat &out, CodingTreeUnit *ctu);

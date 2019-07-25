@@ -1862,9 +1862,8 @@ SquareDivision::SplitResult::SplitResult(const Point3Vec &t1, const Point3Vec &t
                                                                                                                t1_type(t1Type),
                                                                                                                t2_type(t2Type) {}
 
-SquareDivision::GaussResult::GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvParallel,
-                                           double residual, int squareSize, bool parallelFlag, double residualBm, double residualNewton) : mv_warping(
-        mvWarping), mv_parallel(mvParallel), residual(residual), square_size(squareSize), parallel_flag(parallelFlag), residual_bm(residualBm), residual_newton(residualNewton) {}
+SquareDivision::GaussResult::GaussResult(const cv::Point2f &mvParallel, double residual, int squareSize, bool parallelFlag, double residualBm, double residualNewton) :
+                                  mv_parallel(mvParallel), residual(residual), square_size(squareSize), parallel_flag(parallelFlag), residual_bm(residualBm), residual_newton(residualNewton) {}
 
 SquareDivision::GaussResult::GaussResult() {}
 
