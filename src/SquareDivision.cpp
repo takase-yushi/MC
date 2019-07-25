@@ -351,21 +351,21 @@ int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx)
 
     return static_cast<int>(squares.size() - 1);
 }
-//TODO 四角形対応
+
 /**
  * @fn void SquareDivision::eraseSquare(int t_idx)
  * @brief 四角パッチに関わる情報を削除する
  * @param t_idx 四角パッチの番号
  */
-void SquareDivision::eraseSquare(int t_idx){
-    Square square = squares[t_idx];
+void SquareDivision::eraseSquare(int s_idx){
+    Square square = squares[s_idx];
     removeSquareNeighborVertex(square.p1_idx, square.p2_idx, square.p3_idx, square.p4_idx);
-    removeSquareCoveredSquare(square.p1_idx, square.p2_idx, square.p3_idx, square.p4_idx, t_idx);
-    isCodedSquare.erase(isCodedSquare.begin() + t_idx);
-    squares.erase(squares.begin() + t_idx);
+    removeSquareCoveredSquare(square.p1_idx, square.p2_idx, square.p3_idx, square.p4_idx, s_idx);
+    isCodedSquare.erase(isCodedSquare.begin() + s_idx);
+    squares.erase(squares.begin() + s_idx);
 //    covered_square.erase(covered_square.begin() + t_idx);
-    square_gauss_results.erase(square_gauss_results.begin() + t_idx);
-    delete_flag.erase(delete_flag.begin() + t_idx);
+    square_gauss_results.erase(square_gauss_results.begin() + s_idx);
+    delete_flag.erase(delete_flag.begin() + s_idx);
 }
 
 /**
