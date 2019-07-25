@@ -1640,11 +1640,11 @@ cv::Point2f SquareDivision::getQuantizedMv(cv::Point2f &mv, double quantize_step
 
     return ret;
 }
-//TODO 四角形対応
-cv::Mat SquareDivision::getPredictedDiagonalImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag){
+
+cv::Mat SquareDivision::getPredictedDiagonalImageFromCtu(std::vector<CodingTreeUnit*> ctus){
     cv::Mat out = cv::Mat::zeros(ref_image.size(), CV_8UC3);
     for(int i = 0 ; i < ctus.size() ; i++) {
-        getPredictedDiagonalImageFromCtu(ctus[i], area_flag[(int)i/2], out);
+        getPredictedDiagonalImageFromCtu(ctus[i], out);
     }
 
     return out;
@@ -1672,10 +1672,10 @@ void SquareDivision::getPredictedDiagonalImageFromCtu(CodingTreeUnit* ctu, const
         return;
     }
 
-    if(ctu->node1 != nullptr) getPredictedDiagonalImageFromCtu(ctu->node1, area_flag, out);
-    if(ctu->node2 != nullptr) getPredictedDiagonalImageFromCtu(ctu->node2, area_flag, out);
-    if(ctu->node3 != nullptr) getPredictedDiagonalImageFromCtu(ctu->node3, area_flag, out);
-    if(ctu->node4 != nullptr) getPredictedDiagonalImageFromCtu(ctu->node4, area_flag, out);
+    if(ctu->node1 != nullptr) getPredictedDiagonalImageFromCtu(ctu->node1, out);
+    if(ctu->node2 != nullptr) getPredictedDiagonalImageFromCtu(ctu->node2, out);
+    if(ctu->node3 != nullptr) getPredictedDiagonalImageFromCtu(ctu->node3, out);
+    if(ctu->node4 != nullptr) getPredictedDiagonalImageFromCtu(ctu->node4, out);
 }
 
 cv::Mat SquareDivision::getPredictedImageFromCtu(std::vector<CodingTreeUnit*> ctus){
