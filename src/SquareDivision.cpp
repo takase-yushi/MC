@@ -1822,15 +1822,15 @@ int SquareDivision::getCtuCodeLength(CodingTreeUnit *ctu){
     return 1 + getCtuCodeLength(ctu->node1) + getCtuCodeLength(ctu->node2) + getCtuCodeLength(ctu->node3) + getCtuCodeLength(ctu->node4);
 }
 
-//TODO 四角形対応
+
 cv::Mat SquareDivision::getMvImage(std::vector<CodingTreeUnit*> ctus){
     cv::Mat out = target_image.clone();
 
     for(auto square : getSquareCoordinateList()){
-        drawSquare(out, square.p1, square.p2, square.p3, cv::Scalar(255, 255, 255));
+        drawSquare(out, square.p1, square.p2, square.p3, square.p4, cv::Scalar(255, 255, 255));
     }
 
-    for(int i = 0 ; i < ctus.size() ; i++){
+    for(int i = 0 ; i < ctus.size() ; i++){   //i番目のctuを書いていく
         drawMvImage(out, ctus[i]);
     }
 
