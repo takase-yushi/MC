@@ -1309,10 +1309,9 @@ bool SquareDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE
  * @param[in] square_idx 四角パッチの番号
  * @param[in] residual そのパッチの残差
  * @param[in] ctu CodingTreeUnit 符号木
- * @param[in] area_flag 含まれる画素のフラグ
  * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
  */
-std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu, bool parallel_flag, std::vector<cv::Point2f> &pixels){
+std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDivision::getMVD(cv::Point2f mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, std::vector<cv::Point2f> &pixels){
     // 空間予測と時間予測の候補を取り出す
     std::vector<int> spatial_squares = getSpatialSquareList(square_idx);
     int spatial_square_size = static_cast<int>(spatial_squares.size());
@@ -1351,174 +1350,72 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     for(int i = 0 ; i < vectors.size() ; i++) {
         std::pair<cv::Point2f, MV_CODE_METHOD> vector = vectors[i];
         cv::Point2f current_mv = vector.first;
-        // TODO: ワーピング対応
-        if(parallel_flag) { // 平行移動成分に関してはこれまで通りにやる
-            FlagsCodeSum flag_code_sum(0, 0, 0, 0);
 
-            cv::Point2f mvd = current_mv - mv[0];
+        FlagsCodeSum flag_code_sum(0, 0, 0, 0);
+        cv::Point2f mvd = current_mv - mv;
 #if MVD_DEBUG_LOG
-            std::cout << "target_vector_idx       :" << i << std::endl;
-            std::cout << "diff_target_mv(parallel):" << current_mv << std::endl;
-            std::cout << "encode_mv(parallel)     :" << mv[0] << std::endl;
+        std::cout << "target_vector_idx       :" << i << std::endl;
+        std::cout << "diff_target_mv(parallel):" << current_mv << std::endl;
+        std::cout << "encode_mv(parallel)     :" << mv << std::endl;
 #endif
-            mvd = getQuantizedMv(mvd, 4);
+        mvd = getQuantizedMv(mvd, 4);
 #if MVD_DEBUG_LOG
-            std::cout << "mvd(parallel)           :" << mvd << std::endl;
+        std::cout << "mvd(parallel)           :" << mvd << std::endl;
 #endif
-            mvd.x = std::fabs(mvd.x);
-            mvd.y = std::fabs(mvd.y);
+        mvd.x = std::fabs(mvd.x);
+        mvd.y = std::fabs(mvd.y);
 
-            mvd *= 4;
-            int abs_x = mvd.x;
-            int abs_y = mvd.y;
+        mvd *= 4;
+        int abs_x = mvd.x;
+        int abs_y = mvd.y;
 #if MVD_DEBUG_LOG
-            std::cout << "4 * mvd(parallel)       :" << mvd << std::endl;
+        std::cout << "4 * mvd(parallel)       :" << mvd << std::endl;
 #endif
 
-            // 動きベクトル差分の絶対値が0より大きいのか？
-            bool is_x_greater_than_zero = abs_x > 0;
-            bool is_y_greater_than_zero = abs_y > 0;
-
-            flag_code_sum.countGreater0Code();
-            flag_code_sum.countGreater0Code();
-            flag_code_sum.setXGreater0Flag(is_x_greater_than_zero);
-            flag_code_sum.setYGreater0Flag(is_y_greater_than_zero);
-
-            // 動きベクトル差分の絶対値が1より大きいのか？
-            bool is_x_greater_than_one = abs_x > 1;
-            bool is_y_greater_than_one = abs_y > 1;
-
-            // 正負の判定(使ってません！！！)
-            bool is_x_minus = mvd.x < 0;
-            bool is_y_minus = mvd.y < 0;
-
-            int mvd_code_length = 2;
-            if(is_x_greater_than_zero){
-                mvd_code_length += 1;
-
-                if(is_x_greater_than_one){
-                    int mvd_x_minus_2 = mvd.x - 2.0;
-                    mvd_code_length += getExponentialGolombCodeLength((int) mvd_x_minus_2, 0);
-                    flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_x_minus_2, 0));
-                }
-
-                flag_code_sum.countGreater1Code();
-                flag_code_sum.setXGreater1Flag(is_x_greater_than_one);
-                flag_code_sum.countSignFlagCode();
+        // 動きベクトル差分の絶対値が0より大きいのか？
+        bool is_x_greater_than_zero = abs_x > 0;
+        bool is_y_greater_than_zero = abs_y > 0;
+        flag_code_sum.countGreater0Code();
+        flag_code_sum.countGreater0Code();
+        flag_code_sum.setXGreater0Flag(is_x_greater_than_zero);
+        flag_code_sum.setYGreater0Flag(is_y_greater_than_zero);
+        // 動きベクトル差分の絶対値が1より大きいのか？
+        bool is_x_greater_than_one = abs_x > 1;
+        bool is_y_greater_than_one = abs_y > 1;
+        // 正負の判定(使ってません！！！)
+        bool is_x_minus = mvd.x < 0;
+        bool is_y_minus = mvd.y < 0;
+        int mvd_code_length = 2;
+        if(is_x_greater_than_zero){
+            mvd_code_length += 1;
+            if(is_x_greater_than_one){
+                int mvd_x_minus_2 = mvd.x - 2.0;
+                mvd_code_length += getExponentialGolombCodeLength((int) mvd_x_minus_2, 0);
+                flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_x_minus_2, 0));
             }
-
-            if(is_y_greater_than_zero){
-                mvd_code_length += 1;
-
-                if(is_y_greater_than_one){
-                    int mvd_y_minus_2 = mvd.y - 2.0;
-                    mvd_code_length += getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
-                    flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_y_minus_2, 0));
-                }
-
-                flag_code_sum.countGreater1Code();
-                flag_code_sum.setYGreater1Flag(is_y_greater_than_one);
-                flag_code_sum.countSignFlagCode();
-            }
-
-            // 参照箇所符号化
-            int reference_index = std::get<1>(vector);
-            int reference_index_code_length = getUnaryCodeLength(reference_index);
-
-            // 各種フラグ分を(3*2)bit足してます
-            double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
-
-            std::vector<cv::Point2f> mvds{mvd};
-            // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum);
-        }else{
-            std::vector<cv::Point2f> mvds;
-            mvds.emplace_back(current_mv - mv[0]);
-            mvds.emplace_back(current_mv - mv[1]);
-            mvds.emplace_back(current_mv - mv[2]);
-
-            int mvd_code_length = 6;
-            FlagsCodeSum flag_code_sum(0, 0, 0, 0);
-
-            for(int j = 0 ; j < mvds.size() ; j++){
-
-#if MVD_DEBUG_LOG
-                std::cout << "target_vector_idx       :" << j << std::endl;
-                std::cout << "diff_target_mv(warping) :" << current_mv << std::endl;
-                std::cout << "encode_mv(warping)      :" << mv[j] << std::endl;
-#endif
-
-                cv::Point2f mvd = getQuantizedMv(mvds[j], 4);
-                mvd.x = std::fabs(mvd.x);
-                mvd.y = std::fabs(mvd.y);
-#if MVD_DEBUG_LOG
-                std::cout << "mvd(warping)            :" << mvd << std::endl;
-#endif
-                mvd *= 4;
-                mvds[j] = mvd;
-
-#if MVD_DEBUG_LOG
-                std::cout << "4 * mvd(warping)        :" << mvd << std::endl;
-#endif
-                int abs_x = mvd.x;
-                int abs_y = mvd.y;
-
-                // 動きベクトル差分の絶対値が0より大きいのか？
-                bool is_x_greater_than_zero = abs_x > 0;
-                bool is_y_greater_than_zero = abs_y > 0;
-
-                flag_code_sum.countGreater0Code();
-                flag_code_sum.countGreater0Code();
-                flag_code_sum.setXGreater0Flag(is_x_greater_than_zero);
-                flag_code_sum.setYGreater0Flag(is_y_greater_than_zero);
-
-                // 動きベクトル差分の絶対値が1より大きいのか？
-                bool is_x_greater_than_one = abs_x > 1;
-                bool is_y_greater_than_one = abs_y > 1;
-
-
-                // 正負の判定(これもつかってません！！！）
-                bool is_x_minus = mvd.x < 0;
-                bool is_y_minus = mvd.y < 0;
-
-                if(is_x_greater_than_zero){
-                    mvd_code_length += 1;
-
-                    if(is_x_greater_than_one){
-                        int mvd_x_minus_2 = mvd.x - 2.0;
-                        mvd_code_length += getExponentialGolombCodeLength((int) mvd_x_minus_2, 0);
-                        flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_x_minus_2, 0));
-                    }
-
-                    flag_code_sum.countGreater1Code();
-                    flag_code_sum.setXGreater1Flag(is_x_greater_than_one);
-                    flag_code_sum.countSignFlagCode();
-                }
-
-                if(is_y_greater_than_zero){
-                    mvd_code_length += 1;
-
-                    if(is_y_greater_than_one){
-                        int mvd_y_minus_2 = mvd.y - 2.0;
-                        mvd_code_length +=  getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
-                        flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_y_minus_2, 0));
-                    }
-                    flag_code_sum.countGreater1Code();
-                    flag_code_sum.setYGreater1Flag(is_y_greater_than_one);
-                    flag_code_sum.countSignFlagCode();
-                }
-            }
-
-            // 参照箇所符号化
-            int reference_index = std::get<1>(vector);
-            int reference_index_code_length = getUnaryCodeLength(reference_index);
-
-            // 各種フラグ分を(3*2)bit足してます
-            double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
-
-            // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum);
+            flag_code_sum.countGreater1Code();
+            flag_code_sum.setXGreater1Flag(is_x_greater_than_one);
+            flag_code_sum.countSignFlagCode();
         }
+        if(is_y_greater_than_zero){
+            mvd_code_length += 1;
+            if(is_y_greater_than_one){
+                int mvd_y_minus_2 = mvd.y - 2.0;
+                mvd_code_length += getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
+                flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_y_minus_2, 0));
+            }
+            flag_code_sum.countGreater1Code();
+            flag_code_sum.setYGreater1Flag(is_y_greater_than_one);
+            flag_code_sum.countSignFlagCode();
+        }
+        // 参照箇所符号化
+        int reference_index = std::get<1>(vector);
+        int reference_index_code_length = getUnaryCodeLength(reference_index);
+        // 各種フラグ分を(3*2)bit足してます
+        double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
+        std::vector<cv::Point2f> mvds{mvd};
+        // 結果に入れる
+        results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum);
     }
 
     // マージ符号化
@@ -1547,19 +1444,11 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
         if(spatial_square.parallel_flag){
             if(!isMvExists(merge_vectors, spatial_square.mv_parallel)) {
                 merge_vectors.emplace_back(spatial_square.mv_parallel, MERGE);
-                double ret_residual = getSquareResidual(ref_image, target_image, coordinate, mv, pixels_in_square);
+                double ret_residual = getSquareResidual(expansion_ref_uchar, target_image, mv, pixels_in_square, ref_hevc);
                 double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
                 results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, results.size(), MERGE, FlagsCodeSum(0, 0, 0, 0));
             }
         }
-//        else{
-//            if(!isMvExists(merge_vectors, spatial_square.mv_warping[0])) {
-//                merge_vectors.emplace_back(spatial_square.mv_warping[0], MERGE);
-//                double ret_residual = getSquareResidual(ref_image, target_image, coordinate, mv, pixels_in_square);
-//                double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
-//                results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, results.size(), MERGE, FlagsCodeSum(0, 0, 0, 0));
-//            }
-//        }
     }
 
     // RDしたスコアが小さい順にソート
@@ -1596,20 +1485,14 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
         (ctu->original_mvds_x).clear();
         (ctu->original_mvds_y).clear();
 
-        if (parallel_flag) {
-            (ctu->mvds_x).emplace_back(mvds[0].x);
-            (ctu->mvds_y).emplace_back(mvds[0].y);
-        } else {
-            for (int i = 0; i < 3; i++) {
-                (ctu->mvds_x).emplace_back(mvds[i].x);
-                (ctu->mvds_y).emplace_back(mvds[i].y);
-            }
-        }
+        (ctu->mvds_x).emplace_back(mvds[0].x);
+        (ctu->mvds_y).emplace_back(mvds[0].y);
+
     }
 
     return {cost, code_length, mvds, selected_idx, method};
 }
-//TODO 四角形対応
+
 /**
  * @fn cv::Point2f SquareDivision::getQuantizedMv(cv::Point2f mv, int quantize_step)
  * @param mv 動きベクトル
