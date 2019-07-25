@@ -1858,10 +1858,7 @@ void SquareDivision::drawMvImage(cv::Mat &out, CodingTreeUnit *ctu){
 
 SquareDivision::SquareDivision() {}
 
-SquareDivision::SplitResult::SplitResult(const Point3Vec &t1, const Point3Vec &t2, int t1Type, int t2Type) : t1(t1),
-                                                                                                               t2(t2),
-                                                                                                               t1_type(t1Type),
-                                                                                                               t2_type(t2Type) {}
+SquareDivision::SplitResult::SplitResult(const Point4Vec &s1, const Point4Vec &s2, int type) : s1(s1), s2(s2), s_type(type) {}
 
 SquareDivision::GaussResult::GaussResult(const cv::Point2f &mvParallel, double residual, int squareSize, bool parallelFlag, double residualBm, double residualNewton) :
                                   mv_parallel(mvParallel), residual(residual), square_size(squareSize), parallel_flag(parallelFlag), residual_bm(residualBm), residual_newton(residualNewton) {}
