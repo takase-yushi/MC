@@ -57,13 +57,48 @@ void drawPoint(cv::Mat &img, const cv::Point2f p, const cv::Scalar color, int si
  */
 void drawTriangle(cv::Mat &img, const cv::Point2f p1, const cv::Point2f p2, const cv::Point2f p3, const cv::Scalar color){
 
-  drawPoint(img, p1, RED, 4);
-  drawPoint(img, p2, RED, 4);
-  drawPoint(img, p3, RED, 4);
+    drawPoint(img, p1, RED, 4);
+    drawPoint(img, p2, RED, 4);
+    drawPoint(img, p3, RED, 4);
 
-  cv::line(img, p1, p2, color, 2);
-  cv::line(img, p2, p3, color, 2);
-  cv::line(img, p3, p1, color, 2);
+    cv::line(img, p1, p2, color, 2);
+    cv::line(img, p2, p3, color, 2);
+    cv::line(img, p3, p1, color, 2);
+
+}
+
+/**
+ * @fn void drawSquare(cv::Mat &img, const cv::Point2f p1, const cv::Point2f p2, const cv::Point2f p3, const cv::Point2f p4, const cv::Scalar color)
+ * @brief 四角形を描画する
+ * @param[out] img 描画対象の画像データ
+ * @param[in] p1 頂点1
+ * @param[in] p2 頂点2
+ * @param[in] p3 頂点3
+ * @param[in] p4 頂点4
+ * @param[in] color 線の色
+ * @details
+ * Mat型のimg上に, 4点(p1, p2, p3, p4)から構成される四角形をcolor色で描画する.
+ *
+ *  p1               p2
+ *   +---------------+
+ *   |               |
+ *   |               |
+ *   |               |
+ *   +---------------+
+ *  p3               p4
+ *
+ */
+void drawSquare(cv::Mat &img, const cv::Point2f p1, const cv::Point2f p2, const cv::Point2f p3, const cv::Point2f p4, const cv::Scalar color){
+
+    cv::line(img, p1, p2, color, 1);
+    cv::line(img, p2, p4, color, 1);
+    cv::line(img, p4, p3, color, 1);
+    cv::line(img, p3, p1, color, 1);
+
+    drawPoint(img, p1, RED, 1);
+    drawPoint(img, p2, RED, 1);
+    drawPoint(img, p3, RED, 1);
+    drawPoint(img, p4, RED, 1);
 
 }
 
