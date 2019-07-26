@@ -232,7 +232,7 @@ class SQUARE{
      * @param p3_idx 四角形の頂点3のインデックス
      * @param p4_idx 四角形の頂点4のインデックス
      */
-public: SQUARE(Square t) { p1_idx = t.p1_idx; p2_idx = t.p2_idx; p3_idx = t.p3_idx; p4_idx = t.p4_idx; }
+public: SQUARE(Square s) { p1_idx = s.p1_idx; p2_idx = s.p2_idx; p3_idx = s.p3_idx; p4_idx = s.p4_idx; }
 
 };
 
