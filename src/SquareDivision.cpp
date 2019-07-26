@@ -132,7 +132,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
         }
-
     }
 
     // 過去のMVを残すやつを初期化
@@ -161,15 +160,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
             int squareIndex = insertSquare(p1_idx, p2_idx, p3_idx, p4_idx);
             addNeighborVertex(p1_idx, p2_idx, p3_idx, p4_idx);
             addCoveredSquare(p1_idx, p2_idx, p3_idx, p4_idx, squareIndex); // p1/p2/p3はsquareIndex番目の四角形に含まれている
-
-//            int p4_idx = p2_idx;
-//            int p5_idx = p3_idx;
-//            int p6_idx = p3_idx + 1;
-//
-//            squareIndex = insertSquare(p4_idx, p5_idx, p6_idx, TYPE2);
-//            addNeighborVertex(p4_idx, p5_idx, p6_idx);
-//            addCoveredSquare(p4_idx, p5_idx, p6_idx, squareIndex);
-//
         }
     }
 
@@ -577,7 +567,7 @@ void SquareDivision::addCornerAndSquare(Square square, int square_index){
     isCodedSquare[square_index] = false;
     delete_flag[square_index] = true;
 }
-//TODO 四角形対応
+
 /**
  * @fn bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point4Vec square, int square_index, int type, int steps)
  * @brief 与えられたトライアングルを分割するか判定し，必要な場合は分割を行う
@@ -954,7 +944,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
  * @param p1 頂点１の座標
  * @param p2 頂点２の座標
  * @param p3 頂点３の座標
- * @param p3 頂点4の座標
+ * @param p4 頂点4の座標
  * @param type 分割形状
  * @return 分割結果
  */
@@ -1193,7 +1183,7 @@ bool SquareDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE
     }
     return false;
 }
-//TODO 四角形対応
+
 /**
  * @fn std::tuple<cv::Point2f, int, MV_CODE_METHOD> RD(int square_idx, CodingTreeUnit* ctu)
  * @brief RDを行い，最適な差分ベクトルを返す
