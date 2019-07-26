@@ -160,9 +160,8 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
     std::cout << "block_num_y:" << block_num_y << std::endl;
     std::cout << "block_num_x:" << block_num_x << std::endl;
 
-    covered_square.resize(static_cast<unsigned long>((block_num_x + 1) * (block_num_y + 1)));
+    covered_square.resize(static_cast<unsigned long>(4 * (block_num_x) * (block_num_y)));  //頂点の個数はブロック数×4
 
-    //なにしてる？？？
     for(int block_y = 0 ; block_y < block_num_y ; block_y++) {
         for(int block_x = 0 ; block_x < block_num_x ; block_x++) {
             //頂点番号
@@ -170,9 +169,9 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
             int p2_idx;
             int p3_idx;
             int p4_idx;
-            p1_idx = 2 * block_x + (2 * block_y) * (2 * (block_num_x) + 1);
+            p1_idx = 2 * block_x + 4 * block_num_x * block_y;
             p2_idx = p1_idx + 1;
-            p3_idx = p1_idx + ((block_num_x) * 2 + 1 );
+            p3_idx = p1_idx + 2 * block_num_x;
             p4_idx = p3_idx + 1;
 
             int squareIndex = insertSquare(p1_idx, p2_idx, p3_idx, p4_idx);
