@@ -148,8 +148,9 @@ struct Point4Vec{
      * @param p1 三角形の頂点1の座標
      * @param p2 三角形の頂点2の座標
      * @param p3 三角形の頂点3の座標
+     * @param p4 三角形の頂点3の座標
      */
-    Point4Vec(const cv::Point2f &p1, const cv::Point2f &p2, const cv::Point2f &p3, const cv::Point2f &p4) : p1(p1), p2(p2), p3(p3), p4() {}
+    Point4Vec(const cv::Point2f &p1, const cv::Point2f &p2, const cv::Point2f &p3, const cv::Point2f &p4) : p1(p1), p2(p2), p3(p3), p4(p4) {}
 
     Point4Vec() {}
 
