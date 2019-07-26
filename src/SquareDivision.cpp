@@ -531,15 +531,14 @@ void SquareDivision::addCornerAndSquare(Square square, int square_index){
     cv::Point2f p4 = corners[square.p4_idx];
 
     cv::Point2f y = (p3 - p1) / 2.0;
-
-    cv::Point2f a = p1;
-    cv::Point2f b = p2;
-    cv::Point2f c = p3;
-    cv::Point2f d = p4;
-    cv::Point2f e = a + y;
-    cv::Point2f f = b + y;
-    cv::Point2f g = a + y;    g.y++;
-    cv::Point2f h = b + y;    h.y++;
+    y.y -= 0.5;                            //    a         b
+    cv::Point2f a = p1;                    //     ---------
+    cv::Point2f b = p2;                    //     |       |
+                                           //   e |       | f
+    cv::Point2f e = a + y;                 //   g |       | h
+    cv::Point2f f = b + y;                 //     |       |
+    cv::Point2f g = e;    g.y++;           //     ---------
+    cv::Point2f h = f;    h.y++;           //    c         d
 
     int e_idx = getCornerIndex(e);
     int f_idx = getCornerIndex(f);
