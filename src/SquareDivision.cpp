@@ -27,7 +27,7 @@ SquareDivision::SquareDivision(const cv::Mat &refImage, const cv::Mat &targetIma
                                                                                                                     ref_image(refImage), ref_gauss_image(refGaussImage) {}
 
 
-//TODO 四角形対応
+
 /**
  * @fn void SquareDivision::initSquare(int block_size_x, int block_size_y, int _divide_steps, int _qp, int divide_flag)
  * @brief 四角形を初期化する
@@ -83,10 +83,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
             int nx = block_x * (block_size_x);    //ブロックの左上のx座標
             int ny = block_y * (block_size_y);    //ブロックの左上のy座標
 
-            if(nx < 0) nx = 0;
-            if(target_image.cols <= nx) nx = target_image.cols - 1;
-            if(ny < 0) ny = 0;
-            if(target_image.rows <= ny) ny = target_image.rows - 1;
             corners.emplace_back(nx, ny);
             corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
             neighbor_vtx.emplace_back();
@@ -100,10 +96,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
             nx = (block_x + 1) * (block_size_x) - 1;   //ブロックの右上のx座標
             ny = (block_y) * (block_size_y);          //ブロックの右上のy座標
 
-            if(nx < 0) nx = 0;
-            if(target_image.cols <= nx) nx = target_image.cols - 1;
-            if(ny < 0) ny = 0;
-            if(target_image.rows <= ny) ny = target_image.rows - 1;
             corners.emplace_back(nx, ny);
             corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
             neighbor_vtx.emplace_back();
@@ -119,10 +111,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
             int nx = block_x * (block_size_x);              //ブロックの左下のx座標
             int ny = (block_y + 1) * (block_size_y) - 1;    //ブロックの左下のy座標
 
-            if(nx < 0) nx = 0;
-            if(target_image.cols <= nx) nx = target_image.cols - 1;
-            if(ny < 0) ny = 0;
-            if(target_image.rows <= ny) ny = target_image.rows - 1;
             corners.emplace_back(nx, ny);
             corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
             neighbor_vtx.emplace_back();
@@ -136,10 +124,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
             nx = (block_x + 1) * (block_size_x) - 1;    //ブロックの右下のx座標
             ny = (block_y + 1) * (block_size_y) - 1;    //ブロックの右下のy座標
 
-            if(nx < 0) nx = 0;
-            if(target_image.cols <= nx) nx = target_image.cols - 1;
-            if(ny < 0) ny = 0;
-            if(target_image.rows <= ny) ny = target_image.rows - 1;
             corners.emplace_back(nx, ny);
             corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
             neighbor_vtx.emplace_back();
