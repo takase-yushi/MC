@@ -24,6 +24,7 @@ private:
     std::map<int, int> mvd_counter;
     std::map<int, int> mvd_counter_x;
     std::map<int, int> mvd_counter_y;
+    std::map<int, int> MV_counter;
 
     // greater_0フラグの頻度
     std::map<int, int> greater_0_flag_counter;
