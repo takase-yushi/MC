@@ -554,7 +554,7 @@ void SquareDivision::addCornerAndSquare(Square square, int square_index){
     int s2_idx = insertSquare(g_idx, h_idx, c_idx, d_idx);
 
     removeSquareNeighborVertex(square.p1_idx, square.p2_idx, square.p3_idx, square.p4_idx);
-    removeSquareCoveredSquare( square.p1_idx, square.p2_idx, square.p3_idx, square.p3_idx, square_index);
+    removeSquareCoveredSquare( square.p1_idx, square.p2_idx, square.p3_idx, square.p4_idx, square_index);
 
     addNeighborVertex(a_idx, b_idx, e_idx, f_idx);
     addNeighborVertex(g_idx, h_idx, c_idx, d_idx);
