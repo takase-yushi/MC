@@ -530,7 +530,6 @@ void SquareDivision::addCornerAndSquare(Square square, int square_index){
     cv::Point2f p3 = corners[square.p3_idx];
     cv::Point2f p4 = corners[square.p4_idx];
 
-    cv::Point2f x = (p2 - p1) / 2.0;
     cv::Point2f y = (p3 - p1) / 2.0;
 
     cv::Point2f a = p1;
