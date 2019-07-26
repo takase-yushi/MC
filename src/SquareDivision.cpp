@@ -952,8 +952,8 @@ SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1
     switch(type) {
         case 1:
         {
-            cv::Point2f x = (p2 - p1) / 2;           //  a       e g      b
-                                                     //   -----------------
+            cv::Point2f x = (p2 - p1) / 2.0;         //  a       e g      b
+            x.x -= 0.5;                              //   -----------------
             a = p1;                                  //   |               |
             b = p2;                                  //   |               |
             c = p3;                                  //   |               |
@@ -967,8 +967,8 @@ SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1
         }
         case 2:
         {
-            cv::Point2f y = (p1 - p3) / 2;            //    a         b
-                                                      //     ---------
+            cv::Point2f y = (p3 - p1) / 2.0;          //    a         b
+            y.y -= 0.5;                               //     ---------
             a = p1;                                   //     |       |
             b = p2;                                   //   e |       | f
             c = p3;                                   //   g |       | h
