@@ -368,18 +368,7 @@ void run_square(std::string config_path) {
 
         square_division.constructPreviousCodingTree(foo, 0);
 
-        std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_squares.size(), std::vector< std::vector<int> >(block_size_x, std::vector<int>(block_size_y, -1)) );
-
         for (int i = 0; i < init_squares.size(); i++) {
-//            std::vector<std::vector<int>> diagonal_line_area_flag(block_size_x, std::vector<int>(block_size_y, 0)); // 斜め線でどちらを取るか表すフラグ flag[x][y]
-            if(i % 2 == 0){
-                bool flag = false;
-                for (int x = 0; x < block_size_x; x++) {
-                    // diagonal line
-                    diagonal_line_area_flag[i/2][x][block_size_y - x - 1] = (flag ? i : i + 1);
-                    flag = !flag;
-                }
-            }
 
             Point4Vec square = init_squares[i];
             cv::Point2f p1 = square.p1;
