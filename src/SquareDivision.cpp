@@ -116,8 +116,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
 
-            if(block_x == block_num_x) continue;
-
             nx = (block_x + 1) * (block_size_x) - 1;    //ブロックの右下のx座標
             ny = (block_y + 1) * (block_size_y) - 1;    //ブロックの右下のy座標
 
