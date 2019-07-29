@@ -386,7 +386,7 @@ void run_square(std::string config_path) {
         // ===========================================================
         getReconstructionDivisionImage(gaussRefImage, foo, block_size_x, block_size_y);
         cv::Mat p_image = square_division.getPredictedImageFromCtu(foo);
-        cv::Mat color = square_division.getPredictedColorImageFromCtu(foo, getPSNR(target_image, p_image));
+//        cv::Mat color = square_division.getPredictedColorImageFromCtu(foo, getPSNR(target_image, p_image));
 
 //        Analyzer analayzer("_bm_fullsearch_" + std::to_string(qp) + "_" + getCurrentTimestamp());
 //        analayzer.storeDistributionOfMv(foo);
@@ -398,7 +398,7 @@ void run_square(std::string config_path) {
         cv::imwrite(img_directory + "p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
         cv::imwrite( img_directory + "p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
         cv::imwrite(img_directory + "p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", square_division.getMvImage(foo));
-        cv::imwrite(img_directory + "p_color_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
-        std::cout << square_division.getSquareCoordinateList().size() << std::endl;
+//        cv::imwrite(img_directory + "p_color_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
+        std::cout << "Num of squares : " << square_division.getSquareCoordinateList().size() << std::endl;
     }
 }
