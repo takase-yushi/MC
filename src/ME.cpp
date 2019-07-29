@@ -240,8 +240,8 @@ std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point4Vec sq, const c
 
     s = 2;
     error_min = 1 << 20;
-    for(int j = - s + mv_tmp.y ; j <= s + mv_tmp.y ; j += s){            //j : y方向のMV
-        for(int i = - s + mv_tmp.x ; i <= s + mv_tmp.x ; i += s){        //i : x方向のMV
+    for(int j = - 2 * s + mv_tmp.y ; j <= 2 * s + mv_tmp.y ; j += s){            //j : y方向のMV
+        for(int i = - 2 * s + mv_tmp.x ; i <= 2 * s + mv_tmp.x ; i += s){        //i : x方向のMV
             if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_image.cols - spread_quarter
                && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_image.rows - spread_quarter) {
                 e = 0.0;
@@ -269,8 +269,8 @@ std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point4Vec sq, const c
     s = 1;
     error_min = 1 << 20;
 
-    for(int j = - s + mv_tmp.y ; j <= s + mv_tmp.y ; j += s){            //j : y方向のMV
-        for(int i = - s + mv_tmp.x ; i <= s + mv_tmp.x ; i += s){        //i : x方向のMV
+    for(int j = - 2 * s + mv_tmp.y ; j <= 2 * s + mv_tmp.y ; j += s){            //j : y方向のMV
+        for(int i = - 2 * s + mv_tmp.x ; i <= 2 * s + mv_tmp.x ; i += s){        //i : x方向のMV
             if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_image.cols - spread_quarter
                && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_image.rows - spread_quarter) {
                 e = 0.0;
