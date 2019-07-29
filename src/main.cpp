@@ -51,7 +51,7 @@ int main(int argc, char *argv[]){
 //    run(config_path);
     run_square(config_path);
 }
-std::string out_file_suffix = "_debug";
+std::string out_file_suffix = "_square";
 
 void run(std::string config_path) {
 
