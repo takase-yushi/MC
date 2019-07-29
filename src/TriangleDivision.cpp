@@ -1828,93 +1828,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             std::vector<cv::Point2f> mvds{mvd};
             // 結果に入れる
             results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum);
-        }else{
-            std::vector<cv::Point2f> mvds;
-            mvds.emplace_back(current_mv - mv[0]);
-            mvds.emplace_back(current_mv - mv[1]);
-            mvds.emplace_back(current_mv - mv[2]);
-
-            int mvd_code_length = 6;
-            FlagsCodeSum flag_code_sum(0, 0, 0, 0);
-
-            for(int j = 0 ; j < mvds.size() ; j++){
-
-#if MVD_DEBUG_LOG
-                std::cout << "target_vector_idx       :" << j << std::endl;
-                std::cout << "diff_target_mv(warping) :" << current_mv << std::endl;
-                std::cout << "encode_mv(warping)      :" << mv[j] << std::endl;
-#endif
-
-                cv::Point2f mvd = getQuantizedMv(mvds[j], 4);
-                mvd.x = std::fabs(mvd.x);
-                mvd.y = std::fabs(mvd.y);
-#if MVD_DEBUG_LOG
-                std::cout << "mvd(warping)            :" << mvd << std::endl;
-#endif
-                mvd *= 4;
-                mvds[j] = mvd;
-
-#if MVD_DEBUG_LOG
-                std::cout << "4 * mvd(warping)        :" << mvd << std::endl;
-#endif
-                int abs_x = mvd.x;
-                int abs_y = mvd.y;
-
-                // 動きベクトル差分の絶対値が0より大きいのか？
-                bool is_x_greater_than_zero = abs_x > 0;
-                bool is_y_greater_than_zero = abs_y > 0;
-
-                flag_code_sum.countGreater0Code();
-                flag_code_sum.countGreater0Code();
-                flag_code_sum.setXGreater0Flag(is_x_greater_than_zero);
-                flag_code_sum.setYGreater0Flag(is_y_greater_than_zero);
-
-                // 動きベクトル差分の絶対値が1より大きいのか？
-                bool is_x_greater_than_one = abs_x > 1;
-                bool is_y_greater_than_one = abs_y > 1;
-
-
-                // 正負の判定(これもつかってません！！！）
-                bool is_x_minus = mvd.x < 0;
-                bool is_y_minus = mvd.y < 0;
-
-                if(is_x_greater_than_zero){
-                    mvd_code_length += 1;
-
-                    if(is_x_greater_than_one){
-                        int mvd_x_minus_2 = mvd.x - 2.0;
-                        mvd_code_length += getExponentialGolombCodeLength((int) mvd_x_minus_2, 0);
-                        flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_x_minus_2, 0));
-                    }
-
-                    flag_code_sum.countGreater1Code();
-                    flag_code_sum.setXGreater1Flag(is_x_greater_than_one);
-                    flag_code_sum.countSignFlagCode();
-                }
-
-                if(is_y_greater_than_zero){
-                    mvd_code_length += 1;
-
-                    if(is_y_greater_than_one){
-                        int mvd_y_minus_2 = mvd.y - 2.0;
-                        mvd_code_length +=  getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
-                        flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_y_minus_2, 0));
-                    }
-                    flag_code_sum.countGreater1Code();
-                    flag_code_sum.setYGreater1Flag(is_y_greater_than_one);
-                    flag_code_sum.countSignFlagCode();
-                }
-            }
-
-            // 参照箇所符号化
-            int reference_index = std::get<1>(vector);
-            int reference_index_code_length = getUnaryCodeLength(reference_index);
-
-            // 各種フラグ分を(3*2)bit足してます
-            double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
-
-            // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum);
         }
     }
 
@@ -1944,13 +1857,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
         if(spatial_triangle.parallel_flag){
             if(!isMvExists(merge_vectors, spatial_triangle.mv_parallel)) {
                 merge_vectors.emplace_back(spatial_triangle.mv_parallel, MERGE);
-                double ret_residual = getTriangleResidual(ref_image, target_image, coordinate, mv, pixels_in_triangle);
-                double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
-                results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, results.size(), MERGE, FlagsCodeSum(0, 0, 0, 0));
-            }
-        }else{
-            if(!isMvExists(merge_vectors, spatial_triangle.mv_warping[0])) {
-                merge_vectors.emplace_back(spatial_triangle.mv_warping[0], MERGE);
                 double ret_residual = getTriangleResidual(ref_image, target_image, coordinate, mv, pixels_in_triangle);
                 double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
                 results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, results.size(), MERGE, FlagsCodeSum(0, 0, 0, 0));
