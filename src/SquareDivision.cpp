@@ -91,8 +91,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
 
-            if(block_x == block_num_x) continue;    //x座標が画像の端のときはcontinue
-
             nx = (block_x + 1) * (block_size_x) - 1;   //ブロックの右上のx座標
             ny = (block_y) * (block_size_y);          //ブロックの右上のy座標
 
@@ -105,7 +103,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
         }
 
-        if(block_y == block_num_y) continue;    //y座標が画像の端のときはcontinue
         //y列目の下側の頂点を入れる
         for (int block_x = 0 ; block_x < block_num_x; block_x++) {
             int nx = block_x * (block_size_x);              //ブロックの左下のx座標
