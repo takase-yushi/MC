@@ -114,7 +114,7 @@ double getTriangleResidual(const cv::Mat ref_image, const cv::Mat &target_image,
  * @param target_image 対象画像
  * @param triangle 三角パッチの座標
  * @param vec 動きベクトル
- * @return 残差
+ * @return 残差(SAD)
  */
 double getTriangleResidual(unsigned char **ref_image, const cv::Mat &target_image, Point3Vec &triangle, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_triangle_pixels, cv::Rect rect){
     cv::Point2f pp0, pp1, pp2;
@@ -129,7 +129,7 @@ double getTriangleResidual(unsigned char **ref_image, const cv::Mat &target_imag
     cv::Point2f X,a,b,a_later,b_later,X_later;
     double alpha,beta,det;
 
-    double squared_error = 0.0;
+    double sad = 0.0;
 
     a = triangle.p3 - triangle.p1;
     b = triangle.p2 - triangle.p1;
@@ -147,12 +147,12 @@ double getTriangleResidual(unsigned char **ref_image, const cv::Mat &target_imag
         b_later = pp1 - pp0;
         X_later = alpha * a_later + beta * b_later + pp0;
 
-        int y = img_ip(ref_image, rect, X_later.x, X_later.y, 2);
+        int y = img_ip(ref_image, rect, 4 * X_later.x, 4 * X_later.y, 1);
 
-        squared_error += pow((M(target_image, (int)pixel.x, (int)pixel.y) - (0.299 * y + 0.587 * y + 0.114 * y)), 2);
+        sad += fabs(M(target_image, (int)pixel.x, (int)pixel.y) - (0.299 * y + 0.587 * y + 0.114 * y));
     }
 
-    return squared_error;
+    return sad;
 }
 
 
@@ -451,6 +451,9 @@ int img_ip(unsigned char **img, cv::Rect rect, double x, double y, int mode){
     y0 = (int) floor(y);
     dx = x - (double) x0;
     dy = y - (double) y0;
+
+    if(x0 == (rect.width + rect.x)) x0 = (rect.width + rect.x);
+    if(y0 == (rect.height + rect.y)) x0 = (rect.height + rect.y);
 
     /*** mode で指定された補間法に従って補間し，値を val に保存 ***/
     switch(mode) { /* mode = 0 : 最近傍, 1 : 双1次, 2 : 双3次 */
