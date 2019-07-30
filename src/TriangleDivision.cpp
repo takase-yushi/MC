@@ -2032,14 +2032,14 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
         if(spatial_triangle.parallel_flag){
             if(!isMvExists(merge_vectors, spatial_triangle.mv_parallel)) {
                 merge_vectors.emplace_back(spatial_triangle.mv_parallel, MERGE);
-                double ret_residual = getTriangleResidual(expansion_ref_uchar, target_image, coordinate, mv, pixels_in_triangle, rect);
+                double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mv, pixels_in_triangle, rect);
                 double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
                 results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, results.size(), MERGE, FlagsCodeSum(0, 0, 0, 0));
             }
         }else{
             if(!isMvExists(merge_vectors, spatial_triangle.mv_warping[0])) {
                 merge_vectors.emplace_back(spatial_triangle.mv_warping[0], MERGE);
-                double ret_residual = getTriangleResidual(expansion_ref_uchar, target_image, coordinate, mv, pixels_in_triangle, rect);
+                double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mv, pixels_in_triangle, rect);
                 double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
                 results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, results.size(), MERGE, FlagsCodeSum(0, 0, 0, 0));
             }
