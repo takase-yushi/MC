@@ -147,7 +147,7 @@ double getTriangleResidual(unsigned char **ref_image, const cv::Mat &target_imag
         b_later = pp1 - pp0;
         X_later = alpha * a_later + beta * b_later + pp0;
 
-        int y = img_ip(ref_image, rect, 4 * X_later.x, 4 * X_later.y, 2);
+        int y = img_ip(ref_image, rect, 4 * X_later.x, 4 * X_later.y, 1);
 
         sad += fabs(M(target_image, (int)pixel.x, (int)pixel.y) - (0.299 * y + 0.587 * y + 0.114 * y));
     }
@@ -451,6 +451,9 @@ int img_ip(unsigned char **img, cv::Rect rect, double x, double y, int mode){
     y0 = (int) floor(y);
     dx = x - (double) x0;
     dy = y - (double) y0;
+
+    if(x0 == (rect.width + rect.x)) x0 = (rect.width + rect.x);
+    if(y0 == (rect.height + rect.y)) x0 = (rect.height + rect.y);
 
     /*** mode で指定された補間法に従って補間し，値を val に保存 ***/
     switch(mode) { /* mode = 0 : 最近傍, 1 : 双1次, 2 : 双3次 */
