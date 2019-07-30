@@ -2027,7 +2027,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
         int spatial_triangle_index = spatial_triangles[i];
         GaussResult spatial_triangle = triangle_gauss_results[spatial_triangle_index];
         std::vector<cv::Point2f> mvds;
-        cv::Rect rect(-64, -64, target_image.cols * 4 + 64, target_image.rows * 4 + 64);
+        cv::Rect rect(-64, -64, 4 * (target_image.cols + 2 * 16) , 4 * (target_image.rows + 2 * 16));
 
         if(spatial_triangle.parallel_flag){
             if(!isMvExists(merge_vectors, spatial_triangle.mv_parallel)) {
