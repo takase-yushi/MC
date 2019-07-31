@@ -49,6 +49,9 @@ private:
     int warping_patch_num;
     int parallel_patch_num;
 
+    int merge_counter;
+    int spatial_counter;
+
 };
 
 
