@@ -38,6 +38,12 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     }
     fclose(fp);
 
+    fp = std::fopen((log_path + "/MV_distribution" + file_suffix + ".csv").c_str(), "w");
+    for(auto x : MV_counter){
+        fprintf(fp, "%d,%d\n", x.first, x.second);
+    }
+    fclose(fp);
+
     fp = std::fopen((log_path + "/mvd_greater_0_flag_distribution" + file_suffix + ".csv").c_str(), "w");
     for(auto x : greater_0_flag_counter){
         fprintf(fp, "%d,%d\n", x.first, x.second);
@@ -74,6 +80,10 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr){
         if(ctu->method != MV_CODE_METHOD::MERGE){
             if(ctu->parallel_flag){
+                int x_ = (int)abs(((ctu->mv1).x * 4));
+                int y_ = (int)abs(((ctu->mv1).y * 4));
+                MV_counter[x_]++;
+                MV_counter[y_]++;
                 int x = (ctu->mvds_x)[0];
                 mvd_counter_x[x]++;
                 int y = (ctu->mvds_y)[0];

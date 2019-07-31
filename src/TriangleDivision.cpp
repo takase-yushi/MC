@@ -1000,13 +1000,15 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             if(GAUSS_NEWTON_INIT_VECTOR) {
                 std::vector<cv::Point2f> tmp_bm_mv;
                 std::vector<double> tmp_bm_errors;
-                    std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(triangle, target_image, expansion_ref,
+                std::tie(tmp_bm_mv, tmp_bm_errors) = fullpellBlockMatching(triangle, target_image, expansion_ref,
                                                                    diagonal_line_area_flag, triangle_index, ctu);
                 std::tie(gauss_result_warping, gauss_result_parallel, error_warping, error_parallel, triangle_size) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
                                                       diagonal_line_area_flag, triangle_index, ctu, block_size_x,
                                                       block_size_y, tmp_bm_mv[2], ref_hevc);
+#if USE_BM_PARALLEL_MV
                 gauss_result_parallel = tmp_bm_mv[2];
                 error_parallel = tmp_bm_errors[2];
+#endif
             }else{
                 std::tie(gauss_result_warping, gauss_result_parallel, error_warping, error_parallel, triangle_size) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
                                                       diagonal_line_area_flag, triangle_index, ctu, block_size_x,
@@ -2356,78 +2358,78 @@ TriangleDivision::GaussResult::GaussResult(const std::vector<cv::Point2f> &mvWar
 
 TriangleDivision::GaussResult::GaussResult() {}
 
-//std::tuple<std::vector<cv::Point2f>, std::vector<double>> TriangleDivision::blockMatching(Point3Vec triangle, const cv::Mat& target_image, cv::Mat expansion_ref_image, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Point2f fullpell_initial_vector) {
-//    double sx, sy, lx, ly;
-//    cv::Point2f tp1, tp2, tp3;
-//    tp1 = triangle.p1;
-//    tp2 = triangle.p2;
-//    tp3 = triangle.p3;
-//
-//    sx = std::min({tp1.x, tp2.x, tp3.x});
-//    sy = std::min({tp1.y, tp2.y, tp3.y});
-//    lx = std::max({tp1.x, tp2.x, tp3.x});
-//    ly = std::max({tp1.y, tp2.y, tp3.y});
-//
-//    int width = lx - sx + 1;
-//    int height = ly - sy + 1;
-//
-//    sx = sx * 4;
-//    sy = sy * 4;
-//    lx = sx + width * 4 - 1;
-//    ly = sy + height * 4 - 1;
-//
-//    cv::Point2f mv_tmp(0.0, 0.0); //三角パッチの動きベクトル
-//    int SX = 16; // ブロックマッチングの探索範囲(X)
-//    int SY = 16; // ブロックマッチングの探索範囲(Y)
-//
-//    double e = 1e9, error_min = 1e9, rd_min = 1e9, rd = 1e9;
-//    int e_count;
-//    cv::Point2f mv_min;
-//    int spread_quarter = 64;
-//    int s = 1;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
-//    std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, 128, 128);
-//
-//    if(fullpell_initial_vector.x == -10000 && fullpell_initial_vector.y == -10000){
-//        for(int j = -SY * 4 ; j <= SY * 4 ; j += s) {            //j : y方向のMV
-//            for(int i = -SX * 4 ; i <= SX * 4 ; i += s) {        //i : x方向のMV
-//                //探索範囲が画像上かどうか判定
-//                if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
-//                   && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
-//                    e = 0.0;
-//                    e_count = 0;
-//                    for(auto &pixel : pixels) {
-//                        int ref_x = std::max((int)(4 * pixel.x), 0);
-//                        ref_x = (i + ref_x + spread_quarter);
-//                        int ref_y = std::max((int)((4 * pixel.y)), 0);
-//                        ref_y = (j + ref_y + spread_quarter);
-//                        e += fabs(R(expansion_ref_image, ref_x, ref_y) - R(target_image, (int)pixel.x, (int)pixel.y));
-//                        e_count++;
-//                    }
-//                }
-//
-//                cv::Point2f cmt = cv::Point2f(0.0, 0.0);
-//                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({cv::Point2f((double)i/4.0, (double)j/4.0), cv::Point2f((double)i/4.0, (double)j/4.0), cv::Point2f((double)i/4.0, (double)j/4.0)}, e, triangle_index, cmt, area_flag, ctu, true, pixels);
-//                if(rd_min > rd){
-//                    error_min = e;
-//                    rd_min = rd;
-//                    mv_min.x = (double)i / 4.0;
-//                    mv_min.y = (double)j / 4.0;
-//                }
-//            }
-//        }
-//    }else{
-//        mv_min.x = (fullpell_initial_vector.x > 0 ? (int)(fullpell_initial_vector.x + 0.5) : (int) (fullpell_initial_vector.x - 0.5));
-//        mv_min.y = (fullpell_initial_vector.y > 0 ? (int)(fullpell_initial_vector.y + 0.5) : (int) (fullpell_initial_vector.y - 0.5));
-//    }
-//
-//    std::vector<cv::Point2f> mvs;
-//    std::vector<double> errors;
-//    mvs.emplace_back(mv_min.x, mv_min.y);
-//    errors.emplace_back(error_min);
-//    mvs.emplace_back(mv_min.x, mv_min.y);
-//    errors.emplace_back(error_min);
-//    mvs.emplace_back(mv_min.x, mv_min.y);
-//    errors.emplace_back(error_min);
-//
-//    return std::make_tuple(mvs, errors);
-//}
+std::tuple<std::vector<cv::Point2f>, std::vector<double>> TriangleDivision::fullpellBlockMatching(Point3Vec triangle, const cv::Mat& target_image, cv::Mat expansion_ref_image, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Point2f fullpell_initial_vector) {
+    double sx, sy, lx, ly;
+    cv::Point2f tp1, tp2, tp3;
+    tp1 = triangle.p1;
+    tp2 = triangle.p2;
+    tp3 = triangle.p3;
+
+    sx = std::min({tp1.x, tp2.x, tp3.x});
+    sy = std::min({tp1.y, tp2.y, tp3.y});
+    lx = std::max({tp1.x, tp2.x, tp3.x});
+    ly = std::max({tp1.y, tp2.y, tp3.y});
+
+    int width = lx - sx + 1;
+    int height = ly - sy + 1;
+
+    sx = sx * 4;
+    sy = sy * 4;
+    lx = sx + width * 4 - 1;
+    ly = sy + height * 4 - 1;
+
+    cv::Point2f mv_tmp(0.0, 0.0); //三角パッチの動きベクトル
+    int SX = 16; // ブロックマッチングの探索範囲(X)
+    int SY = 16; // ブロックマッチングの探索範囲(Y)
+
+    double error_min = 1e9, rd_min = 1e9;
+    int e_count;
+    cv::Point2f mv_min;
+    int spread_quarter = 64;
+    int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
+    std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, 128, 128);
+
+    if(fullpell_initial_vector.x == -10000 && fullpell_initial_vector.y == -10000){
+//#pragma omp parallel for
+        for(int j = -SY * 4 ; j <= SY * 4 ; j += s) {            //j : y方向のMV
+            for(int i = -SX * 4 ; i <= SX * 4 ; i += s) {        //i : x方向のMV
+                double rd = 1e9, e = 1e9;
+                //探索範囲が画像上かどうか判定
+                if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
+                   && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
+                    e = 0.0;
+                    for(auto &pixel : pixels) {
+                        int ref_x = std::max((int)(4 * pixel.x), 0);
+                        ref_x = (i + ref_x + spread_quarter);
+                        int ref_y = std::max((int)((4 * pixel.y)), 0);
+                        ref_y = (j + ref_y + spread_quarter);
+                        e += fabs(R(expansion_ref_image, ref_x, ref_y) - R(target_image, (int)pixel.x, (int)pixel.y));
+                    }
+                }
+
+                cv::Point2f cmt = cv::Point2f(0.0, 0.0);
+                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({cv::Point2f((double)i/4.0, (double)j/4.0), cv::Point2f((double)i/4.0, (double)j/4.0), cv::Point2f((double)i/4.0, (double)j/4.0)}, e, triangle_index, cmt, area_flag, ctu, true, pixels);
+                if(rd_min > rd){
+                    error_min = e;
+                    rd_min = rd;
+                    mv_min.x = (double)i / 4.0;
+                    mv_min.y = (double)j / 4.0;
+                }
+            }
+        }
+    }else{
+        mv_min.x = (fullpell_initial_vector.x > 0 ? (int)(fullpell_initial_vector.x + 0.5) : (int) (fullpell_initial_vector.x - 0.5));
+        mv_min.y = (fullpell_initial_vector.y > 0 ? (int)(fullpell_initial_vector.y + 0.5) : (int) (fullpell_initial_vector.y - 0.5));
+    }
+
+    std::vector<cv::Point2f> mvs;
+    std::vector<double> errors;
+    mvs.emplace_back(mv_min.x, mv_min.y);
+    errors.emplace_back(error_min);
+    mvs.emplace_back(mv_min.x, mv_min.y);
+    errors.emplace_back(error_min);
+    mvs.emplace_back(mv_min.x, mv_min.y);
+    errors.emplace_back(error_min);
+
+    return std::make_tuple(mvs, errors);
+}

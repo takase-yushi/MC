@@ -904,11 +904,13 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
                 double Error_warping = MSE_warping;
                 double Error_parallel = MSE_parallel;
-                double mu2 = pixels_in_triangle.size() * 0.1;
-                gg_parallel.at<double>(0, 0) += mu2;
-                gg_parallel.at<double>(1, 1) += mu2;
-                B_parallel.at<double>(0, 0) -= (mu2 * tmp_mv_parallel.x);
-                B_parallel.at<double>(1, 0) -= (mu2 * tmp_mv_parallel.y);
+                double mu2 = pixels_in_triangle.size() * 0.0001;
+                gg_parallel.at<double>(0, 0) += 4 * mu2 * tmp_mv_parallel.x * tmp_mv_parallel.x;
+                gg_parallel.at<double>(0, 1) += 4 * mu2 * tmp_mv_parallel.x * tmp_mv_parallel.y;
+                gg_parallel.at<double>(1, 0) += 4 * mu2 * tmp_mv_parallel.y * tmp_mv_parallel.x;
+                gg_parallel.at<double>(1, 1) += 4 * mu2 * tmp_mv_parallel.y * tmp_mv_parallel.y;
+                B_parallel.at<double>(0, 0) -= 2 * mu2 * tmp_mv_parallel.x * (tmp_mv_parallel.x * tmp_mv_parallel.x + tmp_mv_parallel.y * tmp_mv_parallel.y);
+                B_parallel.at<double>(1, 0) -= 2 * mu2 * tmp_mv_parallel.y * (tmp_mv_parallel.x * tmp_mv_parallel.x + tmp_mv_parallel.y * tmp_mv_parallel.y);
                 cv::solve(gg_warping, B_warping, delta_uv_warping); //6x6の連立方程式を解いてdelta_uvに格納
                 v_stack_warping.emplace_back(tmp_mv_warping, Error_warping);
 
