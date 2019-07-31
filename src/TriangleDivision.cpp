@@ -1022,11 +1022,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
             int cost_warping, cost_parallel;
             MV_CODE_METHOD method_warping, method_parallel;
-
             std::tie(cost_parallel, std::ignore, std::ignore, std::ignore, method_parallel) = getMVD(
                     {gauss_result_parallel, gauss_result_parallel, gauss_result_parallel}, error_parallel,
                     triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, true, dummy);
-
 #if !GAUSS_NEWTON_PARALLEL_ONLY
             std::tie(cost_warping, std::ignore, std::ignore, std::ignore, method_warping) = getMVD(
                     triangle_gauss_results[triangle_index].mv_warping, error_warping,
@@ -1082,14 +1080,21 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
     std::vector<cv::Point2i> ret_gauss2;
 
+    if(method_flag == MV_CODE_METHOD::MERGE) {
+        std::vector<int> t = getSpatialTriangleList(triangle_index);
+        gauss_result_parallel = triangle_gauss_results[t[selected_index]].mv_parallel;
+        triangle_gauss_results[triangle_index].mv_parallel = gauss_result_parallel;
+    }
+
     std::vector<cv::Point2f> mv;
-    if(parallel_flag){
+    if (parallel_flag) {
         mv.emplace_back(gauss_result_parallel);
         mv.emplace_back(gauss_result_parallel);
         mv.emplace_back(gauss_result_parallel);
-    }else{
+    } else {
         mv = gauss_result_warping;
     }
+
     ctu->mv1 = mv[0];
     ctu->mv2 = mv[1];
     ctu->mv3 = mv[2];
@@ -1200,16 +1205,18 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         MV_CODE_METHOD method_warping_tmp, method_parallel_tmp;
         if(PRED_MODE == NEWTON){
             if(GAUSS_NEWTON_INIT_VECTOR) {
-                std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_triangles[j], target_image,
+                std::tie(tmp_bm_mv, tmp_bm_errors) = fullpellBlockMatching(subdiv_target_triangles[j], target_image,
                                                                    expansion_ref, diagonal_line_area_flag,
                                                                    triangle_indexes[j], ctus[j]);
                 std::tie(mv_warping_tmp, mv_parallel_tmp, error_warping_tmp, error_parallel_tmp,triangle_size_tmp) = GaussNewton(
                         ref_images, target_images, expand_images, subdiv_target_triangles[j], diagonal_line_area_flag,
                         triangle_indexes[j], ctus[j], block_size_x, block_size_y,
                         tmp_bm_mv[2], ref_hevc);
+
+#if USE_BM_PARALLEL_MV
                 error_parallel_tmp = tmp_bm_errors[2];
                 mv_parallel_tmp = tmp_bm_mv[2];
-
+#endif
             }else{
                 std::tie(mv_warping_tmp, mv_parallel_tmp, error_warping_tmp, error_parallel_tmp, triangle_size_tmp) = GaussNewton(
                         ref_images, target_images, expand_images, subdiv_target_triangles[j], diagonal_line_area_flag,
@@ -1261,6 +1268,12 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 {split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel},
                 split_mv_result[0].residual,
                 triangle_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->node1, true, dummy);
+
+        if(method_flag1 == MV_CODE_METHOD::MERGE) {
+            std::vector<int> t = getSpatialTriangleList(triangle_indexes[0]);
+            gauss_result_parallel = triangle_gauss_results[t[selected_index]].mv_parallel;
+            triangle_gauss_results[triangle_indexes[0]].mv_parallel = gauss_result_parallel;
+        }
     }else{
         std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag1) = getMVD(
                 split_mv_result[0].mv_warping, split_mv_result[0].residual,
@@ -1274,6 +1287,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 {split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel}, split_mv_result[1].residual,
                 triangle_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->node2, true, dummy);
 
+        if(method_flag2 == MV_CODE_METHOD::MERGE) {
+            std::vector<int> t = getSpatialTriangleList(triangle_indexes[1]);
+            gauss_result_parallel = triangle_gauss_results[t[selected_index]].mv_parallel;
+            triangle_gauss_results[triangle_indexes[1]].mv_parallel = gauss_result_parallel;
+        }
     }else{
         std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
                 split_mv_result[1].mv_warping, split_mv_result[1].residual,
@@ -1287,6 +1305,12 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 {split_mv_result[2].mv_parallel, split_mv_result[2].mv_parallel, split_mv_result[2].mv_parallel},
                 split_mv_result[2].residual,
                 triangle_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->node3, true, dummy);
+
+        if(method_flag3 == MV_CODE_METHOD::MERGE) {
+            std::vector<int> t = getSpatialTriangleList(triangle_indexes[2]);
+            gauss_result_parallel = triangle_gauss_results[t[selected_index]].mv_parallel;
+            triangle_gauss_results[triangle_indexes[2]].mv_parallel = gauss_result_parallel;
+        }
     }else{
         std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag3) = getMVD(
                 split_mv_result[2].mv_warping, split_mv_result[2].residual,
@@ -1299,6 +1323,12 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
                 {split_mv_result[3].mv_parallel, split_mv_result[3].mv_parallel, split_mv_result[3].mv_parallel}, split_mv_result[3].residual,
                 triangle_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->node4, true, dummy);
+
+        if(method_flag4 == MV_CODE_METHOD::MERGE) {
+            std::vector<int> t = getSpatialTriangleList(triangle_indexes[3]);
+            gauss_result_parallel = triangle_gauss_results[t[selected_index]].mv_parallel;
+            triangle_gauss_results[triangle_indexes[3]].mv_parallel = gauss_result_parallel;
+        }
     }else{
         std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
                 split_mv_result[3].mv_warping, split_mv_result[3].residual,
