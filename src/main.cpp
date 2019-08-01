@@ -74,29 +74,29 @@ void run(std::string config_path) {
     std::vector<cv::Point2f> corners, corners_org;
     std::vector<cv::Point2f> ref_corners, ref_corners_org;
 
+    // 各タスクの情報が入ったvector
+    std::vector<Config> tasks = readTasks();
+
     // 全画像分ループ
-    while (fgets(buf, sizeof(buf), img_list) != nullptr) {
-        if (buf[0] == '#') continue;
-        char t_file_name[256], r_file_name[256], o_file_name[256], i_file_path[256], csv_prefix[256], r_intra_file_name[256], target_color_file_name[256], c_file_name[256];
-        sscanf(buf, "%s %s %s %s %s %s %s %d %d %d %d", i_file_path, r_file_name, t_file_name, o_file_name,
-               r_intra_file_name, target_color_file_name, c_file_name, &qp, &block_size_x, &block_size_y,
-               &division_steps);
+    for(const auto& task : tasks){
 
-        std::string img_path = ((OS == "Win") ? replaceBackslash(std::string(i_file_path)) : std::string(i_file_path));
-        std::string img_directory = project_directory_path + img_path;
-        std::string target_file_name = std::string(t_file_name);
+        if(!task.isEnable()) continue;
 
-        std::string ref_file_name = std::string(r_file_name);
-        std::string ref_intra_file_name = std::string(r_intra_file_name);
-        std::string corner_file_name = std::string(c_file_name);
-        std::string csv_file_prefix = std::string("aaa");
+        std::string img_path                    = ((OS == "Win") ? replaceBackslash(task.getImgDirectory()) : std::string(task.getImgDirectory()));
+        std::string img_directory               = project_directory_path + img_path;
+        const std::string& target_file_name     = task.getTargetImage();
 
-        std::string ref_file_path = project_directory_path + img_path + ref_file_name;
-        std::string target_file_path = project_directory_path + img_path + target_file_name;
-        std::string ref_intra_file_path = project_directory_path + img_path + ref_intra_file_name;
-        std::string target_color_file_path = project_directory_path + img_path + target_color_file_name;
+        const std::string& ref_file_name        = task.getGaussRefImage();
+        const std::string& ref_intra_file_name  = task.getRefImage();
 
-        std::vector<std::string> out_file = splitString(std::string(o_file_name), '.');
+        std::string ref_file_path               = project_directory_path + img_path + ref_file_name;
+        std::string target_file_path            = project_directory_path + img_path + target_file_name;
+        std::string ref_intra_file_path         = project_directory_path + img_path + ref_intra_file_name;
+
+        block_size_x                            = task.getCtuWidth();
+        block_size_y                            = task.getCtuHeight();
+        qp                                      = task.getQp();
+        division_steps                          = task.getDivisionStep();
 
         std::cout << "img_path               : " << img_path << std::endl;
         std::cout << "target_file_name       : " << target_file_name << std::endl;
@@ -106,10 +106,9 @@ void run(std::string config_path) {
         std::cout << "ref_intra_file_path    : " << ref_intra_file_path << std::endl;
         std::cout << "target_color_file_path : " << target_color_file_path << std::endl;
         std::cout << "ref_gauss file path    : " << ref_file_path << std::endl;
-
-        //RD性能グラフにしたい
-        std::ofstream rate_psnr_csv;
-        rate_psnr_csv = std::ofstream(img_directory + target_file_name + "rate_psnr_csv.csv");
+        std::cout << "QP                     : " << qp << std::endl;
+        std::cout << "CTU_WIDTH              : " << block_size_x << std::endl;
+        std::cout << "CTU_HEIGHT             : " << block_size_y << std::endl;
 
         // 時間計測
         clock_t start = clock();
