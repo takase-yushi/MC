@@ -107,75 +107,75 @@ void test4(){
  * @fn void test5()
  * @brief 斜め線の判定テスト
  */
-//void test5(){
-//    cv::Mat gauss_ref_image = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
-//    cv::Mat ref_image       = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
-//    cv::Mat target_image    = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_000413_limit.bmp");
-//
-//    TriangleDivision triangle_division(ref_image, target_image, gauss_ref_image);
-//
-//    int divide_steps = 8;
-//    // initする
-//    triangle_division.initTriangle(128, 128, divide_steps, LEFT_DIVIDE);
-//    std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
-//
-//    std::vector<std::pair<Point3Vec, int>> init_triangles = triangle_division.getTriangles();
-//
-//    // 色塗り分け画像
-//
-//    std::vector<std::vector<cv::Mat>> ref_images, target_images;
-//    ref_images = getRefImages(ref_image, gauss_ref_image);
-//    target_images = getTargetImages(target_image);
-//    std::vector<std::vector<std::vector<unsigned char **>>> expand_images = getExpandImages(ref_images, target_images, 500);
-//
-//    std::vector<CodingTreeUnit *> foo(init_triangles.size());
-//    for (int i = 0; i < init_triangles.size(); i++) {
-//        foo[i] = new CodingTreeUnit();
-//        foo[i]->split_cu_flag = false;
-//        foo[i]->leftNode = foo[i]->rightNode = nullptr;
-//        foo[i]->triangle_index = i;
-//    }
-//    // std::vector<std::vector<std::vector<int>>> area_flag_cache(init_triangles.size(), std::vector< std::vector<int> >(128, std::vector<int>(128)) );
-//    std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_triangles.size() / 2, std::vector< std::vector<int> >(128, std::vector<int>(128, -1)) ); // 斜め線でどちらを取るか表すフラグ flag[x][y]
-//
-//    for(int i = 0 ; i < init_triangles.size() ; i++) {
-//
-//        if (i % 2 == 0) {
-//            bool flag = false;
-//            for (int x = 0; x < 128; x++) {
-//                // diagonal line
-//                diagonal_line_area_flag[i/2][x][128 - x - 1] = (flag ? i : i + 1);
-//                flag = !flag;
-//            }
-//
-//            diagonal_line_area_flag[i/2][0][0] = 0;
-//            diagonal_line_area_flag[i/2][127][0] = 0;
-//            diagonal_line_area_flag[i/2][0][127] = i + 1;
-//            diagonal_line_area_flag[i/2][127][127] = i + 1;
-//        }
-//
-//        std::pair<Point3Vec, int> triangle = init_triangles[i];
-//
-//        cv::Point2f p1 = triangle.first.p1;
-//        cv::Point2f p2 = triangle.first.p2;
-//        cv::Point2f p3 = triangle.first.p3;
-//        std::cout << "================== step:" << i << " ================== " << std::endl;
-//
-//        triangle_division.split(expand_images, foo[i], nullptr, Point3Vec(p1, p2, p3), i, triangle.second, divide_steps, diagonal_line_area_flag[i/2]);
-//    }
-//
-//    // ***************
-//    // テスト画像出力
-//    // ***************
-//    triangles = triangle_division.getTriangleCoordinateList();
-//    cv::Mat out = triangle_division.getPredictedDiagonalImageFromCtu(foo, diagonal_line_area_flag);
-//
-////    cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo);
-//
-//    cv::imwrite(getProjectDirectory(OS) + "/img/minato/diagonal_test.png", out);
-//    cv::imwrite(getProjectDirectory(OS) + "/img/minato/diagonal_reconstruction.png", getReconstructionDivisionImage(gauss_ref_image, foo, 128, 128));
-//
-//}
+void test5(){
+    cv::Mat gauss_ref_image = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
+    cv::Mat ref_image       = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
+    cv::Mat target_image    = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_000413_limit.bmp");
+
+    TriangleDivision triangle_division(ref_image, target_image, gauss_ref_image);
+
+    int divide_steps = 8;
+    // initする
+    triangle_division.initTriangle(128, 128, divide_steps, LEFT_DIVIDE);
+    std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
+
+    std::vector<std::pair<Point3Vec, int>> init_triangles = triangle_division.getTriangles();
+
+    // 色塗り分け画像
+
+    std::vector<std::vector<cv::Mat>> ref_images, target_images;
+    ref_images = getRefImages(ref_image, gauss_ref_image);
+    target_images = getTargetImages(target_image);
+    std::vector<std::vector<std::vector<unsigned char **>>> expand_images = getExpandImages(ref_images, target_images, 500);
+
+    std::vector<CodingTreeUnit *> foo(init_triangles.size());
+    for (int i = 0; i < init_triangles.size(); i++) {
+        foo[i] = new CodingTreeUnit();
+        foo[i]->split_cu_flag = false;
+        foo[i]->node1 = foo[i]->node2 = foo[i]->node3 = foo[i]->node4 = nullptr;
+        foo[i]->triangle_index = i;
+    }
+    // std::vector<std::vector<std::vector<int>>> area_flag_cache(init_triangles.size(), std::vector< std::vector<int> >(128, std::vector<int>(128)) );
+    std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_triangles.size() / 2, std::vector< std::vector<int> >(128, std::vector<int>(128, -1)) ); // 斜め線でどちらを取るか表すフラグ flag[x][y]
+
+    for(int i = 0 ; i < init_triangles.size() ; i++) {
+
+        if (i % 2 == 0) {
+            bool flag = false;
+            for (int x = 0; x < 128; x++) {
+                // diagonal line
+                diagonal_line_area_flag[i/2][x][128 - x - 1] = (flag ? i : i + 1);
+                flag = !flag;
+            }
+
+            diagonal_line_area_flag[i/2][0][0] = 0;
+            diagonal_line_area_flag[i/2][127][0] = 0;
+            diagonal_line_area_flag[i/2][0][127] = i + 1;
+            diagonal_line_area_flag[i/2][127][127] = i + 1;
+        }
+
+        std::pair<Point3Vec, int> triangle = init_triangles[i];
+
+        cv::Point2f p1 = triangle.first.p1;
+        cv::Point2f p2 = triangle.first.p2;
+        cv::Point2f p3 = triangle.first.p3;
+        std::cout << "================== step:" << i << " ================== " << std::endl;
+
+        triangle_division.split(expand_images, foo[i], nullptr, Point3Vec(p1, p2, p3), i, triangle.second, divide_steps, diagonal_line_area_flag[i/2]);
+    }
+
+    // ***************
+    // テスト画像出力
+    // ***************
+    triangles = triangle_division.getTriangleCoordinateList();
+    cv::Mat out = triangle_division.getPredictedDiagonalImageFromCtu(foo, diagonal_line_area_flag);
+
+//    cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo);
+
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/diagonal_test.png", out);
+    cv::imwrite(getProjectDirectory(OS) + "/img/minato/diagonal_reconstruction.png", getReconstructionDivisionImage(gauss_ref_image, foo, 128, 128));
+
+}
 
 void test6(){
     cv::Mat ref_image = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
@@ -370,17 +370,7 @@ void getDiff_vector(){
         q.x = stod(b[1]); q.y = stod(b[2]);
 
         if(diff < g.x) diff = g.x;
-
-//        diff_x[(int)(4 * abs(g.x - q.x))]++;
-//        diff_y[(int)(4 * abs(g.y - q.y))]++;
     }
-//    for(int i = 0 ; i < 200 ; i++) {
-//        diff_list << (double)i / 4 << " = " << diff_x[i] << ", " << diff_y[i] << std::endl;
-//    }
-//    for(int i = 1 ; i < 200 ; i++){
-//        if(diff < g.x) diff = g.x;
-//    }
-    std::cout << diff <<std::endl;
 }
 
 void draw_mv(){
@@ -506,7 +496,6 @@ void draw_mv(){
                 cv::line(mc_image, cog2, cog2 + q2, CV_RGB(0, 0, 255));
                 cv::line(mc_image, cog2, cog2 + g2, CV_RGB(0, 255, 0));
             }
-            std::cout << j * nw + i <<std::endl;
         }
     }
     cv::imwrite(img_directory + "full_pel_gauss_mv.bmp", mc_image);

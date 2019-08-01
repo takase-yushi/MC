@@ -5,6 +5,8 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
+#include <vector>
+#include <numeric>
 #include "../includes/Encode.h"
 
 /**
@@ -73,10 +75,11 @@ double getLambdaMode(int qp){
  * @brief 予測モードのRDで使うQPに応じたラムダの値を返す
  * @see H.265/HEVC教科書 P234
  * @param qp 参照画像のQP
+ * @param k QP値をk倍するパラメタ
  * @return lambdaの値
  */
-double getLambdaPred(int qp){
-    return sqrt(getLambdaMode(qp));
+double getLambdaPred(int qp, double k){
+    return k * sqrt(getLambdaMode(qp));
 }
 
 /**
@@ -142,4 +145,27 @@ int getExponentialGolombCodeLength(int data, int k){
     }
 
     return p_length + q_length;
+}
+
+/**
+ * @fn double getEntropy(std::vector<int> items)
+ * @brief エントロピーを計算する
+ * @param items 要素
+ * @return 計算されたエントロピー
+ */
+double getEntropy(std::vector<int> items) {
+    int sum = std::accumulate(items.begin(), items.end(), 0);
+
+    std::vector<double> v;
+    v.reserve(items.size());
+for(auto item : items){
+        v.emplace_back(item / (double)sum);
+    }
+
+    double entropy = 0.0;
+    for(auto p : v){
+        entropy += (- p * log2(p));
+    }
+
+    return entropy;
 }

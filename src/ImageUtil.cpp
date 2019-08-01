@@ -603,7 +603,6 @@ unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size, IP_M
 
 
 unsigned char** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
-
     // 引き伸ばし＋補間で使うため4画素余分に取る
     int scaled_expansion_size = expansion_size + 4;
     auto **expansion_image_tmp = (unsigned int **) malloc(sizeof(unsigned int *) * (image.cols + scaled_expansion_size * 2));
@@ -635,7 +634,6 @@ unsigned char** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
             expansion_image_tmp[x][image.rows - y - 1] = expansion_image_tmp[x][image.rows - 1];
         }
     }
-
     auto **expansion_image = (unsigned int **) malloc(sizeof(unsigned int *) * (k * image.cols + 2 * k * scaled_expansion_size));
     expansion_image += (k * scaled_expansion_size);
 
