@@ -844,8 +844,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         addCoveredSquare(squares[square_index].p1_idx,squares[square_index].p2_idx,squares[square_index].p3_idx,squares[square_index].p4_idx, square_index);
         #if MVD_DEBUG_LOG
         std::cout << "square_index:" << square_index << std::endl;
-        std::cout << "p1_idx:" << squares[square_index].first.p1_idx << " p2_idx:" << squares[square_index].first.p2_idx << " p3_idx:" << squares[square_index].first.p3_idx << std::endl;
-        std::cout << "p1:" << corners[squares[square_index].first.p1_idx] << " p2:" << corners[squares[square_index].first.p2_idx] << " p3:" << corners[squares[square_index].first.p3_idx] << std::endl;
+        std::cout << "p1_idx:" << squares[square_index].p1_idx << " p2_idx:" << squares[square_index].p2_idx << " p3_idx:" << squares[square_index].p3_idx << " p4_idx:" << squares[square_index].p4_idx << std::endl;
+        std::cout << "p1:" << corners[squares[square_index].p1_idx] << " p2:" << corners[squares[square_index].p2_idx] << " p3:" << corners[squares[square_index].p3_idx] << " p4:" << corners[squares[square_index].p4_idx] << std::endl;
 #endif
 
         return false;
@@ -944,7 +944,7 @@ std::vector<int> SquareDivision::getSpatialSquareList(int s_idx){
     }
     puts("");
 
-    std::cout << "s_idx:" << t_idx << std::endl;
+    std::cout << "s_idx:" << s_idx << std::endl;
     puts("");
 
 #endif
@@ -1127,7 +1127,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     }
 
 #if MVD_DEBUG_LOG
-    std::cout << corners[squares[square_idx].first.p1_idx] << " " << corners[squares[square_idx].first.p2_idx] << " " << corners[squares[square_idx].first.p3_idx] << std::endl;
+    std::cout << corners[squares[square_idx].p1_idx] << " " << corners[squares[square_idx].p2_idx] << " " << corners[squares[square_idx].p3_idx] << " " << corners[squares[square_idx].p4_idx] << std::endl;
     #endif
 
     if(!isMvExists(vectors, collocated_mv)) vectors.emplace_back(collocated_mv, SPATIAL);
@@ -1258,13 +1258,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     std::cout << "code_length:" << code_length << std::endl;
     std::cout << "cost       :" << cost << std::endl;
     if(method != MERGE){
-        if(parallel_flag) {
-            std::cout << "mvd        :" << mvds[0] << std::endl;
-        }else{
-            for(auto mvd : mvds){
-                std::cout << "mvd        :" << mvd << std::endl;
-            }
-        }
+        std::cout << "mvd        :" << mvds[0] << std::endl;
     }
     puts("");
 #endif
