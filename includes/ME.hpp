@@ -28,21 +28,6 @@ std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point3Vec tr, const c
 std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Vec triangle, const cv::Mat& target_image, cv::Mat expansion_ref_image, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Point2f fullpell_initial_vector = cv::Point2f(-10000, -10000));
 
 /**
- * @fn std::vector<cv::Point2f> warping(cv::Mat &prev_gray, cv::Mat &current_gray, cv::Mat &prev_color, cv::Mat &current_color,
-                                 double &error_warp, Point3Vec target_corners, Point3Vec ref_corners, std::vector<uchar> prev_status)
- * @brief ワーピングを行い、動きベクトルと誤差を返す
- * @param[in]  prev_gray      参照画像のグレースケール画像
- * @param[in]  current_gray   対象画像のグレースケール画像
- * @param[in]  prev_color     参照画像のカラー画像
- * @param[in]  current_color  対象画像のグレースケール画像
- * @param[out] error_warp     ワーピングの誤差
- * @param[in]  corners        三角点を構成する3つの頂点
- * @return 三角形3点の移動先座標prev_cornersを返す. corners[i]の動きベクトルはprev_corners[i]に格納される.
- */
-std::vector<cv::Point2f> warping(const cv::Mat& prev_color, const cv::Mat& current_color,
-                                 double &error_warp, Point3Vec target_corners, Point3Vec& ref_corners);
-
-/**
  * @fn std::vector<cv::Point2f> getReferenceImageCoordinates(const cv::Mat& image, const std::vector<cv::Point2f>& target_corners, const int side_point_nums);
  * @brief 特徴点が参照画像でどの位置に属するのかを求める.(ブロックマッチングでフローをもとめる）
  * @param image
