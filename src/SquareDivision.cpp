@@ -768,13 +768,13 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     if(cost_before_subdiv >= alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4)) {
         ctu->split_cu_flag = true;
 
-        int t1_idx = squares.size() - 4;
-        int t2_idx = squares.size() - 3;
-        int t3_idx = squares.size() - 2;
-        int t4_idx = squares.size() - 1;
+        int s1_idx = squares.size() - 4;
+        int s2_idx = squares.size() - 3;
+        int s3_idx = squares.size() - 2;
+        int s4_idx = squares.size() - 1;
 
         // 1つ目の頂点追加
-        ctu->node1->square_index = t1_idx;
+        ctu->node1->square_index = s1_idx;
         if(split_mv_result[0].parallel_flag) {
             ctu->node1->mv1 = split_mv_result[0].mv_parallel;
             ctu->node1->mv2 = split_mv_result[0].mv_parallel;
@@ -783,12 +783,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         ctu->node1->code_length = code_length1;
         ctu->node1->parallel_flag = split_mv_result[0].parallel_flag;
         ctu->node1->method = method_flag1;
-        square_gauss_results[t1_idx] = split_mv_result[0];
-        isCodedSquare[t1_idx] = true;
-        bool result = split(expand_images, ctu->node1, cmt_left_left, split_sub_squares1.s1, t1_idx, 1, steps - 2);
+        square_gauss_results[s1_idx] = split_mv_result[0];
+        isCodedSquare[s1_idx] = true;
+        bool result = split(expand_images, ctu->node1, cmt_left_left, split_sub_squares1.s1, s1_idx, 1, steps - 2);
 
         // 2つ目の四角形
-        ctu->node2->square_index = t2_idx;
+        ctu->node2->square_index = s2_idx;
         if(split_mv_result[1].parallel_flag){
             ctu->node2->mv1 = split_mv_result[1].mv_parallel;
             ctu->node2->mv2 = split_mv_result[1].mv_parallel;
@@ -798,12 +798,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         ctu->node2->parallel_flag = split_mv_result[1].parallel_flag;
         ctu->node2->method = method_flag2;
 
-        square_gauss_results[t2_idx] = split_mv_result[1];
-        isCodedSquare[t2_idx] = true;
-        result = split(expand_images, ctu->node2, cmt_left_right, split_sub_squares1.s2, t2_idx, 1, steps - 2);
+        square_gauss_results[s2_idx] = split_mv_result[1];
+        isCodedSquare[s2_idx] = true;
+        result = split(expand_images, ctu->node2, cmt_left_right, split_sub_squares1.s2, s2_idx, 1, steps - 2);
 
         // 3つ目の四角形
-        ctu->node3->square_index = t3_idx;
+        ctu->node3->square_index = s3_idx;
         if(split_mv_result[2].parallel_flag) {
             ctu->node3->mv1 = split_mv_result[2].mv_parallel;
             ctu->node3->mv2 = split_mv_result[2].mv_parallel;
@@ -812,12 +812,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         ctu->node3->code_length = code_length3;
         ctu->node3->parallel_flag = split_mv_result[2].parallel_flag;
         ctu->node3->method = method_flag3;
-        square_gauss_results[t3_idx] = split_mv_result[2];
-        isCodedSquare[t3_idx] = true;
-        result = split(expand_images, ctu->node3, cmt_right_left, split_sub_squares2.s1, t3_idx, 1, steps - 2);
+        square_gauss_results[s3_idx] = split_mv_result[2];
+        isCodedSquare[s3_idx] = true;
+        result = split(expand_images, ctu->node3, cmt_right_left, split_sub_squares2.s1, s3_idx, 1, steps - 2);
 
         // 4つ目の四角形
-        ctu->node4->square_index = t4_idx;
+        ctu->node4->square_index = s4_idx;
         if(split_mv_result[3].parallel_flag) {
             ctu->node4->mv1 = split_mv_result[3].mv_parallel;
             ctu->node4->mv2 = split_mv_result[3].mv_parallel;
@@ -826,9 +826,9 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         ctu->node4->code_length = code_length4;
         ctu->node4->parallel_flag = split_mv_result[3].parallel_flag;
         ctu->node4->method = method_flag4;
-        square_gauss_results[t4_idx] = split_mv_result[3];
-        isCodedSquare[t4_idx] = true;
-        result = split(expand_images, ctu->node4, cmt_right_right, split_sub_squares2.s2, t4_idx, 1, steps - 2);
+        square_gauss_results[s4_idx] = split_mv_result[3];
+        isCodedSquare[s4_idx] = true;
+        result = split(expand_images, ctu->node4, cmt_right_right, split_sub_squares2.s2, s4_idx, 1, steps - 2);
 
         return true;
     }else{
