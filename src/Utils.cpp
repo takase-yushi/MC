@@ -152,94 +152,6 @@ double intersectM(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, cv::Point2f p4
 }
 
 /**
- * @fn void interpolation(cv::Mat &in, double x, double y, unsigned char &rr1, unsigned char &gg1, unsigned char &bb1)
- * @brief バイリニア補間をする.
- * @param[in]   in  入力画像
- * @param[in]   x   元のx座標
- * @param[in]   y   元のy座標
- * @param[out]  rr1 補間したRの値
- * @param[out]  gg1 補間したGの値
- * @param[out]  bb1 補間したBの値
- * @details
- *  xとyの座標を補間してrr1, gg1, bb1に入れる
- */
-void interpolation(cv::Mat &in, double x, double y, unsigned char& rr1, unsigned char& gg1, unsigned char& bb1) {
-  int i, j;
-  double alpha, beta;
-
-  i = (int) x;
-  j = (int) y;
-  alpha = x - (double) i;
-  beta = y - (double) j;
-
-  if (i < 0 || in.cols <= i + 1 || j < 0 || in.rows <= j + 1) {
-    rr1 = (unsigned char) RR(in, i, j);
-    gg1 = (unsigned char) GG(in, i, j);
-    bb1 = (unsigned char) BB(in, i, j);
-  } else {
-    rr1 = (unsigned char) (alpha * beta * (unsigned char) RR(in, i + 1, j + 1) +
-                           alpha * (1.0 - beta) * (unsigned char) RR(in, i + 1, j) +
-                           (1.0 - alpha) * beta * (unsigned char) RR(in, i, j + 1) +
-                           (1.0 - alpha) * (1.0 - beta) * (unsigned char) RR(in, i, j));
-
-    gg1 = (unsigned char) (alpha * beta * (unsigned char) GG(in, i + 1, j + 1) +
-                           alpha * (1.0 - beta) * (unsigned char) GG(in, i + 1, j) +
-                           (1.0 - alpha) * beta * (unsigned char) GG(in, i, j + 1) +
-                           (1.0 - alpha) * (1.0 - beta) * (unsigned char) GG(in, i, j));
-
-    bb1 = (unsigned char) (alpha * beta * (unsigned char) BB(in, i + 1, j + 1) +
-                           alpha * (1.0 - beta) * (unsigned char) BB(in, i + 1, j) +
-                           (1.0 - alpha) * beta * (unsigned char) BB(in, i, j + 1) +
-                           (1.0 - alpha) * (1.0 - beta) * (unsigned char) BB(in, i, j));
-  }
-}
-
-/**
- * @fn cv::Mat bilinearInterpolation(cv::Mat src)
- * @brief bilinear補間を用いて, 2倍に拡大した画像を作成する.
- * @param[in] src 入力画像
- * @return 補間を用いて2倍に拡大されたsrcを返す
- */
-cv::Mat bilinearInterpolation(cv::Mat src){
-  cv::Mat dst = cv::Mat::zeros(src.rows * 2, src.cols * 2, CV_8UC3);
-
-  double kx = 0.5;
-  double ky = 0.5;
-
-  for(int j = 0 ; j < dst.rows ; j++) {
-    for (int i = 0 ; i < dst.cols ; i++) {
-      int origin_x = static_cast<int>(i * kx);
-      int origin_y = static_cast<int>(j * ky);
-      double alpha = i * kx - origin_x;
-      double beta = j * ky - origin_y;
-
-      if(i <= 0 || src.cols <= origin_x + 1|| j <= 0 || src.rows <= origin_y + 1 ){
-        R(dst, i, j) = (unsigned char) RR(src, origin_x, origin_y);
-        G(dst, i, j) = (unsigned char) GG(src, origin_x, origin_y);
-        B(dst, i, j) = (unsigned char) BB(src, origin_x, origin_y);
-      }else{
-        R(dst, i, j) = (unsigned char) (alpha * beta * (unsigned char) RR(src, origin_x + 1, origin_y + 1) +
-                                        alpha * (1.0 - beta) * (unsigned char) RR(src, origin_x + 1, origin_y) +
-                                        (1.0 - alpha) * beta * (unsigned char) RR(src, origin_x, origin_y + 1) +
-                                        (1.0 - alpha) * (1.0 - beta) * (unsigned char) RR(src, origin_x, origin_y));
-
-        G(dst, i, j) = (unsigned char) (alpha * beta * (unsigned char) GG(src, origin_x + 1, origin_y + 1) +
-                                        alpha * (1.0 - beta) * (unsigned char) GG(src, origin_x + 1, origin_y) +
-                                        (1.0 - alpha) * beta * (unsigned char) GG(src, origin_x, origin_y + 1) +
-                                        (1.0 - alpha) * (1.0 - beta) * (unsigned char) GG(src, origin_x, origin_y));
-
-        B(dst, i, j) = (unsigned char) (alpha * beta * (unsigned char) BB(src, origin_x + 1, origin_y + 1) +
-                                        alpha * (1.0 - beta) * (unsigned char) BB(src, origin_x + 1, origin_y) +
-                                        (1.0 - alpha) * beta * (unsigned char) BB(src, origin_x, origin_y + 1) +
-                                        (1.0 - alpha) * (1.0 - beta) * (unsigned char) BB(src, origin_x, origin_y));
-      }
-    }
-  }
-
-  return dst;
-}
-
-/**
  * @fn std::string getProjectDirectory
  * @brief プロジェクトディレクトリを返す
  * @return cwd プロジェクトディレクトリを表す文字列(std::string)
@@ -389,7 +301,6 @@ cv::Mat mv_filter(cv::Mat &in,int k){
             double sum = 0;
             for (int l = -k; l <= k; l++) {
                 for (int m = -k; m <= k; m++) {
-//std::cout << "j+l = " << j+l << "i+k = " << i+k << std::endl;
                     sum += g[i + m][j + l];
                 }
             }
@@ -407,21 +318,6 @@ cv::Mat mv_filter(cv::Mat &in,int k){
     g -= k;
     free(g);
     return out;
-}
-
-void bubbleSort(std::vector<std::pair<cv::Point2f,double>> &sort_cornes, int array_size) {
-    int i, j;
-    std::pair<cv::Point2f,double> tmp;
-
-    for (i = 0; i < (array_size - 1); i++) {
-        for (j = (array_size - 1); j > i; j--) {
-            if (sort_cornes[j - 1].second > sort_cornes[j].second) {
-                tmp = sort_cornes[j - 1];
-                sort_cornes[j - 1] = sort_cornes[j];
-                sort_cornes[j] = tmp;
-            }
-        }
-    }
 }
 
 /**

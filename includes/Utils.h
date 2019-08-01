@@ -75,17 +75,6 @@
  */
 #define M(img, x, y) (int)round(0.299 * (double)(R(img, (x), (y))) + 0.587 * (double)(G(img, (x), (y))) + 0.114 * (double)(B(img, (x), (y))))
 
-/**
- *
- */
-#define SIDE_X_MIN 500
-
-/**
- *
- */
-#define SIDE_Y_MIN 400
-
-
 enum {
     BM,
     NEWTON,
@@ -155,98 +144,18 @@ struct Triangle{
     Triangle(int p1_idx, int p2_idx, int p3_idx) : p1_idx(p1_idx), p2_idx(p2_idx), p3_idx(p3_idx) {}
     Triangle(int p1_idx, int p2_idx, int p3_idx, int idx) : p1_idx(p1_idx), p2_idx(p2_idx), p3_idx(p3_idx), idx(idx) {}
 };
-class TRIANGLE{
-    int p1_idx; ///< 三角形の頂点1のインデックス
-    int p2_idx; ///< 三角形の頂点2のインデックス
-    int p3_idx; ///< 三角形の頂点3のインデックス
-
-    /**
-     * コンストラクタ
-     * @param p1_idx 三角形の頂点1のインデックス
-     * @param p2_idx 三角形の頂点2のインデックス
-     * @param p3_idx 三角形の頂点3のインデックス
-     */
-public: TRIANGLE(Triangle t) { p1_idx = t.p1_idx; p2_idx = t.p2_idx; p3_idx = t.p3_idx; }
-
-};
-//double log_2(double num);
 
 void drawTriangle(cv::Mat &img, cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, cv::Scalar color);
-
-void drawTriangle_residual(cv::Mat &img, const cv::Point2f p1, const cv::Point2f p2, const cv::Point2f p3, const cv::Scalar color,cv::Mat &residual);
-
-void interpolation(cv::Mat &in, double x, double y, unsigned char& rr1, unsigned char& gg1, unsigned char& bb1);
-
-void drawRectangle(cv::Mat &img, cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, cv::Point2f p4);
-
-bool check_coordinate(cv::Point2f coordinate, cv::Vec4f range);
 
 double intersectM(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, cv::Point2f p4);
 
 void drawPoint(cv::Mat &img, cv::Point2f p, cv::Scalar color, int size);
-
-double round2(double dIn, int nLen);
-
-cv::Mat bilinearInterpolation(cv::Mat src);
 
 std::string getProjectDirectory(std::string os);
 
 std::string replaceBackslash(std::string str);
 
 std::string getVersionOfOpenCV();
-
-void storeGnuplotFile(const std::string& out_file_path, const std::string& xlable, const std::string& ylabel, const std::string& data_name);
-
-/**
- *  @fn inline int RR(cv::Mat &img, int i, int j)
- *  @brief 座標値が適当なときのみ, その画素のR値を返す.
- *  @return int RGB値のRを返す.
- *  @return 0 指定座標が画像外の場合
- *  @details
- *   imgの(x, y)画素のR値を返す. ただし, (i, j)が画像以外を刺した場合, 0が返る.
- */
-inline int RR(cv::Mat &img, int i, int j) {
-    if (i < 0 || img.cols <= i || j < 0 || img.rows <= j) return 0;
-    return (unsigned char) R(img, i, j);
-}
-
-/**
- *  @fn inline int GG(cv::Mat &img, int i, int j)
- *  @brief 座標値が適当なときのみ, その画素のG値を返す.
- *  @return int RGB値のGを返す.
- *  @return 0 指定座標が画像外の場合
- *  @details
- *   imgの(x, y)画素のG値を返す. ただし, (i, j)が画像以外を刺した場合, 0が返る.
- */
-inline int GG(cv::Mat &img, int i, int j) {
-    if (i < 0 || img.cols <= i || j < 0 || img.rows <= j) return 0;
-    return (unsigned char) G(img, i, j);
-}
-
-/**
- *  @fn inline int BB(cv::Mat &img, int i, int j)
- *  @brief 座標値が適当なときのみ, その画素のB値を返す.
- *  @return int RGB値のBを返す.
- *  @return 0 指定座標が画像外の場合
- *  @details
- *   imgの(x, y)画素のB値を返す. ただし, (i, j)が画像以外を刺した場合, 0が返る.
- */
-inline int BB(cv::Mat &img, int i, int j) {
-    if (i < 0 || img.cols <= i || j < 0 || img.rows <= j) return 0;
-    return (unsigned char) B(img, i, j);
-}
-
-/**
- *  @fn inline int MM(cv::Mat &img, int i, int j)
- *  @brief 座標値が適当なときのみ, その画素の輝度値を返す.
- *  @return int 指定座標の輝度値を返す.
- *  @return 0 指定座標が画像外の場合
- *  @details
- *   imgの(x, y)画素のB値を返す. ただし, (i, j)が画像以外を刺した場合, 0が返る.
- */
-inline double MM(cv::Mat &img, int i, int j) {
-    return 0.299 * RR(img, i, j) + 0.587 * GG(img, i, j) + 0.114 * BB(img, i, j);
-}
 
 /**
  * @fn inline bool isInTriangle(const Point3Vec& trig, const cv::Point2d& p)
@@ -272,52 +181,13 @@ inline bool isInTriangle(const Point3Vec& trig, const cv::Point2d& p) {
     return !(intersectM(tp1, tp2, p, ret) < 0 || intersectM(tp1, tp3, p, ret) < 0 || intersectM(tp2, tp3, p, ret) < 0);
 }
 
-
 bool isPointOnTheLine(cv::Point2f a, cv::Point2f b, cv::Point2f p);
-
-inline int myRound(double x, int delta){
-    return static_cast<int>((x / delta) + (x > 0 ? 0.5 : -0.5));
-}
 
 cv::Point2f roundVecQuarter(const cv::Point2f &p);
 
 std::vector<std::string> splitString(const std::string &s, char delim);
 
-cv::Mat half(cv::Mat &in);
-
 cv::Mat half(cv::Mat &in,int k);
-
-cv::Mat half_MONO(cv::Mat &in,int k);
-
-cv::Mat half_x(cv::Mat &in,int k);
-
-cv::Mat half_y(cv::Mat &in,int k);
-
-cv::Mat half_2(cv::Mat &in);
-
-cv::Mat half_sharp(cv::Mat &in);
-
-cv::Mat mv_filter(cv::Mat& in);
-
-cv::Mat mv_filter(cv::Mat& in,int k);
-
-cv::Mat sobel_filter(cv::Mat &in);
-
-cv::Mat sobel_filter_x(cv::Mat &in);
-
-cv::Mat sobel_filter_y(cv::Mat &in);
-
-void bubbleSort(std::vector<std::pair<std::vector<cv::Point2f>,double>> &sort_cornes, int array_size);
-
-void bubbleSort(std::vector<std::pair<cv::Point2f,double>> &sort_cornes, int array_size);
-
-void bubbleSort(std::vector<std::tuple<cv::Point2f,double,std::vector<Triangle>>> &sort_cornes, int array_size);
-
-std::vector<Triangle> inter_div(std::vector<Triangle> &triangles, std::vector<cv::Point2f> &corners,cv::Point2f add_corner, int t);
-
-void add_corner_edge(std::vector<cv::Point2f> &corners,cv::Mat &canny,double r1,double r2);
-
-std::vector<cv::Point2f> slide_corner_edge(std::vector<cv::Point2f> &corners,cv::Mat &canny,double r1);
 
 std::string getCurrentTimestamp();
 

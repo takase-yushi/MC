@@ -2288,46 +2288,7 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
 
         std::vector<cv::Point2f> mvs{mv, mv, mv};
         std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, block_size_x, block_size_y);
-//        double residual = getTriangleResidual(expansion_ref_uchar, target_image, triangle, mvs, pixels, cv::Rect(-16, -16, target_image.cols + 2 * 16, target_image.rows + 2 * 16));
-//        double mse = residual / (pixels.size());
-//        double psnr = 10 * std::log10(255.0 * 255.0 / mse);
 
-//        if(psnr < 25.0){
-//            for(auto pixel : pixels) {
-//                R(out, (int)pixel.x, (int)pixel.y) = colors[0][0];
-//                G(out, (int)pixel.x, (int)pixel.y) = colors[0][1];
-//                B(out, (int)pixel.x, (int)pixel.y) = colors[0][2];
-//            }
-//        }else if(psnr < 26.0){
-//            for(auto pixel : pixels) {
-//                R(out, (int)pixel.x, (int)pixel.y) = colors[1][0];
-//                G(out, (int)pixel.x, (int)pixel.y) = colors[1][1];
-//                B(out, (int)pixel.x, (int)pixel.y) = colors[1][2];
-//            }
-//        }else if(psnr < 27.0){
-//            for(auto pixel : pixels) {
-//                R(out, (int)pixel.x, (int)pixel.y) = colors[2][0];
-//                G(out, (int)pixel.x, (int)pixel.y) = colors[2][1];
-//                B(out, (int)pixel.x, (int)pixel.y) = colors[2][2];
-//            }
-//        }else if(psnr < 28.0){
-//            for(auto pixel : pixels) {
-//                R(out, (int)pixel.x, (int)pixel.y) = colors[3][0];
-//                G(out, (int)pixel.x, (int)pixel.y) = colors[3][1];
-//                B(out, (int)pixel.x, (int)pixel.y) = colors[3][2];
-//            }
-//        }else if(psnr < 29.0){
-//            for(auto pixel : pixels) {
-//                R(out, (int)pixel.x, (int)pixel.y) = colors[4][0];
-//                G(out, (int)pixel.x, (int)pixel.y) = colors[4][1];
-//                B(out, (int)pixel.x, (int)pixel.y) = colors[4][2];
-//            }
-//        }else if(psnr < 30.0){
-//            for(auto pixel : pixels) {
-//                R(out, (int)pixel.x, (int)pixel.y) = colors[5][0];
-//                G(out, (int)pixel.x, (int)pixel.y) = colors[5][1];
-//                B(out, (int)pixel.x, (int)pixel.y) = colors[5][2];
-//            }
         if(!ctu->parallel_flag) {
             for(auto pixel : pixels) {
                 R(out, (int)pixel.x, (int)pixel.y) = 255;
