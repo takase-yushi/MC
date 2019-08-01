@@ -15,6 +15,7 @@ class CodingTreeUnit;
 class Analyzer {
 public:
     void storeDistributionOfMv(std::vector<CodingTreeUnit*> ctus, std::string log_path);
+    void storeMarkdownFile(double psnr, std::string log_path);
     Analyzer(const std::string &fileSuffix);
 
 private:
@@ -42,6 +43,7 @@ private:
     int mvd_code_sum;
     int mvd_warping_code_sum;
     int mvd_parallel_code_sum;
+    int code_sum;
 
     // ファイルの最後につける値
     std::string file_suffix;
