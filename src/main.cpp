@@ -50,8 +50,8 @@ int main(int argc, char *argv[]){
     tests();
 #else
     std::string config_path = std::string(argv[1]);
-    run(config_path);
-//    run_square(config_path);
+//    run(config_path);
+    run_square(config_path);
 #endif
 
 }

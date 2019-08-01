@@ -999,11 +999,15 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             if(GAUSS_NEWTON_INIT_VECTOR) {
                 std::vector<cv::Point2f> tmp_bm_mv;
                 std::vector<double> tmp_bm_errors;
-                std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(triangle, target_image, expansion_ref,
+                std::tie(tmp_bm_mv, tmp_bm_errors) = fullpellBlockMatching(triangle, target_image, expansion_ref,
                                                                    diagonal_line_area_flag, triangle_index, ctu);
                 std::tie(gauss_result_warping, gauss_result_parallel, error_warping, error_parallel, triangle_size) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
                                                       diagonal_line_area_flag, triangle_index, ctu, block_size_x,
                                                       block_size_y, tmp_bm_mv[2], ref_hevc);
+#if USE_BM_PARALLEL_MV
+                gauss_result_parallel = tmp_bm_mv[2];
+                error_parallel = tmp_bm_errors[2];
+#endif
             }else{
                 std::tie(gauss_result_warping, gauss_result_parallel, error_warping, error_parallel, triangle_size) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
                                                       diagonal_line_area_flag, triangle_index, ctu, block_size_x,
@@ -1017,11 +1021,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
             int cost_warping, cost_parallel;
             MV_CODE_METHOD method_warping, method_parallel;
-
             std::tie(cost_parallel, std::ignore, std::ignore, std::ignore, method_parallel) = getMVD(
                     {gauss_result_parallel, gauss_result_parallel, gauss_result_parallel}, error_parallel,
                     triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, true, dummy);
-
 #if !GAUSS_NEWTON_PARALLEL_ONLY
             std::tie(cost_warping, std::ignore, std::ignore, std::ignore, method_warping) = getMVD(
                     triangle_gauss_results[triangle_index].mv_warping, error_warping,
@@ -1077,14 +1079,21 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
     std::vector<cv::Point2i> ret_gauss2;
 
+    if(method_flag == MV_CODE_METHOD::MERGE) {
+        std::vector<int> t = getSpatialTriangleList(triangle_index);
+        gauss_result_parallel = triangle_gauss_results[t[selected_index]].mv_parallel;
+        triangle_gauss_results[triangle_index].mv_parallel = gauss_result_parallel;
+    }
+
     std::vector<cv::Point2f> mv;
-    if(parallel_flag){
+    if (parallel_flag) {
         mv.emplace_back(gauss_result_parallel);
         mv.emplace_back(gauss_result_parallel);
         mv.emplace_back(gauss_result_parallel);
-    }else{
+    } else {
         mv = gauss_result_warping;
     }
+
     ctu->mv1 = mv[0];
     ctu->mv2 = mv[1];
     ctu->mv3 = mv[2];
@@ -1195,7 +1204,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         MV_CODE_METHOD method_warping_tmp, method_parallel_tmp;
         if(PRED_MODE == NEWTON){
             if(GAUSS_NEWTON_INIT_VECTOR) {
-                std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_triangles[j], target_image,
+                std::tie(tmp_bm_mv, tmp_bm_errors) = fullpellBlockMatching(subdiv_target_triangles[j], target_image,
                                                                    expansion_ref, diagonal_line_area_flag,
                                                                    triangle_indexes[j], ctus[j]);
                 std::tie(mv_warping_tmp, mv_parallel_tmp, error_warping_tmp, error_parallel_tmp,triangle_size_tmp) = GaussNewton(
@@ -1203,7 +1212,10 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                         triangle_indexes[j], ctus[j], block_size_x, block_size_y,
                         tmp_bm_mv[2], ref_hevc);
 
-
+#if USE_BM_PARALLEL_MV
+                error_parallel_tmp = tmp_bm_errors[2];
+                mv_parallel_tmp = tmp_bm_mv[2];
+#endif
             }else{
                 std::tie(mv_warping_tmp, mv_parallel_tmp, error_warping_tmp, error_parallel_tmp, triangle_size_tmp) = GaussNewton(
                         ref_images, target_images, expand_images, subdiv_target_triangles[j], diagonal_line_area_flag,
@@ -1255,6 +1267,12 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 {split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel},
                 split_mv_result[0].residual,
                 triangle_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->node1, true, dummy);
+
+        if(method_flag1 == MV_CODE_METHOD::MERGE) {
+            std::vector<int> t = getSpatialTriangleList(triangle_indexes[0]);
+            gauss_result_parallel = triangle_gauss_results[t[selected_index]].mv_parallel;
+            triangle_gauss_results[triangle_indexes[0]].mv_parallel = gauss_result_parallel;
+        }
     }else{
         std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag1) = getMVD(
                 split_mv_result[0].mv_warping, split_mv_result[0].residual,
@@ -1268,6 +1286,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 {split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel}, split_mv_result[1].residual,
                 triangle_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->node2, true, dummy);
 
+        if(method_flag2 == MV_CODE_METHOD::MERGE) {
+            std::vector<int> t = getSpatialTriangleList(triangle_indexes[1]);
+            gauss_result_parallel = triangle_gauss_results[t[selected_index]].mv_parallel;
+            triangle_gauss_results[triangle_indexes[1]].mv_parallel = gauss_result_parallel;
+        }
     }else{
         std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
                 split_mv_result[1].mv_warping, split_mv_result[1].residual,
@@ -1281,6 +1304,12 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 {split_mv_result[2].mv_parallel, split_mv_result[2].mv_parallel, split_mv_result[2].mv_parallel},
                 split_mv_result[2].residual,
                 triangle_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->node3, true, dummy);
+
+        if(method_flag3 == MV_CODE_METHOD::MERGE) {
+            std::vector<int> t = getSpatialTriangleList(triangle_indexes[2]);
+            gauss_result_parallel = triangle_gauss_results[t[selected_index]].mv_parallel;
+            triangle_gauss_results[triangle_indexes[2]].mv_parallel = gauss_result_parallel;
+        }
     }else{
         std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag3) = getMVD(
                 split_mv_result[2].mv_warping, split_mv_result[2].residual,
@@ -1293,6 +1322,12 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
                 {split_mv_result[3].mv_parallel, split_mv_result[3].mv_parallel, split_mv_result[3].mv_parallel}, split_mv_result[3].residual,
                 triangle_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->node4, true, dummy);
+
+        if(method_flag4 == MV_CODE_METHOD::MERGE) {
+            std::vector<int> t = getSpatialTriangleList(triangle_indexes[3]);
+            gauss_result_parallel = triangle_gauss_results[t[selected_index]].mv_parallel;
+            triangle_gauss_results[triangle_indexes[3]].mv_parallel = gauss_result_parallel;
+        }
     }else{
         std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
                 split_mv_result[3].mv_warping, split_mv_result[3].residual,
@@ -2022,27 +2057,50 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
         pixels_in_triangle = pixels;
     }
 
-    for(int i = 0 ; i < spatial_triangle_size ; i++) {
-        int spatial_triangle_index = spatial_triangles[i];
-        GaussResult spatial_triangle = triangle_gauss_results[spatial_triangle_index];
-        std::vector<cv::Point2f> mvds;
+    if(parallel_flag) {
+//        std::cout << "original residual : " << residual << std::endl;
+        for (int i = 0; i < spatial_triangle_size; i++) {
+            int spatial_triangle_index = spatial_triangles[i];
+            GaussResult spatial_triangle = triangle_gauss_results[spatial_triangle_index];
+            std::vector<cv::Point2f> mvds;
+            cv::Rect rect(-64, -64, 4 * (target_image.cols + 2 * 16), 4 * (target_image.rows + 2 * 16));
+            std::vector<cv::Point2f> mvs;
 
-        if(spatial_triangle.parallel_flag){
-            if(!isMvExists(merge_vectors, spatial_triangle.mv_parallel)) {
-                merge_vectors.emplace_back(spatial_triangle.mv_parallel, MERGE);
-                double ret_residual = getTriangleResidual(ref_image, target_image, coordinate, mv, pixels_in_triangle);
-                double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
-                results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, results.size(), MERGE, FlagsCodeSum(0, 0, 0, 0));
+            double sx = std::min({coordinate.p1.x, coordinate.p2.x, coordinate.p3.x});
+            double sy = std::min({coordinate.p1.y, coordinate.p2.y, coordinate.p3.y});
+            double lx = std::max({coordinate.p1.x, coordinate.p2.x, coordinate.p3.x});
+            double ly = std::max({coordinate.p1.y, coordinate.p2.y, coordinate.p3.y});
+
+            if (spatial_triangle.parallel_flag) {
+                if(spatial_triangle.mv_parallel.x + sx < -16 || spatial_triangle.mv_parallel.y + sy < -16 || spatial_triangle.mv_parallel.x + lx >= target_image.cols + 16 || spatial_triangle.mv_parallel.y + ly >= target_image.rows + 16) continue;
+                if (!isMvExists(merge_vectors, spatial_triangle.mv_parallel)) {
+                    merge_vectors.emplace_back(spatial_triangle.mv_parallel, MERGE);
+                    mvs.emplace_back(spatial_triangle.mv_parallel);
+                    mvs.emplace_back(spatial_triangle.mv_parallel);
+                    mvs.emplace_back(spatial_triangle.mv_parallel);
+                    double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
+//                    std::cout << "ret_residual:" << ret_residual << std::endl;
+                    double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
+                    results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, i, MERGE,
+                                         FlagsCodeSum(0, 0, 0, 0));
+                }
+            } else {
+                if(spatial_triangle.mv_warping[0].x + sx < -16 || spatial_triangle.mv_warping[0].y + sy < -16 || spatial_triangle.mv_warping[0].x + lx >= target_image.cols + 16 || spatial_triangle.mv_warping[0].y + ly >= target_image.rows + 16) continue;
+                if (!isMvExists(merge_vectors, spatial_triangle.mv_warping[0])) {
+                    merge_vectors.emplace_back(spatial_triangle.mv_warping[0], MERGE);
+                    mvs.emplace_back(spatial_triangle.mv_warping[0]);
+                    mvs.emplace_back(spatial_triangle.mv_warping[0]);
+                    mvs.emplace_back(spatial_triangle.mv_warping[0]);
+                    double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs,
+                                                              pixels_in_triangle, rect);
+//                    std::cout << "ret_residual:" << ret_residual << std::endl;
+                    double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
+                    results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, i, MERGE,
+                                         FlagsCodeSum(0, 0, 0, 0));
+                }
             }
-        }else{
-            if(!isMvExists(merge_vectors, spatial_triangle.mv_warping[0])) {
-                merge_vectors.emplace_back(spatial_triangle.mv_warping[0], MERGE);
-                double ret_residual = getTriangleResidual(ref_image, target_image, coordinate, mv, pixels_in_triangle);
-                double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
-                results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, results.size(), MERGE, FlagsCodeSum(0, 0, 0, 0));
-            }
+
         }
-
     }
 
     // RDしたスコアが小さい順にソート
@@ -2351,7 +2409,7 @@ TriangleDivision::GaussResult::GaussResult(const std::vector<cv::Point2f> &mvWar
 
 TriangleDivision::GaussResult::GaussResult() {}
 
-std::tuple<std::vector<cv::Point2f>, std::vector<double>> TriangleDivision::blockMatching(Point3Vec triangle, const cv::Mat& target_image, cv::Mat expansion_ref_image, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Point2f fullpell_initial_vector) {
+std::tuple<std::vector<cv::Point2f>, std::vector<double>> TriangleDivision::fullpellBlockMatching(Point3Vec triangle, const cv::Mat& target_image, cv::Mat expansion_ref_image, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Point2f fullpell_initial_vector) {
     double sx, sy, lx, ly;
     cv::Point2f tp1, tp2, tp3;
     tp1 = triangle.p1;
@@ -2375,28 +2433,28 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> TriangleDivision::bloc
     int SX = 16; // ブロックマッチングの探索範囲(X)
     int SY = 16; // ブロックマッチングの探索範囲(Y)
 
-    double e = 1e9, error_min = 1e9, rd_min = 1e9, rd = 1e9;
+    double error_min = 1e9, rd_min = 1e9;
     int e_count;
     cv::Point2f mv_min;
     int spread_quarter = 64;
-    int s = 1;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
+    int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
     std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, 128, 128);
 
     if(fullpell_initial_vector.x == -10000 && fullpell_initial_vector.y == -10000){
+//#pragma omp parallel for
         for(int j = -SY * 4 ; j <= SY * 4 ; j += s) {            //j : y方向のMV
             for(int i = -SX * 4 ; i <= SX * 4 ; i += s) {        //i : x方向のMV
+                double rd = 1e9, e = 1e9;
                 //探索範囲が画像上かどうか判定
                 if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
                    && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
                     e = 0.0;
-                    e_count = 0;
                     for(auto &pixel : pixels) {
                         int ref_x = std::max((int)(4 * pixel.x), 0);
                         ref_x = (i + ref_x + spread_quarter);
                         int ref_y = std::max((int)((4 * pixel.y)), 0);
                         ref_y = (j + ref_y + spread_quarter);
                         e += fabs(R(expansion_ref_image, ref_x, ref_y) - R(target_image, (int)pixel.x, (int)pixel.y));
-                        e_count++;
                     }
                 }
 
