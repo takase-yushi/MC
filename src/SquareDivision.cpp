@@ -613,23 +613,20 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         ctu->error_bm = result_before.residual_bm;
         ctu->error_newton = result_before.residual_newton;
     }else {
-        if(PRED_MODE == BM) {
-            std::vector<cv::Point2f> tmp_bm_mv;
-            double tmp_bm_error;
-            std::tie(tmp_bm_mv, tmp_bm_error) = ::blockMatching(square, target_image, expansion_ref);
-            square_gauss_results[square_index].residual_bm = tmp_bm_error;
-            ctu->error_bm = tmp_bm_error;
-            gauss_result_warping = tmp_bm_mv;
-            gauss_result_parallel = tmp_bm_mv[2];
-            RMSE_before_subdiv = tmp_bm_error;
-            error_parallel = tmp_bm_error;
-//            square_gauss_results[square_index].mv_warping = gauss_result_warping;
-            square_gauss_results[square_index].mv_parallel = gauss_result_parallel;
-            square_gauss_results[square_index].square_size = square_size;
-            square_gauss_results[square_index].residual = RMSE_before_subdiv;
-            square_gauss_results[square_index].parallel_flag = true;
-            parallel_flag = true;
-        }
+        std::vector<cv::Point2f> tmp_bm_mv;
+        double tmp_bm_error;
+        std::tie(tmp_bm_mv, tmp_bm_error) = blockMatching(square, target_image, expansion_ref, square_index, ctu);
+        square_gauss_results[square_index].residual_bm = tmp_bm_error;
+        ctu->error_bm = tmp_bm_error;
+        gauss_result_warping = tmp_bm_mv;
+        gauss_result_parallel = tmp_bm_mv[2];
+        RMSE_before_subdiv = tmp_bm_error;
+        error_parallel = tmp_bm_error;
+        square_gauss_results[square_index].mv_parallel = gauss_result_parallel;
+        square_gauss_results[square_index].square_size = square_size;
+        square_gauss_results[square_index].residual = RMSE_before_subdiv;
+        square_gauss_results[square_index].parallel_flag = true;
+        parallel_flag = true;
     }
 
     std::vector<cv::Point2f> mvd;
@@ -722,11 +719,11 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         double cost_warping_tmp, cost_parallel_tmp;
         double tmp_error_newton;
         MV_CODE_METHOD method_warping_tmp, method_parallel_tmp;
-        if(PRED_MODE == BM){
-            std::tie(tmp_bm_mv, tmp_bm_error) = ::blockMatching(subdiv_target_squares[j], target_image, expansion_ref);
-            mv_parallel_tmp = tmp_bm_mv[2];
-            error_parallel_tmp = tmp_bm_error;
-            square_size_tmp = (double)1e6;
+
+        std::tie(tmp_bm_mv, tmp_bm_error) = blockMatching(subdiv_target_squares[j], target_image, expansion_ref, square_indexes[j], ctus[j]);
+        mv_parallel_tmp = tmp_bm_mv[2];
+        error_parallel_tmp = tmp_bm_error;
+        square_size_tmp = (double)1e6;
 
         split_mv_result[j] = GaussResult(mv_parallel_tmp, error_parallel_tmp, square_size_tmp, true, tmp_bm_error, tmp_error_newton);
     }
