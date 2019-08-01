@@ -815,6 +815,23 @@ void filterTest(){
     cv::imwrite(img_directory + "quarter_scaled_target_dctfilter_image.bmp", dctfilter_image);
 }
 
+void test_config_file() {
+    std::vector<Config> tasks = readTasks();
+
+    for(auto& task : tasks){
+        std::cout << task.getImgDirectory() << std::endl;
+        std::cout << task.getGaussRefImage() << std::endl;
+        std::cout << task.getRefImage() << std::endl;
+        std::cout << task.getTargetImage() << std::endl;
+
+        std::cout << task.getQp() << std::endl;
+        std::cout << task.getCtuWidth() << std::endl;
+        std::cout << task.getCtuHeight() << std::endl;
+        std::cout << task.getDivisionStep() << std::endl;
+    }
+
+}
+
 //void test() {
 //
 //    const std::string img_directory = getProjectDirectory(OS) + "\\img\\minato\\";

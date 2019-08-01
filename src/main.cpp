@@ -52,6 +52,7 @@ int main(int argc, char *argv[]){
 }
 
 void tests(){
+    test_config_file();
 }
 
 void run(std::string config_path) {
