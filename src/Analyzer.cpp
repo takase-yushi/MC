@@ -7,6 +7,7 @@
 #include "../includes/Encode.h"
 #include <cstdio>
 #include <iostream>
+#include <sys/stat.h>
 
 /**
  *
@@ -20,6 +21,9 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     for(auto ctu : ctus){
         storeDistributionOfMv(ctu);
     }
+
+    log_path = log_path + "/log" + file_suffix;
+    mkdir((log_path).c_str(), 0744);
 
     FILE *fp = std::fopen((log_path + "/mvd_distribution" + file_suffix + ".csv").c_str(), "w");
     for(auto x : mvd_counter){
