@@ -27,18 +27,6 @@
 std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point3Vec tr, const cv::Mat& current, cv::Mat expansion_image);
 std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Vec triangle, const cv::Mat& target_image, cv::Mat expansion_ref_image, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Point2f fullpell_initial_vector = cv::Point2f(-10000, -10000));
 
-/**
- * @fn std::vector<cv::Point2f> getReferenceImageCoordinates(const cv::Mat& image, const std::vector<cv::Point2f>& target_corners, const int side_point_nums);
- * @brief 特徴点が参照画像でどの位置に属するのかを求める.(ブロックマッチングでフローをもとめる）
- * @param image
- * @param target_corners
- * @return std::vector<cv::Point2f> ref_corners 参照画像の特徴点群
- */
-std::pair<std::vector<cv::Point2f>, std::priority_queue<int>> getReferenceImageCoordinates(const cv::Mat &ref,
-                                                                                           const cv::Mat &target,
-                                                                                           const std::vector<cv::Point2f> &target_corners,
-                                                                                           cv::Mat &debug);
-
 double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::Mat& output_image, Point3Vec& triangle, std::vector<cv::Point2f>& mv, int offset, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Rect block_size, unsigned char **ref_hevc = nullptr);
 std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, int, bool> Marquardt(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char **>>> expand_image, Point3Vec target_corners, const std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, int block_size_x, int block_size_y);
 
