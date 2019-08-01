@@ -11,7 +11,6 @@ int Reconstruction::insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type)
     v.emplace_back(corners[p1_idx], p1_idx);
     v.emplace_back(corners[p2_idx], p2_idx);
     v.emplace_back(corners[p3_idx], p3_idx);
-    // std::cout  << "before-sort:" << v[0].first << " " << v[1].first << " " << v[2].first << std::endl;
 
     // ラスタスキャン順でソート
     sort(v.begin(), v.end(), [](const std::pair<cv::Point2f, int> &a1, const std::pair<cv::Point2f, int> &a2) {
@@ -23,7 +22,6 @@ int Reconstruction::insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type)
     });
 
     Triangle triangle(v[0].second, v[1].second, v[2].second);
-    // std::cout  << "after-sort:" <<v[0].first << " " << v[1].first << " " << v[2].first << std::endl;
 
     triangles.emplace_back(triangle, type);
 
