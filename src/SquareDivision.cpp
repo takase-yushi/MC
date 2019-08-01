@@ -681,11 +681,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     double RMSE_after_subdiv = 0.0;
     std::vector<GaussResult> split_mv_result(subdiv_target_squares.size());
 
-//    int p1_idx = getCornerIndex(p1);
-//    int p2_idx = getCornerIndex(p2);
-//    int p3_idx = getCornerIndex(p3);
-//    addCornerAndSquare(Square(p1_idx, p2_idx, p3_idx), square_index, type);
-
     int s1_p1_idx = getCornerIndex(split_squares.s1.p1);
     int s1_p2_idx = getCornerIndex(split_squares.s1.p2);
     int s1_p3_idx = getCornerIndex(split_squares.s1.p3);
@@ -699,29 +694,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     addCornerAndSquare(Square(s2_p1_idx, s2_p2_idx, s2_p3_idx, s2_p4_idx), square_index);
 
     int square_indexes[] = {(int)squares.size() - 4, (int)squares.size() - 3, (int)squares.size() - 2, (int)squares.size() - 1};
-
-    // 分割回数が偶数回目のとき斜線の更新を行う
-    int sx = ceil( std::min({square.p1.x, square.p2.x, square.p3.x}));
-    int lx = floor(std::max({square.p1.x, square.p2.x, square.p3.x}));
-    int sy = ceil( std::min({square.p1.y, square.p2.y, square.p3.y}));
-    int ly = floor(std::max({square.p1.y, square.p2.y, square.p3.y}));
-
-    int width =  (lx - sx) / 2 + 1;
-    int height = (ly - sy) / 2 + 1;
-
-    bool flag = true;
-//    int a, b, c, d;
-//    if(type == 1) {    //四角形
-//        for (int x = 0 ; x < width  ; x++) {
-//            diagonal_line_area_flag[(x + sx) % block_size_x][(x + sy) % block_size_y] = (x % 2 == 0 ? square_indexes[0] : square_indexes[2]);
-//            flag = !flag;
-//        }
-//    }else if(type == 2) {    //長方形
-//        for (int x = 0 ; x < width ; x++) {
-//            diagonal_line_area_flag[(sx + width + x) % block_size_x][(sy + height + x) % block_size_y] = (x % 2 == 0 ? square_indexes[1] : square_indexes[3]);
-//            flag = !flag;
-//        }
-//    }
 
     ctu->node1 = new CodingTreeUnit();
     ctu->node1->square_index = squares.size() - 4;
@@ -756,9 +728,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             error_parallel_tmp = tmp_bm_error;
             square_size_tmp = (double)1e6;
 
-            split_mv_result[j] = GaussResult(mv_parallel_tmp, error_parallel_tmp, square_size_tmp, true, tmp_bm_error, tmp_error_newton);
-        }
-
+        split_mv_result[j] = GaussResult(mv_parallel_tmp, error_parallel_tmp, square_size_tmp, true, tmp_bm_error, tmp_error_newton);
     }
 
     double cost_after_subdiv1;
@@ -775,52 +745,27 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag1) = getMVD(
                 split_mv_result[0].mv_parallel, split_mv_result[0].residual, square_indexes[0], cmt_left_left->mv1, ctu->node1, dummy);
     }
-//    else{
-//        std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag1) = getMVD(
-//                split_mv_result[0].mv_warping, split_mv_result[0].residual,
-//                square_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->node1, false, dummy);
-//    }
 
     double cost_after_subdiv2;
     int code_length2;
     if(split_mv_result[1].parallel_flag){
         std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
-                split_mv_result[1].mv_parallel, split_mv_result[1].residual,
-                square_indexes[1], cmt_left_right->mv1, ctu->node2, dummy);
-
+                split_mv_result[1].mv_parallel, split_mv_result[1].residual, square_indexes[1], cmt_left_right->mv1, ctu->node2, dummy);
     }
-//    else{
-//        std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
-//                split_mv_result[1].mv_warping, split_mv_result[1].residual,
-//                square_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->node2, false, dummy);
-//    }
 
     double cost_after_subdiv3;
     int code_length3;
     if(split_mv_result[2].parallel_flag) {
         std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag3) = getMVD(
-                split_mv_result[2].mv_parallel, split_mv_result[2].residual,
-                square_indexes[2], cmt_right_left->mv1, ctu->node3, dummy);
+                split_mv_result[2].mv_parallel, split_mv_result[2].residual, square_indexes[2], cmt_right_left->mv1, ctu->node3, dummy);
     }
-//    else{
-//        std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag3) = getMVD(
-//                split_mv_result[2].mv_warping, split_mv_result[2].residual,
-//                square_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->node3, false, dummy);
-//    }
 
     double cost_after_subdiv4;
     int code_length4;
     if(split_mv_result[3].parallel_flag){
         std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
-                split_mv_result[3].mv_parallel, split_mv_result[3].residual,
-                square_indexes[3], cmt_right_right->mv1, ctu->node4, dummy);
+                split_mv_result[3].mv_parallel, split_mv_result[3].residual, square_indexes[3], cmt_right_right->mv1, ctu->node4, dummy);
     }
-//    else{
-//        std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
-//                split_mv_result[3].mv_warping, split_mv_result[3].residual,
-//                square_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->node4, false, dummy);
-//    }
-
     double alpha = 1;
     std::cout << "before:" << cost_before_subdiv << " after:" << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4) << std::endl;
     if(cost_before_subdiv >= alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4)) {
@@ -838,11 +783,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             ctu->node1->mv2 = split_mv_result[0].mv_parallel;
             ctu->node1->mv3 = split_mv_result[0].mv_parallel;
         }
-//        else{
-//            ctu->node1->mv1 = split_mv_result[0].mv_warping[0];
-//            ctu->node1->mv2 = split_mv_result[0].mv_warping[1];
-//            ctu->node1->mv3 = split_mv_result[0].mv_warping[2];
-//        }
         ctu->node1->code_length = code_length1;
         ctu->node1->parallel_flag = split_mv_result[0].parallel_flag;
         ctu->node1->method = method_flag1;
@@ -857,11 +797,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             ctu->node2->mv2 = split_mv_result[1].mv_parallel;
             ctu->node2->mv3 = split_mv_result[1].mv_parallel;
         }
-//        else{
-//            ctu->node2->mv1 = split_mv_result[1].mv_warping[0];
-//            ctu->node2->mv2 = split_mv_result[1].mv_warping[1];
-//            ctu->node2->mv3 = split_mv_result[1].mv_warping[2];
-//        }
         ctu->node2->code_length = code_length2;
         ctu->node2->parallel_flag = split_mv_result[1].parallel_flag;
         ctu->node2->method = method_flag2;
@@ -877,11 +812,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             ctu->node3->mv2 = split_mv_result[2].mv_parallel;
             ctu->node3->mv3 = split_mv_result[2].mv_parallel;
         }
-//        else{
-//            ctu->node3->mv1 = split_mv_result[2].mv_warping[0];
-//            ctu->node3->mv2 = split_mv_result[2].mv_warping[1];
-//            ctu->node3->mv3 = split_mv_result[2].mv_warping[2];
-//        }
         ctu->node3->code_length = code_length3;
         ctu->node3->parallel_flag = split_mv_result[2].parallel_flag;
         ctu->node3->method = method_flag3;
@@ -896,11 +826,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             ctu->node4->mv2 = split_mv_result[3].mv_parallel;
             ctu->node4->mv3 = split_mv_result[3].mv_parallel;
         }
-//        else{
-//            ctu->node4->mv1 = split_mv_result[3].mv_warping[0];
-//            ctu->node4->mv2 = split_mv_result[3].mv_warping[1];
-//            ctu->node4->mv3 = split_mv_result[3].mv_warping[2];
-//        }
         ctu->node4->code_length = code_length4;
         ctu->node4->parallel_flag = split_mv_result[3].parallel_flag;
         ctu->node4->method = method_flag4;
