@@ -311,7 +311,6 @@ int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx)
     Square square(v[0].second, v[1].second, v[2].second, v[3].second, static_cast<int>(squares.size()));
 
     squares.emplace_back(square);
-//    covered_square.emplace_back();
     isCodedSquare.emplace_back(false);
     square_gauss_results.emplace_back();
     square_gauss_results[square_gauss_results.size() - 1].residual = -1.0;
@@ -331,7 +330,6 @@ void SquareDivision::eraseSquare(int s_idx){
     removeSquareCoveredSquare(square.p1_idx, square.p2_idx, square.p3_idx, square.p4_idx, s_idx);
     isCodedSquare.erase(isCodedSquare.begin() + s_idx);
     squares.erase(squares.begin() + s_idx);
-//    covered_square.erase(covered_square.begin() + t_idx);
     square_gauss_results.erase(square_gauss_results.begin() + s_idx);
     delete_flag.erase(delete_flag.begin() + s_idx);
 }
@@ -600,7 +598,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
     if(square_gauss_results[square_index].residual > 0) {
         GaussResult result_before = square_gauss_results[square_index];
-//        gauss_result_warping = result_before.mv_warping;
         gauss_result_parallel = result_before.mv_parallel;
         RMSE_before_subdiv = result_before.residual;
         square_size = result_before.square_size;
@@ -640,11 +637,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 gauss_result_parallel, error_parallel,
                 square_index, cmt->mv1, ctu, dummy);
     }
-//    else{
-//        std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
-//                square_gauss_results[square_index].mv_warping, error_warping,
-//                square_index, cmt->mv1, diagonal_line_area_flag, ctu, false, dummy);
-//    }
 
     std::vector<cv::Point2i> ret_gauss2;
 
