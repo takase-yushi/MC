@@ -17,6 +17,7 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     greater_0_flag_sum = greater_1_flag_sum = sign_flag_sum = mvd_code_sum = warping_patch_num = parallel_patch_num = 0;
     mvd_warping_code_sum = mvd_parallel_code_sum = 0;
     merge_counter = spatial_counter = 0;
+    code_sum = 0;
 
     for(auto ctu : ctus){
         storeDistributionOfMv(ctu);
@@ -62,6 +63,7 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     fclose(fp);
 
     fp = std::fopen((log_path + "/mvd_result" + file_suffix + ".txt").c_str(), "w");
+    fprintf(fp, "code_sum              :%d\n", code_sum);
     fprintf(fp, "greater_0_flag        :%d\n", greater_0_flag_sum);
     fprintf(fp, "greater_0_flag entropy:%f\n", getEntropy({greater_0_flag_counter[0], greater_0_flag_counter[1]}));
     fprintf(fp, "greater_1_flag        :%d\n", greater_1_flag_sum);
@@ -85,6 +87,7 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
  */
 void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr){
+        code_sum += ctu->code_length;
         if(ctu->method != MV_CODE_METHOD::MERGE){
             if(ctu->parallel_flag){
                 int x_ = (int)abs(((ctu->mv1).x * 4));
@@ -154,3 +157,12 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
 }
 
 Analyzer::Analyzer(const std::string &fileSuffix) : file_suffix(fileSuffix) {}
+
+void Analyzer::storeMarkdownFile(double psnr, std::string log_path) {
+    log_path = log_path + "/log" + file_suffix;
+
+    extern int qp;
+    FILE *fp = fopen((log_path + "/result.md").c_str(), "w");
+    fprintf(fp, "|%d|%f|%d|%f|%d|\n", qp, getLambdaPred(qp, 1.0), code_sum, psnr, warping_patch_num + parallel_patch_num);
+    fclose(fp);
+}
