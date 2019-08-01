@@ -679,7 +679,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     int s2_p1_idx = getCornerIndex(split_squares.s2.p1);
     int s2_p2_idx = getCornerIndex(split_squares.s2.p2);
     int s2_p3_idx = getCornerIndex(split_squares.s2.p3);
-    int s2_p4_idx = getCornerIndex(split_squares.s2.p3);
+    int s2_p4_idx = getCornerIndex(split_squares.s2.p4);
     addCornerAndSquare(Square(s2_p1_idx, s2_p2_idx, s2_p3_idx, s2_p4_idx), square_index);
 
     int square_indexes[] = {(int)squares.size() - 4, (int)squares.size() - 3, (int)squares.size() - 2, (int)squares.size() - 1};
