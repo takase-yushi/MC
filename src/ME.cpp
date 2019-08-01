@@ -174,23 +174,14 @@ std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point3Vec tr, const c
  * @details
  *
  */
-std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point4Vec sq, const cv::Mat& current, cv::Mat expansion_image) {
+std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point4Vec square, const cv::Mat& target_image, cv::Mat expansion_image) {
     double sx, sy, lx, ly;
     cv::Point2f sp1, sp2, sp3, sp4;
 
-    sp1 = sq.p1;
-    sp2 = sq.p2;
-    sp3 = sq.p3;
-    sp4 = sq.p4;
-
-//    sp1.x = (sp1.x + 1) * 4 - 1;
-//    sp1.y = (sp1.y + 1) * 4 - 1;
-//    sp2.x = (sp2.x + 1) * 4 - 1;
-//    sp2.y = (sp2.y + 1) * 4 - 1;
-//    sp3.x = (sp3.x + 1) * 4 - 1;
-//    sp3.y = (sp3.y + 1) * 4 - 1;
-//    sp4.x = (sp4.x + 1) * 4 - 1;
-//    sp4.y = (sp4.y + 1) * 4 - 1;
+    sp1 = square.p1;
+    sp2 = square.p2;
+    sp3 = square.p3;
+    sp4 = square.p4;
 
     sx = 4 * std::min({sp1.x, sp2.x, sp3.x, sp4.x});
     sy = 4 * std::min({sp1.y, sp2.y, sp3.y, sp4.y});
@@ -202,10 +193,8 @@ std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point4Vec sq, const c
     int SY = 16; // ブロックマッチングの探索範囲(Y)
 
     double e, error_min;
-    int e_count;
 
     error_min = 1 << 20;
-    cv::Point2d xp(0.0, 0.0);
     cv::Point2f mv_min;
     int spread_quarter = 64;
     int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
@@ -216,14 +205,12 @@ std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point4Vec sq, const c
             if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_image.cols - spread_quarter
                && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_image.rows - spread_quarter) {
                 e = 0.0;
-                e_count = 0;
                 for (int y = (int) (round(sy) / 4); y <= (int) (round(ly) / 4); y++) {
                     for (int x = (int) (round(sx) / 4); x <= (int) (round(lx) / 4); x++) {
-                        e += fabs(R(expansion_image, i + 4 * x + spread_quarter, j + 4 * y + spread_quarter) - R(current, x, y));
-                        e_count++;
+                        e += fabs(R(expansion_image, i + 4 * x + spread_quarter, j + 4 * y + spread_quarter) - R(target_image, x, y));
                     }
                 }
-                if(error_min > e && e_count > 0){
+                if(error_min > e){
                     error_min = e;
                     mv_min.x = (double)i / 4.0;
                     mv_min.y = (double)j / 4.0;
@@ -245,15 +232,12 @@ std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point4Vec sq, const c
             if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_image.cols - spread_quarter
                && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_image.rows - spread_quarter) {
                 e = 0.0;
-                e_count = 0;
                 for (int y = (int) (round(sy) / 4); y <= (int) (round(ly) / 4); y++) {
                     for (int x = (int) (round(sx) / 4); x <= (int) (round(lx) / 4); x++) {
-                        e += fabs(R(expansion_image, i + 4 * x + spread_quarter, j + 4 * y + spread_quarter) - R(current, x, y));
-                        e_count++;
-
+                        e += fabs(R(expansion_image, i + 4 * x + spread_quarter, j + 4 * y + spread_quarter) - R(target_image, x, y));
                     }
                 }
-                if(error_min > e && e_count > 0){
+                if(error_min > e){
                     error_min = e;
                     mv_min.x = (double)i / 4.0;
                     mv_min.y = (double)j / 4.0;
@@ -274,14 +258,12 @@ std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point4Vec sq, const c
             if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_image.cols - spread_quarter
                && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_image.rows - spread_quarter) {
                 e = 0.0;
-                e_count = 0;
                 for (int y = (int) (round(sy) / 4); y <= (int) (round(ly) / 4); y++) {
                     for (int x = (int) (round(sx) / 4); x <= (int) (round(lx) / 4); x++) {
-                        e += fabs(R(expansion_image, i + 4 * x + spread_quarter, j + 4 * y + spread_quarter) - R(current, x, y));
-                        e_count++;
+                        e += fabs(R(expansion_image, i + 4 * x + spread_quarter, j + 4 * y + spread_quarter) - R(target_image, x, y));
                     }
                 }
-                if(error_min > e && e_count > 0){
+                if(error_min > e){
                     error_min = e;
                     mv_min.x = (double)i / 4.0;
                     mv_min.y = (double)j / 4.0;
