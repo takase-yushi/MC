@@ -15,12 +15,9 @@
 #include <cassert>
 #include "../includes/Analyzer.h"
 #include "../includes/Encode.h"
-#include "../includes/config.h"
 #include "../includes/ME.hpp"
-#include "../includes/DelaunayTriangulation.hpp"
 #include "../includes/Vector.hpp"
 #include "../includes/psnr.h"
-#include "../includes/Golomb.hpp"
 #include "../includes/TriangleDivision.h"
 #include "../includes/Reconstruction.h"
 #include "../includes/ImageUtil.h"
@@ -195,7 +192,6 @@ void run(std::string config_path) {
         std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_triangles.size(), std::vector< std::vector<int> >(block_size_x, std::vector<int>(block_size_y, -1)) );
 
         for (int i = 0; i < init_triangles.size(); i++) {
-//            std::vector<std::vector<int>> diagonal_line_area_flag(block_size_x, std::vector<int>(block_size_y, 0)); // 斜め線でどちらを取るか表すフラグ flag[x][y]
             if(i % 2 == 0){
                 bool flag = false;
                 for (int x = 0; x < block_size_x; x++) {

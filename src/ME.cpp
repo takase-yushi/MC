@@ -12,7 +12,6 @@
 #include <math.h>
 #include <fstream>
 #include <memory>
-#include "../includes/DelaunayTriangulation.hpp"
 #include "../includes/Utils.h"
 #include "../includes/ImageUtil.h"
 #include <algorithm>

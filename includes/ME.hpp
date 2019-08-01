@@ -8,11 +8,9 @@
 #define ENCODER_ME_H
 
 #include <opencv2/core/mat.hpp>
-#include "config.h"
 #include <vector>
 #include <queue>
 #include "Utils.h"
-#include "../includes/DelaunayTriangulation.hpp"
 
 /**
  * @fn void block_matching(cv::Mat &prev, cv::Mat &current, double &error, cv::Point2f &mv, Point3Vec tr, cv::Mat expansion_image)
