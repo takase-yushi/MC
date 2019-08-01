@@ -911,7 +911,7 @@ std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const st
     return pixels_in_triangle;
 }
 /**
- * @fn std::vector<cv::Point2f> getPixelsInSquare(const Point4Vec& square, int triangle_index, CodingTreeUnit* ctu, int block_size_x, int block_size_y)
+ * @fn std::vector<cv::Point2f> getPixelsInSquare(const Point4Vec& square)
  * @brief ブロック内に含まれる画素を返す
  * @param aquare 四角形
  * @return 画素の集合
