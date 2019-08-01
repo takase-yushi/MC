@@ -60,16 +60,6 @@ void run(std::string config_path) {
     std::cout << "OpenCV_version : " << getVersionOfOpenCV() << std::endl;
 
     const std::string project_directory_path = getProjectDirectory(OS);
-    FILE *img_list;
-
-    std::string list_path = (OS == "Win" ? replaceBackslash(project_directory_path + config_path) :
-                             project_directory_path + config_path);
-    if ((img_list = fopen((list_path).c_str(), "r")) == NULL) {
-        std::cerr << "Error : Can not open file" << std::endl;
-        exit(1);
-    }
-
-    char buf[512];
 
     std::vector<cv::Point2f> corners, corners_org;
     std::vector<cv::Point2f> ref_corners, ref_corners_org;
@@ -104,7 +94,6 @@ void run(std::string config_path) {
         std::cout << "ref_file_path          : " << ref_file_path << std::endl;
         std::cout << "target_image file path : " << target_file_path << std::endl;
         std::cout << "ref_intra_file_path    : " << ref_intra_file_path << std::endl;
-        std::cout << "target_color_file_path : " << target_color_file_path << std::endl;
         std::cout << "ref_gauss file path    : " << ref_file_path << std::endl;
         std::cout << "QP                     : " << qp << std::endl;
         std::cout << "CTU_WIDTH              : " << block_size_x << std::endl;
@@ -112,7 +101,7 @@ void run(std::string config_path) {
 
         // 時間計測
         clock_t start = clock();
-        std::cout << "check1" << std::endl;
+
         // 準備 --------------------------------------------------------------------------------
         // 画像の読み込み
         cv::Mat ref_gauss, ref_gauss_gray;          // 参照フレーム
