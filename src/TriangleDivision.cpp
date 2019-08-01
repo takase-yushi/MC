@@ -77,15 +77,11 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
 
     previousMvList.emplace_back();
     // すべての頂点を入れる
-    for(int block_y = 0 ; block_y <= block_num_y ; block_y++) {
-        for (int block_x = 0 ; block_x <= block_num_x; block_x++) {
+    for(int block_y = 0 ; block_y < block_num_y ; block_y++) {
+        for (int block_x = 0 ; block_x < block_num_x; block_x++) {
             int nx = block_x * (block_size_x);
             int ny = block_y * (block_size_y);
 
-            if(nx < 0) nx = 0;
-            if(target_image.cols <= nx) nx = target_image.cols - 1;
-            if(ny < 0) ny = 0;
-            if(target_image.rows <= ny) ny = target_image.rows - 1;
             corners.emplace_back(nx, ny);
             corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
             same_corner_list.emplace_back();
@@ -96,15 +92,9 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
 
-            if(block_x == block_num_x) continue;
-
             nx = (block_x + 1) * (block_size_x) - 1;
             ny = (block_y) * (block_size_y);
 
-            if(nx < 0) nx = 0;
-            if(target_image.cols <= nx) nx = target_image.cols - 1;
-            if(ny < 0) ny = 0;
-            if(target_image.rows <= ny) ny = target_image.rows - 1;
             corners.emplace_back(nx, ny);
             corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
             same_corner_list.emplace_back();
@@ -116,16 +106,10 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
         }
 
-        if(block_y == block_num_y) continue;
-
-        for (int block_x = 0 ; block_x <= block_num_x; block_x++) {
+        for (int block_x = 0 ; block_x < block_num_x; block_x++) {
             int nx = block_x * (block_size_x);
             int ny = (block_y + 1) * (block_size_y) - 1;
 
-            if(nx < 0) nx = 0;
-            if(target_image.cols <= nx) nx = target_image.cols - 1;
-            if(ny < 0) ny = 0;
-            if(target_image.rows <= ny) ny = target_image.rows - 1;
             corners.emplace_back(nx, ny);
             corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
             same_corner_list.emplace_back();
@@ -169,7 +153,7 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
     std::cout << "block_num_y:" << block_num_y << std::endl;
     std::cout << "block_num_x:" << block_num_x << std::endl;
 
-    covered_triangle.resize(static_cast<unsigned long>((block_num_x * 2 + 1) * (block_num_y * 2 + 1)));
+    covered_triangle.resize(static_cast<unsigned long>((block_num_x * 2) * (block_num_y * 2)));
 
     for(int block_y = 0 ; block_y < block_num_y ; block_y++) {
         for(int block_x = 0 ; block_x < block_num_x ; block_x++) {
@@ -178,9 +162,9 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
             int p3_idx;
             int p4_idx;
             if(divide_flag == LEFT_DIVIDE) {
-                p1_idx = 2 * block_x + (2 * block_y) * ((block_num_x) * 2 + 1);
+                p1_idx = 2 * block_x + (2 * block_y) * ((block_num_x) * 2);
                 p2_idx = p1_idx + 1;
-                p3_idx = p1_idx + ((block_num_x) * 2 + 1 );
+                p3_idx = p1_idx + ((block_num_x) * 2);
 
                 int triangleIndex = insertTriangle(p1_idx, p2_idx, p3_idx, TYPE1);
                 addNeighborVertex(p1_idx, p2_idx, p3_idx);
