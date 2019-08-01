@@ -1611,78 +1611,114 @@ SquareDivision::GaussResult::GaussResult(const cv::Point2f &mvParallel, double r
 
 SquareDivision::GaussResult::GaussResult() {}
 
-//std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockMatching(Point3Vec triangle, const cv::Mat& target_image, cv::Mat expansion_ref_image, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Point2f fullpell_initial_vector) {
-//    double sx, sy, lx, ly;
-//    cv::Point2f tp1, tp2, tp3;
-//    tp1 = triangle.p1;
-//    tp2 = triangle.p2;
-//    tp3 = triangle.p3;
-//
-//    sx = std::min({tp1.x, tp2.x, tp3.x});
-//    sy = std::min({tp1.y, tp2.y, tp3.y});
-//    lx = std::max({tp1.x, tp2.x, tp3.x});
-//    ly = std::max({tp1.y, tp2.y, tp3.y});
-//
-//    int width = lx - sx + 1;
-//    int height = ly - sy + 1;
-//
-//    sx = sx * 4;
-//    sy = sy * 4;
-//    lx = sx + width * 4 - 1;
-//    ly = sy + height * 4 - 1;
-//
-//    cv::Point2f mv_tmp(0.0, 0.0); //四角パッチの動きベクトル
-//    int SX = 16; // ブロックマッチングの探索範囲(X)
-//    int SY = 16; // ブロックマッチングの探索範囲(Y)
-//
-//    double e = 1e9, error_min = 1e9, rd_min = 1e9, rd = 1e9;
-//    int e_count;
-//    cv::Point2f mv_min;
-//    int spread_quarter = 64;
-//    int s = 1;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
-//    std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, 128, 128);
-//
-//    if(fullpell_initial_vector.x == -10000 && fullpell_initial_vector.y == -10000){
-//        for(int j = -SY * 4 ; j <= SY * 4 ; j += s) {            //j : y方向のMV
-//            for(int i = -SX * 4 ; i <= SX * 4 ; i += s) {        //i : x方向のMV
-//                //探索範囲が画像上かどうか判定
-//                if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
-//                   && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
-//                    e = 0.0;
-//                    e_count = 0;
-//                    for(auto &pixel : pixels) {
-//                        int ref_x = std::max((int)(4 * pixel.x), 0);
-//                        ref_x = (i + ref_x + spread_quarter);
-//                        int ref_y = std::max((int)((4 * pixel.y)), 0);
-//                        ref_y = (j + ref_y + spread_quarter);
-//                        e += fabs(R(expansion_ref_image, ref_x, ref_y) - R(target_image, (int)pixel.x, (int)pixel.y));
-//                        e_count++;
-//                    }
-//                }
-//
-//                cv::Point2f cmt = cv::Point2f(0.0, 0.0);
-//                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({cv::Point2f((double)i/4.0, (double)j/4.0), cv::Point2f((double)i/4.0, (double)j/4.0), cv::Point2f((double)i/4.0, (double)j/4.0)}, e, triangle_index, cmt, area_flag, ctu, true, pixels);
-//                if(rd_min > rd){
-//                    error_min = e;
-//                    rd_min = rd;
-//                    mv_min.x = (double)i / 4.0;
-//                    mv_min.y = (double)j / 4.0;
-//                }
-//            }
-//        }
-//    }else{
-//        mv_min.x = (fullpell_initial_vector.x > 0 ? (int)(fullpell_initial_vector.x + 0.5) : (int) (fullpell_initial_vector.x - 0.5));
-//        mv_min.y = (fullpell_initial_vector.y > 0 ? (int)(fullpell_initial_vector.y + 0.5) : (int) (fullpell_initial_vector.y - 0.5));
-//    }
-//
-//    std::vector<cv::Point2f> mvs;
-//    std::vector<double> errors;
-//    mvs.emplace_back(mv_min.x, mv_min.y);
-//    errors.emplace_back(error_min);
-//    mvs.emplace_back(mv_min.x, mv_min.y);
-//    errors.emplace_back(error_min);
-//    mvs.emplace_back(mv_min.x, mv_min.y);
-//    errors.emplace_back(error_min);
-//
-//    return std::make_tuple(mvs, errors);
-//}
+std::tuple<std::vector<cv::Point2f>, double> SquareDivision::blockMatching(Point4Vec square, const cv::Mat& target_image, cv::Mat expansion_ref_image, int square_index, CodingTreeUnit *ctu) {
+    double sx, sy, lx, ly;
+    cv::Point2f sp1, sp2, sp3, sp4;
+
+    sp1 = square.p1;
+    sp2 = square.p2;
+    sp3 = square.p3;
+    sp4 = square.p4;
+
+    sx = 4 * std::min({sp1.x, sp2.x, sp3.x, sp4.x});
+    sy = 4 * std::min({sp1.y, sp2.y, sp3.y, sp4.y});
+    lx = 4 * std::max({sp1.x, sp2.x, sp3.x, sp4.x}) + 3;
+    ly = 4 * std::max({sp1.y, sp2.y, sp3.y, sp4.y}) + 3;
+
+    cv::Point2f mv_tmp(0.0, 0.0); //ブロックの動きベクトル
+    int SX = 16; // ブロックマッチングの探索範囲(X)
+    int SY = 16; // ブロックマッチングの探索範囲(Y)
+
+    double rd, e;
+    double rd_min = 1e9, e_min = 1e9;
+
+    cv::Point2f mv_min;
+    int spread_quarter = 64;
+    int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
+    std::vector<cv::Point2f> pixels = getPixelsInSquare(square);
+
+    for(int j = -SY * 4 ; j <= SY * 4 ; j += s) {            //j : y方向のMV
+        for(int i = -SX * 4 ; i <= SX * 4 ; i += s) {        //i : x方向のMV
+            //探索範囲が画像上かどうか判定
+            if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
+               && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
+                e = 0.0;
+                for (int y = (int) (round(sy) / 4); y <= (int) (round(ly) / 4); y++) {
+                    for (int x = (int) (round(sx) / 4); x <= (int) (round(lx) / 4); x++) {
+                        e += fabs(R(expansion_ref_image, i + 4 * x + spread_quarter, j + 4 * y + spread_quarter) - R(target_image, x, y));
+                    }
+                }
+                cv::Point2f cmt = cv::Point2f(0.0, 0.0);
+                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD(cv::Point2f((double)i/4.0, (double)j/4.0), e, square_index, cmt, ctu, pixels);
+                if(rd_min > rd){
+                    e_min = e;
+                    rd_min = rd;
+                    mv_min.x = (double)i / 4.0;
+                    mv_min.y = (double)j / 4.0;
+                }
+            }
+        }
+    }
+
+    std::vector<cv::Point2f> mvs;
+    mvs.emplace_back(mv_min.x, mv_min.y);
+
+    mv_tmp.x = mv_min.x * 4;
+    mv_tmp.y = mv_min.y * 4;
+
+    s = 2;
+    for(int j = - 2 * s + mv_tmp.y ; j <= 2 * s + mv_tmp.y ; j += s){            //j : y方向のMV
+        for(int i = - 2 * s + mv_tmp.x ; i <= 2 * s + mv_tmp.x ; i += s){        //i : x方向のMV
+            if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
+               && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
+                e = 0.0;
+                for (int y = (int) (round(sy) / 4); y <= (int) (round(ly) / 4); y++) {
+                    for (int x = (int) (round(sx) / 4); x <= (int) (round(lx) / 4); x++) {
+                        e += fabs(R(expansion_ref_image, i + 4 * x + spread_quarter, j + 4 * y + spread_quarter) - R(target_image, x, y));
+                    }
+                }
+                cv::Point2f cmt = cv::Point2f(0.0, 0.0);
+                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD(cv::Point2f((double)i/4.0, (double)j/4.0), e, square_index, cmt, ctu, pixels);
+                if(rd_min > rd){
+                    e_min = e;
+                    rd_min = rd;
+                    mv_min.x = (double)i / 4.0;
+                    mv_min.y = (double)j / 4.0;
+                }
+            }
+        }
+    }
+
+    mvs.emplace_back(mv_min.x, mv_min.y);
+    mv_tmp.x = mv_min.x * 4;
+    mv_tmp.y = mv_min.y * 4;
+
+    s = 1;
+
+    for(int j = - 2 * s + mv_tmp.y ; j <= 2 * s + mv_tmp.y ; j += s){            //j : y方向のMV
+        for(int i = - 2 * s + mv_tmp.x ; i <= 2 * s + mv_tmp.x ; i += s){        //i : x方向のMV
+            if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
+               && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
+                e = 0.0;
+                for (int y = (int) (round(sy) / 4); y <= (int) (round(ly) / 4); y++) {
+                    for (int x = (int) (round(sx) / 4); x <= (int) (round(lx) / 4); x++) {
+                        e += fabs(R(expansion_ref_image, i + 4 * x + spread_quarter, j + 4 * y + spread_quarter) - R(target_image, x, y));
+                    }
+                }
+                cv::Point2f cmt = cv::Point2f(0.0, 0.0);
+                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD(cv::Point2f((double)i/4.0, (double)j/4.0), e, square_index, cmt, ctu, pixels);
+                if(rd_min > rd){
+                    e_min = e;
+                    rd_min = rd;
+                    mv_min.x = (double)i / 4.0;
+                    mv_min.y = (double)j / 4.0;
+                }
+            }
+        }
+    }
+
+    double error = e_min;
+    mvs.emplace_back(mv_min.x, mv_min.y);
+
+    return std::make_tuple(mvs, error);
+}
