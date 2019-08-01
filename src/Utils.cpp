@@ -374,6 +374,7 @@ std::vector<Config> readTasks(std::string config_name) {
     // iterate each-tasks
     for(auto& item : ary){
         picojson::object& task      = item.get<picojson::object>();
+        bool enable_flag            = task["enable"         ].get<bool>();
         std::string img_directory   = task["img_directory"  ].get<std::string>();
         std::string gauss_ref_image = task["gauss_ref_image"].get<std::string>();
         std::string ref_image       = task["ref_image"      ].get<std::string>();
@@ -383,7 +384,7 @@ std::vector<Config> readTasks(std::string config_name) {
         int ctu_height              = static_cast<int>(task["ctu_height"     ].get<double>());
         int division_steps          = static_cast<int>(task["division_step"  ].get<double>());
 
-        tasks.emplace_back(img_directory, gauss_ref_image, ref_image, target_image, qp, ctu_width, ctu_height, division_steps);
+        tasks.emplace_back(enable_flag, img_directory, gauss_ref_image, ref_image, target_image, qp, ctu_width, ctu_height, division_steps);
     }
 
     return tasks;

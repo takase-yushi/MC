@@ -20,6 +20,10 @@ private:
     int ctu_width;
     int ctu_height;
     int division_step;
+    bool enable;
+public:
+    bool isEnable() const;
+
 public:
     const std::string &getImgDirectory() const;
 
@@ -38,7 +42,7 @@ public:
     int getDivisionStep() const;
 
 public:
-    Config(const std::string &imgDirectory, const std::string &gaussRefImage, const std::string &refImage,
+    Config(bool enableFlag, const std::string &imgDirectory, const std::string &gaussRefImage, const std::string &refImage,
            const std::string &targetImage, int qp, int ctuWidth, int ctuHeight, int divisionStep);
 };
 
