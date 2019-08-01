@@ -1124,12 +1124,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
                 vectors.emplace_back(spatial_square.mv_parallel, SPATIAL);
             }
         }
-//        else{
-//            // 隣接パッチがワーピングで予想されている場合、そのパッチの0番の動きベクトルを候補とする
-//            if(!isMvExists(vectors, spatial_square.mv_warping[0])){
-//                vectors.emplace_back(spatial_square.mv_warping[0], SPATIAL);
-//            }
-//        }
     }
 
 #if MVD_DEBUG_LOG
