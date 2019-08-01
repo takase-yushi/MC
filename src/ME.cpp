@@ -336,7 +336,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
     cv::Point2f mv_min;
     int spread_quarter = 64;
     int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
-    std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, 128, 128);
+    std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, 64, 64);
 
     if(fullpell_initial_vector.x == -10000 && fullpell_initial_vector.y == -10000){
         for(int j = -SY * 4 ; j <= SY * 4 ; j += s) {            //j : y方向のMV
