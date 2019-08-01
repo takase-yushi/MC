@@ -218,18 +218,6 @@ void run(std::string config_path) {
         cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo, diagonal_line_area_flag);
         cv::Mat color = triangle_division.getPredictedColorImageFromCtu(foo, diagonal_line_area_flag, getPSNR(target_image, p_image));
 
-#if STORE_DISTRIBUTION_LOG
-#if STORE_MVD_DISTRIBUTION_LOG
-#if GAUSS_NEWTON_PARALLEL_ONLY
-        Analyzer analayzer("_warping_and_parallel_" + std::to_string(qp) + "_" + getCurrentTimestamp());
-        analayzer.storeDistributionOfMv(foo, getProjectDirectory(OS) + "/log/minato");
-#else
-        Analyzer analayzer("_warping_and_parallel_average_mv_" + std::to_string(qp) + "_" + getCurrentTimestamp());
-        analayzer.storeDistributionOfMv(foo, getProjectDirectory(OS) + "/log/minato");
-#endif
-#endif
-#endif
-
         int code_length = triangle_division.getCtuCodeLength(foo);
         std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
         std::cout << "PSNR:" << getPSNR(target_image, p_image) << " code_length:" << code_length << std::endl;
@@ -239,5 +227,19 @@ void run(std::string config_path) {
         cv::imwrite(img_directory + "p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", triangle_division.getMvImage(foo));
         cv::imwrite(img_directory + "p_color_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
         std::cout << "triangle_size:" << triangle_division.getTriangleCoordinateList().size() << std::endl;
+
+#if STORE_DISTRIBUTION_LOG
+#if STORE_MVD_DISTRIBUTION_LOG
+#if GAUSS_NEWTON_PARALLEL_ONLY
+        Analyzer analayzer("_warping_and_parallel_" + std::to_string(qp) + "_" + getCurrentTimestamp());
+        analayzer.storeDistributionOfMv(foo, getProjectDirectory(OS) + "/log/minato");
+#else
+        Analyzer analayzer("_warping_and_parallel_average_mv_add_3_qp_" + std::to_string(qp) + "_" + getCurrentTimestamp());
+        analayzer.storeDistributionOfMv(foo, getProjectDirectory(OS) + "/log/minato");
+        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , getProjectDirectory(OS) + "/log/minato");
+#endif
+#endif
+#endif
+
     }
 }
