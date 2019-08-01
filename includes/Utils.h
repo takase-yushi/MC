@@ -7,8 +7,8 @@
 #ifndef ENCODER_UTILS_H
 #define ENCODER_UTILS_H
 
-#include <opencv2/core/types.hpp>
-#include "config.h"
+#include <opencv2/core.hpp>
+#include <opencv/cv.hpp>
 #include "CodingTreeUnit.h"
 
 /**
