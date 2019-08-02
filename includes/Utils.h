@@ -10,6 +10,7 @@
 #include <opencv2/core.hpp>
 #include <opencv/cv.hpp>
 #include "CodingTreeUnit.h"
+#include "Config.h"
 
 /**
  * @def R(img, x, y) ((img).data[((int)img.step) * (y) + (x) * 3 + 2])
@@ -190,5 +191,7 @@ std::vector<std::string> splitString(const std::string &s, char delim);
 cv::Mat half(cv::Mat &in,int k);
 
 std::string getCurrentTimestamp();
+
+std::vector<Config> readTasks(std::string config_name = "config.json");
 
 #endif //ENCODER_UTILS_H

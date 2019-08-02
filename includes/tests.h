@@ -37,5 +37,6 @@ void draw_mv();
 void getDiff_image();
 void filterTest();
 void test();
+void test_config_file();
 
 #endif //ENCODER_TESTS_H
