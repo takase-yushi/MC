@@ -521,7 +521,6 @@ void SquareDivision::addCornerAndSquare(Square square, int square_index){
     cv::Point2f p1 = corners[square.p1_idx];
     cv::Point2f p2 = corners[square.p2_idx];
     cv::Point2f p3 = corners[square.p3_idx];
-    cv::Point2f p4 = corners[square.p4_idx];
 
     cv::Point2f y = (p3 - p1) / 2.0;
     y.y -= 0.5;                            //    a         b
@@ -576,16 +575,14 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     if(steps <= 0) return false;
 
     double RMSE_before_subdiv = 0.0;
-    double error_warping, error_parallel;
+    double error_parallel;
     cv::Point2f p1 = square.p1;
     cv::Point2f p2 = square.p2;
     cv::Point2f p3 = square.p3;
     cv::Point2f p4 = square.p4;
 
-    Point4Vec targetSquare(p1, p2, p3, p4);
     int square_size = 0;
     bool parallel_flag;
-    int num;
 
     std::vector<cv::Point2f> dummy;
     std::vector<cv::Point2f> gauss_result_warping;
@@ -604,8 +601,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         parallel_flag = result_before.parallel_flag;
         if(parallel_flag){
             error_parallel = result_before.residual;
-        }else{
-            error_warping = result_before.residual;
         }
         ctu->error_bm = result_before.residual_bm;
         ctu->error_newton = result_before.residual_newton;
