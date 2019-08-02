@@ -83,7 +83,7 @@ enum {
 
 #define PRED_MODE NEWTON
 #define GAUSS_NEWTON_PARALLEL_ONLY false
-#define GAUSS_NEWTON_INIT_VECTOR true
+#define GAUSS_NEWTON_INIT_VECTOR false
 #define GAUSS_NEWTON_HEVC_IMAGE true
 #define HEVC_REF_IMAGE true
 #define STORE_MVD_DISTRIBUTION_LOG true
