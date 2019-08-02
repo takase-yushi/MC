@@ -140,6 +140,7 @@ private:
     int insertSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx);
     void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int p4_idx);
     void addCoveredSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx, int square_no);
+    std::vector<std::set<int> > same_corner_list;
     void removeSquareNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int p4_idx);
     void removeSquareCoveredSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx, int square_idx);
     int getCornerIndex(cv::Point2f p);
