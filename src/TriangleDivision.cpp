@@ -1816,6 +1816,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
     std::vector<int> spatial_triangles = getSpatialTriangleList(triangle_idx);
     int spatial_triangle_size = static_cast<int>(spatial_triangles.size());
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors; // ベクトルとモードを表すフラグのペア
+    std::vector<std::vector<cv::Point2f>> warping_vectors;
 
     // すべてのベクトルを格納する．
     for(int i = 0 ; i < spatial_triangle_size ; i++) {
@@ -1825,13 +1826,52 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
         if(spatial_triangle.parallel_flag){
             if(!isMvExists(vectors, spatial_triangle.mv_parallel)) {
                 vectors.emplace_back(spatial_triangle.mv_parallel, SPATIAL);
+                warping_vectors.emplace_back();
             }
         }else{
             // 隣接パッチがワーピングで予想されている場合、そのパッチの0番の動きベクトルを候補とする
             cv::Point2f p1 = spatial_triangle.mv_warping[0];
             cv::Point2f p2 = spatial_triangle.mv_warping[1];
             cv::Point2f p3 = spatial_triangle.mv_warping[2];
-            cv::Point2f mv_average((p1.x + p2.x + p3.x) / 3.0, (p1.y + p2.y + p3.y) / 3.0);
+#if MVD_DEBUG_LOG
+            std::cout << "target_triangle_coordinate:";
+            std::cout << corners[triangles[triangle_idx].first.p1_idx] << " ";
+            std::cout << corners[triangles[triangle_idx].first.p2_idx] << " ";
+            std::cout << corners[triangles[triangle_idx].first.p3_idx] << std::endl;
+            std::cout << "ref_triangle_coordinate:";
+            std::cout << corners[triangles[spatial_triangle_index].first.p1_idx] << " ";
+            std::cout << corners[triangles[spatial_triangle_index].first.p2_idx] << " ";
+            std::cout << corners[triangles[spatial_triangle_index].first.p3_idx] << std::endl;
+            std::cout << "ref_triangle_mvs:";
+            std::cout << p1 << " " << p2 << " " << p3 << std::endl;
+#endif
+            cv::Point2f mv_average;
+            std::vector<cv::Point2f> ref_mvs{p1, p2, p3};
+            std::pair<Triangle, int> target_triangle = triangles[triangle_idx];
+            cv::Point2f pp1 = corners[target_triangle.first.p1_idx], pp2 = corners[target_triangle.first.p2_idx], pp3 = corners[target_triangle.first.p3_idx];
+            std::pair<Triangle, int> ref_triangle = triangles[spatial_triangle_index];
+            std::vector<cv::Point2f> ref_triangle_coordinates{corners[ref_triangle.first.p1_idx], corners[ref_triangle.first.p2_idx], corners[ref_triangle.first.p3_idx]};
+            std::vector<cv::Point2f> target_triangle_coordinates{cv::Point2f((pp1.x + pp2.x + pp3.x) / 3.0, (pp1.y + pp2.y + pp3.y) / 3.0)};
+            std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_triangle_coordinates, ref_mvs, target_triangle_coordinates);
+            mv_average = mvs[0];
+
+            if (!parallel_flag) {
+                target_triangle_coordinates.clear();
+                target_triangle_coordinates.emplace_back(pp1);
+                target_triangle_coordinates.emplace_back(pp2);
+                target_triangle_coordinates.emplace_back(pp3);
+                mvs = getPredictedWarpingMv(ref_triangle_coordinates, ref_mvs, target_triangle_coordinates);
+                std::vector<cv::Point2f> v{mvs[0], mvs[1], mvs[2]};
+                warping_vectors.emplace_back(v);
+
+                mv_average.x = (p1.x + p2.x + p3.x) / 3.0;
+                mv_average.y = (p1.y + p2.y + p3.y) / 3.0;
+            }else{
+                warping_vectors.emplace_back();
+            }
+
+            mv_average.x = (p1.x + p2.x + p3.x) / 3.0;
+            mv_average.y = (p1.y + p2.y + p3.y) / 3.0;
             mv_average = roundVecQuarter(mv_average);
             if(!isMvExists(vectors, mv_average)){
                 vectors.emplace_back(mv_average, SPATIAL);
@@ -1843,9 +1883,15 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
     std::cout << corners[triangles[triangle_idx].first.p1_idx] << " " << corners[triangles[triangle_idx].first.p2_idx] << " " << corners[triangles[triangle_idx].first.p3_idx] << std::endl;
     #endif
 
-    if(!isMvExists(vectors, collocated_mv)) vectors.emplace_back(collocated_mv, SPATIAL);
+    if(!isMvExists(vectors, collocated_mv)) {
+        vectors.emplace_back(collocated_mv, SPATIAL);
+        warping_vectors.emplace_back();
+    }
 
-    if(vectors.size() < 2) vectors.emplace_back(cv::Point2f(0.0, 0.0), Collocated);
+    if(vectors.size() < 2) {
+        vectors.emplace_back(cv::Point2f(0.0, 0.0), Collocated);
+        warping_vectors.emplace_back();
+    }
 
     double lambda = getLambdaPred(qp, (parallel_flag ? 1.0 : 1.0));
 
@@ -1936,9 +1982,15 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum);
         }else{
             std::vector<cv::Point2f> mvds;
-            mvds.emplace_back(current_mv - mv[0]);
-            mvds.emplace_back(current_mv - mv[1]);
-            mvds.emplace_back(current_mv - mv[2]);
+            if(!warping_vectors[i].empty()){
+                mvds.emplace_back(warping_vectors[i][0] - mv[0]);
+                mvds.emplace_back(warping_vectors[i][1] - mv[1]);
+                mvds.emplace_back(warping_vectors[i][2] - mv[2]);
+            }else {
+                mvds.emplace_back(current_mv - mv[0]);
+                mvds.emplace_back(current_mv - mv[1]);
+                mvds.emplace_back(current_mv - mv[2]);
+            }
 
             int mvd_code_length = 6;
             FlagsCodeSum flag_code_sum(0, 0, 0, 0);

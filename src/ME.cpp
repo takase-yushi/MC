@@ -480,13 +480,13 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     continue;
                 double error_tmp = 0.0;
                 for (const auto &pixel : pixels_in_triangle) {
-                    #if GAUSS_NEWTON_HEVC_IMAGE
-                        error_tmp += abs(expand_image[0][3][1][4 * (int) (pixel.x + bx)][4 * (int) (pixel.y + by)] -
-                                         expand_image[0][3][3][4 * (int) (pixel.x)][4 * (int) (pixel.y)]);
-                    #else
-                        error_tmp += abs(expand_image[0][3][1][(int) (pixel.x + bx)][(int) (pixel.y + by)] -
+#if GAUSS_NEWTON_HEVC_IMAGE
+                    error_tmp += abs(expand_image[0][3][1][4 * (int) (pixel.x + bx)][4 * (int) (pixel.y + by)] -
+                                     expand_image[0][3][3][4 * (int) (pixel.x)][4 * (int) (pixel.y)]);
+#else
+                    error_tmp += abs(expand_image[0][3][1][(int) (pixel.x + bx)][(int) (pixel.y + by)] -
                                                      expand_image[0][3][3][(int) (pixel.x)][(int) (pixel.y)]);
-                    #endif
+#endif
                 }
                 if (error_min > error_tmp) {
                     error_min = error_tmp;
@@ -719,17 +719,17 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                         // 参照フレームの中心差分
                         spread+=1;
                         double g_x, g_y;
-                        #if GAUSS_NEWTON_HEVC_IMAGE
-                            g_x          = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_warping.x  + 1), 4 * (X_later_warping.y     ), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_warping.x  - 1), 4 * (X_later_warping.y     ), 1)) / 2.0;  // (current_ref_expand[x_warping_tmp + 4 ][y_warping_tmp     ] - current_ref_expand[x_warping_tmp - 4 ][y_warping_tmp     ]) / 2.0;
-                            g_y          = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_warping.x     ), 4 * (X_later_warping.y  + 1), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_warping.x     ), 4 * (X_later_warping.y  - 1), 1)) / 2.0;  // (current_ref_expand[x_warping_tmp     ][y_warping_tmp + 4 ] - current_ref_expand[x_warping_tmp     ][y_warping_tmp - 4 ]) / 2.0;
-                            g_x_parallel = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_parallel.x + 1), 4 * (X_later_parallel.y    ), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_parallel.x - 1), 4 * (X_later_parallel.y    ), 1)) / 2.0;  // (current_ref_expand[x_parallel_tmp + 4][y_parallel_tmp    ] - current_ref_expand[x_parallel_tmp - 4][y_parallel_tmp    ]) / 2.0;
-                            g_y_parallel = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_parallel.x    ), 4 * (X_later_parallel.y + 1), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_parallel.x    ), 4 * (X_later_parallel.y - 1), 1)) / 2.0;  // (current_ref_expand[x_parallel_tmp    ][y_parallel_tmp + 4] - current_ref_expand[x_parallel_tmp    ][y_parallel_tmp - 4]) / 2.0;
-                        #else
-                            g_x   = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x  + 1 , X_later_warping.y    , 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x  - 1, X_later_warping.y     , 1)) / 2.0;  // (current_ref_expand[x_warping_tmp + 4 ][y_warping_tmp     ] - current_ref_expand[x_warping_tmp - 4 ][y_warping_tmp     ]) / 2.0;
+#if GAUSS_NEWTON_HEVC_IMAGE
+                        g_x          = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_warping.x  + 1), 4 * (X_later_warping.y     ), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_warping.x  - 1), 4 * (X_later_warping.y     ), 1)) / 2.0;  // (current_ref_expand[x_warping_tmp + 4 ][y_warping_tmp     ] - current_ref_expand[x_warping_tmp - 4 ][y_warping_tmp     ]) / 2.0;
+                        g_y          = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_warping.x     ), 4 * (X_later_warping.y  + 1), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_warping.x     ), 4 * (X_later_warping.y  - 1), 1)) / 2.0;  // (current_ref_expand[x_warping_tmp     ][y_warping_tmp + 4 ] - current_ref_expand[x_warping_tmp     ][y_warping_tmp - 4 ]) / 2.0;
+                        g_x_parallel = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_parallel.x + 1), 4 * (X_later_parallel.y    ), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_parallel.x - 1), 4 * (X_later_parallel.y    ), 1)) / 2.0;  // (current_ref_expand[x_parallel_tmp + 4][y_parallel_tmp    ] - current_ref_expand[x_parallel_tmp - 4][y_parallel_tmp    ]) / 2.0;
+                        g_y_parallel = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_parallel.x    ), 4 * (X_later_parallel.y + 1), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_parallel.x    ), 4 * (X_later_parallel.y - 1), 1)) / 2.0;  // (current_ref_expand[x_parallel_tmp    ][y_parallel_tmp + 4] - current_ref_expand[x_parallel_tmp    ][y_parallel_tmp - 4]) / 2.0;
+#else
+                        g_x   = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x  + 1 , X_later_warping.y    , 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x  - 1, X_later_warping.y     , 1)) / 2.0;  // (current_ref_expand[x_warping_tmp + 4 ][y_warping_tmp     ] - current_ref_expand[x_warping_tmp - 4 ][y_warping_tmp     ]) / 2.0;
                             g_y   = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x     , X_later_warping.y  + 1, 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x     , X_later_warping.y  - 1, 1)) / 2.0;  // (current_ref_expand[x_warping_tmp     ][y_warping_tmp + 4 ] - current_ref_expand[x_warping_tmp     ][y_warping_tmp - 4 ]) / 2.0;
                             g_x_parallel = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_parallel.x + 1, X_later_parallel.y    , 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_parallel.x - 1, X_later_parallel.y    , 1)) / 2.0;  // (current_ref_expand[x_parallel_tmp + 4][y_parallel_tmp    ] - current_ref_expand[x_parallel_tmp - 4][y_parallel_tmp    ]) / 2.0;
                             g_y_parallel = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_parallel.x    , X_later_parallel.y + 1, 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_parallel.x    , X_later_parallel.y - 1, 1)) / 2.0;  // (current_ref_expand[x_parallel_tmp    ][y_parallel_tmp + 4] - current_ref_expand[x_parallel_tmp    ][y_parallel_tmp - 4]) / 2.0;
-                        #endif
+#endif
                         spread-=1;
 
                         // 式(28)～(33)
@@ -743,17 +743,17 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     double g_warping;
                     double g_parallel;
 
-                    #if GAUSS_NEWTON_HEVC_IMAGE
-                        f              = img_ip(current_target_expand    , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                X.x, 4 *                X.y, 1);
-                        f_org          = img_ip(current_target_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                X.x, 4 *                X.y, 1);
-                        g_warping      = img_ip(current_ref_expand       , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *  X_later_warping.x, 4 *  X_later_warping.y, 1);
-                        g_parallel     = img_ip(current_ref_expand       , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_parallel.x, 4 * X_later_parallel.y, 1);
-                    #else
-                        f              = img_ip(current_target_expand    , cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)),                X.x,                X.y, 2);
+#if GAUSS_NEWTON_HEVC_IMAGE
+                    f              = img_ip(current_target_expand    , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                X.x, 4 *                X.y, 1);
+                    f_org          = img_ip(current_target_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                X.x, 4 *                X.y, 1);
+                    g_warping      = img_ip(current_ref_expand       , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *  X_later_warping.x, 4 *  X_later_warping.y, 1);
+                    g_parallel     = img_ip(current_ref_expand       , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_parallel.x, 4 * X_later_parallel.y, 1);
+#else
+                    f              = img_ip(current_target_expand    , cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)),                X.x,                X.y, 2);
                         f_org          = img_ip(current_target_org_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)),                X.x,                X.y, 2);#endif
                         g_warping      = img_ip(current_ref_expand       , cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)),  X_later_warping.x,  X_later_warping.y, 2);                    double g_org_warping;
                         g_parallel     = img_ip(current_ref_expand       , cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_parallel.x, X_later_parallel.y, 2);                    double g_org_parallel;
-                    #endif
+#endif
                     double g_org_warping;
                     double g_org_parallel;
                     RMSE_warping_filter += fabs(f - g_warping);
@@ -772,13 +772,13 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                         g_org_warping  = img_ip(ref_hevc, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * tmp_X_later_warping.x,  4 * tmp_X_later_warping.y, 1);
                         g_org_parallel = img_ip(ref_hevc, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * tmp_X_later_parallel.x, 4 * tmp_X_later_parallel.y, 1);
                     }else {
-                        #if GAUSS_NEWTON_HEVC_IMAGE
-                            g_org_warping  = img_ip(current_ref_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *  tmp_X_later_warping.x, 4 *  tmp_X_later_warping.y, 1);
-                            g_org_parallel = img_ip(current_ref_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * tmp_X_later_parallel.x, 4 * tmp_X_later_parallel.y, 1);
-                        #else
-                            g_org_warping  = img_ip(current_ref_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread),  tmp_X_later_warping.x, tmp_X_later_warping.y, 2);
+#if GAUSS_NEWTON_HEVC_IMAGE
+                        g_org_warping  = img_ip(current_ref_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *  tmp_X_later_warping.x, 4 *  tmp_X_later_warping.y, 1);
+                        g_org_parallel = img_ip(current_ref_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * tmp_X_later_parallel.x, 4 * tmp_X_later_parallel.y, 1);
+#else
+                        g_org_warping  = img_ip(current_ref_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread),  tmp_X_later_warping.x, tmp_X_later_warping.y, 2);
                             g_org_parallel = img_ip(current_ref_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread), tmp_X_later_parallel.x, tmp_X_later_parallel.y, 2);
-                        #endif
+#endif
                     }
 
                     if(iterate_counter > 4){
@@ -894,11 +894,11 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
             }
 
             std::sort(v_stack_warping.begin(), v_stack_warping.end(), [](std::pair<std::vector<cv::Point2f>,double> a, std::pair<std::vector<cv::Point2f>,double> b){
-              return a.second < b.second;
+                return a.second < b.second;
             });
 
             std::sort(v_stack_parallel.begin(), v_stack_parallel.end(), [](std::pair<cv::Point2f,double> a, std::pair<cv::Point2f,double> b){
-              return a.second < b.second;
+                return a.second < b.second;
             });
 
             tmp_mv_warping = v_stack_warping[0].first;//一番良い動きベクトルを採用
@@ -958,4 +958,35 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
 
     return std::make_tuple(std::vector<cv::Point2f>{max_v_warping[0], max_v_warping[1], max_v_warping[2]}, max_v_parallel, min_error_warping, min_error_parallel, pixels_in_triangle.size());
+}
+
+/**
+ * @fn
+ * @brief
+ * @param ref_triangle_coordinate 参照パッチの各点の座標
+ * @param ref_mvs 参照パッチの各点の動きベクトル
+ * @param target_triangle_coordinate 符号化対象パッチの頂点の座標
+ * @return 予測した動きベクトル
+ */
+std::vector<cv::Point2f> getPredictedWarpingMv(std::vector<cv::Point2f>& ref_triangle_coordinate, std::vector<cv::Point2f>& ref_mvs, std::vector<cv::Point2f>& target_triangle_coordinate){
+    cv::Point2f p0,p1,p2;
+    p0 = ref_triangle_coordinate[0];
+    p1 = ref_triangle_coordinate[1];
+    p2 = ref_triangle_coordinate[2];
+    cv::Point2f a = p1 - p0;
+    cv::Point2f b = p2 - p0;
+
+    std::vector<cv::Point2f> v;
+
+    double det = a.x * b.y - a.y * b.x;
+
+    for (int i = 0; i < static_cast<int>(target_triangle_coordinate.size()); i++) {
+        cv::Point2f target = target_triangle_coordinate[i] - ref_triangle_coordinate[0];
+        double alpha = (target.x * b.y - target.y * b.x) / det;
+        double beta = (a.x * target.y - a.y * target.x) / det;
+        cv::Point2f X_ = alpha * (p1 + ref_mvs[1] - (p0 + ref_mvs[0])) + beta * (p2 + ref_mvs[2] - (p0 + ref_mvs[0])) + p0 + ref_mvs[0];
+        v.emplace_back(roundVecQuarter(X_ - target_triangle_coordinate[i]));
+    }
+
+    return v;
 }
