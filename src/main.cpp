@@ -42,7 +42,7 @@ int qp;
 int block_size_x;
 int block_size_y;
 int division_steps;
-std::string out_file_suffix = "_debug";
+std::string out_file_suffix = "_square";
 
 int main(int argc, char *argv[]){
     // Write test codes below
@@ -115,7 +115,6 @@ void run(std::string config_path) {
 
         // 時間計測
         clock_t start = clock();
-        std::cout << "check1" << std::endl;
         // 準備 --------------------------------------------------------------------------------
         // 画像の読み込み
         cv::Mat ref_gauss, ref_gauss_gray;          // 参照フレーム
@@ -304,7 +303,6 @@ void run_square(std::string config_path) {
 
         // 時間計測
         clock_t start = clock();
-        std::cout << "check1" << std::endl;
         // 準備 --------------------------------------------------------------------------------
         // 画像の読み込み
         cv::Mat ref_gauss, ref_gauss_gray;          // 参照フレーム
@@ -381,7 +379,7 @@ void run_square(std::string config_path) {
 
         square_division.constructPreviousCodingTree(foo, 0);
 
-        for (int i = 0; i < init_squares.size(); i++) {
+        for (int i = 0; i < init_squares.size() ; i++) {
 
             Point4Vec square = init_squares[i];
             cv::Point2f p1 = square.p1;
