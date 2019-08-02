@@ -598,10 +598,10 @@ void SquareDivision::addCornerAndSquare(Square square, int square_index){
     cv::Point2f g = e;    g.y++;           //     ---------
     cv::Point2f h = f;    h.y++;           //    c         d
 
-    int e_idx = getCornerIndex(e);
-    int f_idx = getCornerIndex(f);
-    int g_idx = getCornerIndex(g);
-    int h_idx = getCornerIndex(h);
+    int e_idx = getOrAddCornerIndex(e);
+    int f_idx = getOrAddCornerIndex(f);
+    int g_idx = getOrAddCornerIndex(g);
+    int h_idx = getOrAddCornerIndex(h);
 
     int a_idx = square.p1_idx;
     int b_idx = square.p2_idx;
@@ -737,16 +737,16 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     double RMSE_after_subdiv = 0.0;
     std::vector<GaussResult> split_mv_result(subdiv_target_squares.size());
 
-    int s1_p1_idx = getCornerIndex(split_squares.s1.p1);
-    int s1_p2_idx = getCornerIndex(split_squares.s1.p2);
-    int s1_p3_idx = getCornerIndex(split_squares.s1.p3);
-    int s1_p4_idx = getCornerIndex(split_squares.s1.p4);
+    int s1_p1_idx = getOrAddCornerIndex(split_squares.s1.p1);
+    int s1_p2_idx = getOrAddCornerIndex(split_squares.s1.p2);
+    int s1_p3_idx = getOrAddCornerIndex(split_squares.s1.p3);
+    int s1_p4_idx = getOrAddCornerIndex(split_squares.s1.p4);
     addCornerAndSquare(Square(s1_p1_idx, s1_p2_idx, s1_p3_idx, s1_p4_idx), square_index);
 
-    int s2_p1_idx = getCornerIndex(split_squares.s2.p1);
-    int s2_p2_idx = getCornerIndex(split_squares.s2.p2);
-    int s2_p3_idx = getCornerIndex(split_squares.s2.p3);
-    int s2_p4_idx = getCornerIndex(split_squares.s2.p4);
+    int s2_p1_idx = getOrAddCornerIndex(split_squares.s2.p1);
+    int s2_p2_idx = getOrAddCornerIndex(split_squares.s2.p2);
+    int s2_p3_idx = getOrAddCornerIndex(split_squares.s2.p3);
+    int s2_p4_idx = getOrAddCornerIndex(split_squares.s2.p4);
     addCornerAndSquare(Square(s2_p1_idx, s2_p2_idx, s2_p3_idx, s2_p4_idx), square_index);
 
     same_corner_list[s1_p2_idx].emplace(s2_p1_idx);                      //     ---------    ---------
