@@ -4,9 +4,9 @@
       "enable"         : true,
       "img_directory"  : "/img/minato",
       "gauss_ref_image": "/minato_limit_2_I22.bmp",
-      "ref_image"      : "/minato_limit_2_I22.bmp",
+      "ref_image"      : "/minato_limit_2_I37.bmp",
       "target_image"   : "/minato_000413_limit.bmp",
-      "QP"             : 22,
+      "QP"             : 37,
       "ctu_width"      : 128,
       "ctu_height"     : 128,
       "division_step"  : 8
