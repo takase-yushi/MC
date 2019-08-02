@@ -144,6 +144,7 @@ private:
     void removeSquareNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int p4_idx);
     void removeSquareCoveredSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx, int square_idx);
     int getOrAddCornerIndex(cv::Point2f p);
+    int getCornerIndex(cv::Point2f p);
     void addCornerAndSquare(Square square, int square_index);
     void constructPreviousCodingTree(CodingTreeUnit* codingTree, CollocatedMvTree* constructedTree);
     static cv::Point2f getQuantizedMv(cv::Point2f &mv, double quantize_step);

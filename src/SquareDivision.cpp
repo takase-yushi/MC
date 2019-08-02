@@ -575,6 +575,17 @@ int SquareDivision::getOrAddCornerIndex(cv::Point2f p) {
 
 
 /**
+ * @fn int SquareDivision::getCornerIndex(cv::Point2f p)
+ * @brief 頂点が格納されているインデックスを返す。頂点が存在しない場合、-1を返す
+ * @param[in] 頂点の座標
+ * @return 頂点番号
+ */
+int SquareDivision::getCornerIndex(cv::Point2f p) {
+    if(corner_flag[(int)(p.y * 2)][(int)(p.x * 2)] != -1) return corner_flag[(int)(p.y * 2)][(int)(p.x * 2)]; //すでに頂点がある場合
+    return -1;
+}
+
+/**
  * @fn void SquareDivision::addCornerAndSquare(Square square, int square_index)
  * @brief
  * @param square
