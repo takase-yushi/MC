@@ -1831,6 +1831,18 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             cv::Point2f p1 = spatial_triangle.mv_warping[0];
             cv::Point2f p2 = spatial_triangle.mv_warping[1];
             cv::Point2f p3 = spatial_triangle.mv_warping[2];
+#if MVD_DEBUG_LOG
+            std::cout << "target_triangle_coordinate:";
+            std::cout << corners[triangles[triangle_idx].first.p1_idx] << " ";
+            std::cout << corners[triangles[triangle_idx].first.p2_idx] << " ";
+            std::cout << corners[triangles[triangle_idx].first.p3_idx] << std::endl;
+            std::cout << "ref_triangle_coordinate:";
+            std::cout << corners[triangles[spatial_triangle_index].first.p1_idx] << " ";
+            std::cout << corners[triangles[spatial_triangle_index].first.p2_idx] << " ";
+            std::cout << corners[triangles[spatial_triangle_index].first.p3_idx] << std::endl;
+            std::cout << "ref_triangle_mvs:";
+            std::cout << p1 << " " << p2 << " " << p3 << std::endl;
+#endif
             cv::Point2f mv_average((p1.x + p2.x + p3.x) / 3.0, (p1.y + p2.y + p3.y) / 3.0);
             mv_average = roundVecQuarter(mv_average);
             if(!isMvExists(vectors, mv_average)){
