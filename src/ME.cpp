@@ -959,3 +959,34 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
     return std::make_tuple(std::vector<cv::Point2f>{max_v_warping[0], max_v_warping[1], max_v_warping[2]}, max_v_parallel, min_error_warping, min_error_parallel, pixels_in_triangle.size());
 }
+
+/**
+ * @fn
+ * @brief
+ * @param ref_triangle_coordinate 参照パッチの各点の座標
+ * @param ref_mvs 参照パッチの各点の動きベクトル
+ * @param target_triangle_coordinate 符号化対象パッチの頂点の座標
+ * @return 予測した動きベクトル
+ */
+std::vector<cv::Point2f> getPredictedWarpingMv(std::vector<cv::Point2f>& ref_triangle_coordinate, std::vector<cv::Point2f>& ref_mvs, std::vector<cv::Point2f>& target_triangle_coordinate){
+    cv::Point2f p0,p1,p2;
+    p0 = ref_triangle_coordinate[0];
+    p1 = ref_triangle_coordinate[1];
+    p2 = ref_triangle_coordinate[2];
+    cv::Point2f a = p1 - p0;
+    cv::Point2f b = p2 - p0;
+
+    std::vector<cv::Point2f> v;
+
+    double det = a.x * b.y - a.y * b.x;
+
+    for (int i = 0; i < static_cast<int>(target_triangle_coordinate.size()); i++) {
+        cv::Point2f target = target_triangle_coordinate[i] - ref_triangle_coordinate[0];
+        double alpha = (target.x * b.y - target.y * b.x) / det;
+        double beta = (a.x * target.y - a.y * target.x) / det;
+        cv::Point2f X_ = alpha * (p1 + ref_mvs[1] - (p0 + ref_mvs[0])) + beta * (p2 + ref_mvs[2] - (p0 + ref_mvs[0])) + p0 + ref_mvs[0];
+        v.emplace_back(roundVecQuarter(X_ - target_triangle_coordinate[i]));
+    }
+
+    return v;
+}

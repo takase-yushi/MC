@@ -12,18 +12,6 @@
 #include <queue>
 #include "Utils.h"
 
-/**
- * @fn void block_matching(cv::Mat &prev, cv::Mat &current, double &error, cv::Point2f &mv, Point3Vec tr, cv::Mat expansion_image)
- * @brief ブロックマッチングを行い, 動きベクトルを求める
- * @param[in]  prev             参照画像
- * @param[in]  current          対象画像
- * @param[out] error            誤差
- * @param[out] mv               ブロックマッチングの平行移動ベクトル
- * @param[in]  tr               三角形を表す3点の座標
- * @param[in]  expansion_image  2倍に拡大した(補間した)画像
- * @details
- *
- */
 std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point3Vec tr, const cv::Mat& current, cv::Mat expansion_image);
 std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Vec triangle, const cv::Mat& target_image, cv::Mat expansion_ref_image, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Point2f fullpell_initial_vector = cv::Point2f(-10000, -10000));
 
@@ -33,5 +21,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
 double bicubic_weight(double x);
 int bicubic_interpolation(unsigned char **img, double x, double y);
+
+std::vector<cv::Point2f> getPredictedWarpingMv(std::vector<cv::Point2f>& ref_triangle_coordinate, std::vector<cv::Point2f>& ref_mvs, std::vector<cv::Point2f>& target_triangle_coordinate);
 
 #endif //ENCODER_ME_H
