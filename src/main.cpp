@@ -53,6 +53,7 @@ int main(int argc, char *argv[]){
 
 void tests(){
     test_config_file();
+    testPredMv();
 }
 
 void run(std::string config_path) {

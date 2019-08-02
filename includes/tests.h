@@ -39,4 +39,5 @@ void filterTest();
 void test();
 void test_config_file();
 
+void testPredMv();
 #endif //ENCODER_TESTS_H
