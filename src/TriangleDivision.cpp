@@ -2138,6 +2138,29 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             }
 
         }
+    }else{
+        int merge_count = 0;
+        for(int i = 0 ; i < spatial_triangle_size ; i++){
+            int spatial_triangle_index = spatial_triangles[i];
+            GaussResult spatial_triangle = triangle_gauss_results[spatial_triangle_index];
+            cv::Rect rect(-64, -64, 4 * (target_image.cols + 2 * 16), 4 * (target_image.rows + 2 * 16));
+            std::vector<cv::Point2f> mvs;
+            std::vector<cv::Point2f> mvds;
+
+            if(!spatial_triangle.parallel_flag){
+                // TODO: すでに過去にはいっているかどうかをチェックする必要がある
+                if(!warping_vectors[i].empty()) {
+                    mvs.emplace_back(warping_vectors[i][0]);
+                    mvs.emplace_back(warping_vectors[i][1]);
+                    mvs.emplace_back(warping_vectors[i][2]);
+
+                    double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
+                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
+                    results.emplace_back(rd, getUnaryCodeLength(merge_count), mvds, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0));
+                    merge_count++;
+                }
+            }
+        }
     }
 
     // RDしたスコアが小さい順にソート
