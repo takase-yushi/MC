@@ -206,46 +206,38 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
     }
 
     // 0行目
-    for(int block_x = 1 ; block_x < (block_num_x * 2) - 1; block_x+=2){              //   -----------------     -----------------
-        int p1_idx = block_x;                                                        //   |            p1 |     | p2            |
-        int p2_idx = block_x + 1;                                                    //   |               |     |               |
-        same_corner_list[p1_idx].emplace(p2_idx);                                    //   |               |     |               |
-        same_corner_list[p2_idx].emplace(p1_idx);                                    //   |               |     |               |
-    }                                                                                //   -----------------     -----------------
-
+    for(int block_x = 1 ; block_x < (block_num_x * 2) - 1; block_x+=2){              //   ---------------     ---------------
+        int p1_idx = block_x;                                                        //   |          p1 |     | p2          |
+        int p2_idx = block_x + 1;                                                    //   |             |     |             |
+        same_corner_list[p2_idx].emplace(p1_idx);                                    //   |             |     |             |
+    }                                                                                //   |             |     |             |
+                                                                                     //   ---------------     ---------------
     for(int block_y = 1 ; block_y < (2 * block_num_y - 1) ; block_y+=2){             //
-        for(int block_x = 1 ; block_x < (block_num_x * 2 - 1) ; block_x+=2){         //   -----------------     -----------------
-            int p1_idx = block_x +     2 * block_num_x * block_y;                    //   |               |     |               |
-            int p2_idx = block_x + 1 + 2 * block_num_x * block_y;                    //   |               |     |               |
-            same_corner_list[p1_idx].emplace(p2_idx);                                //   |               |     |               |
-            same_corner_list[p2_idx].emplace(p1_idx);                                //   |            p1 |     | p2            |
-                                                                                     //   -----------------     -----------------
-//            if(block_y == (block_num_y - 1)) continue;                             //
-                                                                                     //   -----------------     -----------------
-            int p3_idx = p1_idx + 2 * block_num_x;                                   //   |            p3 |     | p4            |
-            int p4_idx = p3_idx + 1;                                                 //   |               |     |               |
-                                                                                     //   |               |     |               |
-            same_corner_list[p1_idx].emplace(p3_idx);                                //   |               |     |               |
-            same_corner_list[p1_idx].emplace(p4_idx);                                //   -----------------     -----------------
-            same_corner_list[p2_idx].emplace(p3_idx);                                //
-            same_corner_list[p2_idx].emplace(p4_idx);
-            same_corner_list[p3_idx].emplace(p1_idx);
-            same_corner_list[p3_idx].emplace(p2_idx);
-            same_corner_list[p3_idx].emplace(p4_idx);
+        for(int block_x = 1 ; block_x < (block_num_x * 2 - 1) ; block_x+=2){         //   ---------------     ---------------
+            int p1_idx = block_x +     2 * block_num_x * block_y;                    //   |             |     |             |
+            int p2_idx = block_x + 1 + 2 * block_num_x * block_y;                    //   |             |     |             |
+            same_corner_list[p2_idx].emplace(p1_idx);                                //   |             |     |             |
+                                                                                     //   |          p1 |     | p2          |
+             int p3_idx = p1_idx + 2 * block_num_x;                                  //   ---------------     ---------------
+             int p4_idx = p3_idx + 1;                                                //
+                                                                                     //   ---------------     ---------------
+            same_corner_list[p2_idx].emplace(p3_idx);                                //   |          p3 |     | p4          |
+                                                                                     //   |             |     |             |
+            same_corner_list[p3_idx].emplace(p1_idx);                                //   |             |     |             |
+            same_corner_list[p3_idx].emplace(p2_idx);                                //   |             |     |             |
+                                                                                     //   ---------------     ---------------
             same_corner_list[p4_idx].emplace(p1_idx);
             same_corner_list[p4_idx].emplace(p2_idx);
-            same_corner_list[p4_idx].emplace(p3_idx);
         }
     }
 
     std::cout << same_corner_list.size() << std::endl;
-    // 0行目
-    for(int block_x = 1 ; block_x < (block_num_x * 2) - 1; block_x+=2){              //   -----------------     -----------------
-        int p1_idx = block_x + 2 * block_num_x * (2 * block_num_y - 1);              //   |            p1 |     | p2            |
-        int p2_idx = block_x + 1;                                                    //   |               |     |               |
-        same_corner_list[p1_idx].emplace(p2_idx);                                    //   |               |     |               |
-        same_corner_list[p2_idx].emplace(p1_idx);                                    //   |               |     |               |
-    }                                                                                //   -----------------     -----------------
+    // 最下行目                                                                      //   ---------------     ---------------
+    for(int block_x = 1 ; block_x < (block_num_x * 2) - 1; block_x+=2){              //   |          p1 |     | p2          |
+        int p1_idx = block_x + 2 * block_num_x * (2 * block_num_y - 1);              //   |             |     |             |
+        int p2_idx = block_x + 1;                                                    //   |             |     |             |
+        same_corner_list[p2_idx].emplace(p1_idx);                                    //   |             |     |             |
+    }                                                                                //   ---------------     ---------------
 }
 
 /**
@@ -635,10 +627,8 @@ void SquareDivision::addCornerAndSquare(Square square, int square_index){
     addCoveredSquare(a_idx, e_idx, c_idx, f_idx, s1_idx);
     addCoveredSquare(g_idx, b_idx, h_idx, d_idx, s2_idx);
 
-    same_corner_list[e_idx].emplace(g_idx);
     same_corner_list[g_idx].emplace(e_idx);
 
-    same_corner_list[f_idx].emplace(h_idx);
     same_corner_list[h_idx].emplace(f_idx);
 
     isCodedSquare[square_index] = false;
@@ -766,31 +756,26 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
                                                                          //  -----------------
     //2分割後の隣接する頂点を追加                                        //  |               |
-    same_corner_list[s1_p3_idx].emplace(s2_p1_idx);                      //  |s1_p3     s1_p4|
-    same_corner_list[s2_p1_idx].emplace(s1_p3_idx);                      //  -----------------
+    same_corner_list[s2_p1_idx].emplace(s1_p3_idx);                      //  |s1_p3     s1_p4|
                                                                          //  -----------------
-    same_corner_list[s1_p4_idx].emplace(s2_p2_idx);                      //  |s2_p1     s2_p2|
-    same_corner_list[s2_p2_idx].emplace(s1_p4_idx);                      //  |               |
-                                                                         //  -----------------
-
-    //4分割後の隣接する頂点を追加
+    same_corner_list[s2_p2_idx].emplace(s1_p4_idx);                      //  -----------------
+                                                                         //  |s2_p1     s2_p2|
+                                                                         //  |               |
+    //4分割後の隣接する頂点を追加                                        //  -----------------
+    //p4とp3、p2とp1に関してはaddCornerAndSquareで追加しているのでここでは追加しない。
     int sub1_s1_p4_idx = getOrAddCornerIndex(split_sub_squares1.s1.p4);
     int sub2_s1_p2_idx = getOrAddCornerIndex(split_sub_squares2.s1.p2);  //     ---------------  ---------------
                                                                          //     |             |  |             |
     int sub1_s2_p3_idx = getOrAddCornerIndex(split_sub_squares1.s2.p3);  //     |             |  |             |
     int sub2_s2_p1_idx = getOrAddCornerIndex(split_sub_squares2.s2.p1);  //     |             |  |             |
                                                                          //     |   sub1_s1_p4|  |sub1_s2_p3   |
-    same_corner_list[sub1_s1_p4_idx].emplace(sub2_s1_p2_idx);            //     ---------------  ---------------
     same_corner_list[sub2_s1_p2_idx].emplace(sub1_s1_p4_idx);            //     ---------------  ---------------
-                                                                         //     |   sub2_s1_p2|  |sub2_s2_p1   |
-    same_corner_list[sub1_s1_p4_idx].emplace(sub2_s2_p1_idx);            //     |             |  |             |
-    same_corner_list[sub2_s2_p1_idx].emplace(sub1_s1_p4_idx);            //     |             |  |             |
-                                                                         //     |             |  |             |
     same_corner_list[sub2_s1_p2_idx].emplace(sub1_s2_p3_idx);            //     ---------------  ---------------
-    same_corner_list[sub1_s2_p3_idx].emplace(sub2_s1_p2_idx);
-
-    same_corner_list[sub2_s2_p1_idx].emplace(sub1_s2_p3_idx);
-    same_corner_list[sub1_s2_p3_idx].emplace(sub2_s2_p1_idx);
+                                                                         //     |   sub2_s1_p2|  |sub2_s2_p1   |
+    same_corner_list[sub2_s2_p1_idx].emplace(sub1_s1_p4_idx);            //     |             |  |             |
+    same_corner_list[sub2_s2_p1_idx].emplace(sub1_s2_p3_idx);            //     |             |  |             |
+                                                                         //     |             |  |             |
+    same_corner_list[sub1_s2_p3_idx].emplace(sub2_s2_p1_idx);            //     ---------------  ---------------
 
     //4分割後の隣接するパッチの頂点を追加                                // if != -1 のとき
     int sub1_s1_p3_idx = getCornerIndex(split_sub_squares1.s1.p3);       //              |          sp3|  |sp4          |
@@ -813,30 +798,22 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
     if(sp1_idx != -1) {
         same_corner_list[sub1_s1_p3_idx].emplace(sp1_idx);
-        same_corner_list[sp1_idx].emplace(sub1_s1_p3_idx);
         same_corner_list[sub2_s1_p1_idx].emplace(sp1_idx);
-        same_corner_list[sp1_idx].emplace(sub2_s1_p1_idx);
     }
 
     if(sp2_idx != -1) {
         same_corner_list[sub1_s1_p3_idx].emplace(sp2_idx);
-        same_corner_list[sp2_idx].emplace(sub1_s1_p3_idx);
         same_corner_list[sub2_s1_p1_idx].emplace(sp2_idx);
-        same_corner_list[sp2_idx].emplace(sub2_s1_p1_idx);
     }
 
     if(sp3_idx != -1) {
         same_corner_list[sub1_s1_p2_idx].emplace(sp3_idx);
-        same_corner_list[sp3_idx].emplace(sub1_s1_p2_idx);
         same_corner_list[sub1_s2_p1_idx].emplace(sp3_idx);
-        same_corner_list[sp3_idx].emplace(sub1_s2_p1_idx);
     }
 
     if(sp4_idx != -1) {
         same_corner_list[sub1_s1_p2_idx].emplace(sp4_idx);
-        same_corner_list[sp4_idx].emplace(sub1_s1_p2_idx);
         same_corner_list[sub1_s2_p1_idx].emplace(sp4_idx);
-        same_corner_list[sp4_idx].emplace(sub1_s2_p1_idx);
     }
 
     int square_indexes[] = {(int)squares.size() - 4, (int)squares.size() - 3, (int)squares.size() - 2, (int)squares.size() - 1};
