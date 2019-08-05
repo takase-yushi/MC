@@ -2140,6 +2140,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
         }
     }else{
         int merge_count = 0;
+        std::vector<Point3Vec> warping_vector_history;
         for(int i = 0 ; i < spatial_triangle_size ; i++){
             int spatial_triangle_index = spatial_triangles[i];
             GaussResult spatial_triangle = triangle_gauss_results[spatial_triangle_index];
@@ -2148,16 +2149,17 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             std::vector<cv::Point2f> mvds;
 
             if(!spatial_triangle.parallel_flag){
-                // TODO: すでに過去にはいっているかどうかをチェックする必要がある
-                if(!warping_vectors[i].empty()) {
+                if(!warping_vectors[i].empty()){
                     mvs.emplace_back(warping_vectors[i][0]);
                     mvs.emplace_back(warping_vectors[i][1]);
                     mvs.emplace_back(warping_vectors[i][2]);
-
-                    double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
-                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
-                    results.emplace_back(rd, getUnaryCodeLength(merge_count), mvds, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0));
-                    merge_count++;
+                    if(!isMvExists(warping_vector_history, mvs)) {
+                        double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
+                        double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
+                        results.emplace_back(rd, getUnaryCodeLength(merge_count), mvds, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0));
+                        merge_count++;
+                        warping_vector_history.emplace_back(mvs[0], mvs[1], mvs[2]);
+                    }
                 }
             }
         }
@@ -2504,4 +2506,13 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> TriangleDivision::full
     errors.emplace_back(error_min);
 
     return std::make_tuple(mvs, errors);
+}
+
+
+bool TriangleDivision::isMvExists(const std::vector<Point3Vec> &vectors, const std::vector<cv::Point2f> &mvs) {
+    for(const auto& vector : vectors){
+        if(vector.p1 == mvs[0] && vector.p2 == mvs[1] && vector.p3 == mvs[2]) return true;
+    }
+
+    return false;
 }
