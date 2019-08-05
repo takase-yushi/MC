@@ -486,8 +486,8 @@ std::vector<Point4Vec> SquareDivision::getIdxCoveredSquareCoordinateList(int tar
     }
     std::vector<Point4Vec> v(s.size());
 
-    for(auto triangle_idx : s) {
-        Square square = squares[triangle_idx];
+    for(auto square_idx : s) {
+        Square square = squares[square_idx];
         v.emplace_back(corners[square.p1_idx], corners[square.p2_idx], corners[square.p3_idx], corners[square.p4_idx]);
     }
 
@@ -603,15 +603,15 @@ void SquareDivision::addCornerAndSquare(Square square, int square_index){
     cv::Point2f p2 = corners[square.p2_idx];
     cv::Point2f p3 = corners[square.p3_idx];    //p4は使わないので宣言していない
 
-    cv::Point2f y = (p3 - p1) / 2.0;
-    y.y -= 0.5;                            //    a         b
-    cv::Point2f a = p1;                    //     ---------
-    cv::Point2f b = p2;                    //     |       |
-                                           //   e |       | f
-    cv::Point2f e = a + y;                 //   g |       | h
-    cv::Point2f f = b + y;                 //     |       |
-    cv::Point2f g = e;    g.y++;           //     ---------
-    cv::Point2f h = f;    h.y++;           //    c         d
+    cv::Point2f x = (p2 - p1) / 2.0;
+    x.x -= 0.5;                            //  a       e g      b
+    cv::Point2f a = p1;                    //   -----------------
+    cv::Point2f c = p3;                    //   |               |
+                                           //   |               |
+    cv::Point2f e = a + x;                 //   -----------------
+    cv::Point2f f = c + x;                 //  c       f h      d
+    cv::Point2f g = e;    g.x++;           //
+    cv::Point2f h = f;    h.x++;           //
 
     int e_idx = getOrAddCornerIndex(e);
     int f_idx = getOrAddCornerIndex(f);
@@ -623,17 +623,17 @@ void SquareDivision::addCornerAndSquare(Square square, int square_index){
     int c_idx = square.p3_idx;
     int d_idx = square.p4_idx;
 
-    int s1_idx = insertSquare(a_idx, b_idx, e_idx, f_idx);
-    int s2_idx = insertSquare(g_idx, h_idx, c_idx, d_idx);
+    int s1_idx = insertSquare(a_idx, e_idx, c_idx, f_idx);
+    int s2_idx = insertSquare(g_idx, b_idx, h_idx, d_idx);
 
     removeSquareNeighborVertex(square.p1_idx, square.p2_idx, square.p3_idx, square.p4_idx);
     removeSquareCoveredSquare( square.p1_idx, square.p2_idx, square.p3_idx, square.p4_idx, square_index);
 
-    addNeighborVertex(a_idx, b_idx, e_idx, f_idx);
-    addNeighborVertex(g_idx, h_idx, c_idx, d_idx);
+    addNeighborVertex(a_idx, e_idx, c_idx, f_idx);
+    addNeighborVertex(g_idx, b_idx, h_idx, d_idx);
 
-    addCoveredSquare(a_idx, b_idx, e_idx, f_idx, s1_idx);
-    addCoveredSquare(g_idx, h_idx, c_idx, d_idx, s2_idx);
+    addCoveredSquare(a_idx, e_idx, c_idx, f_idx, s1_idx);
+    addCoveredSquare(g_idx, b_idx, h_idx, d_idx, s2_idx);
 
     same_corner_list[e_idx].emplace(g_idx);
     same_corner_list[g_idx].emplace(e_idx);
@@ -647,7 +647,7 @@ void SquareDivision::addCornerAndSquare(Square square, int square_index){
 
 /**
  * @fn bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point4Vec square, int square_index, int type, int steps)
- * @brief 与えられたトライアングルを分割するか判定し，必要な場合は分割を行う
+ * @brief 与えられた四角形を分割するか判定し，必要な場合は分割を行う
  * @details この関数は再帰的に呼び出され，そのたびに分割を行う
  * @param gaussRefImage ガウス・ニュートン法の参照画像
  * @param ctu CodingTreeUnitのrootノード
@@ -764,77 +764,79 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     int s2_p4_idx = getOrAddCornerIndex(split_squares.s2.p4);
     addCornerAndSquare(Square(s2_p1_idx, s2_p2_idx, s2_p3_idx, s2_p4_idx), square_index);
 
-    //2分割後の隣接する頂点を追加
-    same_corner_list[s1_p2_idx].emplace(s2_p1_idx);                      //     ---------    ---------
-    same_corner_list[s2_p1_idx].emplace(s1_p2_idx);                      //     |  s1_p2|    |s2_p1  |
-                                                                         //     |       |    |       |
-    same_corner_list[s1_p4_idx].emplace(s2_p3_idx);                      //     |       |    |       |
-    same_corner_list[s2_p3_idx].emplace(s1_p4_idx);                      //     |  s1_p4|    |s2_p3  |
-                                                                         //     ---------    ---------
+                                                                         //  -----------------
+    //2分割後の隣接する頂点を追加                                        //  |               |
+    same_corner_list[s1_p3_idx].emplace(s2_p1_idx);                      //  |s1_p3     s1_p4|
+    same_corner_list[s2_p1_idx].emplace(s1_p3_idx);                      //  -----------------
+                                                                         //  -----------------
+    same_corner_list[s1_p4_idx].emplace(s2_p2_idx);                      //  |s2_p1     s2_p2|
+    same_corner_list[s2_p2_idx].emplace(s1_p4_idx);                      //  |               |
+                                                                         //  -----------------
+
     //4分割後の隣接する頂点を追加
     int sub1_s1_p4_idx = getOrAddCornerIndex(split_sub_squares1.s1.p4);
-    int sub1_s2_p2_idx = getOrAddCornerIndex(split_sub_squares1.s2.p2);  //     ---------------    ---------------
-                                                                         //     |             |    |             |
-    int sub2_s1_p3_idx = getOrAddCornerIndex(split_sub_squares2.s1.p3);  //     |             |    |             |
-    int sub2_s2_p1_idx = getOrAddCornerIndex(split_sub_squares2.s2.p1);  //     |             |    |             |
-                                                                         //     |   sub1_s1_p4|    |sub2_s1_p3   |
-    same_corner_list[sub1_s1_p4_idx].emplace(sub1_s2_p2_idx);            //     ---------------    ---------------
-    same_corner_list[sub1_s2_p2_idx].emplace(sub1_s1_p4_idx);            //     |   sub1_s2_p2|    |sub2_s2_p1   |
-                                                                         //     |             |    |             |
-    same_corner_list[sub1_s1_p4_idx].emplace(sub2_s2_p1_idx);            //     |             |    |             |
-    same_corner_list[sub2_s2_p1_idx].emplace(sub1_s1_p4_idx);            //     |             |    |             |
-                                                                         //     ---------------    ---------------
-    same_corner_list[sub1_s2_p2_idx].emplace(sub2_s1_p3_idx);
-    same_corner_list[sub2_s1_p3_idx].emplace(sub1_s2_p2_idx);
+    int sub2_s1_p2_idx = getOrAddCornerIndex(split_sub_squares2.s1.p2);  //     ---------------  ---------------
+                                                                         //     |             |  |             |
+    int sub1_s2_p3_idx = getOrAddCornerIndex(split_sub_squares1.s2.p3);  //     |             |  |             |
+    int sub2_s2_p1_idx = getOrAddCornerIndex(split_sub_squares2.s2.p1);  //     |             |  |             |
+                                                                         //     |   sub1_s1_p4|  |sub1_s2_p3   |
+    same_corner_list[sub1_s1_p4_idx].emplace(sub2_s1_p2_idx);            //     ---------------  ---------------
+    same_corner_list[sub2_s1_p2_idx].emplace(sub1_s1_p4_idx);            //     ---------------  ---------------
+                                                                         //     |   sub2_s1_p2|  |sub2_s2_p1   |
+    same_corner_list[sub1_s1_p4_idx].emplace(sub2_s2_p1_idx);            //     |             |  |             |
+    same_corner_list[sub2_s2_p1_idx].emplace(sub1_s1_p4_idx);            //     |             |  |             |
+                                                                         //     |             |  |             |
+    same_corner_list[sub2_s1_p2_idx].emplace(sub1_s2_p3_idx);            //     ---------------  ---------------
+    same_corner_list[sub1_s2_p3_idx].emplace(sub2_s1_p2_idx);
 
-    same_corner_list[sub2_s2_p1_idx].emplace(sub2_s1_p3_idx);
-    same_corner_list[sub2_s1_p3_idx].emplace(sub2_s2_p1_idx);
+    same_corner_list[sub2_s2_p1_idx].emplace(sub1_s2_p3_idx);
+    same_corner_list[sub1_s2_p3_idx].emplace(sub2_s2_p1_idx);
 
-    //4分割後の隣接するパッチの頂点を追加
-    int sub1_s1_p3_idx = getCornerIndex(split_sub_squares1.s1.p3);       //              |          sp3|    |sp4          |
-    int sub1_s2_p1_idx = getCornerIndex(split_sub_squares1.s2.p1);       //              ---------------    ---------------
+    //4分割後の隣接するパッチの頂点を追加                                // if != -1 のとき
+    int sub1_s1_p3_idx = getCornerIndex(split_sub_squares1.s1.p3);       //              |          sp3|  |sp4          |
+    int sub2_s1_p1_idx = getCornerIndex(split_sub_squares2.s1.p1);       //              ---------------  ---------------
                                                                          //
-    int sub1_s1_p2_idx = getCornerIndex(split_sub_squares1.s1.p2);       //      ---     ---------------    ---------------
-    int sub2_s1_p1_idx = getCornerIndex(split_sub_squares2.s1.p1);       //        |     |   sub1_s1_p2|    |sub2_s1_p1   |
-                                                                         //        |     |             |    |             |
-    cv::Point2f sp1 = split_sub_squares1.s1.p3;                          //        |     |             |    |             |
-    cv::Point2f sp2 = split_sub_squares1.s2.p1;                          //     sp1|     |sub1_s1_p3   |    |             |
-    cv::Point2f sp3 = split_sub_squares1.s1.p2;                          //      ---     ---------------    ---------------
-    cv::Point2f sp4 = split_sub_squares2.s1.p1;                          //     sp2|     |sub1_s2_p1   |    |             |
-    //それぞれspの座標を合わせる                                         //        |     |             |    |             |
-    sp1.x--; sp2.x--; sp3.y--; sp4.y--;                                  //        |     |             |    |             |
-                                                                         //        |     |             |    |             |
-    int sp1_idx = getCornerIndex(sp1);                                   //      ---     ---------------    ---------------
-    int sp2_idx = getCornerIndex(sp2);                                   //
+    int sub1_s1_p2_idx = getCornerIndex(split_sub_squares1.s1.p2);       //      ---     ---------------  ---------------
+    int sub1_s2_p1_idx = getCornerIndex(split_sub_squares1.s2.p1);       //        |     |   sub1_s1_p2|  |sub1_s2_p1   |
+                                                                         //        |     |             |  |             |
+    cv::Point2f sp1 = split_sub_squares1.s1.p3;                          //        |     |             |  |             |
+    cv::Point2f sp2 = split_sub_squares2.s1.p1;                          //     sp1|     |sub1_s1_p3   |  |             |
+    cv::Point2f sp3 = split_sub_squares1.s1.p2;                          //      ---     ---------------  ---------------
+    cv::Point2f sp4 = split_sub_squares1.s2.p1;                          //      ---     ---------------  ---------------
+    //それぞれspの座標を合わせる                                         //     sp2|     |sub2_s1_p1   |  |             |
+    sp1.x--; sp2.x--; sp3.y--; sp4.y--;                                  //        |     |             |  |             |
+    //頂点がある場合はそのインデックスをもらってくる(無いときは-1)       //        |     |             |  |             |
+    int sp1_idx = getCornerIndex(sp1);                                   //        |     |             |  |             |
+    int sp2_idx = getCornerIndex(sp2);                                   //      ---     ---------------  ---------------
     int sp3_idx = getCornerIndex(sp3);                                   //
-    int sp4_idx = getCornerIndex(sp4);                                   //
+    int sp4_idx = getCornerIndex(sp4);                                   //　-1 のとき
 
     if(sp1_idx != -1) {
         same_corner_list[sub1_s1_p3_idx].emplace(sp1_idx);
         same_corner_list[sp1_idx].emplace(sub1_s1_p3_idx);
-        same_corner_list[sub1_s2_p1_idx].emplace(sp1_idx);
-        same_corner_list[sp1_idx].emplace(sub1_s2_p1_idx);
+        same_corner_list[sub2_s1_p1_idx].emplace(sp1_idx);
+        same_corner_list[sp1_idx].emplace(sub2_s1_p1_idx);
     }
 
     if(sp2_idx != -1) {
         same_corner_list[sub1_s1_p3_idx].emplace(sp2_idx);
         same_corner_list[sp2_idx].emplace(sub1_s1_p3_idx);
-        same_corner_list[sub1_s2_p1_idx].emplace(sp2_idx);
-        same_corner_list[sp2_idx].emplace(sub1_s2_p1_idx);
+        same_corner_list[sub2_s1_p1_idx].emplace(sp2_idx);
+        same_corner_list[sp2_idx].emplace(sub2_s1_p1_idx);
     }
 
     if(sp3_idx != -1) {
         same_corner_list[sub1_s1_p2_idx].emplace(sp3_idx);
         same_corner_list[sp3_idx].emplace(sub1_s1_p2_idx);
-        same_corner_list[sub2_s1_p1_idx].emplace(sp3_idx);
-        same_corner_list[sp3_idx].emplace(sub2_s1_p1_idx);
+        same_corner_list[sub1_s2_p1_idx].emplace(sp3_idx);
+        same_corner_list[sp3_idx].emplace(sub1_s2_p1_idx);
     }
 
     if(sp4_idx != -1) {
         same_corner_list[sub1_s1_p2_idx].emplace(sp4_idx);
         same_corner_list[sp4_idx].emplace(sub1_s1_p2_idx);
-        same_corner_list[sub2_s1_p1_idx].emplace(sp4_idx);
-        same_corner_list[sp4_idx].emplace(sub2_s1_p1_idx);
+        same_corner_list[sub1_s2_p1_idx].emplace(sp4_idx);
+        same_corner_list[sp4_idx].emplace(sub1_s2_p1_idx);
     }
 
     int square_indexes[] = {(int)squares.size() - 4, (int)squares.size() - 3, (int)squares.size() - 2, (int)squares.size() - 1};
@@ -1016,33 +1018,33 @@ SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1
     switch(type) {
         case 1:
         {
-            cv::Point2f x = (p2 - p1) / 2.0;         //  a       e g      b
-            x.x -= 0.5;                              //   -----------------
+            cv::Point2f y = (p3 - p1) / 2.0;         //  a                b
+            y.y -= 0.5;                              //   -----------------
             a = p1;                                  //   |               |
-            b = p2;                                  //   |               |
-            c = p3;                                  //   |               |
+            b = p2;                                  // e |               | f
+            c = p3;                                  // g |               | h
             d = p4;                                  //   |               |
-            e = g = a + x;                           //   -----------------
-            f = h = c + x;                           //  c       f h      d
-            g.x++;
-            h.x++;
-
-            return {Point4Vec(a, e, c, f), Point4Vec(g, b, h, d), 2};
-        }
-        case 2:
-        {
-            cv::Point2f y = (p3 - p1) / 2.0;          //    a         b
-            y.y -= 0.5;                               //     ---------
-            a = p1;                                   //     |       |
-            b = p2;                                   //   e |       | f
-            c = p3;                                   //   g |       | h
-            d = p4;                                   //     |       |
-            e = g = a + y;                            //     ---------
-            f = h = b + y;                            //    c         d
+            e = g = a + y;                           //   -----------------
+            f = h = b + y;                           //  c                d
             g.y++;
             h.y++;
 
-            return {Point4Vec(a, b, e, f), Point4Vec(g, h, c, d), 1};
+            return {Point4Vec(a, b, e, f), Point4Vec(g, h, c, d), 2};
+        }
+        case 2:
+        {
+            cv::Point2f x = (p2 - p1) / 2.0;          //  a       e g      b
+            x.x -= 0.5;                               //   -----------------
+            a = p1;                                   //   |               |
+            b = p2;                                   //   |               |
+            c = p3;                                   //   -----------------
+            d = p4;                                   //  c       f h      d
+            e = g = a + x;                            //
+            f = h = c + x;                            //
+            g.x++;
+            h.x++;
+
+            return {Point4Vec(a, e, c, f), Point4Vec(g, b, h, d), 1};
         }
         default:
             break;
