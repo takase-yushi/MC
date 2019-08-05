@@ -91,6 +91,7 @@ enum {
 #define TEST_MODE false
 #define STORE_DISTRIBUTION_LOG true
 #define USE_BM_PARALLEL_MV false
+#define MV_LIST_MAX_NUM 5
 
 const std::string OS = "Ubuntu";
 
