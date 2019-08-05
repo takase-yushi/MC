@@ -1824,7 +1824,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
         GaussResult spatial_triangle = triangle_gauss_results[spatial_triangle_index];
 
         if(spatial_triangle.parallel_flag){
-            if(!isMvExists(vectors, spatial_triangle.mv_parallel)) {
+            if(!isMvExists(vectors, spatial_triangle.mv_parallel) && vectors.size() < MV_LIST_MAX_NUM) {
                 vectors.emplace_back(spatial_triangle.mv_parallel, SPATIAL);
                 warping_vectors.emplace_back();
             }
@@ -1873,7 +1873,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             mv_average.x = (p1.x + p2.x + p3.x) / 3.0;
             mv_average.y = (p1.y + p2.y + p3.y) / 3.0;
             mv_average = roundVecQuarter(mv_average);
-            if(!isMvExists(vectors, mv_average)){
+            if(!isMvExists(vectors, mv_average) && vectors.size() < MV_LIST_MAX_NUM){
                 vectors.emplace_back(mv_average, SPATIAL);
             }
         }
@@ -2094,6 +2094,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
         pixels_in_triangle = pixels;
     }
 
+    int merge_count = 0;
     if(parallel_flag) {
 //        std::cout << "original residual : " << residual << std::endl;
         for (int i = 0; i < spatial_triangle_size; i++) {
@@ -2110,7 +2111,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 
             if (spatial_triangle.parallel_flag) {
                 if(spatial_triangle.mv_parallel.x + sx < -16 || spatial_triangle.mv_parallel.y + sy < -16 || spatial_triangle.mv_parallel.x + lx >= target_image.cols + 16 || spatial_triangle.mv_parallel.y + ly >= target_image.rows + 16) continue;
-                if (!isMvExists(merge_vectors, spatial_triangle.mv_parallel)) {
+                if (!isMvExists(merge_vectors, spatial_triangle.mv_parallel) && merge_count < MV_LIST_MAX_NUM) {
                     merge_vectors.emplace_back(spatial_triangle.mv_parallel, MERGE);
                     mvs.emplace_back(spatial_triangle.mv_parallel);
                     mvs.emplace_back(spatial_triangle.mv_parallel);
@@ -2120,10 +2121,11 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                     double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
                     results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, i, MERGE,
                                          FlagsCodeSum(0, 0, 0, 0));
+                    merge_count++;
                 }
             } else {
                 if(spatial_triangle.mv_warping[0].x + sx < -16 || spatial_triangle.mv_warping[0].y + sy < -16 || spatial_triangle.mv_warping[0].x + lx >= target_image.cols + 16 || spatial_triangle.mv_warping[0].y + ly >= target_image.rows + 16) continue;
-                if (!isMvExists(merge_vectors, spatial_triangle.mv_warping[0])) {
+                if (!isMvExists(merge_vectors, spatial_triangle.mv_warping[0]) && merge_count < MV_LIST_MAX_NUM) {
                     merge_vectors.emplace_back(spatial_triangle.mv_warping[0], MERGE);
                     mvs.emplace_back(spatial_triangle.mv_warping[0]);
                     mvs.emplace_back(spatial_triangle.mv_warping[0]);
@@ -2134,37 +2136,32 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                     double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
                     results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, i, MERGE,
                                          FlagsCodeSum(0, 0, 0, 0));
+                    merge_count++;
                 }
             }
 
         }
     }else{
-        int merge_count = 0;
         std::vector<Point3Vec> warping_vector_history;
-        for(int i = 0 ; i < spatial_triangle_size ; i++){
-            int spatial_triangle_index = spatial_triangles[i];
-            GaussResult spatial_triangle = triangle_gauss_results[spatial_triangle_index];
+        for(int i = 0 ; i < warping_vectors.size() ; i++){
             cv::Rect rect(-64, -64, 4 * (target_image.cols + 2 * 16), 4 * (target_image.rows + 2 * 16));
             std::vector<cv::Point2f> mvs;
             std::vector<cv::Point2f> mvds;
 
-            if(!spatial_triangle.parallel_flag){
-                if(!warping_vectors[i].empty()){
-                    mvs.emplace_back(warping_vectors[i][0]);
-                    mvs.emplace_back(warping_vectors[i][1]);
-                    mvs.emplace_back(warping_vectors[i][2]);
-                    if(!isMvExists(warping_vector_history, mvs)) {
-                        double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
-                        double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
-                        results.emplace_back(rd, getUnaryCodeLength(merge_count), mvds, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0));
-                        merge_count++;
-                        warping_vector_history.emplace_back(mvs[0], mvs[1], mvs[2]);
-                    }
+            if(!warping_vectors[i].empty()) {
+                mvs.emplace_back(warping_vectors[i][0]);
+                mvs.emplace_back(warping_vectors[i][1]);
+                mvs.emplace_back(warping_vectors[i][2]);
+                if (!isMvExists(warping_vector_history, mvs)) {
+                    double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
+                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
+                    results.emplace_back(rd, getUnaryCodeLength(merge_count), mvds, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0));
+                    merge_count++;
+                    warping_vector_history.emplace_back(mvs[0], mvs[1], mvs[2]);
                 }
             }
         }
     }
-
     // RDしたスコアが小さい順にソート
     std::sort(results.begin(), results.end(), [](const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum >& a, const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum>& b){
         return std::get<0>(a) < std::get<0>(b);
