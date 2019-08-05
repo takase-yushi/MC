@@ -27,3 +27,4 @@
 #\img\minato\             minato_limit_2_I22.bmp       minato_000413_limit.bmp       minato_QP29.bmp                minato_limit_2_I29.bmp  minato_mirai_000413_limit.bmp  minato_16                     29     128              128
 #\img\minato\             minato_limit_2_I22.bmp       minato_000413_limit.bmp       minato_QP33.bmp                minato_limit_2_I33.bmp  minato_mirai_000413_limit.bmp  minato_16                     33     128              128
 /img/minato/             minato_limit_2_I22.bmp       minato_000413_limit.bmp       minato_QP22.bmp                minato_limit_2_I22.bmp  minato_mirai_000413_limit.bmp  minato_16                      22     64              64      6
+#/img/minato/             minato_limit_2_I22.bmp       minato_000413_limit.bmp       minato_QP22.bmp                minato_limit_2_I37.bmp  minato_mirai_000413_limit.bmp  minato_16                      37     64              64      6
