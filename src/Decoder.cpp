@@ -210,5 +210,57 @@ void Decoder::initTriangle(int _block_size_x, int _block_size_y, int _divide_ste
 }
 
 
+/**
+ * @fn int Decoder::insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type)
+ * @brief 三角形を追加する
+ * @param[in] p1_idx 頂点1の座標のインデックス
+ * @param[in] p2_idx 頂点2の座標のインデックス
+ * @param[in] p3_idx 頂点3の座標のインデックス
+ * @param[in] type 分割タイプ
+ * @return 挿入した三角形が格納されているインデックス
+ */
+int Decoder::insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type) {
+    std::vector<std::pair<cv::Point2f, int> > v;
+    v.emplace_back(corners[p1_idx], p1_idx);
+    v.emplace_back(corners[p2_idx], p2_idx);
+    v.emplace_back(corners[p3_idx], p3_idx);
+
+    // ラスタスキャン順でソート
+    sort(v.begin(), v.end(), [](const std::pair<cv::Point2f, int> &a1, const std::pair<cv::Point2f, int> &a2) {
+        if (a1.first.y != a2.first.y) {
+            return a1.first.y < a2.first.y;
+        } else {
+            return a1.first.x < a2.first.x;
+        }
+    });
+
+    Triangle triangle(v[0].second, v[1].second, v[2].second, static_cast<int>(triangles.size()));
+
+    triangles.emplace_back(triangle, type);
+    isCodedTriangle.emplace_back(false);
+    triangle_gauss_results.emplace_back();
+    triangle_gauss_results[triangle_gauss_results.size() - 1].residual = -1.0;
+    delete_flag.emplace_back(false);
+
+    return static_cast<int>(triangles.size() - 1);
+}
+
 Decoder::Decoder(const cv::Mat &refImage, const cv::Mat &targetImage) : ref_image(refImage),
                                                                             target_image(targetImage) {}
+
+void Decoder::addNeighborVertex(int p1_idx, int p2_idx, int p3_idx) {
+    neighbor_vtx[p1_idx].emplace(p2_idx);
+    neighbor_vtx[p2_idx].emplace(p1_idx);
+
+    neighbor_vtx[p1_idx].emplace(p3_idx);
+    neighbor_vtx[p3_idx].emplace(p1_idx);
+
+    neighbor_vtx[p2_idx].emplace(p3_idx);
+    neighbor_vtx[p3_idx].emplace(p2_idx);
+}
+
+void Decoder::addCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_no) {
+    covered_triangle[p1_idx].emplace(triangle_no);
+    covered_triangle[p2_idx].emplace(triangle_no);
+    covered_triangle[p3_idx].emplace(triangle_no);
+}
