@@ -24,7 +24,7 @@
 #include "../includes/Utils.h"
 #include "../includes/tests.h"
 
-void run(std::string config_path);
+void run();
 void tests();
 
 #define HARRIS false
@@ -45,8 +45,7 @@ int main(int argc, char *argv[]){
 #if TEST_MODE
     tests();
 #else
-    std::string config_path = std::string(argv[1]);
-    run(config_path);
+    run();
 #endif
 
 }
@@ -56,7 +55,7 @@ void tests(){
     testPredMv();
 }
 
-void run(std::string config_path) {
+void run() {
 
     std::cout << "OpenCV_version : " << getVersionOfOpenCV() << std::endl;
 
