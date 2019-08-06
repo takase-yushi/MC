@@ -958,6 +958,9 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
         return true;
     }else{
+        //4分割により追加された頂点12個を消す
+        same_corner_list.erase(same_corner_list.end() - 12,same_corner_list.end());
+        corners.erase(corners.end() - 12, corners.end());
         isCodedSquare[square_index] = true;
         delete_flag[square_index] = false;
         ctu->node1 = ctu->node2 = ctu->node3 = ctu->node4 = nullptr;
