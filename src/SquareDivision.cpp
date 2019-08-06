@@ -808,24 +808,24 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     same_corner_list[sub2_s2_p1_idx].emplace(sub1_s2_p3_idx);            //     |             |  |             |
                                                                          //     ---------------  ---------------
 
-    //4分割後の隣接するパッチの頂点を追加                                // if != -1 のとき
-    int sub1_s1_p3_idx = getCornerIndex(split_sub_squares1.s1.p3);       //              |          sp3|  |sp4          |
-    int sub2_s1_p1_idx = getCornerIndex(split_sub_squares2.s1.p1);       //              ---------------  ---------------
-                                                                         //
-    int sub1_s1_p2_idx = getCornerIndex(split_sub_squares1.s1.p2);       //      ---     ---------------  ---------------
-    int sub1_s2_p1_idx = getCornerIndex(split_sub_squares1.s2.p1);       //        |     |   sub1_s1_p2|  |sub1_s2_p1   |
-                                                                         //        |     |             |  |             |
-    cv::Point2f sp1 = split_sub_squares1.s1.p3;                          //        |     |             |  |             |
-    cv::Point2f sp2 = split_sub_squares2.s1.p1;                          //     sp1|     |sub1_s1_p3   |  |             |
-    cv::Point2f sp3 = split_sub_squares1.s1.p2;                          //      ---     ---------------  ---------------
-    cv::Point2f sp4 = split_sub_squares1.s2.p1;                          //      ---     ---------------  ---------------
-    //それぞれspの座標を合わせる                                         //     sp2|     |sub2_s1_p1   |  |             |
-    sp1.x--; sp2.x--; sp3.y--; sp4.y--;                                  //        |     |             |  |             |
-    //頂点がある場合はそのインデックスをもらってくる(無いときは-1)       //        |     |             |  |             |
-    int sp1_idx = getCornerIndex(sp1);                                   //        |     |             |  |             |
-    int sp2_idx = getCornerIndex(sp2);                                   //      ---     ---------------  ---------------
-    int sp3_idx = getCornerIndex(sp3);                                   //
-    int sp4_idx = getCornerIndex(sp4);                                   //　-1 のとき
+    //4分割後の隣接するパッチの頂点を追加
+    int sub1_s1_p3_idx = getCornerIndex(split_sub_squares1.s1.p3);
+    int sub2_s1_p1_idx = getCornerIndex(split_sub_squares2.s1.p1);
+
+    int sub1_s1_p2_idx = getCornerIndex(split_sub_squares1.s1.p2);
+    int sub1_s2_p1_idx = getCornerIndex(split_sub_squares1.s2.p1);
+
+    cv::Point2f sp1 = split_sub_squares1.s1.p3;
+    cv::Point2f sp2 = split_sub_squares2.s1.p1;
+    cv::Point2f sp3 = split_sub_squares1.s1.p2;
+    cv::Point2f sp4 = split_sub_squares1.s2.p1;
+    //それぞれspの座標を合わせる
+    sp1.x--; sp2.x--; sp3.y--; sp4.y--;
+    //頂点がある場合はそのインデックスをもらってくる(無いときは-1)
+    int sp1_idx = getCornerIndex(sp1);
+    int sp2_idx = getCornerIndex(sp2);
+    int sp3_idx = getCornerIndex(sp3);
+    int sp4_idx = getCornerIndex(sp4);
 
     if(sp1_idx != -1) {                                                  // if != -1 のとき
         same_corner_list[sub1_s1_p3_idx].emplace(sp1_idx);               //              |          sp3|  |sp4          |
