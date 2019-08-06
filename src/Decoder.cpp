@@ -300,3 +300,16 @@ int Decoder::getCornerIndex(cv::Point2f p) {
     same_corner_list[(int)corners.size() - 1].emplace(corners.size() - 1);
     return static_cast<int>(corners.size() - 1);
 }
+
+cv::Mat Decoder::getReconstructionTriangleImage() {
+    cv::Mat out = target_image.clone();
+
+    for(int i = 0 ; i < triangles.size() ; i++){
+        cv::Point2f p1 = corners[triangles[i].first.p1_idx];
+        cv::Point2f p2 = corners[triangles[i].first.p2_idx];
+        cv::Point2f p3 = corners[triangles[i].first.p3_idx];
+        drawTriangle(out, p1, p2, p3, WHITE);
+    }
+
+    return out;
+}

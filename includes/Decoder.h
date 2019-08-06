@@ -17,6 +17,7 @@ public:
     void initTriangle(int _block_size_x, int _block_size_y, int _divide_steps, int _qp, int divide_flag);
     Decoder(const cv::Mat &ref_image, const cv::Mat &targetImage);
     void reconstructionTriangle(std::vector<CodingTreeUnit*> ctus);
+    cv::Mat getReconstructionTriangleImage();
 
 private:
     int block_size_x, block_size_y;
