@@ -2356,13 +2356,13 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
             if(ctu->method == MV_CODE_METHOD::MERGE){
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = 0;
-                    G(out, (int)pixel.x, (int)pixel.y) = 255;
+                    G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     B(out, (int)pixel.x, (int)pixel.y) = 0;
                 }
             }else{
                 for(auto pixel : pixels) {
-                    R(out, (int)pixel.x, (int)pixel.y) = 255;
-                    G(out, (int)pixel.x, (int)pixel.y) = 255;
+                    R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
+                    G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     B(out, (int)pixel.x, (int)pixel.y) = 0;
                 }
             }
@@ -2371,14 +2371,14 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
             if(ctu->method == MV_CODE_METHOD::MERGE){
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = 0;
-                    G(out, (int)pixel.x, (int)pixel.y) = 255;
-                    B(out, (int)pixel.x, (int)pixel.y) = 255;
+                    G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
+                    B(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                 }
             }else{
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = 0;
                     G(out, (int)pixel.x, (int)pixel.y) = 0;
-                    B(out, (int)pixel.x, (int)pixel.y) = 255;
+                    B(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                 }
             }
 //            getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, 16, area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
