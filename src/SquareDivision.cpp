@@ -582,6 +582,38 @@ int SquareDivision::getCornerIndex(cv::Point2f p) {
 }
 
 /**
+ * @fn void SquareDivision::eraseCornerFlag(Point4Vec s1, Point4Vec s2, Point4Vec s3, Point4Vec s4)
+ * @brief 4分割後の不要な頂点が格納されているインデックスを-1で初期化する。
+ * @param[in] 四角形の頂点の集合 s1
+ * @param[in] 四角形の頂点の集合 s2
+ * @param[in] 四角形の頂点の集合 s3
+ * @param[in] 四角形の頂点の集合 s4
+ *  ----   ----
+ *  | s1| | s2|
+ *  ----  ----
+ *  ----   ----
+ *  | s3| | s4|
+ *  ----  ----
+ */
+void SquareDivision::eraseCornerFlag(Point4Vec s1, Point4Vec s2, Point4Vec s3, Point4Vec s4) {
+    corner_flag[2 * s1.p2.y][2 * s1.p2.x] = -1;
+    corner_flag[2 * s1.p3.y][2 * s1.p3.x] = -1;
+    corner_flag[2 * s1.p4.y][2 * s1.p4.x] = -1;
+
+    corner_flag[2 * s2.p1.y][2 * s2.p1.x] = -1;
+    corner_flag[2 * s2.p3.y][2 * s2.p3.x] = -1;
+    corner_flag[2 * s2.p4.y][2 * s2.p4.x] = -1;
+
+    corner_flag[2 * s3.p1.y][2 * s3.p1.x] = -1;
+    corner_flag[2 * s3.p2.y][2 * s3.p2.x] = -1;
+    corner_flag[2 * s3.p4.y][2 * s3.p4.x] = -1;
+
+    corner_flag[2 * s4.p1.y][2 * s4.p1.x] = -1;
+    corner_flag[2 * s4.p2.y][2 * s4.p2.x] = -1;
+    corner_flag[2 * s4.p3.y][2 * s4.p3.x] = -1;
+}
+
+/**
  * @fn void SquareDivision::addCornerAndSquare(Square square, int square_index)
  * @brief
  * @param square
@@ -960,6 +992,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         //4分割により追加された頂点12個を消す
         same_corner_list.erase(same_corner_list.end() - 12,same_corner_list.end());
         corners.erase(corners.end() - 12, corners.end());
+        eraseCornerFlag(split_sub_squares1.s1, split_sub_squares1.s2, split_sub_squares2.s1, split_sub_squares2.s2);
         isCodedSquare[square_index] = true;
         delete_flag[square_index] = false;
         ctu->node1 = ctu->node2 = ctu->node3 = ctu->node4 = nullptr;

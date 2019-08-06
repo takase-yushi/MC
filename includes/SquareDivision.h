@@ -146,6 +146,7 @@ private:
     int getOrAddCornerIndex(cv::Point2f p);
     int getCornerIndex(cv::Point2f p);
     void addCornerAndSquare(Square square, int square_index);
+    void eraseCornerFlag(Point4Vec s1, Point4Vec s2, Point4Vec s3, Point4Vec s4);
     void constructPreviousCodingTree(CodingTreeUnit* codingTree, CollocatedMvTree* constructedTree);
     static cv::Point2f getQuantizedMv(cv::Point2f &mv, double quantize_step);
     bool isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> &vectors, const cv::Point2f &mv);
