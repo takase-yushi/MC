@@ -23,6 +23,7 @@
 #include "../includes/ImageUtil.h"
 #include "../includes/Utils.h"
 #include "../includes/tests.h"
+#include "../includes/Decoder.h"
 
 void run();
 void tests();
@@ -218,6 +219,11 @@ void run() {
         cv::imwrite(img_directory + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", triangle_division.getMvImage(foo));
         cv::imwrite(img_directory + "/p_color_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
         std::cout << "triangle_size:" << triangle_division.getTriangleCoordinateList().size() << std::endl;
+
+        Decoder decoder(ref_image, target_image);
+        decoder.initTriangle(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);
+        decoder.reconstructionTriangle(foo);
+        cv::imwrite(img_directory + "/p_recon_decoder_test.png", decoder.getReconstructionTriangleImage());
 
 #if STORE_DISTRIBUTION_LOG
 #if STORE_MVD_DISTRIBUTION_LOG
