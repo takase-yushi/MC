@@ -774,8 +774,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                                                                          //     |   sub2_s1_p2|  |sub2_s2_p1   |
     same_corner_list[sub2_s2_p1_idx].emplace(sub1_s1_p4_idx);            //     |             |  |             |
     same_corner_list[sub2_s2_p1_idx].emplace(sub1_s2_p3_idx);            //     |             |  |             |
-                                                                         //     |             |  |             |
-    same_corner_list[sub1_s2_p3_idx].emplace(sub2_s2_p1_idx);            //     ---------------  ---------------
+                                                                         //     ---------------  ---------------
 
     //4分割後の隣接するパッチの頂点を追加                                // if != -1 のとき
     int sub1_s1_p3_idx = getCornerIndex(split_sub_squares1.s1.p3);       //              |          sp3|  |sp4          |
