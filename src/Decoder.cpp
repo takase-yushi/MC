@@ -12,13 +12,15 @@ void Decoder::initTriangle(int _block_size_x, int _block_size_y, int _divide_ste
     block_size_x = _block_size_x;
     block_size_y = _block_size_y;
     qp = _qp;
+
+    image_width = ref_image.cols;
+    image_height = ref_image.rows;
+
     int block_num_x = ceil((double)image_width / (block_size_x));
     int block_num_y = ceil((double)image_height / (block_size_y));
     divide_steps = _divide_steps;
     coded_picture_num = 0;
 
-    image_width = ref_image.cols;
-    image_height = ref_image.rows;
 
     corners.clear();
     neighbor_vtx.clear();
@@ -200,7 +202,7 @@ void Decoder::initTriangle(int _block_size_x, int _block_size_y, int _divide_ste
         }
     }
 
-    // 0行目
+    // 最終行
     for(int block_x = 1 ; block_x < (block_num_x * 2) - 1; block_x+=2){
         int p1_idx = block_x + 2 * block_num_x * (2 * block_num_y - 1);
         int p2_idx = block_x + 1;
@@ -224,15 +226,6 @@ int Decoder::insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type) {
     v.emplace_back(corners[p1_idx], p1_idx);
     v.emplace_back(corners[p2_idx], p2_idx);
     v.emplace_back(corners[p3_idx], p3_idx);
-
-    // ラスタスキャン順でソート
-    sort(v.begin(), v.end(), [](const std::pair<cv::Point2f, int> &a1, const std::pair<cv::Point2f, int> &a2) {
-        if (a1.first.y != a2.first.y) {
-            return a1.first.y < a2.first.y;
-        } else {
-            return a1.first.x < a2.first.x;
-        }
-    });
 
     Triangle triangle(v[0].second, v[1].second, v[2].second, static_cast<int>(triangles.size()));
 
