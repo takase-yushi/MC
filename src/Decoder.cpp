@@ -209,6 +209,15 @@ void Decoder::initTriangle(int _block_size_x, int _block_size_y, int _divide_ste
         same_corner_list[p1_idx].emplace(p2_idx);
         same_corner_list[p2_idx].emplace(p1_idx);
     }
+
+    triangle_index_counter = 0;
+
+    for (int i = 0; i < triangles.size(); i++) {
+        decode_ctus[i] = new CodingTreeUnit();
+        decode_ctus[i]->split_cu_flag = false;
+        decode_ctus[i]->node1 = decode_ctus[i]->node2 = decode_ctus[i]->node3 = decode_ctus[i]->node4 = nullptr;
+        decode_ctus[i]->triangle_index = i;
+    }
 }
 
 

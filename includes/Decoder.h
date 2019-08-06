@@ -29,6 +29,7 @@ private:
     int image_width, image_height;
     cv::Mat ref_image, target_image;
     cv::Mat hevc_ref_image;
+    std::vector<CodingTreeUnit *> decode_ctus;
 
 private:
 
