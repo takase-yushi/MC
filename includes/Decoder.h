@@ -28,6 +28,7 @@ private:
     int divide_steps;
     int coded_picture_num;
     int image_width, image_height;
+    int triangle_index_counter;
     cv::Mat ref_image, target_image;
     cv::Mat hevc_ref_image;
     std::vector<CodingTreeUnit *> decode_ctus;

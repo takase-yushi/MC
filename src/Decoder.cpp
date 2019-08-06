@@ -293,13 +293,58 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
 
     TriangleDivision::SplitResult result = TriangleDivision::getSplitTriangle(triangle.p1, triangle.p2, triangle.p3, type);
 
+    int p1_idx = getCornerIndex(result.t1.p1);
+    int p2_idx = getCornerIndex(result.t1.p2);
+    int p3_idx = getCornerIndex(result.t1.p3);
+    insertTriangle(p1_idx, p2_idx, p3_idx, result.t1_type);
+
+    p1_idx = getCornerIndex(result.t2.p1);
+    p2_idx = getCornerIndex(result.t2.p2);
+    p3_idx = getCornerIndex(result.t2.p3);
+    insertTriangle(p1_idx, p2_idx, p3_idx, result.t2_type);
+
     TriangleDivision::SplitResult result_subdiv_1 = TriangleDivision::getSplitTriangle(result.t1.p1, result.t1.p2, result.t1.p3, result.t1_type);
     TriangleDivision::SplitResult result_subdiv_2 = TriangleDivision::getSplitTriangle(result.t2.p1, result.t2.p2, result.t2.p3, result.t2_type);
 
-    if(ctu->node1 != nullptr) reconstructionTriangle(ctu->node1, result_subdiv_1.t1, result_subdiv_1.t1_type);
-    if(ctu->node2 != nullptr) reconstructionTriangle(ctu->node2, result_subdiv_1.t2, result_subdiv_1.t2_type);
-    if(ctu->node3 != nullptr) reconstructionTriangle(ctu->node3, result_subdiv_2.t1, result_subdiv_2.t1_type);
-    if(ctu->node4 != nullptr) reconstructionTriangle(ctu->node4, result_subdiv_2.t2, result_subdiv_2.t2_type);
+    p1_idx = getCornerIndex(result_subdiv_1.t1.p1);
+    p2_idx = getCornerIndex(result_subdiv_1.t1.p2);
+    p3_idx = getCornerIndex(result_subdiv_1.t1.p3);
+
+    insertTriangle(p1_idx, p2_idx, p3_idx, result_subdiv_1.t1_type);
+
+    p1_idx = getCornerIndex(result_subdiv_1.t2.p1);
+    p2_idx = getCornerIndex(result_subdiv_1.t2.p2);
+    p3_idx = getCornerIndex(result_subdiv_1.t2.p3);
+
+    insertTriangle(p1_idx, p2_idx, p3_idx, result_subdiv_1.t2_type);
+
+    p1_idx = getCornerIndex(result_subdiv_2.t1.p1);
+    p2_idx = getCornerIndex(result_subdiv_2.t1.p2);
+    p3_idx = getCornerIndex(result_subdiv_2.t1.p3);
+
+    insertTriangle(p1_idx, p2_idx, p3_idx, result_subdiv_2.t1_type);
+
+    p1_idx = getCornerIndex(result_subdiv_2.t2.p1);
+    p2_idx = getCornerIndex(result_subdiv_2.t2.p2);
+    p3_idx = getCornerIndex(result_subdiv_2.t2.p3);
+
+    insertTriangle(p1_idx, p2_idx, p3_idx, result_subdiv_2.t2_type);
+
+    decode_ctu->node1 = new CodingTreeUnit();
+    decode_ctu->node1->node1 = decode_ctu->node1->node2 = decode_ctu->node1->node3 = decode_ctu->node1->node4 = nullptr;
+    if(ctu->node1 != nullptr) reconstructionTriangle(ctu->node1, decode_ctu->node1, result_subdiv_1.t1, result_subdiv_1.t1_type);
+
+    decode_ctu->node2 = new CodingTreeUnit();
+    decode_ctu->node2->node1 = decode_ctu->node2->node2 = decode_ctu->node2->node3 = decode_ctu->node2->node4 = nullptr;
+    if(ctu->node2 != nullptr) reconstructionTriangle(ctu->node2, decode_ctu->node2, result_subdiv_1.t2, result_subdiv_1.t2_type);
+
+    decode_ctu->node3 = new CodingTreeUnit();
+    decode_ctu->node3->node1 = decode_ctu->node3->node2 = decode_ctu->node3->node3 = decode_ctu->node3->node4 = nullptr;
+    if(ctu->node3 != nullptr) reconstructionTriangle(ctu->node3, decode_ctu->node3, result_subdiv_2.t1, result_subdiv_2.t1_type);
+
+    decode_ctu->node4 = new CodingTreeUnit();
+    decode_ctu->node4->node1 = decode_ctu->node4->node2 = decode_ctu->node4->node3 = decode_ctu->node4->node4 = nullptr;
+    if(ctu->node4 != nullptr) reconstructionTriangle(ctu->node4, decode_ctu->node4, result_subdiv_2.t2, result_subdiv_2.t2_type);
 }
 
 int Decoder::getCornerIndex(cv::Point2f p) {
