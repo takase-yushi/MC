@@ -41,10 +41,14 @@ private:
     std::vector<bool> isCodedTriangle;
     std::vector<std::vector<CollocatedMvTree *>> previousMvList;
     std::vector<GaussResult> triangle_gauss_results;
-    std::vector<std::vector<CollocatedMvTree*>> previousMvList;
 
     cv::Mat hevc_expansion_ref;
-};
+
+    void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
+    void addCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_no);
+    void reconstructionTriangle(CodingTreeUnit *ctu, Point3Vec triangle, int type);
+    int getCornerIndex(cv::Point2f p);
+    int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
 
 };
 
