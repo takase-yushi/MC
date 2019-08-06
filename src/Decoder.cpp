@@ -264,3 +264,46 @@ void Decoder::addCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangl
     covered_triangle[p2_idx].emplace(triangle_no);
     covered_triangle[p3_idx].emplace(triangle_no);
 }
+
+void Decoder::reconstructionTriangle(std::vector<CodingTreeUnit*> ctu) {
+    for(int i = 0 ; i < ctu.size() ; i++) {
+        CodingTreeUnit* cu = ctu[i];
+        int type = (i % 2 == 0 ? DIVIDE::TYPE1 : DIVIDE::TYPE2);
+        Triangle t = triangles[i].first;
+        reconstructionTriangle(cu, Point3Vec(corners[t.p1_idx], corners[t.p2_idx], corners[t.p3_idx]),type);
+    }
+}
+
+void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, Point3Vec triangle, int type) {
+
+    if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
+        int p1_idx, p2_idx, p3_idx;
+        p1_idx = getCornerIndex(triangle.p1);
+        p2_idx = getCornerIndex(triangle.p2);
+        p3_idx = getCornerIndex(triangle.p3);
+
+        insertTriangle(p1_idx, p2_idx, p3_idx, type);
+        return;
+    }
+
+    TriangleDivision::SplitResult result = TriangleDivision::getSplitTriangle(triangle.p1, triangle.p2, triangle.p3, type);
+
+    TriangleDivision::SplitResult result_subdiv_1 = TriangleDivision::getSplitTriangle(result.t1.p1, result.t1.p2, result.t1.p3, result.t1_type);
+    TriangleDivision::SplitResult result_subdiv_2 = TriangleDivision::getSplitTriangle(result.t2.p1, result.t2.p2, result.t2.p3, result.t2_type);
+
+    if(ctu->node1 != nullptr) reconstructionTriangle(ctu->node1, result_subdiv_1.t1, result_subdiv_1.t1_type);
+    if(ctu->node2 != nullptr) reconstructionTriangle(ctu->node2, result_subdiv_1.t2, result_subdiv_1.t2_type);
+    if(ctu->node3 != nullptr) reconstructionTriangle(ctu->node3, result_subdiv_2.t1, result_subdiv_2.t1_type);
+    if(ctu->node4 != nullptr) reconstructionTriangle(ctu->node4, result_subdiv_2.t2, result_subdiv_2.t2_type);
+}
+
+int Decoder::getCornerIndex(cv::Point2f p) {
+    if(corner_flag[(int)(p.y * 2)][(int)(p.x * 2)] != -1) return corner_flag[(int)(p.y * 2)][(int)(p.x * 2)];
+    corners.emplace_back(p);
+    neighbor_vtx.emplace_back();
+    covered_triangle.emplace_back();
+    corner_flag[(int)(p.y * 2)][(int)(p.x * 2)] = static_cast<int>(corners.size() - 1);
+    same_corner_list.emplace_back();
+    same_corner_list[(int)corners.size() - 1].emplace(corners.size() - 1);
+    return static_cast<int>(corners.size() - 1);
+}

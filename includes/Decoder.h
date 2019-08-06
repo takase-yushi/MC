@@ -15,8 +15,8 @@
 class Decoder {
 public:
     void initTriangle(int _block_size_x, int _block_size_y, int _divide_steps, int _qp, int divide_flag);
-
     Decoder(const cv::Mat &ref_image, const cv::Mat &targetImage);
+    void reconstructionTriangle(std::vector<CodingTreeUnit*> ctus);
 
 private:
     int block_size_x, block_size_y;
@@ -47,6 +47,9 @@ private:
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
     void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
     void addCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_no);
+    void reconstructionTriangle(CodingTreeUnit* ctu, Point3Vec triangle, int type);
+    int getCornerIndex(cv::Point2f p);
+
 };
 
 #endif //ENCODER_DECODER_H
