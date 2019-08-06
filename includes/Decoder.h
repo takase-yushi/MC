@@ -48,10 +48,10 @@ private:
 
     void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
     void addCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_no);
-    void reconstructionTriangle(CodingTreeUnit *ctu, Point3Vec triangle, int type);
+    void reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode_ctu, Point3Vec triangle, int type);
     int getCornerIndex(cv::Point2f p);
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
-
+    void getModeImage(CodingTreeUnit *ctu, cv::Mat &out, const std::vector<std::vector<int>> &area_flag);
 };
 
 #endif //ENCODER_DECODER_H

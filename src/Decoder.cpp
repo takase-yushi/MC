@@ -272,11 +272,11 @@ void Decoder::reconstructionTriangle(std::vector<CodingTreeUnit*> ctu) {
         CodingTreeUnit* cu = ctu[i];
         int type = (i % 2 == 0 ? DIVIDE::TYPE1 : DIVIDE::TYPE2);
         Triangle t = triangles[i].first;
-        reconstructionTriangle(cu, Point3Vec(corners[t.p1_idx], corners[t.p2_idx], corners[t.p3_idx]),type);
+        reconstructionTriangle(cu, decode_ctus[i], Point3Vec(corners[t.p1_idx], corners[t.p2_idx], corners[t.p3_idx]),type);
     }
 }
 
-void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, Point3Vec triangle, int type) {
+void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode_ctu, Point3Vec triangle, int type) {
 
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
         int p1_idx, p2_idx, p3_idx;
@@ -284,7 +284,10 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, Point3Vec triangle, in
         p2_idx = getCornerIndex(triangle.p2);
         p3_idx = getCornerIndex(triangle.p3);
 
-        insertTriangle(p1_idx, p2_idx, p3_idx, type);
+        int t_idx = insertTriangle(p1_idx, p2_idx, p3_idx, type);
+        decode_ctu->method = ctu->method;
+        decode_ctu->triangle_index = t_idx;
+
         return;
     }
 
