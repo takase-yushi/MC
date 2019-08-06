@@ -827,24 +827,60 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     int sp3_idx = getCornerIndex(sp3);                                   //
     int sp4_idx = getCornerIndex(sp4);                                   //　-1 のとき
 
-    if(sp1_idx != -1) {
-        same_corner_list[sub1_s1_p3_idx].emplace(sp1_idx);
-        same_corner_list[sub2_s1_p1_idx].emplace(sp1_idx);
-    }
-
-    if(sp2_idx != -1) {
-        same_corner_list[sub1_s1_p3_idx].emplace(sp2_idx);
-        same_corner_list[sub2_s1_p1_idx].emplace(sp2_idx);
+    if(sp1_idx != -1) {                                                  // if != -1 のとき
+        same_corner_list[sub1_s1_p3_idx].emplace(sp1_idx);               //              |          sp3|  |sp4          |
+        same_corner_list[sub2_s1_p1_idx].emplace(sp1_idx);               //              ---------------  ---------------
+    }                                                                    //
+    else {                                                               //      ---     ---------------  ---------------
+        for(int i = 1 ; i < 7 ; i++) {                                   //        |     |   sub1_s1_p2|  |sub1_s2_p1   |
+            sp1.y += 8;                                                  //        |     |             |  |             |
+            if((sp1_idx = getCornerIndex(sp1)) != -1) {                  //        |     |             |  |             |
+                same_corner_list[sub1_s1_p3_idx].emplace(sp1_idx);       //     sp1|     |sub1_s1_p3   |  |             |
+                break;                                                   //      ---     ---------------  ---------------
+            }                                                            //      ---     ---------------  ---------------
+        }                                                                //     sp2|     |sub2_s1_p1   |  |             |
+    }                                                                    //        |     |             |  |             |
+                                                                         //        |     |             |  |             |
+    if(sp2_idx != -1) {                                                  //        |     |             |  |             |
+        same_corner_list[sub1_s1_p3_idx].emplace(sp2_idx);               //      ---     ---------------  ---------------
+        same_corner_list[sub2_s1_p1_idx].emplace(sp2_idx);               //
+    }                                                                    //　-1 のとき、インデックスを上下左右に動かし、頂点を探索
+    else {
+        for(int i = 1 ; i < 7 ; i++) {
+           sp2.y -= 8;
+           if((sp2_idx = getCornerIndex(sp2)) != -1) {
+               same_corner_list[sub2_s1_p1_idx].emplace(sp2_idx);
+               break;
+           }
+        }
     }
 
     if(sp3_idx != -1) {
         same_corner_list[sub1_s1_p2_idx].emplace(sp3_idx);
         same_corner_list[sub1_s2_p1_idx].emplace(sp3_idx);
     }
+    else {
+        for(int i = 1 ; i < 7 ; i++) {
+            sp3.x += 8;
+            if((sp3_idx = getCornerIndex(sp3)) != -1) {
+                same_corner_list[sub1_s1_p2_idx].emplace(sp3_idx);
+                break;
+            }
+        }
+    }
 
     if(sp4_idx != -1) {
         same_corner_list[sub1_s1_p2_idx].emplace(sp4_idx);
         same_corner_list[sub1_s2_p1_idx].emplace(sp4_idx);
+    }
+    else {
+        for(int i = 1 ; i < 7 ; i++) {
+            sp4.x -= 8;
+            if((sp4_idx = getCornerIndex(sp4)) != -1) {
+                same_corner_list[sub1_s2_p1_idx].emplace(sp4_idx);
+                break;
+            }
+        }
     }
 
     int square_indexes[] = {(int)squares.size() - 4, (int)squares.size() - 3, (int)squares.size() - 2, (int)squares.size() - 1};
