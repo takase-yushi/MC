@@ -2450,12 +2450,6 @@ TriangleDivision::SplitResult::SplitResult(const Point3Vec &t1, const Point3Vec 
                                                                                                                t1_type(t1Type),
                                                                                                                t2_type(t2Type) {}
 
-TriangleDivision::GaussResult::GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvParallel,
-                                           double residual, int triangleSize, bool parallelFlag, double residualBm, double residualNewton) : mv_warping(
-        mvWarping), mv_parallel(mvParallel), residual(residual), triangle_size(triangleSize), parallel_flag(parallelFlag), residual_bm(residualBm), residual_newton(residualNewton) {}
-
-TriangleDivision::GaussResult::GaussResult() {}
-
 std::tuple<std::vector<cv::Point2f>, std::vector<double>> TriangleDivision::fullpellBlockMatching(Point3Vec triangle, const cv::Mat& target_image, cv::Mat expansion_ref_image, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Point2f fullpell_initial_vector) {
     double sx, sy, lx, ly;
     cv::Point2f tp1, tp2, tp3;

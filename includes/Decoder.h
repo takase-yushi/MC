@@ -10,11 +10,13 @@
 #include <set>
 #include "Utils.h"
 #include "CollocatedMvTree.h"
+#include "GaussResult.h"
 
 class Decoder {
 public:
     void initTriangle(int _block_size_x, int _block_size_y, int _divide_steps, int _qp, int divide_flag);
     Decoder(const cv::Mat &ref_image, const cv::Mat &targetImage);
+    void reconstructionTriangle(std::vector<CodingTreeUnit*> ctus);
 
 private:
     int block_size_x, block_size_y;
@@ -37,10 +39,13 @@ private:
     std::vector<std::vector<int>> corner_flag;
     std::vector<bool> delete_flag;
     std::vector<bool> isCodedTriangle;
+    std::vector<std::vector<CollocatedMvTree *>> previousMvList;
+    std::vector<GaussResult> triangle_gauss_results;
     std::vector<std::vector<CollocatedMvTree*>> previousMvList;
 
     cv::Mat hevc_expansion_ref;
 };
 
+};
 
 #endif //ENCODER_DECODER_H

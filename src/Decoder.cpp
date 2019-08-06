@@ -210,5 +210,100 @@ void Decoder::initTriangle(int _block_size_x, int _block_size_y, int _divide_ste
 }
 
 
+/**
+ * @fn int Decoder::insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type)
+ * @brief 三角形を追加する
+ * @param[in] p1_idx 頂点1の座標のインデックス
+ * @param[in] p2_idx 頂点2の座標のインデックス
+ * @param[in] p3_idx 頂点3の座標のインデックス
+ * @param[in] type 分割タイプ
+ * @return 挿入した三角形が格納されているインデックス
+ */
+int Decoder::insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type) {
+    std::vector<std::pair<cv::Point2f, int> > v;
+    v.emplace_back(corners[p1_idx], p1_idx);
+    v.emplace_back(corners[p2_idx], p2_idx);
+    v.emplace_back(corners[p3_idx], p3_idx);
+
+    // ラスタスキャン順でソート
+    sort(v.begin(), v.end(), [](const std::pair<cv::Point2f, int> &a1, const std::pair<cv::Point2f, int> &a2) {
+        if (a1.first.y != a2.first.y) {
+            return a1.first.y < a2.first.y;
+        } else {
+            return a1.first.x < a2.first.x;
+        }
+    });
+
+    Triangle triangle(v[0].second, v[1].second, v[2].second, static_cast<int>(triangles.size()));
+
+    triangles.emplace_back(triangle, type);
+    isCodedTriangle.emplace_back(false);
+    triangle_gauss_results.emplace_back();
+    triangle_gauss_results[triangle_gauss_results.size() - 1].residual = -1.0;
+    delete_flag.emplace_back(false);
+
+    return static_cast<int>(triangles.size() - 1);
+}
+
 Decoder::Decoder(const cv::Mat &refImage, const cv::Mat &targetImage) : ref_image(refImage),
                                                                             target_image(targetImage) {}
+
+void Decoder::addNeighborVertex(int p1_idx, int p2_idx, int p3_idx) {
+    neighbor_vtx[p1_idx].emplace(p2_idx);
+    neighbor_vtx[p2_idx].emplace(p1_idx);
+
+    neighbor_vtx[p1_idx].emplace(p3_idx);
+    neighbor_vtx[p3_idx].emplace(p1_idx);
+
+    neighbor_vtx[p2_idx].emplace(p3_idx);
+    neighbor_vtx[p3_idx].emplace(p2_idx);
+}
+
+void Decoder::addCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_no) {
+    covered_triangle[p1_idx].emplace(triangle_no);
+    covered_triangle[p2_idx].emplace(triangle_no);
+    covered_triangle[p3_idx].emplace(triangle_no);
+}
+
+void Decoder::reconstructionTriangle(std::vector<CodingTreeUnit*> ctu) {
+    for(int i = 0 ; i < ctu.size() ; i++) {
+        CodingTreeUnit* cu = ctu[i];
+        int type = (i % 2 == 0 ? DIVIDE::TYPE1 : DIVIDE::TYPE2);
+        Triangle t = triangles[i].first;
+        reconstructionTriangle(cu, Point3Vec(corners[t.p1_idx], corners[t.p2_idx], corners[t.p3_idx]),type);
+    }
+}
+
+void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, Point3Vec triangle, int type) {
+
+    if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
+        int p1_idx, p2_idx, p3_idx;
+        p1_idx = getCornerIndex(triangle.p1);
+        p2_idx = getCornerIndex(triangle.p2);
+        p3_idx = getCornerIndex(triangle.p3);
+
+        insertTriangle(p1_idx, p2_idx, p3_idx, type);
+        return;
+    }
+
+    TriangleDivision::SplitResult result = TriangleDivision::getSplitTriangle(triangle.p1, triangle.p2, triangle.p3, type);
+
+    TriangleDivision::SplitResult result_subdiv_1 = TriangleDivision::getSplitTriangle(result.t1.p1, result.t1.p2, result.t1.p3, result.t1_type);
+    TriangleDivision::SplitResult result_subdiv_2 = TriangleDivision::getSplitTriangle(result.t2.p1, result.t2.p2, result.t2.p3, result.t2_type);
+
+    if(ctu->node1 != nullptr) reconstructionTriangle(ctu->node1, result_subdiv_1.t1, result_subdiv_1.t1_type);
+    if(ctu->node2 != nullptr) reconstructionTriangle(ctu->node2, result_subdiv_1.t2, result_subdiv_1.t2_type);
+    if(ctu->node3 != nullptr) reconstructionTriangle(ctu->node3, result_subdiv_2.t1, result_subdiv_2.t1_type);
+    if(ctu->node4 != nullptr) reconstructionTriangle(ctu->node4, result_subdiv_2.t2, result_subdiv_2.t2_type);
+}
+
+int Decoder::getCornerIndex(cv::Point2f p) {
+    if(corner_flag[(int)(p.y * 2)][(int)(p.x * 2)] != -1) return corner_flag[(int)(p.y * 2)][(int)(p.x * 2)];
+    corners.emplace_back(p);
+    neighbor_vtx.emplace_back();
+    covered_triangle.emplace_back();
+    corner_flag[(int)(p.y * 2)][(int)(p.x * 2)] = static_cast<int>(corners.size() - 1);
+    same_corner_list.emplace_back();
+    same_corner_list[(int)corners.size() - 1].emplace(corners.size() - 1);
+    return static_cast<int>(corners.size() - 1);
+}
