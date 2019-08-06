@@ -325,3 +325,65 @@ cv::Mat Decoder::getReconstructionTriangleImage() {
 
     return out;
 }
+
+cv::Mat Decoder::getModeImage(std::vector<CodingTreeUnit*> ctus, const std::vector<std::vector<std::vector<int>>> &area_flag) {
+    cv::Mat out = cv::Mat::zeros(ref_image.size(), CV_8UC3);
+
+    for(int i = 0 ; i < decode_ctus.size() ; i++){
+        getModeImage(decode_ctus[i], out, area_flag[i]);
+    }
+
+    for(const auto& triangle : triangles){
+        drawTriangle(out, corners[triangle.first.p1_idx], corners[triangle.first.p2_idx], corners[triangle.first.p3_idx], WHITE);
+    }
+    return out;
+}
+
+void Decoder::getModeImage(CodingTreeUnit* ctu, cv::Mat &out, const std::vector<std::vector<int>> &area_flag){
+    if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
+        int triangle_index = triangle_index_counter;
+        Triangle triangle_corner_idx = triangles[triangle_index].first;
+        Point3Vec triangle(corners[triangle_corner_idx.p1_idx], corners[triangle_corner_idx.p2_idx], corners[triangle_corner_idx.p3_idx]);
+
+        std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, block_size_x, block_size_y);
+
+        if(ctu->parallel_flag) {
+            if(ctu->method == MV_CODE_METHOD::MERGE){
+                for(auto pixel : pixels) {
+                    R(out, (int)pixel.x, (int)pixel.y) = 0;
+                    G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
+                    B(out, (int)pixel.x, (int)pixel.y) = 0;
+                }
+            }else{
+                for(auto pixel : pixels) {
+                    R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
+                    G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
+                    B(out, (int)pixel.x, (int)pixel.y) = 0;
+                }
+            }
+
+        }else{
+            if(ctu->method == MV_CODE_METHOD::MERGE){
+                for(auto pixel : pixels) {
+                    R(out, (int)pixel.x, (int)pixel.y) = 0;
+                    G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
+                    B(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
+                }
+            }else{
+                for(auto pixel : pixels) {
+                    R(out, (int)pixel.x, (int)pixel.y) = 0;
+                    G(out, (int)pixel.x, (int)pixel.y) = 0;
+                    B(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
+                }
+            }
+        }
+
+        triangle_index_counter++;
+        return;
+    }
+
+    if(ctu->node1 != nullptr) getModeImage(ctu->node1, out, area_flag);
+    if(ctu->node2 != nullptr) getModeImage(ctu->node2, out, area_flag);
+    if(ctu->node3 != nullptr) getModeImage(ctu->node3, out, area_flag);
+    if(ctu->node4 != nullptr) getModeImage(ctu->node4, out, area_flag);
+}

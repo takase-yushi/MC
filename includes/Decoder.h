@@ -18,6 +18,7 @@ public:
     Decoder(const cv::Mat &ref_image, const cv::Mat &targetImage);
     void reconstructionTriangle(std::vector<CodingTreeUnit*> ctus);
     cv::Mat getReconstructionTriangleImage();
+    cv::Mat getModeImage(std::vector<CodingTreeUnit*> ctus, const std::vector<std::vector<std::vector<int>>> &area_flag);
 
 private:
     int block_size_x, block_size_y;
