@@ -42,7 +42,7 @@ private:
     std::vector<bool> delete_flag;
     std::vector<bool> isCodedTriangle;
     std::vector<std::vector<CollocatedMvTree *>> previousMvList;
-    std::vector<GaussResult> triangle_gauss_results;
+    std::vector<GaussResult> triangle_info;
 
     cv::Mat hevc_expansion_ref;
 
