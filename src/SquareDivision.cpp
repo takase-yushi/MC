@@ -64,13 +64,13 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
      *
      */
 
-    corner_flag.resize(static_cast<unsigned long>(ref_image.rows * 2));
-    for(int i = 0 ; i < ref_image.rows * 2 ; i++) {
-        corner_flag[i].resize(static_cast<unsigned long>(ref_image.cols * 2));
+    corner_flag.resize(static_cast<unsigned long>(ref_image.rows));
+    for(int i = 0 ; i < ref_image.rows ; i++) {
+        corner_flag[i].resize(static_cast<unsigned long>(ref_image.cols));
     }
 
-    for(int y = 0 ; y < ref_image.rows * 2; y++) {
-        for(int x = 0 ; x < ref_image.cols * 2; x++) {
+    for(int y = 0 ; y < ref_image.rows ; y++) {
+        for(int x = 0 ; x < ref_image.cols ; x++) {
             corner_flag[y][x] = -1;
         }
     }
@@ -84,7 +84,7 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
             int ny = block_y * (block_size_y);    //ブロックの左上のy座標
 
             corners.emplace_back(nx, ny);
-            corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
+            corner_flag[ny][nx] = static_cast<int>(corners.size() - 1);
             same_corner_list.emplace_back();
             same_corner_list[(int)corners.size() - 1].emplace(corners.size() - 1); // 他と共有している頂点は、自分の番号だけ入れる
             neighbor_vtx.emplace_back();
@@ -97,7 +97,7 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
             ny = (block_y) * (block_size_y);          //ブロックの右上のy座標
 
             corners.emplace_back(nx, ny);
-            corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
+            corner_flag[ny][nx] = static_cast<int>(corners.size() - 1);
             same_corner_list.emplace_back();
             same_corner_list[(int)corners.size() - 1].emplace(corners.size() - 1);
             neighbor_vtx.emplace_back();
@@ -113,7 +113,7 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
             int ny = (block_y + 1) * (block_size_y) - 1;    //ブロックの左下のy座標
 
             corners.emplace_back(nx, ny);
-            corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
+            corner_flag[ny][nx] = static_cast<int>(corners.size() - 1);
             same_corner_list.emplace_back();
             same_corner_list[(int)corners.size() - 1].emplace(corners.size() - 1);;
             neighbor_vtx.emplace_back();
@@ -126,7 +126,7 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
             ny = (block_y + 1) * (block_size_y) - 1;    //ブロックの右下のy座標
 
             corners.emplace_back(nx, ny);
-            corner_flag[ny * 2][nx * 2] = static_cast<int>(corners.size() - 1);
+            corner_flag[ny][nx] = static_cast<int>(corners.size() - 1);
             same_corner_list.emplace_back();
             same_corner_list[(int)corners.size() - 1].emplace(corners.size() - 1);
             neighbor_vtx.emplace_back();
@@ -233,10 +233,10 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
 
     std::cout << same_corner_list.size() << std::endl;
     // 最下行目                                                                      //   ---------------     ---------------
-    for(int block_x = 1 ; block_x < (block_num_x * 2) - 1; block_x+=2){              //   |          p1 |     | p2          |
+    for(int block_x = 1 ; block_x < (block_num_x * 2) - 1; block_x+=2){              //   |             |     |             |
         int p1_idx = block_x + 2 * block_num_x * (2 * block_num_y - 1);              //   |             |     |             |
         int p2_idx = block_x + 1;                                                    //   |             |     |             |
-        same_corner_list[p2_idx].emplace(p1_idx);                                    //   |             |     |             |
+        same_corner_list[p2_idx].emplace(p1_idx);                                    //   |          p1 |     | p2          |
     }                                                                                //   ---------------     ---------------
 }
 
@@ -555,11 +555,11 @@ void SquareDivision::removeSquareCoveredSquare(int p1_idx, int p2_idx, int p3_id
  * @return 頂点番号
  */
 int SquareDivision::getOrAddCornerIndex(cv::Point2f p) {
-    if(corner_flag[(int)(p.y * 2)][(int)(p.x * 2)] != -1) return corner_flag[(int)(p.y * 2)][(int)(p.x * 2)]; //すでに頂点がある場合
+    if(corner_flag[(int)(p.y)][(int)(p.x)] != -1) return corner_flag[(int)(p.y)][(int)(p.x)]; //すでに頂点がある場合
     corners.emplace_back(p);
     neighbor_vtx.emplace_back();
     covered_square.emplace_back();
-    corner_flag[(int)(p.y * 2)][(int)(p.x * 2)] = static_cast<int>(corners.size() - 1);
+    corner_flag[(int)(p.y)][(int)(p.x)] = static_cast<int>(corners.size() - 1);
     same_corner_list.emplace_back();
     same_corner_list[(int)corners.size() - 1].emplace(corners.size() - 1);
     return static_cast<int>(corners.size() - 1);
@@ -574,8 +574,8 @@ int SquareDivision::getOrAddCornerIndex(cv::Point2f p) {
  */
 int SquareDivision::getCornerIndex(cv::Point2f p) {
     if(p.x != -1 && p.y != -1) {
-        if (corner_flag[(int) (p.y * 2)][(int) (p.x * 2)] != -1)
-            return corner_flag[(int) (p.y * 2)][(int) (p.x * 2)]; //すでに頂点がある場合
+        if (corner_flag[(int) (p.y)][(int) (p.x)] != -1)
+            return corner_flag[(int) (p.y)][(int) (p.x)]; //すでに頂点がある場合
         return -1;
     }
     return -1;
@@ -596,21 +596,21 @@ int SquareDivision::getCornerIndex(cv::Point2f p) {
  *  ----  ----
  */
 void SquareDivision::eraseCornerFlag(Point4Vec s1, Point4Vec s2, Point4Vec s3, Point4Vec s4) {
-    corner_flag[2 * s1.p2.y][2 * s1.p2.x] = -1;
-    corner_flag[2 * s1.p3.y][2 * s1.p3.x] = -1;
-    corner_flag[2 * s1.p4.y][2 * s1.p4.x] = -1;
+    corner_flag[s1.p2.y][s1.p2.x] = -1;
+    corner_flag[s1.p3.y][s1.p3.x] = -1;
+    corner_flag[s1.p4.y][s1.p4.x] = -1;
 
-    corner_flag[2 * s2.p1.y][2 * s2.p1.x] = -1;
-    corner_flag[2 * s2.p3.y][2 * s2.p3.x] = -1;
-    corner_flag[2 * s2.p4.y][2 * s2.p4.x] = -1;
+    corner_flag[s2.p1.y][s2.p1.x] = -1;
+    corner_flag[s2.p3.y][s2.p3.x] = -1;
+    corner_flag[s2.p4.y][s2.p4.x] = -1;
 
-    corner_flag[2 * s3.p1.y][2 * s3.p1.x] = -1;
-    corner_flag[2 * s3.p2.y][2 * s3.p2.x] = -1;
-    corner_flag[2 * s3.p4.y][2 * s3.p4.x] = -1;
+    corner_flag[s3.p1.y][s3.p1.x] = -1;
+    corner_flag[s3.p2.y][s3.p2.x] = -1;
+    corner_flag[s3.p4.y][s3.p4.x] = -1;
 
-    corner_flag[2 * s4.p1.y][2 * s4.p1.x] = -1;
-    corner_flag[2 * s4.p2.y][2 * s4.p2.x] = -1;
-    corner_flag[2 * s4.p3.y][2 * s4.p3.x] = -1;
+    corner_flag[s4.p1.y][s4.p1.x] = -1;
+    corner_flag[s4.p2.y][s4.p2.x] = -1;
+    corner_flag[s4.p3.y][s4.p3.x] = -1;
 }
 
 /**
