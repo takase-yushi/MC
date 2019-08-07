@@ -1733,8 +1733,9 @@ std::tuple<std::vector<cv::Point2f>, double> SquareDivision::blockMatching(Point
     ly = 4 * std::max({sp1.y, sp2.y, sp3.y, sp4.y}) + 3;
 
     cv::Point2f mv_tmp(0.0, 0.0); //ブロックの動きベクトル
-    int SX = 16; // ブロックマッチングの探索範囲(X)
-    int SY = 16; // ブロックマッチングの探索範囲(Y)
+    int SX = 16;                 // ブロックマッチングの探索範囲(X)
+    int SY = 16;                 // ブロックマッチングの探索範囲(Y)
+    int neighbor_pixels = 2;     //1 : 近傍 1 画素     2 : 近傍 2 画素
 
     double rd, e;
     double rd_min = 1e9, e_min = 1e9;
@@ -1774,8 +1775,8 @@ std::tuple<std::vector<cv::Point2f>, double> SquareDivision::blockMatching(Point
     mv_tmp.y = mv_min.y * 4;
 
     s = 2;
-    for(int j = - 2 * s + mv_tmp.y ; j <= 2 * s + mv_tmp.y ; j += s){            //j : y方向のMV
-        for(int i = - 2 * s + mv_tmp.x ; i <= 2 * s + mv_tmp.x ; i += s){        //i : x方向のMV
+    for(int j = - neighbor_pixels * s + mv_tmp.y ; j <= neighbor_pixels * s + mv_tmp.y ; j += s){            //j : y方向のMV
+        for(int i = - neighbor_pixels * s + mv_tmp.x ; i <= neighbor_pixels * s + mv_tmp.x ; i += s){        //i : x方向のMV
             if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
                && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
                 e = 0.0;
@@ -1802,8 +1803,8 @@ std::tuple<std::vector<cv::Point2f>, double> SquareDivision::blockMatching(Point
 
     s = 1;
 
-    for(int j = - 2 * s + mv_tmp.y ; j <= 2 * s + mv_tmp.y ; j += s){            //j : y方向のMV
-        for(int i = - 2 * s + mv_tmp.x ; i <= 2 * s + mv_tmp.x ; i += s){        //i : x方向のMV
+    for(int j = - neighbor_pixels * s + mv_tmp.y ; j <= neighbor_pixels * s + mv_tmp.y ; j += s){            //j : y方向のMV
+        for(int i = - neighbor_pixels * s + mv_tmp.x ; i <= neighbor_pixels * s + mv_tmp.x ; i += s){        //i : x方向のMV
             if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
                && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
                 e = 0.0;
