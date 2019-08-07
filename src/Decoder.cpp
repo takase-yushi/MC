@@ -269,6 +269,15 @@ void Decoder::addCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangl
 
 void Decoder::reconstructionTriangle(std::vector<CodingTreeUnit*> ctu) {
     for(int i = 0 ; i < ctu.size() ; i++) {
+        if(i % 2 == 0){
+            bool flag = false;
+            for (int x = 0; x < block_size_x; x++) {
+                // diagonal line
+                area_flag[i/2][x][block_size_y - x - 1] = (flag ? i : i + 1);
+                flag = !flag;
+            }
+        }
+
         CodingTreeUnit* cu = ctu[i];
         int type = (i % 2 == 0 ? DIVIDE::TYPE1 : DIVIDE::TYPE2);
         Triangle t = triangles[i].first;
@@ -329,6 +338,37 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
     p3_idx = getCornerIndex(result_subdiv_2.t2.p3);
 
     insertTriangle(p1_idx, p2_idx, p3_idx, result_subdiv_2.t2_type);
+
+    // 分割回数が偶数回目のとき斜線の更新を行う
+    int triangle_indexes[] = {(int)triangles.size() - 4, (int)triangles.size() - 3, (int)triangles.size() - 2, (int)triangles.size() - 1};
+
+    int sx = ceil( std::min({triangle.p1.x, triangle.p2.x, triangle.p3.x}));
+    int lx = floor(std::max({triangle.p1.x, triangle.p2.x, triangle.p3.x}));
+    int sy = ceil( std::min({triangle.p1.y, triangle.p2.y, triangle.p3.y}));
+    int ly = floor(std::max({triangle.p1.y, triangle.p2.y, triangle.p3.y}));
+
+    int width =  (lx - sx) / 2 + 1;
+    int height = (ly - sy) / 2 + 1;
+
+    if(type == TYPE1) {
+        for (int x = 0 ; x < width  ; x++) {
+            area_flag[(x + sx) % block_size_x][(x + sy) % block_size_y] = (x % 2 == 0 ? triangle_indexes[0] : triangle_indexes[2]);
+        }
+    }else if(type == TYPE2) {
+        for (int x = 0 ; x < width ; x++) {
+            area_flag[(sx + width + x) % block_size_x][(sy + height + x) % block_size_y] = (x % 2 == 0 ? triangle_indexes[1] : triangle_indexes[3]);
+        }
+
+    }else if(type == TYPE3){
+        for(int x = 0 ; x < width ; x++){
+            area_flag[(sx + width + x) % block_size_x][(sy + height - x - 1) % block_size_y] = (x % 2 == 0 ? triangle_indexes[1] : triangle_indexes[2]);
+        }
+    }else if(type == TYPE4){
+        for(int x = 0 ; x < width ; x++){
+            area_flag[(x + sx) % block_size_x][(ly - x) % block_size_y] = (x % 2 == 0 ? triangle_indexes[1] : triangle_indexes[2]);
+        }
+    }
+
 
     decode_ctu->node1 = new CodingTreeUnit();
     decode_ctu->node1->node1 = decode_ctu->node1->node2 = decode_ctu->node1->node3 = decode_ctu->node1->node4 = nullptr;

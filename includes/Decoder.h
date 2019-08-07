@@ -45,6 +45,7 @@ private:
     std::vector<bool> isCodedTriangle;
     std::vector<std::vector<CollocatedMvTree *>> previousMvList;
     std::vector<GaussResult> triangle_info;
+    std::vector<std::vector<std::vector<int>>> area_flag;
 
     cv::Mat hevc_expansion_ref;
 
