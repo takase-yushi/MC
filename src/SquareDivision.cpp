@@ -234,8 +234,8 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
     std::cout << same_corner_list.size() << std::endl;
     // 最下行目                                                                      //   ---------------     ---------------
     for(int block_x = 1 ; block_x < (block_num_x * 2) - 1; block_x+=2){              //   |             |     |             |
-        int p1_idx = block_x + 2 * block_num_x * (2 * block_num_y - 1);              //   |             |     |             |
-        int p2_idx = block_x + 1;                                                    //   |             |     |             |
+        int p1_idx = block_x +     2 * block_num_x * (2 * block_num_y - 1);          //   |             |     |             |
+        int p2_idx = block_x + 1 + 2 * block_num_x * (2 * block_num_y - 1);          //   |             |     |             |
         same_corner_list[p2_idx].emplace(p1_idx);                                    //   |          p1 |     | p2          |
     }                                                                                //   ---------------     ---------------
 }
