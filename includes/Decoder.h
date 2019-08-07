@@ -18,7 +18,7 @@ public:
     Decoder(const cv::Mat &ref_image, const cv::Mat &targetImage);
     void reconstructionTriangle(std::vector<CodingTreeUnit*> ctus);
     cv::Mat getReconstructionTriangleImage();
-    cv::Mat getModeImage(std::vector<CodingTreeUnit*> ctus, const std::vector<std::vector<std::vector<int>>> &area_flag);
+    cv::Mat getModeImage(std::vector<CodingTreeUnit*> ctus, const std::vector<std::vector<std::vector<int>>> &diagonal_area_flag);
 
 private:
     int block_size_x, block_size_y;
@@ -51,10 +51,18 @@ private:
 
     void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
     void addCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_no);
-    void reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode_ctu, Point3Vec triangle, int type);
+    void reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode_ctu, std::vector<std::vector<int>> &diagonal_area_flag, Point3Vec triangle, int triangle_index, int type);
     int getCornerIndex(cv::Point2f p);
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
     void getModeImage(CodingTreeUnit *ctu, cv::Mat &out, const std::vector<std::vector<int>> &area_flag);
+
+    std::vector<int> getSpatialTriangleList(int triangle_index);
+    std::vector<int> getIdxCoveredTriangleIndexList(int vertex_index);
+    bool isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> &vectors, const cv::Point2f &mv);
+    static bool isMvExists(const std::vector<std::vector<cv::Point2f>> &vectors, const std::vector<cv::Point2f> &mvs);
+    void addCornerAndTriangle(Triangle triangle, int triangle_index, int type);
+    void removeTriangleNeighborVertex(int p1_idx, int p2_idx, int p3_idx);
+    void removeTriangleCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, int triangle_idx);
 };
 
 #endif //ENCODER_DECODER_H
