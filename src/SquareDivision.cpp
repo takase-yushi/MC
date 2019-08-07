@@ -1112,9 +1112,8 @@ std::vector<int> SquareDivision::getSpatialSquareList(int s_idx){
     std::vector<int> list1 = getIdxCoveredSquareIndexList(square.p1_idx);
     std::vector<int> list2 = getIdxCoveredSquareIndexList(square.p2_idx);
     std::vector<int> list3 = getIdxCoveredSquareIndexList(square.p3_idx);
-    std::vector<int> list4 = getIdxCoveredSquareIndexList(square.p4_idx);
 
-    std::set<int> mutualIndexSet1, mutualIndexSet2, mutualIndexSet3, mutualIndexSet4;
+    std::set<int> mutualIndexSet1, mutualIndexSet2, mutualIndexSet3;
 
 #if MVD_DEBUG_LOG
     std::cout << "p1:" << squares[s_idx].p1_idx << std::endl;
@@ -1149,12 +1148,10 @@ std::vector<int> SquareDivision::getSpatialSquareList(int s_idx){
     for(auto idx : list1) if(isCodedSquare[idx] && idx != s_idx) mutualIndexSet1.emplace(idx);
     for(auto idx : list2) if(isCodedSquare[idx] && idx != s_idx) mutualIndexSet2.emplace(idx);
     for(auto idx : list3) if(isCodedSquare[idx] && idx != s_idx) mutualIndexSet3.emplace(idx);
-    for(auto idx : list4) if(isCodedSquare[idx] && idx != s_idx) mutualIndexSet4.emplace(idx);
 
     for(auto idx : mutualIndexSet1) spatialSquares.emplace(idx);
     for(auto idx : mutualIndexSet2) spatialSquares.emplace(idx);
     for(auto idx : mutualIndexSet3) spatialSquares.emplace(idx);
-    for(auto idx : mutualIndexSet4) spatialSquares.emplace(idx);
 
     std::vector<int> ret;
 
