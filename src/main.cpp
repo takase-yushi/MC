@@ -224,6 +224,7 @@ void run() {
         decoder.initTriangle(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);
         decoder.reconstructionTriangle(foo);
         cv::imwrite(img_directory + "/p_recon_decoder_test.png", decoder.getReconstructionTriangleImage());
+        cv::imwrite(img_directory + "/p_recon_mode_image_test.png", decoder.getModeImage(foo, diagonal_line_area_flag));
 
 #if STORE_DISTRIBUTION_LOG
 #if STORE_MVD_DISTRIBUTION_LOG
