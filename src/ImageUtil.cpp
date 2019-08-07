@@ -918,12 +918,12 @@ std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const st
  */
 std::vector<cv::Point2f> getPixelsInSquare(const Point4Vec& square){
     std::vector<cv::Point2f> pixels_in_square;
-    cv::Point2f p0 = square.p1, p1 = square.p2, p2 = square.p3, p3 = square.p4;
+    cv::Point2f p1 = square.p1, p4 = square.p4;
 
-    int sx = ceil(std::min({p0.x, p1.x, p2.x, p3.x}));
-    int lx = floor(std::max({p0.x, p1.x, p2.x, p3.x}));
-    int sy = ceil(std::min({p0.y, p1.y, p2.y, p3.y}));
-    int ly = floor(std::max({p0.y, p1.y, p2.y, p3.y}));
+    int sx = p1.x;
+    int lx = p4.x;
+    int sy = p1.y;
+    int ly = p4.y;
 
     pixels_in_square.clear();
     cv::Point2i xp;
