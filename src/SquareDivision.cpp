@@ -1702,17 +1702,15 @@ SquareDivision::GaussResult::GaussResult() {}
 
 std::tuple<std::vector<cv::Point2f>, double> SquareDivision::blockMatching(Point4Vec square, const cv::Mat& target_image, cv::Mat expansion_ref_image, int square_index, CodingTreeUnit *ctu) {
     double sx, sy, lx, ly;
-    cv::Point2f sp1, sp2, sp3, sp4;
+    cv::Point2f sp1, sp4;
 
     sp1 = square.p1;
-    sp2 = square.p2;
-    sp3 = square.p3;
     sp4 = square.p4;
 
-    sx = 4 * std::min({sp1.x, sp2.x, sp3.x, sp4.x});
-    sy = 4 * std::min({sp1.y, sp2.y, sp3.y, sp4.y});
-    lx = 4 * std::max({sp1.x, sp2.x, sp3.x, sp4.x}) + 3;
-    ly = 4 * std::max({sp1.y, sp2.y, sp3.y, sp4.y}) + 3;
+    sx = 4 * sp1.x;
+    sy = 4 * sp1.y;
+    lx = 4 * sp4.x + 3;
+    ly = 4 * sp4.y + 3;
 
     cv::Point2f mv_tmp(0.0, 0.0); //ブロックの動きベクトル
     int SX = 16;                 // ブロックマッチングの探索範囲(X)
