@@ -22,6 +22,7 @@
 #include <random>
 #include "../includes/ImageUtil.h"
 #include "../includes/Analyzer.h"
+#include "../includes/Flags.h"
 
 TriangleDivision::TriangleDivision(const cv::Mat &refImage, const cv::Mat &targetImage, const cv::Mat &refGaussImage) : target_image(targetImage),
                                                                                                                         ref_image(refImage), ref_gauss_image(refGaussImage) {}
@@ -236,20 +237,18 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
         same_corner_list[p2_idx].emplace(p1_idx);
     }
 
-    for(int block_y = 0 ; block_y < 2 * block_num_y ; block_y+=2){
+    for(int block_y = 1 ; block_y < (block_num_y * 2) - 1; block_y+=2){
         for(int block_x = 1 ; block_x < (block_num_x * 2) - 1; block_x+=2){
             int p1_idx = block_x +     2 * block_num_x * block_y;
             int p2_idx = block_x + 1 + 2 * block_num_x * block_y;
-            same_corner_list[p1_idx].emplace(p2_idx);
-            same_corner_list[p2_idx].emplace(p1_idx);
-
-            if(block_y == 0 || block_y == (block_num_y - 1)) continue;
 
             int p3_idx = p1_idx + 2 * block_num_x;
             int p4_idx = p3_idx + 1;
 
+            same_corner_list[p1_idx].emplace(p2_idx);
             same_corner_list[p1_idx].emplace(p3_idx);
             same_corner_list[p1_idx].emplace(p4_idx);
+            same_corner_list[p2_idx].emplace(p1_idx);
             same_corner_list[p2_idx].emplace(p3_idx);
             same_corner_list[p2_idx].emplace(p4_idx);
             same_corner_list[p3_idx].emplace(p1_idx);
@@ -265,7 +264,7 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
     // 0行目
     for(int block_x = 1 ; block_x < (block_num_x * 2) - 1; block_x+=2){
         int p1_idx = block_x + 2 * block_num_x * (2 * block_num_y - 1);
-        int p2_idx = block_x + 1;
+        int p2_idx = p1_idx + 1;
         same_corner_list[p1_idx].emplace(p2_idx);
         same_corner_list[p2_idx].emplace(p1_idx);
     }
@@ -525,7 +524,7 @@ std::vector<int> TriangleDivision::getIdxCoveredTriangleIndexList(int target_ver
         tmp_s = covered_triangle[same_corner];
         for(auto idx : tmp_s) s.emplace(idx);
     }
-    std::vector<int> v(s.size());
+    std::vector<int> v;
 
     for(auto triangle_idx : s) {
         v.emplace_back(triangle_idx);
@@ -1065,9 +1064,10 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     std::vector<cv::Point2i> ret_gauss2;
 
     if(method_flag == MV_CODE_METHOD::MERGE) {
-        std::vector<int> t = getSpatialTriangleList(triangle_index);
-        gauss_result_parallel = triangle_gauss_results[t[selected_index]].mv_parallel;
-        triangle_gauss_results[triangle_index].mv_parallel = gauss_result_parallel;
+        triangle_gauss_results[triangle_index].mv_parallel = mvd[0];
+        triangle_gauss_results[triangle_index].mv_warping = mvd;
+        gauss_result_parallel = mvd[0];
+        gauss_result_warping = mvd;
     }
 
     std::vector<cv::Point2f> mv;
@@ -1087,6 +1087,20 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     ctu->collocated_mv = cmt->mv1;
     ctu->parallel_flag = parallel_flag;
     ctu->method = method_flag;
+    ctu->ref_triangle_idx = selected_index;
+
+    if(method_flag == SPATIAL) {
+        ctu->mvds.clear();
+        if(ctu->parallel_flag) {
+            ctu->mvds.emplace_back(mvd[0]);
+            ctu->mvds.emplace_back(mvd[0]);
+            ctu->mvds.emplace_back(mvd[0]);
+        }else{
+            ctu->mvds.emplace_back(mvd[0]);
+            ctu->mvds.emplace_back(mvd[1]);
+            ctu->mvds.emplace_back(mvd[2]);
+        }
+    }
 
     SplitResult split_triangles = getSplitTriangle(p1, p2, p3, type);
 
@@ -1416,6 +1430,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         addNeighborVertex(triangles[triangle_index].first.p1_idx,triangles[triangle_index].first.p2_idx,triangles[triangle_index].first.p3_idx);
         addCoveredTriangle(triangles[triangle_index].first.p1_idx,triangles[triangle_index].first.p2_idx,triangles[triangle_index].first.p3_idx, triangle_index);
 
+//        std::cout << (ctu->method == MERGE ? "MERGE" : "SPATIAL") << " " << (ctu->parallel_flag ? "PARALLEL" : "WARPING") << " "  << ctu->mv1 << " " << ctu->mv2 << " " << ctu->mv3 << std::endl;
         return false;
     }
 
@@ -1794,7 +1809,7 @@ void TriangleDivision::constructPreviousCodingTree(CodingTreeUnit* codingTree, C
  */
 bool TriangleDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> &vectors, const cv::Point2f &mv){
     for(auto vector : vectors) {
-        if(std::get<0>(vector) == mv) {
+        if(vector.first == mv) {
             return true;
         }
     }
@@ -1864,14 +1879,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 std::vector<cv::Point2f> v{mvs[0], mvs[1], mvs[2]};
                 warping_vectors.emplace_back(v);
 
-                mv_average.x = (p1.x + p2.x + p3.x) / 3.0;
-                mv_average.y = (p1.y + p2.y + p3.y) / 3.0;
             }else{
                 warping_vectors.emplace_back();
             }
 
-            mv_average.x = (p1.x + p2.x + p3.x) / 3.0;
-            mv_average.y = (p1.y + p2.y + p3.y) / 3.0;
             mv_average = roundVecQuarter(mv_average);
             if(!isMvExists(vectors, mv_average) && vectors.size() < MV_LIST_MAX_NUM){
                 vectors.emplace_back(mv_average, SPATIAL);
@@ -1896,13 +1907,14 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
     double lambda = getLambdaPred(qp, (parallel_flag ? 1.0 : 1.0));
 
     //                      コスト, 差分ベクトル, 番号, タイプ
-    std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum> > results;
+    std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> > results;
     for(int i = 0 ; i < vectors.size() ; i++) {
         std::pair<cv::Point2f, MV_CODE_METHOD> vector = vectors[i];
         cv::Point2f current_mv = vector.first;
         // TODO: ワーピング対応
         if(parallel_flag) { // 平行移動成分に関してはこれまで通りにやる
             FlagsCodeSum flag_code_sum(0, 0, 0, 0);
+            Flags flags;
 
             cv::Point2f mvd = current_mv - mv[0];
 #if MVD_DEBUG_LOG
@@ -1911,6 +1923,14 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             std::cout << "encode_mv(parallel)     :" << mv[0] << std::endl;
 #endif
             mvd = getQuantizedMv(mvd, 4);
+
+            // 正負の判定(使ってません！！！)
+            bool is_x_minus = mvd.x < 0;
+            bool is_y_minus = mvd.y < 0;
+
+            flags.x_sign_flag.emplace_back(is_x_minus);
+            flags.y_sign_flag.emplace_back(is_y_minus);
+
 #if MVD_DEBUG_LOG
             std::cout << "mvd(parallel)           :" << mvd << std::endl;
 #endif
@@ -1928,6 +1948,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             bool is_x_greater_than_zero = abs_x > 0;
             bool is_y_greater_than_zero = abs_y > 0;
 
+            flags.x_greater_0_flag.emplace_back(is_x_greater_than_zero);
+            flags.y_greater_0_flag.emplace_back(is_y_greater_than_zero);
+
             flag_code_sum.countGreater0Code();
             flag_code_sum.countGreater0Code();
             flag_code_sum.setXGreater0Flag(is_x_greater_than_zero);
@@ -1937,9 +1960,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             bool is_x_greater_than_one = abs_x > 1;
             bool is_y_greater_than_one = abs_y > 1;
 
-            // 正負の判定(使ってません！！！)
-            bool is_x_minus = mvd.x < 0;
-            bool is_y_minus = mvd.y < 0;
+            flags.x_greater_1_flag.emplace_back(is_x_greater_than_one);
+            flags.y_greater_1_flag.emplace_back(is_y_greater_than_one);
 
             int mvd_code_length = 2;
             if(is_x_greater_than_zero){
@@ -1947,6 +1969,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 
                 if(is_x_greater_than_one){
                     int mvd_x_minus_2 = mvd.x - 2.0;
+                    mvd.x -= 2.0;
                     mvd_code_length += getExponentialGolombCodeLength((int) mvd_x_minus_2, 0);
                     flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_x_minus_2, 0));
                 }
@@ -1961,6 +1984,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 
                 if(is_y_greater_than_one){
                     int mvd_y_minus_2 = mvd.y - 2.0;
+                    mvd.y -= 2.0;
                     mvd_code_length += getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
                     flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_y_minus_2, 0));
                 }
@@ -1979,7 +2003,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 
             std::vector<cv::Point2f> mvds{mvd};
             // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum);
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum, flags);
         }else{
             std::vector<cv::Point2f> mvds;
             if(!warping_vectors[i].empty()){
@@ -1994,7 +2018,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 
             int mvd_code_length = 6;
             FlagsCodeSum flag_code_sum(0, 0, 0, 0);
-
+            Flags flags;
             for(int j = 0 ; j < mvds.size() ; j++){
 
 #if MVD_DEBUG_LOG
@@ -2004,6 +2028,13 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 #endif
 
                 cv::Point2f mvd = getQuantizedMv(mvds[j], 4);
+
+                // 正負の判定
+                bool is_x_minus = mvd.x < 0;
+                bool is_y_minus = mvd.y < 0;
+                flags.x_sign_flag.emplace_back(is_x_minus);
+                flags.y_sign_flag.emplace_back(is_y_minus);
+
                 mvd.x = std::fabs(mvd.x);
                 mvd.y = std::fabs(mvd.y);
 #if MVD_DEBUG_LOG
@@ -2022,6 +2053,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 bool is_x_greater_than_zero = abs_x > 0;
                 bool is_y_greater_than_zero = abs_y > 0;
 
+                flags.x_greater_0_flag.emplace_back(is_x_greater_than_zero);
+                flags.y_greater_0_flag.emplace_back(is_y_greater_than_zero);
+
                 flag_code_sum.countGreater0Code();
                 flag_code_sum.countGreater0Code();
                 flag_code_sum.setXGreater0Flag(is_x_greater_than_zero);
@@ -2031,16 +2065,15 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 bool is_x_greater_than_one = abs_x > 1;
                 bool is_y_greater_than_one = abs_y > 1;
 
-
-                // 正負の判定(これもつかってません！！！）
-                bool is_x_minus = mvd.x < 0;
-                bool is_y_minus = mvd.y < 0;
+                flags.x_greater_1_flag.emplace_back(is_x_greater_than_one);
+                flags.y_greater_1_flag.emplace_back(is_y_greater_than_one);
 
                 if(is_x_greater_than_zero){
                     mvd_code_length += 1;
 
                     if(is_x_greater_than_one){
                         int mvd_x_minus_2 = mvd.x - 2.0;
+                        mvd.x -= 2.0;
                         mvd_code_length += getExponentialGolombCodeLength((int) mvd_x_minus_2, 0);
                         flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_x_minus_2, 0));
                     }
@@ -2055,6 +2088,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 
                     if(is_y_greater_than_one){
                         int mvd_y_minus_2 = mvd.y - 2.0;
+                        mvd.y -= 2.0;
                         mvd_code_length +=  getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
                         flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_y_minus_2, 0));
                     }
@@ -2062,6 +2096,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                     flag_code_sum.setYGreater1Flag(is_y_greater_than_one);
                     flag_code_sum.countSignFlagCode();
                 }
+                mvds[j].x = mvd.x;
+                mvds[j].y = mvd.y;
             }
 
             // 参照箇所符号化
@@ -2072,7 +2108,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
 
             // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum);
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum, flags);
         }
     }
 
@@ -2094,20 +2130,19 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
         pixels_in_triangle = pixels;
     }
 
+    double sx = std::min({coordinate.p1.x, coordinate.p2.x, coordinate.p3.x});
+    double sy = std::min({coordinate.p1.y, coordinate.p2.y, coordinate.p3.y});
+    double lx = std::max({coordinate.p1.x, coordinate.p2.x, coordinate.p3.x});
+    double ly = std::max({coordinate.p1.y, coordinate.p2.y, coordinate.p3.y});
+
     int merge_count = 0;
     if(parallel_flag) {
-//        std::cout << "original residual : " << residual << std::endl;
         for (int i = 0; i < spatial_triangle_size; i++) {
             int spatial_triangle_index = spatial_triangles[i];
             GaussResult spatial_triangle = triangle_gauss_results[spatial_triangle_index];
             std::vector<cv::Point2f> mvds;
             cv::Rect rect(-64, -64, 4 * (target_image.cols + 2 * 16), 4 * (target_image.rows + 2 * 16));
             std::vector<cv::Point2f> mvs;
-
-            double sx = std::min({coordinate.p1.x, coordinate.p2.x, coordinate.p3.x});
-            double sy = std::min({coordinate.p1.y, coordinate.p2.y, coordinate.p3.y});
-            double lx = std::max({coordinate.p1.x, coordinate.p2.x, coordinate.p3.x});
-            double ly = std::max({coordinate.p1.y, coordinate.p2.y, coordinate.p3.y});
 
             if (spatial_triangle.parallel_flag) {
                 if(spatial_triangle.mv_parallel.x + sx < -16 || spatial_triangle.mv_parallel.y + sy < -16 || spatial_triangle.mv_parallel.x + lx >= target_image.cols + 16 || spatial_triangle.mv_parallel.y + ly >= target_image.rows + 16) continue;
@@ -2117,10 +2152,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                     mvs.emplace_back(spatial_triangle.mv_parallel);
                     mvs.emplace_back(spatial_triangle.mv_parallel);
                     double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
-//                    std::cout << "ret_residual:" << ret_residual << std::endl;
                     double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
-                    results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, i, MERGE,
-                                         FlagsCodeSum(0, 0, 0, 0));
+                    results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvs, merge_count, MERGE,
+                                         FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
                 }
             } else {
@@ -2132,10 +2166,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                     mvs.emplace_back(spatial_triangle.mv_warping[0]);
                     double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs,
                                                               pixels_in_triangle, rect);
-//                    std::cout << "ret_residual:" << ret_residual << std::endl;
                     double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
-                    results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, i, MERGE,
-                                         FlagsCodeSum(0, 0, 0, 0));
+                    results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvs, merge_count, MERGE,
+                                         FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
                 }
             }
@@ -2152,18 +2185,25 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 mvs.emplace_back(warping_vectors[i][0]);
                 mvs.emplace_back(warping_vectors[i][1]);
                 mvs.emplace_back(warping_vectors[i][2]);
-                if (!isMvExists(warping_vector_history, mvs)) {
+
+                if(mvs[0].x + sx < -16 || mvs[0].y + sy < -16 || mvs[0].x + lx >= target_image.cols + 16  || mvs[0].y + ly>=target_image.rows + 16 ) continue;
+                if(mvs[1].x + sx < -16 || mvs[1].y + sy < -16 || mvs[1].x + lx >= target_image.cols + 16  || mvs[1].y + ly>=target_image.rows + 16 ) continue;
+                if(mvs[2].x + sx < -16 || mvs[2].y + sy < -16 || mvs[2].x + lx >= target_image.cols + 16  || mvs[2].y + ly>=target_image.rows + 16 ) continue;
+
+                if (!isMvExists(warping_vector_history, mvs) && warping_vector_history.size() < MV_LIST_MAX_NUM) {
                     double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
                     double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
-                    results.emplace_back(rd, getUnaryCodeLength(merge_count), mvds, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0));
+                    results.emplace_back(rd, getUnaryCodeLength(merge_count), mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
                     warping_vector_history.emplace_back(mvs[0], mvs[1], mvs[2]);
                 }
             }
         }
     }
+
+
     // RDしたスコアが小さい順にソート
-    std::sort(results.begin(), results.end(), [](const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum >& a, const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum>& b){
+    std::sort(results.begin(), results.end(), [](const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags >& a, const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags>& b){
         return std::get<0>(a) < std::get<0>(b);
     });
     double cost = std::get<0>(results[0]);
@@ -2172,6 +2212,15 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
     int selected_idx = std::get<3>(results[0]);
     MV_CODE_METHOD method = std::get<4>(results[0]);
     FlagsCodeSum flag_code_sum = std::get<5>(results[0]);
+    Flags result_flags = std::get<6>(results[0]);
+    ctu->x_greater_0_flag = result_flags.x_greater_0_flag;
+    ctu->y_greater_0_flag = result_flags.y_greater_0_flag;
+    ctu->x_greater_1_flag = result_flags.x_greater_1_flag;
+    ctu->y_greater_1_flag = result_flags.y_greater_1_flag;
+    ctu->x_sign_flag = result_flags.x_sign_flag;
+    ctu->y_sign_flag = result_flags.y_sign_flag;
+    ctu->mvds = mvds;
+    ctu->ref_triangle_idx = selected_idx;
 
 #if MVD_DEBUG_LOG
     puts("Result ===========================================");
@@ -2449,12 +2498,6 @@ TriangleDivision::SplitResult::SplitResult(const Point3Vec &t1, const Point3Vec 
                                                                                                                t2(t2),
                                                                                                                t1_type(t1Type),
                                                                                                                t2_type(t2Type) {}
-
-TriangleDivision::GaussResult::GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvParallel,
-                                           double residual, int triangleSize, bool parallelFlag, double residualBm, double residualNewton) : mv_warping(
-        mvWarping), mv_parallel(mvParallel), residual(residual), triangle_size(triangleSize), parallel_flag(parallelFlag), residual_bm(residualBm), residual_newton(residualNewton) {}
-
-TriangleDivision::GaussResult::GaussResult() {}
 
 std::tuple<std::vector<cv::Point2f>, std::vector<double>> TriangleDivision::fullpellBlockMatching(Point3Vec triangle, const cv::Mat& target_image, cv::Mat expansion_ref_image, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Point2f fullpell_initial_vector) {
     double sx, sy, lx, ly;

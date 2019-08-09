@@ -443,7 +443,7 @@ int img_ip(unsigned char **img, cv::Rect rect, double x, double y, int mode){
     if (x < rect.x || x > rect.x + rect.width || y < rect.y || y > rect.y + rect.height ) {
         std::cout << "Error in img_ip!" << std::endl;
         std::cout << x << " " << y << std::endl;
-        exit(1);
+        exit(-1);
     }
 
     /*** 補間点(x, y)の整数部分(x0, y0), 小数部分(dx, dy)を求める ***/

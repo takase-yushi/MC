@@ -8,6 +8,7 @@
 #include "Utils.h"
 #include "CodingTreeUnit.h"
 #include "CollocatedMvTree.h"
+#include "GaussResult.h"
 #include <set>
 #include <vector>
 
@@ -96,22 +97,6 @@ enum DIVIDE {
 class TriangleDivision {
 
 public:
-
-    class GaussResult{
-    public:
-        GaussResult();
-
-        GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvParallel, double residual,
-                    int triangleSize, bool parallelFlag, double residual_bm, double residual_newton);
-        std::vector<cv::Point2f> mv_warping;
-        cv::Point2f mv_parallel;
-        double residual;
-        int triangle_size;
-        bool parallel_flag;
-        double residual_bm;
-        double residual_newton;
-        MV_CODE_METHOD method;
-    };
 
     struct SplitResult {
     public:
