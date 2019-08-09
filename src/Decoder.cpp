@@ -471,8 +471,7 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
             if(decode_ctu->parallel_flag){
                 std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> merge_list;
 
-                for(int i = 0 ; i < vector_list.size() ; i++){
-                    std::pair<cv::Point2f, MV_CODE_METHOD> spatial_triangle_info = vector_list[i];
+                for(int i = 0 ; i < spatial_triangle_list.size() ; i++){
                     GaussResult spatial_triangle = triangle_info[spatial_triangle_list[i]];
 
                     if(spatial_triangle_info.second == SPATIAL){
