@@ -22,6 +22,7 @@
 #include <random>
 #include "../includes/ImageUtil.h"
 #include "../includes/Analyzer.h"
+#include "../includes/Flags.h"
 
 TriangleDivision::TriangleDivision(const cv::Mat &refImage, const cv::Mat &targetImage, const cv::Mat &refGaussImage) : target_image(targetImage),
                                                                                                                         ref_image(refImage), ref_gauss_image(refGaussImage) {}
@@ -1086,10 +1087,10 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     ctu->collocated_mv = cmt->mv1;
     ctu->parallel_flag = parallel_flag;
     ctu->method = method_flag;
-    ctu->mvds.clear();
     ctu->ref_triangle_idx = selected_index;
 
     if(method_flag == SPATIAL) {
+        ctu->mvds.clear();
         if(ctu->parallel_flag) {
             ctu->mvds.emplace_back(mvd[0]);
             ctu->mvds.emplace_back(mvd[0]);
@@ -1639,12 +1640,6 @@ std::vector<int> TriangleDivision::getSpatialTriangleList(int t_idx){
         ret.emplace_back(idx);
     }
 
-    if(t_idx == 122){
-        puts("no.122 spatial patch");
-        for(const auto& idx : ret){
-            std::cout << idx << std::endl;
-        }
-    }
     return ret;
 }
 
@@ -1882,6 +1877,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 mvs = getPredictedWarpingMv(ref_triangle_coordinates, ref_mvs, target_triangle_coordinates);
                 std::vector<cv::Point2f> v{mvs[0], mvs[1], mvs[2]};
                 warping_vectors.emplace_back(v);
+
             }else{
                 warping_vectors.emplace_back();
             }
@@ -2140,7 +2136,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 
     int merge_count = 0;
     if(parallel_flag) {
-//        std::cout << "original residual : " << residual << std::endl;
         for (int i = 0; i < spatial_triangle_size; i++) {
             int spatial_triangle_index = spatial_triangles[i];
             GaussResult spatial_triangle = triangle_gauss_results[spatial_triangle_index];
@@ -2156,7 +2151,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                     mvs.emplace_back(spatial_triangle.mv_parallel);
                     mvs.emplace_back(spatial_triangle.mv_parallel);
                     double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
-//                    std::cout << "ret_residual:" << ret_residual << std::endl;
                     double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
                     results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvs, merge_count, MERGE,
                                          FlagsCodeSum(0, 0, 0, 0), Flags());
@@ -2171,7 +2165,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                     mvs.emplace_back(spatial_triangle.mv_warping[0]);
                     double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs,
                                                               pixels_in_triangle, rect);
-//                    std::cout << "ret_residual:" << ret_residual << std::endl;
                     double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
                     results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvs, merge_count, MERGE,
                                          FlagsCodeSum(0, 0, 0, 0), Flags());
@@ -2206,9 +2199,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             }
         }
     }
-    if(triangle_idx == 122){
-        std::cout << "merge_count:" << merge_count << std::endl;
-    }
+
+
     // RDしたスコアが小さい順にソート
     std::sort(results.begin(), results.end(), [](const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags >& a, const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags>& b){
         return std::get<0>(a) < std::get<0>(b);
