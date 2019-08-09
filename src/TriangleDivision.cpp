@@ -1063,9 +1063,10 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     std::vector<cv::Point2i> ret_gauss2;
 
     if(method_flag == MV_CODE_METHOD::MERGE) {
-        std::vector<int> t = getSpatialTriangleList(triangle_index);
-        gauss_result_parallel = triangle_gauss_results[t[selected_index]].mv_parallel;
-        triangle_gauss_results[triangle_index].mv_parallel = gauss_result_parallel;
+        triangle_gauss_results[triangle_index].mv_parallel = mvd[0];
+        triangle_gauss_results[triangle_index].mv_warping = mvd;
+        gauss_result_parallel = mvd[0];
+        gauss_result_warping = mvd;
     }
 
     std::vector<cv::Point2f> mv;
