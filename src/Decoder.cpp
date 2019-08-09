@@ -293,10 +293,10 @@ void Decoder::reconstructionTriangle(std::vector<CodingTreeUnit*> ctu) {
 void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode_ctu, std::vector<std::vector<int>> &diagonal_area_flag, Point3Vec triangle, int triangle_index, int type) {
 
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
-        decode_ctu->method = ctu->method;
-        decode_ctu->triangle_index = triangle_index;
-        decode_ctu->parallel_flag = ctu->parallel_flag;
-        decode_ctu->ref_triangle_idx = ctu->ref_triangle_idx;
+        decode_ctu->method              = ctu->method;           // SPATIAL or MERGE(符号化データ)
+        decode_ctu->triangle_index      = triangle_index;        // 復号側で求めた三角パッチの番号
+        decode_ctu->parallel_flag       = ctu->parallel_flag;    // 平行移動を表すフラグ(符号化データ)
+        decode_ctu->ref_triangle_idx    = ctu->ref_triangle_idx; // 参照パッチインデックス(符号化データ)
         isCodedTriangle[triangle_index] = true;
 
         std::vector<int> spatial_triangle_list = getSpatialTriangleList(triangle_index);
