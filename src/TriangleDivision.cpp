@@ -2212,6 +2212,15 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
     int selected_idx = std::get<3>(results[0]);
     MV_CODE_METHOD method = std::get<4>(results[0]);
     FlagsCodeSum flag_code_sum = std::get<5>(results[0]);
+    Flags result_flags = std::get<6>(results[0]);
+    ctu->x_greater_0_flag = result_flags.x_greater_0_flag;
+    ctu->y_greater_0_flag = result_flags.y_greater_0_flag;
+    ctu->x_greater_1_flag = result_flags.x_greater_1_flag;
+    ctu->y_greater_1_flag = result_flags.y_greater_1_flag;
+    ctu->x_sign_flag = result_flags.x_sign_flag;
+    ctu->y_sign_flag = result_flags.y_sign_flag;
+    ctu->mvds = mvds;
+    ctu->ref_triangle_idx = selected_idx;
 
 #if MVD_DEBUG_LOG
     puts("Result ===========================================");
