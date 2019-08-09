@@ -19,6 +19,7 @@ public:
     void reconstructionTriangle(std::vector<CodingTreeUnit*> ctus);
     cv::Mat getReconstructionTriangleImage();
     cv::Mat getModeImage(std::vector<CodingTreeUnit*> ctus, const std::vector<std::vector<std::vector<int>>> &diagonal_area_flag);
+    cv::Mat getMvImage(std::vector<CodingTreeUnit*> ctus, const cv::Mat base_image);
 
 private:
     int block_size_x, block_size_y;
@@ -55,6 +56,7 @@ private:
     int getCornerIndex(cv::Point2f p);
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
     void getModeImage(CodingTreeUnit *ctu, cv::Mat &out, const std::vector<std::vector<int>> &area_flag);
+    void getMvImage(CodingTreeUnit *ctu, const cv::Mat &out);
 
     std::vector<int> getSpatialTriangleList(int triangle_index);
     std::vector<int> getIdxCoveredTriangleIndexList(int vertex_index);

@@ -2481,9 +2481,15 @@ void TriangleDivision::drawMvImage(cv::Mat &out, CodingTreeUnit *ctu){
         cv::Point2f p2 = corners[t.p2_idx];
         cv::Point2f p3 = corners[t.p3_idx];
 
-        cv::Point2f g = (p1 + p2 + p3) / 3.0;
+        if(ctu->parallel_flag) {
+            cv::Point2f g = (p1 + p2 + p3) / 3.0;
 
-        cv::line(out, g, g+ctu->mv1, GREEN);
+            cv::line(out, g, g + ctu->mv1, GREEN);
+        }else{
+            cv::line(out, p1, p1 + ctu->mv1, GREEN);
+            cv::line(out, p2, p2 + ctu->mv2, GREEN);
+            cv::line(out, p3, p3 + ctu->mv3, GREEN);
+        }
     }
 
     if(ctu->node1 != nullptr) drawMvImage(out, ctu->node1);

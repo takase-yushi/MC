@@ -1132,3 +1132,44 @@ void Decoder::removeTriangleCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, 
     covered_triangle[p2_idx].erase(triangle_idx);
     covered_triangle[p3_idx].erase(triangle_idx);
 }
+
+cv::Mat Decoder::getMvImage(std::vector<CodingTreeUnit *> ctus, const cv::Mat base_image) {
+    cv::Mat out = base_image.clone();
+
+    for(const auto ctu : ctus){
+        getMvImage(ctu, out);
+    }
+
+    return out;
+}
+
+void Decoder::getMvImage(CodingTreeUnit *ctu, const cv::Mat &out) {
+    if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr){
+        if(ctu->parallel_flag){
+            std::pair<Triangle, int> t = triangles[ctu->triangle_index];
+            cv::Point2f p1 = corners[t.first.p1_idx];
+            cv::Point2f p2 = corners[t.first.p2_idx];
+            cv::Point2f p3 = corners[t.first.p3_idx];
+
+            cv::Point2f pog((p1.x + p2.x + p3.x) / 3.0, (p1.y + p2.y + p3.y) / 3.0);
+
+            cv::line(out, pog, pog + ctu->mv1, GREEN);
+        }else{
+            std::pair<Triangle, int> t = triangles[ctu->triangle_index];
+            cv::Point2f p1 = corners[t.first.p1_idx];
+            cv::Point2f p2 = corners[t.first.p2_idx];
+            cv::Point2f p3 = corners[t.first.p3_idx];
+
+            cv::line(out, p1, p1 + ctu->mv1, GREEN);
+            cv::line(out, p2, p2 + ctu->mv2, GREEN);
+            cv::line(out, p3, p3 + ctu->mv3, GREEN);
+        }
+
+        return;
+    }
+
+    if(ctu->node1 != nullptr) getMvImage(ctu->node1, out);
+    if(ctu->node2 != nullptr) getMvImage(ctu->node2, out);
+    if(ctu->node3 != nullptr) getMvImage(ctu->node3, out);
+    if(ctu->node4 != nullptr) getMvImage(ctu->node4, out);
+}
