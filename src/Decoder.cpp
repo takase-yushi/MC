@@ -756,7 +756,7 @@ std::vector<int> Decoder::getIdxCoveredTriangleIndexList(int vertex_index) {
         tmp_s = covered_triangle[same_corner];
         for(auto idx : tmp_s) s.emplace(idx);
     }
-    std::vector<int> v(s.size());
+    std::vector<int> v;
 
     for(auto triangle_idx : s) {
         v.emplace_back(triangle_idx);
