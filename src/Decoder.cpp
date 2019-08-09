@@ -380,29 +380,97 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
             warping_vector_list.emplace_back();
         }
 
-        std::cout << corners[triangles[triangle_index].first.p1_idx] << " " << corners[triangles[triangle_index].first.p2_idx] << " " << corners[triangles[triangle_index].first.p3_idx] << std::endl;
+        double sx = std::min({triangle.p1.x, triangle.p2.x, triangle.p3.x});
+        double sy = std::min({triangle.p1.y, triangle.p2.y, triangle.p3.y});
+        double lx = std::max({triangle.p1.x, triangle.p2.x, triangle.p3.x});
+        double ly = std::max({triangle.p1.y, triangle.p2.y, triangle.p3.y});
 
-        std::cout << "vector_list.size() :" << vector_list.size() << std::endl;
-        std::cout << "warping_list.size():" << warping_vector_list.size() << std::endl;
         if(decode_ctu->method == SPATIAL){
             std::pair<cv::Point2f, MV_CODE_METHOD> ref_mv = vector_list[decode_ctu->ref_triangle_idx];
             std::vector<cv::Point2f> ref_warping_mv = warping_vector_list[decode_ctu->ref_triangle_idx];
             if(decode_ctu->parallel_flag){
-                decode_ctu->mv1 = ref_mv.first + ctu->mvds[0];
-                decode_ctu->mv2 = ref_mv.first + ctu->mvds[1];
-                decode_ctu->mv3 = ref_mv.first + ctu->mvds[2];
+
+                cv::Point2f mvd = ctu->mvds[0];
+                if(!ctu->x_greater_0_flag[0]) mvd.x = 0;
+                if(!ctu->y_greater_0_flag[0]) mvd.y = 0;
+
+                if(ctu->x_greater_0_flag[0]) {
+                    if(ctu->x_greater_1_flag[0]){
+                        mvd.x += 2.0;
+                    }else{
+                        mvd.x = 1.0;
+                    }
+                }
+
+                if(ctu->x_sign_flag[0]){
+                    mvd.x *= -1.0;
+                }
+
+                if(ctu->y_greater_0_flag[0]) {
+                    if(ctu->y_greater_1_flag[0]){
+                        mvd.y += 2.0;
+                    }else{
+                        mvd.y = 1.0;
+                    }
+                }
+
+                if(ctu->y_sign_flag[0]){
+                    mvd.y *= -1.0;
+                }
+
+                mvd /= 4.0;
+
+                decode_ctu->mv1 = ref_mv.first - mvd;
+                decode_ctu->mv2 = ref_mv.first - mvd;
+                decode_ctu->mv3 = ref_mv.first - mvd;
                 triangle_info[triangle_index].mv_parallel = decode_ctu->mv1;
                 triangle_info[triangle_index].parallel_flag = true;
             }else {
-                if(ref_warping_mv.empty()){
-                    decode_ctu->mv1 = ref_mv.first + ctu->mvds[0];
-                    decode_ctu->mv2 = ref_mv.first + ctu->mvds[1];
-                    decode_ctu->mv3 = ref_mv.first + ctu->mvds[2];
-                }else {
-                    decode_ctu->mv1 = ref_warping_mv[0] + ctu->mvds[0];
-                    decode_ctu->mv2 = ref_warping_mv[1] + ctu->mvds[1];
-                    decode_ctu->mv3 = ref_warping_mv[2] + ctu->mvds[2];
+                std::vector<cv::Point2f> mvds;
+                for(int i = 0 ; i < 3 ; i++){
+                    cv::Point2f mvd = ctu->mvds[i];
+                    if(!ctu->x_greater_0_flag[i]) mvd.x = 0;
+
+                    if(ctu->x_greater_0_flag[i]) {
+                        if(ctu->x_greater_1_flag[i]){
+                            mvd.x += 2.0;
+                        }else{
+                            mvd.x = 1.0;
+                        }
+                    }
+
+                    if(ctu->x_sign_flag[i]){
+                        mvd.x *= -1.0;
+                    }
+
+                    if(!ctu->y_greater_0_flag[i]) mvd.y = 0;
+
+                    if(ctu->y_greater_0_flag[i]) {
+                        if(ctu->y_greater_1_flag[i]){
+                            mvd.y += 2.0;
+                        }else{
+                            mvd.y = 1.0;
+                        }
+                    }
+
+                    if(ctu->y_sign_flag[i]){
+                        mvd.y *= -1.0;
+                    }
+
+                    mvd /= 4.0;
+                    mvds.emplace_back(mvd);
                 }
+
+                if(ref_warping_mv.empty()){
+                    decode_ctu->mv1 = ref_mv.first - mvds[0];
+                    decode_ctu->mv2 = ref_mv.first - mvds[1];
+                    decode_ctu->mv3 = ref_mv.first - mvds[2];
+                }else {
+                    decode_ctu->mv1 = ref_warping_mv[0] - mvds[0];
+                    decode_ctu->mv2 = ref_warping_mv[1] - mvds[1];
+                    decode_ctu->mv3 = ref_warping_mv[2] - mvds[2];
+                }
+                triangle_info[triangle_index].mv_warping.clear();
                 triangle_info[triangle_index].mv_warping.emplace_back(decode_ctu->mv1);
                 triangle_info[triangle_index].mv_warping.emplace_back(decode_ctu->mv2);
                 triangle_info[triangle_index].mv_warping.emplace_back(decode_ctu->mv3);
@@ -410,40 +478,66 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
             }
         }else{
             if(decode_ctu->parallel_flag){
-                std::pair<cv::Point2f, MV_CODE_METHOD> ref_mv = vector_list[decode_ctu->ref_triangle_idx];
+                std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> merge_list;
+
+                for(int i = 0 ; i < vector_list.size() ; i++){
+                    std::pair<cv::Point2f, MV_CODE_METHOD> spatial_triangle_info = vector_list[i];
+                    GaussResult spatial_triangle = triangle_info[spatial_triangle_list[i]];
+
+                    if(spatial_triangle_info.second == SPATIAL){
+                        if(spatial_triangle.mv_parallel.x + sx < -16 || spatial_triangle.mv_parallel.y + sy < -16 || spatial_triangle.mv_parallel.x + lx >= target_image.cols + 16 || spatial_triangle.mv_parallel.y + ly >= target_image.rows + 16) continue;
+
+                        if(!isMvExists(merge_list, spatial_triangle.mv_parallel) && merge_list.size() < MV_LIST_MAX_NUM) {
+                            std::pair<cv::Point2f, MV_CODE_METHOD> ref_mv = vector_list[i];
+                            merge_list.emplace_back(ref_mv.first, MERGE);
+                        }
+
+                    }else{
+                        if (spatial_triangle.mv_warping[0].x + sx < -16 || spatial_triangle.mv_warping[0].y + sy < -16 || spatial_triangle.mv_warping[0].x + lx >= target_image.cols + 16 || spatial_triangle.mv_warping[0].y + ly >= target_image.rows + 16) continue;
+
+                        if(!isMvExists(merge_list, spatial_triangle.mv_warping[0]) && merge_list.size() < MV_LIST_MAX_NUM) {
+                            merge_list.emplace_back(spatial_triangle.mv_warping[0], MERGE);
+                        }
+                    }
+                }
+
+                std::pair<cv::Point2f, MV_CODE_METHOD> ref_mv = merge_list[decode_ctu->ref_triangle_idx];
                 decode_ctu->mv1 = ref_mv.first;
                 decode_ctu->mv2 = ref_mv.first;
                 decode_ctu->mv3 = ref_mv.first;
 
                 triangle_info[triangle_index].mv_parallel = ref_mv.first;
                 triangle_info[triangle_index].parallel_flag = true;
+
             }else{
-//                std::vector<cv::Point2f> ref_warping_mv = warping_vector_list[decode_ctu->ref_triangle_idx];
                 int merge_idx = decode_ctu->ref_triangle_idx;
                 std::vector<std::vector<cv::Point2f>> warping_vector_history;
                 std::vector<std::vector<cv::Point2f>> merge_mv_list;
-                puts("merge list");
+
                 for(int i = 0 ; i < warping_vector_list.size() ; i++){
                     if(warping_vector_list[i].empty()) continue;
                     std::vector<cv::Point2f> mvs = warping_vector_list[i];
-                    std::cout << mvs[0] << " " << mvs[1] << " " << mvs[2] << std::endl;
+
+                    if(mvs[0].x + sx < -16 || mvs[0].y + sy < -16 || mvs[0].x + lx >= target_image.cols + 16  || mvs[0].y + ly>=target_image.rows + 16 ) continue;
+                    if(mvs[1].x + sx < -16 || mvs[1].y + sy < -16 || mvs[1].x + lx >= target_image.cols + 16  || mvs[1].y + ly>=target_image.rows + 16 ) continue;
+                    if(mvs[2].x + sx < -16 || mvs[2].y + sy < -16 || mvs[2].x + lx >= target_image.cols + 16  || mvs[2].y + ly>=target_image.rows + 16 ) continue;
+
                     if(!isMvExists(merge_mv_list, warping_vector_list[i]) && merge_mv_list.size() < MV_LIST_MAX_NUM){
                         merge_mv_list.emplace_back(warping_vector_list[i]);
                     }
                 }
-                std::cout << "merge_idx:" << merge_idx << std::endl;
-                std::cout << merge_mv_list.size() << std::endl;
+
                 std::vector<cv::Point2f> ref_warping_mv = merge_mv_list[merge_idx];
+
                 decode_ctu->mv1 = ref_warping_mv[0];
                 decode_ctu->mv2 = ref_warping_mv[1];
                 decode_ctu->mv3 = ref_warping_mv[2];
 
-                triangle_info[triangle_index].mv_warping.emplace_back(ref_warping_mv[0]);
-                triangle_info[triangle_index].mv_warping.emplace_back(ref_warping_mv[1]);
-                triangle_info[triangle_index].mv_warping.emplace_back(ref_warping_mv[2]);
+                triangle_info[triangle_index].mv_warping = ref_warping_mv;
 
             }
         }
+
         triangle_info[triangle_index].parallel_flag = ctu->parallel_flag;
         triangle_info[triangle_index].method = ctu->method;
         return;
