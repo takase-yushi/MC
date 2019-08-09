@@ -303,13 +303,6 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
         std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> vector_list;
         std::vector<std::vector<cv::Point2f>> warping_vector_list;
 
-        puts("");
-        std::cout << "spatial_triangle_list.size():" << spatial_triangle_list.size() << std::endl;
-        for(const auto& t_list : spatial_triangle_list){
-            std::cout << t_list << std::endl;
-        }
-
-
         for(int i = 0 ; i < spatial_triangle_list.size() ; i++){
             std::pair<Triangle, int> t = triangles[spatial_triangle_list[i]];
             GaussResult spatial_triangle_info = triangle_info[spatial_triangle_list[i]];
@@ -367,8 +360,6 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
             }
         }
 
-        std::cout << "vector_list.size() :" << vector_list.size() << std::endl;
-        std::cout << "warping_list.size():" << warping_vector_list.size() << std::endl;
         cv::Point2f collocated_mv(0.0, 0.0);
         if(!isMvExists(vector_list, collocated_mv)) {
             vector_list.emplace_back(collocated_mv, SPATIAL);
@@ -634,7 +625,6 @@ cv::Mat Decoder::getReconstructionTriangleImage() {
 cv::Mat Decoder::getModeImage(std::vector<CodingTreeUnit*> ctus, const std::vector<std::vector<std::vector<int>>> &diagonal_area_flag) {
     cv::Mat out = cv::Mat::zeros(ref_image.size(), CV_8UC3);
 
-    std::cout << "decode_triangles_size():" << triangles.size() << std::endl;
     for(int i = 0 ; i < decode_ctus.size() ; i++){
         getModeImage(decode_ctus[i], out, area_flag[i]);
     }
@@ -738,12 +728,6 @@ std::vector<int> Decoder::getSpatialTriangleList(int triangle_index) {
         ret.emplace_back(idx);
     }
 
-    if(triangle_index == 250){
-        puts("triangle_250 covered triangle");
-        for(const auto item : ret){
-            std::cout << item << std::endl;
-        }
-    }
     return ret;
 }
 
