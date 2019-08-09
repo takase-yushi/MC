@@ -1909,13 +1909,14 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
     double lambda = getLambdaPred(qp, (parallel_flag ? 1.0 : 1.0));
 
     //                      コスト, 差分ベクトル, 番号, タイプ
-    std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum> > results;
+    std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> > results;
     for(int i = 0 ; i < vectors.size() ; i++) {
         std::pair<cv::Point2f, MV_CODE_METHOD> vector = vectors[i];
         cv::Point2f current_mv = vector.first;
         // TODO: ワーピング対応
         if(parallel_flag) { // 平行移動成分に関してはこれまで通りにやる
             FlagsCodeSum flag_code_sum(0, 0, 0, 0);
+            Flags flags;
 
             cv::Point2f mvd = current_mv - mv[0];
 #if MVD_DEBUG_LOG
@@ -1924,6 +1925,14 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             std::cout << "encode_mv(parallel)     :" << mv[0] << std::endl;
 #endif
             mvd = getQuantizedMv(mvd, 4);
+
+            // 正負の判定(使ってません！！！)
+            bool is_x_minus = mvd.x < 0;
+            bool is_y_minus = mvd.y < 0;
+
+            flags.x_sign_flag.emplace_back(is_x_minus);
+            flags.y_sign_flag.emplace_back(is_y_minus);
+
 #if MVD_DEBUG_LOG
             std::cout << "mvd(parallel)           :" << mvd << std::endl;
 #endif
@@ -1941,6 +1950,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             bool is_x_greater_than_zero = abs_x > 0;
             bool is_y_greater_than_zero = abs_y > 0;
 
+            flags.x_greater_0_flag.emplace_back(is_x_greater_than_zero);
+            flags.y_greater_0_flag.emplace_back(is_y_greater_than_zero);
+
             flag_code_sum.countGreater0Code();
             flag_code_sum.countGreater0Code();
             flag_code_sum.setXGreater0Flag(is_x_greater_than_zero);
@@ -1950,9 +1962,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             bool is_x_greater_than_one = abs_x > 1;
             bool is_y_greater_than_one = abs_y > 1;
 
-            // 正負の判定(使ってません！！！)
-            bool is_x_minus = mvd.x < 0;
-            bool is_y_minus = mvd.y < 0;
+            flags.x_greater_1_flag.emplace_back(is_x_greater_than_one);
+            flags.y_greater_1_flag.emplace_back(is_y_greater_than_one);
 
             int mvd_code_length = 2;
             if(is_x_greater_than_zero){
@@ -1992,7 +2003,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 
             std::vector<cv::Point2f> mvds{mvd};
             // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum);
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum, flags);
         }else{
             std::vector<cv::Point2f> mvds;
             if(!warping_vectors[i].empty()){
@@ -2007,7 +2018,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 
             int mvd_code_length = 6;
             FlagsCodeSum flag_code_sum(0, 0, 0, 0);
-
+            Flags flags;
             for(int j = 0 ; j < mvds.size() ; j++){
 
 #if MVD_DEBUG_LOG
@@ -2017,6 +2028,13 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 #endif
 
                 cv::Point2f mvd = getQuantizedMv(mvds[j], 4);
+
+                // 正負の判定
+                bool is_x_minus = mvd.x < 0;
+                bool is_y_minus = mvd.y < 0;
+                flags.x_sign_flag.emplace_back(is_x_minus);
+                flags.y_sign_flag.emplace_back(is_y_minus);
+
                 mvd.x = std::fabs(mvd.x);
                 mvd.y = std::fabs(mvd.y);
 #if MVD_DEBUG_LOG
@@ -2035,6 +2053,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 bool is_x_greater_than_zero = abs_x > 0;
                 bool is_y_greater_than_zero = abs_y > 0;
 
+                flags.x_greater_0_flag.emplace_back(is_x_greater_than_zero);
+                flags.y_greater_0_flag.emplace_back(is_y_greater_than_zero);
+
                 flag_code_sum.countGreater0Code();
                 flag_code_sum.countGreater0Code();
                 flag_code_sum.setXGreater0Flag(is_x_greater_than_zero);
@@ -2044,10 +2065,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 bool is_x_greater_than_one = abs_x > 1;
                 bool is_y_greater_than_one = abs_y > 1;
 
-
-                // 正負の判定(これもつかってません！！！）
-                bool is_x_minus = mvd.x < 0;
-                bool is_y_minus = mvd.y < 0;
+                flags.x_greater_1_flag.emplace_back(is_x_greater_than_one);
+                flags.y_greater_1_flag.emplace_back(is_y_greater_than_one);
 
                 if(is_x_greater_than_zero){
                     mvd_code_length += 1;
@@ -2085,7 +2104,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
 
             // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum);
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum, flags);
         }
     }
 
@@ -2132,8 +2151,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                     double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
 //                    std::cout << "ret_residual:" << ret_residual << std::endl;
                     double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
-                    results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, i, MERGE,
-                                         FlagsCodeSum(0, 0, 0, 0));
+                    results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvs, merge_count, MERGE,
+                                         FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
                 }
             } else {
@@ -2147,8 +2166,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                                                               pixels_in_triangle, rect);
 //                    std::cout << "ret_residual:" << ret_residual << std::endl;
                     double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
-                    results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvds, i, MERGE,
-                                         FlagsCodeSum(0, 0, 0, 0));
+                    results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvs, merge_count, MERGE,
+                                         FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
                 }
             }
@@ -2173,7 +2192,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 if (!isMvExists(warping_vector_history, mvs) && warping_vector_history.size() < MV_LIST_MAX_NUM) {
                     double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
                     double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
-                    results.emplace_back(rd, getUnaryCodeLength(merge_count), mvds, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0));
+                    results.emplace_back(rd, getUnaryCodeLength(merge_count), mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
                     warping_vector_history.emplace_back(mvs[0], mvs[1], mvs[2]);
                 }
@@ -2184,7 +2203,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
         std::cout << "merge_count:" << merge_count << std::endl;
     }
     // RDしたスコアが小さい順にソート
-    std::sort(results.begin(), results.end(), [](const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum >& a, const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum>& b){
+    std::sort(results.begin(), results.end(), [](const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags >& a, const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags>& b){
         return std::get<0>(a) < std::get<0>(b);
     });
     double cost = std::get<0>(results[0]);

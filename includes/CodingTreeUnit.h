@@ -37,6 +37,9 @@ public:
     cv::Point2f collocated_mv;
     MV_CODE_METHOD method;
     FlagsCodeSum flags_code_sum;
+    std::vector<bool> x_greater_0_flag, y_greater_0_flag;
+    std::vector<bool> x_greater_1_flag, y_greater_1_flag;
+    std::vector<bool> x_sign_flag, y_sign_flag;
 };
 
 
