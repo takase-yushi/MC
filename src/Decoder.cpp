@@ -530,6 +530,8 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
 
         triangle_info[triangle_index].parallel_flag = ctu->parallel_flag;
         triangle_info[triangle_index].method = ctu->method;
+
+        std::cout << decode_ctu->mv1 << " " << decode_ctu->mv2 << " " << decode_ctu->mv3 << std::endl;
         return;
     }
 

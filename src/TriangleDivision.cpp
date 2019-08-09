@@ -1334,7 +1334,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     }
 
     double alpha = 1;
-    std::cout << "before:" << cost_before_subdiv << " after:" << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4) << std::endl;
+//    std::cout << "before:" << cost_before_subdiv << " after:" << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4) << std::endl;
     if(cost_before_subdiv >= alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4)) {
         ctu->split_cu_flag = true;
 
@@ -1430,6 +1430,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         addNeighborVertex(triangles[triangle_index].first.p1_idx,triangles[triangle_index].first.p2_idx,triangles[triangle_index].first.p3_idx);
         addCoveredTriangle(triangles[triangle_index].first.p1_idx,triangles[triangle_index].first.p2_idx,triangles[triangle_index].first.p3_idx, triangle_index);
 
+        std::cout << ctu->mv1 << " " << ctu->mv2 << " " << ctu->mv3 << std::endl;
         return false;
     }
 

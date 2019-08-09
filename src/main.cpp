@@ -195,7 +195,7 @@ void run() {
             cv::Point2f p1 = triangle.first.p1;
             cv::Point2f p2 = triangle.first.p2;
             cv::Point2f p3 = triangle.first.p3;
-            std::cout << "================== step:" << i << " ================== " << std::endl;
+//            std::cout << "================== step:" << i << " ================== " << std::endl;
             triangle_division.split(expand_images, foo[i], nullptr, Point3Vec(p1, p2, p3), i, triangle.second, division_steps, diagonal_line_area_flag[i/2]);
         }
         std::cout << "split finished" << std::endl;
