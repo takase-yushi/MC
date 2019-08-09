@@ -478,8 +478,7 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
                         if(spatial_triangle.mv_parallel.x + sx < -16 || spatial_triangle.mv_parallel.y + sy < -16 || spatial_triangle.mv_parallel.x + lx >= target_image.cols + 16 || spatial_triangle.mv_parallel.y + ly >= target_image.rows + 16) continue;
 
                         if(!isMvExists(merge_list, spatial_triangle.mv_parallel) && merge_list.size() < MV_LIST_MAX_NUM) {
-                            std::pair<cv::Point2f, MV_CODE_METHOD> ref_mv = vector_list[i];
-                            merge_list.emplace_back(ref_mv.first, MERGE);
+                            merge_list.emplace_back(spatial_triangle.mv_parallel, MERGE);
                         }
 
                     }else{
