@@ -474,7 +474,7 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
                 for(int i = 0 ; i < spatial_triangle_list.size() ; i++){
                     GaussResult spatial_triangle = triangle_info[spatial_triangle_list[i]];
 
-                    if(spatial_triangle_info.second == SPATIAL){
+                    if(spatial_triangle.parallel_flag){
                         if(spatial_triangle.mv_parallel.x + sx < -16 || spatial_triangle.mv_parallel.y + sy < -16 || spatial_triangle.mv_parallel.x + lx >= target_image.cols + 16 || spatial_triangle.mv_parallel.y + ly >= target_image.rows + 16) continue;
 
                         if(!isMvExists(merge_list, spatial_triangle.mv_parallel) && merge_list.size() < MV_LIST_MAX_NUM) {
