@@ -304,7 +304,6 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
         std::vector<std::vector<cv::Point2f>> warping_vector_list;
 
         for(int i = 0 ; i < spatial_triangle_list.size() ; i++){
-            std::pair<Triangle, int> t = triangles[spatial_triangle_list[i]];
             GaussResult spatial_triangle_info = triangle_info[spatial_triangle_list[i]];
             if(spatial_triangle_info.parallel_flag){
                 if(!isMvExists(vector_list, spatial_triangle_info.mv_parallel) && vector_list.size() < MV_LIST_MAX_NUM) {
@@ -530,7 +529,7 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
         triangle_info[triangle_index].parallel_flag = ctu->parallel_flag;
         triangle_info[triangle_index].method = ctu->method;
 
-        std::cout << decode_ctu->mv1 << " " << decode_ctu->mv2 << " " << decode_ctu->mv3 << std::endl;
+//        std::cout << (decode_ctu->method == MERGE ? "MERGE" : "SPATIAL") << " " << (decode_ctu->parallel_flag ? "PARALLEL" : "WARPING") << " "  <<decode_ctu->mv1 << " " << decode_ctu->mv2 << " " << decode_ctu->mv3 << std::endl;
         return;
     }
 
