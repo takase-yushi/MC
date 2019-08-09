@@ -2152,8 +2152,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                     mvs.emplace_back(spatial_triangle.mv_parallel);
                     mvs.emplace_back(spatial_triangle.mv_parallel);
                     double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
-                    double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
-                    results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvs, merge_count, MERGE,
+                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
+                    results.emplace_back(rd, getUnaryCodeLength(merge_count) + 1, mvs, merge_count, MERGE,
                                          FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
                 }
@@ -2166,8 +2166,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                     mvs.emplace_back(spatial_triangle.mv_warping[0]);
                     double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs,
                                                               pixels_in_triangle, rect);
-                    double rd = ret_residual + lambda * (getUnaryCodeLength(i) + 1);
-                    results.emplace_back(rd, getUnaryCodeLength(i) + 1, mvs, merge_count, MERGE,
+                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
+                    results.emplace_back(rd, getUnaryCodeLength(merge_count) + 1, mvs, merge_count, MERGE,
                                          FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
                 }
