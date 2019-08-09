@@ -1972,6 +1972,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 
                 if(is_x_greater_than_one){
                     int mvd_x_minus_2 = mvd.x - 2.0;
+                    mvd.x -= 2.0;
                     mvd_code_length += getExponentialGolombCodeLength((int) mvd_x_minus_2, 0);
                     flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_x_minus_2, 0));
                 }
@@ -1986,6 +1987,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 
                 if(is_y_greater_than_one){
                     int mvd_y_minus_2 = mvd.y - 2.0;
+                    mvd.y -= 2.0;
                     mvd_code_length += getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
                     flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_y_minus_2, 0));
                 }
@@ -2074,6 +2076,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 
                     if(is_x_greater_than_one){
                         int mvd_x_minus_2 = mvd.x - 2.0;
+                        mvd.x -= 2.0;
                         mvd_code_length += getExponentialGolombCodeLength((int) mvd_x_minus_2, 0);
                         flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_x_minus_2, 0));
                     }
@@ -2088,6 +2091,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 
                     if(is_y_greater_than_one){
                         int mvd_y_minus_2 = mvd.y - 2.0;
+                        mvd.y -= 2.0;
                         mvd_code_length +=  getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
                         flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_y_minus_2, 0));
                     }
@@ -2095,6 +2099,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                     flag_code_sum.setYGreater1Flag(is_y_greater_than_one);
                     flag_code_sum.countSignFlagCode();
                 }
+                mvds[j].x = mvd.x;
+                mvds[j].y = mvd.y;
             }
 
             // 参照箇所符号化
