@@ -1813,7 +1813,7 @@ void TriangleDivision::constructPreviousCodingTree(CodingTreeUnit* codingTree, C
  */
 bool TriangleDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> &vectors, const cv::Point2f &mv){
     for(auto vector : vectors) {
-        if(std::get<0>(vector) == mv) {
+        if(vector.first == mv) {
             return true;
         }
     }
