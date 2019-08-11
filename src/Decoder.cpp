@@ -469,6 +469,7 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
         }else{
             if(decode_ctu->parallel_flag){
                 std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> merge_list;
+                std::vector<Triangle> merge_triangle_coordinate;
 
                 for(int i = 0 ; i < spatial_triangle_list.size() ; i++){
                     GaussResult spatial_triangle = triangle_info[spatial_triangle_list[i]];
@@ -478,6 +479,7 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
 
                         if(!isMvExists(merge_list, spatial_triangle.mv_parallel) && merge_list.size() < MV_LIST_MAX_NUM) {
                             merge_list.emplace_back(spatial_triangle.mv_parallel, MERGE);
+                            merge_triangle_coordinate.emplace_back(triangles[spatial_triangle_list[i]].first);
                         }
 
                     }else{
@@ -485,6 +487,7 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
 
                         if(!isMvExists(merge_list, spatial_triangle.mv_warping[0]) && merge_list.size() < MV_LIST_MAX_NUM) {
                             merge_list.emplace_back(spatial_triangle.mv_warping[0], MERGE);
+                            merge_triangle_coordinate.emplace_back(triangles[spatial_triangle_list[i]].first);
                         }
                     }
                 }
@@ -493,6 +496,13 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
                 decode_ctu->mv1 = ref_mv.first;
                 decode_ctu->mv2 = ref_mv.first;
                 decode_ctu->mv3 = ref_mv.first;
+                Triangle t = merge_triangle_coordinate[decode_ctu->ref_triangle_idx];
+                cv::Point2f merge_triangle_p1 = corners[t.p1_idx];
+                cv::Point2f merge_triangle_p2 = corners[t.p2_idx];
+                cv::Point2f merge_triangle_p3 = corners[t.p3_idx];
+                decode_ctu->merge_triangle_ref_vector.x = (merge_triangle_p1.x + merge_triangle_p2.x + merge_triangle_p3.x) / 3.0;
+                decode_ctu->merge_triangle_ref_vector.y = (merge_triangle_p1.y + merge_triangle_p2.y + merge_triangle_p3.y) / 3.0;
+                std::cout << merge_triangle_p1 << " " << merge_triangle_p2 << " " << merge_triangle_p3   << std::endl;
 
                 triangle_info[triangle_index].mv_parallel = ref_mv.first;
                 triangle_info[triangle_index].parallel_flag = true;
@@ -501,6 +511,7 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
                 int merge_idx = decode_ctu->ref_triangle_idx;
                 std::vector<std::vector<cv::Point2f>> warping_vector_history;
                 std::vector<std::vector<cv::Point2f>> merge_mv_list;
+                std::vector<Triangle> merge_triangle_coordinate;
 
                 for(int i = 0 ; i < warping_vector_list.size() ; i++){
                     if(warping_vector_list[i].empty()) continue;
@@ -512,6 +523,7 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
 
                     if(!isMvExists(merge_mv_list, warping_vector_list[i]) && merge_mv_list.size() < MV_LIST_MAX_NUM){
                         merge_mv_list.emplace_back(warping_vector_list[i]);
+                        merge_triangle_coordinate.emplace_back(triangles[spatial_triangle_list[i]].first);
                     }
                 }
 
@@ -520,6 +532,13 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
                 decode_ctu->mv1 = ref_warping_mv[0];
                 decode_ctu->mv2 = ref_warping_mv[1];
                 decode_ctu->mv3 = ref_warping_mv[2];
+
+                Triangle t = merge_triangle_coordinate[merge_idx];
+                cv::Point2f merge_triangle_p1 = corners[t.p1_idx];
+                cv::Point2f merge_triangle_p2 = corners[t.p2_idx];
+                cv::Point2f merge_triangle_p3 = corners[t.p3_idx];
+                decode_ctu->merge_triangle_ref_vector.x = (merge_triangle_p1.x + merge_triangle_p2.x + merge_triangle_p3.x) / 3.0;
+                decode_ctu->merge_triangle_ref_vector.y = (merge_triangle_p1.y + merge_triangle_p2.y + merge_triangle_p3.y) / 3.0;
 
                 triangle_info[triangle_index].mv_warping = ref_warping_mv;
 
@@ -1133,10 +1152,10 @@ void Decoder::removeTriangleCoveredTriangle(int p1_idx, int p2_idx, int p3_idx, 
     covered_triangle[p3_idx].erase(triangle_idx);
 }
 
-cv::Mat Decoder::getMvImage(std::vector<CodingTreeUnit *> ctus, const cv::Mat base_image) {
+cv::Mat Decoder::getMvImage(const cv::Mat base_image) {
     cv::Mat out = base_image.clone();
 
-    for(const auto ctu : ctus){
+    for(const auto ctu : decode_ctus){
         getMvImage(ctu, out);
     }
 
@@ -1153,16 +1172,25 @@ void Decoder::getMvImage(CodingTreeUnit *ctu, const cv::Mat &out) {
 
             cv::Point2f pog((p1.x + p2.x + p3.x) / 3.0, (p1.y + p2.y + p3.y) / 3.0);
 
-            cv::line(out, pog, pog + ctu->mv1, GREEN);
+            cv::arrowedLine(out, pog, pog + ctu->mv1, GREEN);
+            if(ctu->method == MERGE) {
+                cv::arrowedLine(out, pog, ctu->merge_triangle_ref_vector, cv::Scalar(0, 165, 255));
+            }
+
         }else{
             std::pair<Triangle, int> t = triangles[ctu->triangle_index];
             cv::Point2f p1 = corners[t.first.p1_idx];
             cv::Point2f p2 = corners[t.first.p2_idx];
             cv::Point2f p3 = corners[t.first.p3_idx];
 
-            cv::line(out, p1, p1 + ctu->mv1, GREEN);
-            cv::line(out, p2, p2 + ctu->mv2, GREEN);
-            cv::line(out, p3, p3 + ctu->mv3, GREEN);
+            cv::arrowedLine(out, p1, p1 + ctu->mv1, GREEN);
+            cv::arrowedLine(out, p2, p2 + ctu->mv2, GREEN);
+            cv::arrowedLine(out, p3, p3 + ctu->mv3, GREEN);
+
+            cv::Point2f pog((p1.x + p2.x + p3.x) / 3.0, (p1.y + p2.y + p3.y) / 3.0);
+            if(ctu->method) {
+                cv::arrowedLine(out, pog, ctu->merge_triangle_ref_vector, cv::Scalar(0, 165, 255));
+            }
         }
 
         return;
