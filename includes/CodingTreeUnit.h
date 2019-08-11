@@ -40,6 +40,8 @@ public:
     std::vector<bool> x_greater_0_flag, y_greater_0_flag;
     std::vector<bool> x_greater_1_flag, y_greater_1_flag;
     std::vector<bool> x_sign_flag, y_sign_flag;
+
+    cv::Point2f merge_triangle_ref_vector;
 };
 
 

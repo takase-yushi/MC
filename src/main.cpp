@@ -226,7 +226,7 @@ void run() {
         cv::imwrite(img_directory + "/p_recon_decoder_test.png", decoder.getReconstructionTriangleImage());
         cv::imwrite(img_directory + "/p_recon_mode_image_test.png", decoder.getModeImage(foo, diagonal_line_area_flag));
 
-        cv::imwrite(img_directory + "/p_mv_image_test.png", decoder.getMvImage(foo, color));
+        cv::imwrite(img_directory + "/p_mv_image_test.png", decoder.getMvImage(color));
 
 #if STORE_DISTRIBUTION_LOG
 #if STORE_MVD_DISTRIBUTION_LOG
