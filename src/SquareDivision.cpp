@@ -22,6 +22,7 @@
 #include <random>
 #include "../includes/ImageUtil.h"
 #include "../includes/Analyzer.h"
+#include <algorithm>
 
 SquareDivision::SquareDivision(const cv::Mat &refImage, const cv::Mat &targetImage, const cv::Mat &refGaussImage) : target_image(targetImage),
                                                                                                                     ref_image(refImage), ref_gauss_image(refGaussImage) {}
@@ -1080,7 +1081,7 @@ SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1
     }
 
 }
-//TODO
+//TODO　参照パッチかぶりの解決
 /**
  * @fn std::vector<int> SquareDivision::getSpatialSquareList(int s_idx)
  * @brief t_idx番目の四角形の空間予測動きベクトル候補を返す
@@ -1126,41 +1127,30 @@ std::vector<int> SquareDivision::getSpatialSquareList(int s_idx){
 
 #endif
 
-//    for(auto idx : list1) if(isCodedSquare[idx] && idx != s_idx) mutualIndexSet1.emplace(idx);
-//    for(auto idx : list2) if(isCodedSquare[idx] && idx != s_idx) mutualIndexSet2.emplace(idx);
-//    for(auto idx : list3) if(isCodedSquare[idx] && idx != s_idx) mutualIndexSet3.emplace(idx);
-//
-//    for(auto idx : mutualIndexSet1) spatialSquares.emplace(idx);
-//    for(auto idx : mutualIndexSet2) spatialSquares.emplace(idx);
-//    for(auto idx : mutualIndexSet3) spatialSquares.emplace(idx);
-
-    std::vector<int> ret;
-
-//    for(auto idx : spatialSquares){
-//        ret.emplace_back(idx);
-//    }
-
     for(auto idx : list1) if(isCodedSquare[idx] && idx != s_idx) mutualIndexSet1.emplace_back(idx);
     for(auto idx : list2) if(isCodedSquare[idx] && idx != s_idx) mutualIndexSet2.emplace_back(idx);
     for(auto idx : list3) if(isCodedSquare[idx] && idx != s_idx) mutualIndexSet3.emplace_back(idx);
 
-    //左下の頂点の隣接パッチを入れる(優先度1,2番のパッチ)          2 -> 1 -> 自分 の順番で入っている
-    for(int i = mutualIndexSet3.size() - 1 ; i >= 0 ; i--){
-//        ret.emplace_back(mutualIndexSet3[i]);
+    //四角形インデックスが若い順だとHMの優先度の逆になってしまうので逆順にする。
+    reverse(mutualIndexSet2.begin(), mutualIndexSet2.end());
+    reverse(mutualIndexSet3.begin(), mutualIndexSet3.end());
+
+    std::vector<int> ret;
+
+    //優先度が高い順に入れていく
+    for(auto idx : mutualIndexSet3){
+        ret.emplace_back(idx);
     }
 
-    //右上の頂点の隣接パッチを入れる(優先度3,4番のパッチ)          4 -> 3 -> 自分 の順番で入っている
-    for(int i = mutualIndexSet2.size() - 1 ; i >= 0 ; i--){
-//        ret.emplace_back(mutualIndexSet2[i]);
+    for(auto idx : mutualIndexSet2){
+        ret.emplace_back(idx);
     }
 
-    //左上の頂点の隣接パッチを入れる(優先度5番のパッチ)          5 -> 自分 の順番で入っている
-    for(int i = mutualIndexSet1.size() - 1 ; i >= 0 ; i--){
-//        ret.emplace_back(mutualIndexSet1[i]);
+    for(auto idx : mutualIndexSet1){
+        ret.emplace_back(idx);
     }
 
-    //自分を入れる
-    ret.emplace_back((int)(mutualIndexSet3[mutualIndexSet3.size() - 1]));
+    ret.emplace_back(s_idx);
 
     return ret;
 }
@@ -1733,7 +1723,7 @@ std::tuple<std::vector<cv::Point2f>, double> SquareDivision::blockMatching(Point
     cv::Point2f mv_tmp(0.0, 0.0); //ブロックの動きベクトル
     int SX = 16;                 // ブロックマッチングの探索範囲(X)
     int SY = 16;                 // ブロックマッチングの探索範囲(Y)
-    int neighbor_pixels = 1;     //1 : 近傍 1 画素     2 : 近傍 2 画素
+    int neighbor_pixels = 3;     //1 : 近傍 1 画素,  2 : 近傍 2 画素,   n : 近傍 n 画素
 
     double rd, e;
     double rd_min = 1e9, e_min = 1e9;
