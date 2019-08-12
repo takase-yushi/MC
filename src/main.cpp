@@ -155,6 +155,13 @@ void run() {
             foo[i]->split_cu_flag = false;
             foo[i]->node1 = foo[i]->node2 = foo[i]->node3 = foo[i]->node4 = nullptr;
             foo[i]->triangle_index = i;
+            foo[i]->mvds.resize(3);
+            foo[i]->x_greater_0_flag.resize(3);
+            foo[i]->x_greater_1_flag.resize(3);
+            foo[i]->y_greater_0_flag.resize(3);
+            foo[i]->y_greater_1_flag.resize(3);
+            foo[i]->x_sign_flag.resize(3);
+            foo[i]->y_sign_flag.resize(3);
         }
 
         cv::Mat spatialMvTestImage;
@@ -218,7 +225,6 @@ void run() {
         cv::imwrite( img_directory + "/p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
         cv::imwrite(img_directory + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", triangle_division.getMvImage(foo));
         cv::imwrite(img_directory + "/p_color_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
-        std::cout << "triangle_size:" << triangle_division.getTriangleCoordinateList().size() << std::endl;
 
         Decoder decoder(ref_image, target_image);
         decoder.initTriangle(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);
