@@ -941,7 +941,7 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
  * @return 分割した場合はtrue, そうでない場合falseを返す
  */
 bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point3Vec triangle, int triangle_index, int type, int steps, std::vector<std::vector<int>> &diagonal_line_area_flag) {
-    if(steps <= 0) return false;
+
 
     double RMSE_before_subdiv = 0.0;
     double error_warping, error_parallel;
@@ -1100,6 +1100,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             ctu->mvds.emplace_back(mvd[1]);
             ctu->mvds.emplace_back(mvd[2]);
         }
+    }
+
+    if(steps <= 0){
+        isCodedTriangle[triangle_index] = true;
+        return false;
     }
 
     SplitResult split_triangles = getSplitTriangle(p1, p2, p3, type);
