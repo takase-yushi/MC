@@ -1194,7 +1194,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
     std::vector<CodingTreeUnit*> ctus{ctu->node1, ctu->node2, ctu->node3, ctu->node4};
 #if !MVD_DEBUG_LOG
-    #pragma omp parallel for
+//    #pragma omp parallel for
 #endif
     for (int j = 0; j < (int) subdiv_ref_triangles.size(); j++) {
         double error_warping_tmp, error_parallel_tmp;
