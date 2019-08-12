@@ -39,7 +39,7 @@ int qp;
 int block_size_x;
 int block_size_y;
 int division_steps;
-std::string out_file_suffix = "_debug";
+std::string out_file_suffix = "_parallel_only";
 
 int main(int argc, char *argv[]){
     // Write test codes below
@@ -237,10 +237,12 @@ void run() {
 #if STORE_DISTRIBUTION_LOG
 #if STORE_MVD_DISTRIBUTION_LOG
 #if GAUSS_NEWTON_PARALLEL_ONLY
-        Analyzer analayzer("_warping_and_parallel_" + std::to_string(qp) + "_" + getCurrentTimestamp());
+        Analyzer analayzer("_parallel_only_" + std::to_string(qp) + "_" + getCurrentTimestamp());
         analayzer.storeDistributionOfMv(foo, getProjectDirectory(OS) + "/log/minato");
+        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , getProjectDirectory(OS) + "/log/minato");
+
 #else
-        Analyzer analayzer("_warping_and_parallel_average_mv_add_3_qp_" + std::to_string(qp) + "_" + getCurrentTimestamp());
+        Analyzer analayzer("_lambda_plus_8_" + std::to_string(qp) + "_" + getCurrentTimestamp());
         analayzer.storeDistributionOfMv(foo, getProjectDirectory(OS) + "/log/minato");
         analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , getProjectDirectory(OS) + "/log/minato");
 #endif
