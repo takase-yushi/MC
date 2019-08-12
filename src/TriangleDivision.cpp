@@ -1254,6 +1254,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             split_mv_result[j] = GaussResult(mv_warping_tmp, mv_parallel_tmp, error_parallel_tmp, triangle_size_tmp, true, tmp_bm_errors[2], tmp_error_newton);
         }
 
+        isCodedTriangle[triangle_indexes[j]] = true;
+    }
+
+    for(int i = 0 ; i < 4 ; i++){
+        isCodedTriangle[triangle_indexes[i]] = false;
     }
 
     double cost_after_subdiv1;
@@ -1282,6 +1287,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 split_mv_result[0].mv_warping, split_mv_result[0].residual,
                 triangle_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->node1, false, dummy);
     }
+    isCodedTriangle[triangle_indexes[0]] = true;
 
     double cost_after_subdiv2;
     int code_length2;
@@ -1300,6 +1306,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 split_mv_result[1].mv_warping, split_mv_result[1].residual,
                 triangle_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->node2, false, dummy);
     }
+    isCodedTriangle[triangle_indexes[1]] = true;
 
     double cost_after_subdiv3;
     int code_length3;
@@ -1319,6 +1326,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 split_mv_result[2].mv_warping, split_mv_result[2].residual,
                 triangle_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->node3, false, dummy);
     }
+    isCodedTriangle[triangle_indexes[2]] = true;
 
     double cost_after_subdiv4;
     int code_length4;
@@ -1337,10 +1345,15 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 split_mv_result[3].mv_warping, split_mv_result[3].residual,
                 triangle_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->node4, false, dummy);
     }
+    isCodedTriangle[triangle_indexes[3]] = true;
 
     double alpha = 1;
     std::cout << "before:" << cost_before_subdiv << " after:" << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4) << std::endl;
     if(cost_before_subdiv >= alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4)) {
+
+        for(int i = 0 ; i < 4 ; i++){
+            isCodedTriangle[triangle_indexes[i]] = false;
+        }
         ctu->split_cu_flag = true;
 
         int t1_idx = triangles.size() - 4;
@@ -1425,6 +1438,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     }else{
         isCodedTriangle[triangle_index] = true;
         delete_flag[triangle_index] = false;
+        for(int i = 0 ; i < 4 ; i++) isCodedTriangle[triangle_indexes[i]] = false;
         ctu->node1 = ctu->node2 = ctu->node3 = ctu->node4 = nullptr;
         ctu->method = method_flag;
         diagonal_line_area_flag = prev_area_flag;
