@@ -1254,6 +1254,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             triangle_size_tmp = (double)1e6;
 
             split_mv_result[j] = GaussResult(mv_warping_tmp, mv_parallel_tmp, error_parallel_tmp, triangle_size_tmp, true, tmp_bm_errors[2], tmp_error_newton);
+
+            triangle_gauss_results[triangle_indexes[j]].parallel_flag = true;
+            triangle_gauss_results[triangle_indexes[j]].mv_parallel = mv_parallel_tmp;
         }
 
         isCodedTriangle[triangle_indexes[j]] = true;
@@ -2209,6 +2212,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
     double ly = std::max({coordinate.p1.y, coordinate.p2.y, coordinate.p3.y});
 
     int merge_count = 0;
+
+#if MERGE_MODE
     if(parallel_flag) {
         for (int i = 0; i < spatial_triangle_size; i++) {
             int spatial_triangle_index = spatial_triangles[i];
@@ -2273,7 +2278,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             }
         }
     }
-
+#endif
 
     // RDしたスコアが小さい順にソート
     std::sort(results.begin(), results.end(), [](const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags >& a, const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags>& b){
