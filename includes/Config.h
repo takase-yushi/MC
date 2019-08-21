@@ -10,9 +10,7 @@
 
 class Config {
 
-
 private:
-    std::string img_directory;
     std::string gauss_ref_image;
     std::string ref_image;
     std::string target_image;
@@ -21,8 +19,8 @@ private:
     int ctu_height;
     int division_step;
     bool enable;
-public:
-    bool isEnable() const;
+    std::string img_directory;
+    std::string log_directory;
 
 public:
     const std::string &getImgDirectory() const;
@@ -41,8 +39,11 @@ public:
 
     int getDivisionStep() const;
 
-public:
-    Config(bool enableFlag, const std::string &imgDirectory, const std::string &gaussRefImage, const std::string &refImage,
+    bool isEnable() const;
+
+    const std::string &getLogDirectory() const;
+
+    Config(bool enableFlag, const std::string &imgDirectory, const std::string &logDirectory, const std::string &gaussRefImage, const std::string &refImage,
            const std::string &targetImage, int qp, int ctuWidth, int ctuHeight, int divisionStep);
 };
 

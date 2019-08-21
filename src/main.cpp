@@ -75,6 +75,7 @@ void run() {
 
         std::string img_path                    = ((OS == "Win") ? replaceBackslash(task.getImgDirectory()) : std::string(task.getImgDirectory()));
         std::string img_directory               = project_directory_path + img_path;
+        std::string log_directory               = project_directory_path + task.getLogDirectory();
         const std::string& target_file_name     = task.getTargetImage();
 
         const std::string& ref_file_name        = task.getGaussRefImage();
@@ -89,7 +90,8 @@ void run() {
         qp                                      = task.getQp();
         division_steps                          = task.getDivisionStep();
 
-        std::cout << "img_path               : " << img_path << std::endl;
+        std::cout << "img_directory          : " << img_directory << std::endl;
+        std::cout << "log_directory          : " << log_directory << std::endl;
         std::cout << "target_file_name       : " << target_file_name << std::endl;
         std::cout << "ref_file_name          : " << ref_file_name << std::endl;
         std::cout << "ref_file_path          : " << ref_file_path << std::endl;
@@ -238,13 +240,13 @@ void run() {
 #if STORE_MVD_DISTRIBUTION_LOG
 #if GAUSS_NEWTON_PARALLEL_ONLY
         Analyzer analayzer("_parallel_only_" + std::to_string(qp) + "_" + getCurrentTimestamp());
-        analayzer.storeDistributionOfMv(foo, getProjectDirectory(OS) + "/log/minato");
-        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , getProjectDirectory(OS) + "/log/minato");
+        analayzer.storeDistributionOfMv(foo, log_directory);
+        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
 
 #else
         Analyzer analayzer("_lambda_plus_8_" + std::to_string(qp) + "_" + getCurrentTimestamp());
-        analayzer.storeDistributionOfMv(foo, getProjectDirectory(OS) + "/log/minato");
-        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , getProjectDirectory(OS) + "/log/minato");
+        analayzer.storeDistributionOfMv(foo, log_directory);
+        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
 #endif
 #endif
 #endif

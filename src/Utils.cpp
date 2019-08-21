@@ -379,12 +379,13 @@ std::vector<Config> readTasks(std::string config_name) {
         std::string gauss_ref_image = task["gauss_ref_image"].get<std::string>();
         std::string ref_image       = task["ref_image"      ].get<std::string>();
         std::string target_image    = task["target_image"   ].get<std::string>();
+        std::string log_directory   = task["log_directory"].get<std::string>();
         int qp                      = static_cast<int>(task["QP"             ].get<double>());
         int ctu_width               = static_cast<int>(task["ctu_width"      ].get<double>());
         int ctu_height              = static_cast<int>(task["ctu_height"     ].get<double>());
         int division_steps          = static_cast<int>(task["division_step"  ].get<double>());
 
-        tasks.emplace_back(enable_flag, img_directory, gauss_ref_image, ref_image, target_image, qp, ctu_width, ctu_height, division_steps);
+        tasks.emplace_back(enable_flag, img_directory, log_directory, gauss_ref_image, ref_image, target_image, qp, ctu_width, ctu_height, division_steps);
     }
 
     return tasks;

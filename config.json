@@ -3,6 +3,7 @@
     {
       "enable"         : false,
       "img_directory"  : "/img/minato",
+      "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_limit_2_I22.bmp",
       "ref_image"      : "/minato_limit_2_I37.bmp",
       "target_image"   : "/minato_000413_limit.bmp",
@@ -14,6 +15,7 @@
     {
       "enable"         : false,
       "img_directory"  : "/img/minato",
+      "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_limit_2_I22.bmp",
       "ref_image"      : "/minato_limit_2_I37.bmp",
       "target_image"   : "/minato_000413_limit.bmp",
@@ -25,6 +27,7 @@
     {
       "enable"         : true,
       "img_directory"  : "/img/minato",
+      "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_limit_2_I22.bmp",
       "ref_image"      : "/minato_I_qp27.png",
       "target_image"   : "/minato_000413_limit.bmp",
@@ -36,6 +39,7 @@
     {
       "enable"         : true,
       "img_directory"  : "/img/minato",
+      "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_limit_2_I22.bmp",
       "ref_image"      : "/minato_I_qp29.png",
       "target_image"   : "/minato_000413_limit.bmp",
@@ -47,6 +51,7 @@
     {
       "enable"         : true,
       "img_directory"  : "/img/minato",
+      "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_limit_2_I22.bmp",
       "ref_image"      : "/minato_I_qp31.png",
       "target_image"   : "/minato_000413_limit.bmp",
@@ -57,6 +62,7 @@
     },    {
       "enable"         : true,
       "img_directory"  : "/img/minato",
+      "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_limit_2_I22.bmp",
       "ref_image"      : "/minato_I_qp33.png",
       "target_image"   : "/minato_000413_limit.bmp",
@@ -68,6 +74,7 @@
     {
       "enable"         : true,
       "img_directory"  : "/img/minato",
+      "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_limit_2_I22.bmp",
       "ref_image"      : "/minato_I_qp35.png",
       "target_image"   : "/minato_000413_limit.bmp",
@@ -79,6 +86,7 @@
     {
       "enable"         : true,
       "img_directory"  : "/img/minato",
+      "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_limit_2_I22.bmp",
       "ref_image"      : "/minato_I_qp37.png",
       "target_image"   : "/minato_000413_limit.bmp",
