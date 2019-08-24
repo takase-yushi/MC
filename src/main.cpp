@@ -1,3 +1,5 @@
+#include <utility>
+
 /**
  * @file main.cpp
  * @brief 実行ファイル
@@ -25,7 +27,7 @@
 #include "../includes/tests.h"
 #include "../includes/Decoder.h"
 
-void run();
+void run(std::string config_name);
 void tests();
 
 #define HARRIS false
@@ -46,7 +48,15 @@ int main(int argc, char *argv[]){
 #if TEST_MODE
     tests();
 #else
-    run();
+
+    std::string config_name;
+    if(argc == 1) {
+        config_name = "config.json";
+    }else{
+        config_name = std::string(argv[1]);
+    }
+
+    run(config_name);
 #endif
 
 }
@@ -56,7 +66,7 @@ void tests(){
     testPredMv();
 }
 
-void run() {
+void run(std::string config_name) {
 
     std::cout << "OpenCV_version : " << getVersionOfOpenCV() << std::endl;
 
@@ -66,7 +76,7 @@ void run() {
     std::vector<cv::Point2f> ref_corners, ref_corners_org;
 
     // 各タスクの情報が入ったvector
-    std::vector<Config> tasks = readTasks();
+    std::vector<Config> tasks = readTasks(std::move(config_name));
 
     // 全画像分ループ
     for(const auto& task : tasks){
