@@ -230,21 +230,22 @@ void run(std::string config_name) {
         cv::imwrite(img_directory + "/p_recon_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", recon);
 
         int code_length = triangle_division.getCtuCodeLength(foo);
+        std::string log_file_suffix = "_lambda_plus_30_" + std::to_string(qp) + "_" + getCurrentTimestamp();
         std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
         std::cout << "PSNR:" << getPSNR(target_image, p_image) << " code_length:" << code_length << std::endl;
-        std::cout << img_directory + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png" << std::endl;
-        cv::imwrite(img_directory + "/p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
-        cv::imwrite( img_directory + "/p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
-        cv::imwrite(img_directory + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", triangle_division.getMvImage(foo));
-        cv::imwrite(img_directory + "/p_color_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
+        std::cout << log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png" << std::endl;
+        cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
+        cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
+        cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", triangle_division.getMvImage(foo));
+        cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mode_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
 
-        Decoder decoder(ref_image, target_image);
-        decoder.initTriangle(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);
-        decoder.reconstructionTriangle(foo);
-        cv::imwrite(img_directory + "/p_recon_decoder_test.png", decoder.getReconstructionTriangleImage());
-        cv::imwrite(img_directory + "/p_recon_mode_image_test.png", decoder.getModeImage(foo, diagonal_line_area_flag));
-
-        cv::imwrite(img_directory + "/p_mv_image_test.png", decoder.getMvImage(color));
+//        Decoder decoder(ref_image, target_image);
+//        decoder.initTriangle(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);
+//        decoder.reconstructionTriangle(foo);
+//        cv::imwrite(img_directory + "/p_recon_decoder_test.png", decoder.getReconstructionTriangleImage());
+//        cv::imwrite(img_directory + "/p_recon_mode_image_test.png", decoder.getModeImage(foo, diagonal_line_area_flag));
+//
+//        cv::imwrite(img_directory + "/p_mv_image_test.png", decoder.getMvImage(color));
 
 #if STORE_DISTRIBUTION_LOG
 #if STORE_MVD_DISTRIBUTION_LOG
@@ -254,7 +255,7 @@ void run(std::string config_name) {
         analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
 
 #else
-        Analyzer analayzer("_lambda_plus_8_" + std::to_string(qp) + "_" + getCurrentTimestamp());
+        Analyzer analayzer(log_file_suffix);
         analayzer.storeDistributionOfMv(foo, log_directory);
         analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
 #endif
