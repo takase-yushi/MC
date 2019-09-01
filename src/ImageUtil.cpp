@@ -12,6 +12,7 @@
 #include "../includes/CodingTreeUnit.h"
 #include "../includes/Reconstruction.h"
 #include "../includes/TriangleDivision.h"
+#include "../includes/env.h"
 
 /**
  * @fn get_residual(const cv::Mat &target_image, const cv::Mat &predict_image)

@@ -22,22 +22,23 @@ message(STATUS "    config: ${OpenCV_DIR}")
 message(STATUS "    version: ${OpenCV_VERSION}")
 message(STATUS "    libraries: ${OpenCV_LIBS}")
 message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
+message(STATUS "    SYSTEM_NAME : ${CMAKE_SYSTEM_NAME}")
 
 # OpenMP settings
 find_package( OpenMP )
 if (OPENMP_FOUND)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set (CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
 set(SOURCE_FILES src/main.cpp)
-add_executable(Encoder src/Config.cpp includes/Config.h src/main.cpp src/psnr.cpp includes/psnr.h src/main.cpp includes/Utils.h src/Utils.cpp src/ME.cpp includes/ME.hpp includes/Vector.hpp includes/Point.hpp includes/saturate.hpp src/TriangleDivision.cpp includes/TriangleDivision.h src/CodingTreeUnit.cpp includes/CodingTreeUnit.h src/Reconstruction.cpp includes/Reconstruction.h src/CollocatedMvTree.cpp includes/CollocatedMvTree.h src/ImageUtil.cpp includes/ImageUtil.h src/Encode.cpp includes/Encode.h test/tests.cpp includes/tests.h src/Analyzer.cpp includes/Analyzer.h src/FlagsCodeSum.cpp includes/FlagsCodeSum.h includes/picojson.h src/Decoder.cpp includes/Decoder.h includes/GaussResult.h src/GaussResult.cpp includes/Flags.h)
+add_executable(Encoder src/Config.cpp includes/Config.h src/main.cpp src/psnr.cpp includes/psnr.h src/main.cpp includes/Utils.h src/Utils.cpp src/ME.cpp includes/ME.hpp includes/Vector.hpp includes/Point.hpp includes/saturate.hpp src/TriangleDivision.cpp includes/TriangleDivision.h src/CodingTreeUnit.cpp includes/CodingTreeUnit.h src/Reconstruction.cpp includes/Reconstruction.h src/CollocatedMvTree.cpp includes/CollocatedMvTree.h src/ImageUtil.cpp includes/ImageUtil.h src/Encode.cpp includes/Encode.h test/tests.cpp includes/tests.h src/Analyzer.cpp includes/Analyzer.h src/FlagsCodeSum.cpp includes/FlagsCodeSum.h includes/picojson.h src/Decoder.cpp includes/Decoder.h includes/GaussResult.h src/GaussResult.cpp includes/Flags.h includes/env.h)
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     target_compile_options(Encoder PUBLIC -O3 -g3)
 else()
     target_compile_options(Encoder PUBLIC -O3 -fopenmp -g3)
 endif()
-target_compile_options(Encoder PUBLIC -O3 -fopenmp -g3)
+
 include_directories(${OpenCV_INCLUDE_DIRS})
 target_link_libraries(Encoder ${OpenCV_LIBS})
 
