@@ -26,16 +26,10 @@
 #include "../includes/Utils.h"
 #include "../includes/tests.h"
 #include "../includes/Decoder.h"
+#include "../includes/env.h"
 
 void run(std::string config_name);
 void tests();
-
-#define HARRIS false
-#define THRESHOLD true
-#define LAMBDA 0.2
-#define INTER_DIV true // 頂点追加するかしないか
-
-#define DIVIDE_MODE LEFT_DIVIDE
 
 int qp;
 int block_size_x;
