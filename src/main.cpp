@@ -35,6 +35,9 @@ int qp;
 int block_size_x;
 int block_size_y;
 int division_steps;
+double injected_lambda;
+bool lambda_inject_flag;
+
 std::string out_file_suffix = "_parallel_only";
 
 int main(int argc, char *argv[]){
@@ -93,6 +96,9 @@ void run(std::string config_name) {
         block_size_y                            = task.getCtuHeight();
         qp                                      = task.getQp();
         division_steps                          = task.getDivisionStep();
+
+        lambda_inject_flag                      = task.isLambdaEnable();
+        injected_lambda                         = task.getLambda();
 
         std::cout << "img_directory          : " << img_directory << std::endl;
         std::cout << "log_directory          : " << log_directory << std::endl;

@@ -21,6 +21,15 @@ private:
     bool enable;
     std::string img_directory;
     std::string log_directory;
+    bool lambda_enable;
+
+private:
+  double lambda;
+
+public:
+  bool isLambdaEnable() const;
+
+  double getLambda() const;
 
 public:
     const std::string &getImgDirectory() const;
@@ -43,8 +52,10 @@ public:
 
     const std::string &getLogDirectory() const;
 
-    Config(bool enableFlag, const std::string &imgDirectory, const std::string &logDirectory, const std::string &gaussRefImage, const std::string &refImage,
-           const std::string &targetImage, int qp, int ctuWidth, int ctuHeight, int divisionStep);
+    Config(const std::string &gaussRefImage, const std::string &refImage, const std::string &targetImage, int qp,
+         int ctuWidth, int ctuHeight, int divisionStep, bool enable, const std::string &imgDirectory,
+         const std::string &logDirectory, bool lambdaEnable, double lambda);
+
 };
 
 

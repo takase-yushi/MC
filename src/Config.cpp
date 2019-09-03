@@ -4,10 +4,20 @@
 
 #include "../includes/Config.h"
 
-Config::Config(bool enableFlag, const std::string &imgDirectory, const std::string &logDirectory, const std::string &gaussRefImage, const std::string &refImage,
-               const std::string &targetImage, int qp, int ctuWidth, int ctuHeight, int divisionStep) : enable(enableFlag), img_directory(
-        imgDirectory), log_directory(logDirectory), gauss_ref_image(gaussRefImage), ref_image(refImage), target_image(targetImage), qp(qp),
-        ctu_width(ctuWidth), ctu_height(ctuHeight), division_step(divisionStep) {}
+
+Config::Config(const std::string &gaussRefImage, const std::string &refImage, const std::string &targetImage, int qp,
+               int ctuWidth, int ctuHeight, int divisionStep, bool enable, const std::string &imgDirectory,
+               const std::string &logDirectory, bool lambdaEnable, double lambda) : gauss_ref_image(gaussRefImage),
+                                                                                    ref_image(refImage),
+                                                                                    target_image(targetImage), qp(qp),
+                                                                                    ctu_width(ctuWidth),
+                                                                                    ctu_height(ctuHeight),
+                                                                                    division_step(divisionStep),
+                                                                                    enable(enable),
+                                                                                    img_directory(imgDirectory),
+                                                                                    log_directory(logDirectory),
+                                                                                    lambda_enable(lambdaEnable),
+                                                                                    lambda(lambda) {}
 
 const std::string &Config::getImgDirectory() const {
     return img_directory;
@@ -47,4 +57,12 @@ bool Config::isEnable() const {
 
 const std::string &Config::getLogDirectory() const {
     return log_directory;
+}
+
+bool Config::isLambdaEnable() const {
+    return lambda_enable;
+}
+
+double Config::getLambda() const {
+    return lambda;
 }
