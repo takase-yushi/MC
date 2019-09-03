@@ -791,7 +791,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                                                                          //     |             |  |             |
     same_corner_list[sub2_s2_p1_idx].emplace(sub1_s1_p4_idx);            //     |             |  |             |
                                                                          //     |             |  |             |
-                                                                         //     ---------------  ---------------
+    //TODO 隣接頂点ガバガバじゃない？                                                                     //     ---------------  ---------------
     //4分割後の隣接するパッチの頂点を追加
     int sub1_s1_p3_idx = getCornerIndex(split_sub_squares1.s1.p3);
     int sub2_s1_p1_idx = getCornerIndex(split_sub_squares2.s1.p1);
@@ -1081,7 +1081,8 @@ SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1
     }
 
 }
-//TODO　参照パッチかぶりの解決
+
+
 /**
  * @fn std::vector<int> SquareDivision::getSpatialSquareList(int s_idx)
  * @brief t_idx番目の四角形の空間予測動きベクトル候補を返す
@@ -1300,7 +1301,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     std::vector<int> spatial_squares = getSpatialSquareList(square_idx);
     int spatial_square_size = static_cast<int>(spatial_squares.size());
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors; // ベクトルとモードを表すフラグのペア
-//TODO 参照パッチの優先度をHMと同じにする
+
     // すべてのベクトルを格納する．
     for(int i = 0 ; i < spatial_square_size ; i++) {
         int spatial_square_index = spatial_squares[i];
@@ -1723,7 +1724,7 @@ std::tuple<std::vector<cv::Point2f>, double> SquareDivision::blockMatching(Point
     cv::Point2f mv_tmp(0.0, 0.0); //ブロックの動きベクトル
     int SX = 16;                 // ブロックマッチングの探索範囲(X)
     int SY = 16;                 // ブロックマッチングの探索範囲(Y)
-    int neighbor_pixels = 3;     //1 : 近傍 1 画素,  2 : 近傍 2 画素,   n : 近傍 n 画素
+    int neighbor_pixels = 2;     //1 : 近傍 1 画素,  2 : 近傍 2 画素,   n : 近傍 n 画素
 
     double rd, e;
     double rd_min = 1e9, e_min = 1e9;
