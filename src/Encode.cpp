@@ -79,6 +79,11 @@ double getLambdaMode(int qp){
  * @return lambdaの値
  */
 double getLambdaPred(int qp, double k){
+    extern bool lambda_inject_flag;
+    extern int injected_lambda;
+
+    if(lambda_inject_flag) return injected_lambda;
+
     return k * sqrt(getLambdaMode(qp));
 }
 
