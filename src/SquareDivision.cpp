@@ -780,18 +780,18 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                                                                          //  |s2_p1     s2_p2|
                                                                          //  |               |
     //4分割後の隣接する頂点を追加                                        //  -----------------
-    int sub1_s1_p4_idx = getOrAddCornerIndex(split_sub_squares1.s1.p4);  //     ---------------  ---------------
-    int sub2_s1_p2_idx = getOrAddCornerIndex(split_sub_squares2.s1.p2);  //     |             |  |             |
+    int sub1_s1_p4_idx = getCornerIndex(split_sub_squares1.s1.p4);       //     ---------------  ---------------
+    int sub2_s1_p2_idx = getCornerIndex(split_sub_squares2.s1.p2);       //     |             |  |             |
                                                                          //     |             |  |             |
-    int sub1_s2_p3_idx = getOrAddCornerIndex(split_sub_squares1.s2.p3);  //     |             |  |             |
-    int sub2_s2_p1_idx = getOrAddCornerIndex(split_sub_squares2.s2.p1);  //     |   sub1_s1_p4|  |sub1_s2_p3   |
+    int sub1_s2_p3_idx = getCornerIndex(split_sub_squares1.s2.p3);       //     |             |  |             |
+    int sub2_s2_p1_idx = getCornerIndex(split_sub_squares2.s2.p1);       //     |   sub1_s1_p4|  |sub1_s2_p3   |
                                                                          //     ---------------  ---------------
     same_corner_list[sub2_s1_p2_idx].emplace(sub1_s1_p4_idx);            //     ---------------  ---------------
     same_corner_list[sub2_s1_p2_idx].emplace(sub1_s2_p3_idx);            //     |   sub2_s1_p2|  |sub2_s2_p1   |
                                                                          //     |             |  |             |
     same_corner_list[sub2_s2_p1_idx].emplace(sub1_s1_p4_idx);            //     |             |  |             |
                                                                          //     |             |  |             |
-    //TODO 隣接頂点ガバガバじゃない？                                                                     //     ---------------  ---------------
+                                                                         //     ---------------  ---------------
     //4分割後の隣接するパッチの頂点を追加
     int sub1_s1_p3_idx = getCornerIndex(split_sub_squares1.s1.p3);
     int sub2_s1_p1_idx = getCornerIndex(split_sub_squares2.s1.p1);
