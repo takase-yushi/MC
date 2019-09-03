@@ -114,6 +114,10 @@ void run(std::string config_name) {
         std::cout << "lambda_inject_flag     : " << lambda_inject_flag << std::endl;
         std::cout << "injected lambda        : " << injected_lambda << std::endl;
 
+        if(lambda_inject_flag) {
+            out_file_suffix = "_lambda_" + std::to_string(injected_lambda) + "_";
+        }
+
         // 時間計測
         clock_t start = clock();
 
