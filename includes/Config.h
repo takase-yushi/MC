@@ -11,19 +11,24 @@
 class Config {
 
 private:
-    std::string gauss_ref_image;
-    std::string ref_image;
-    std::string target_image;
-    int qp;
-    int ctu_width;
-    int ctu_height;
-    int division_step;
-    bool enable;
-    std::string img_directory;
-    std::string log_directory;
-    bool lambda_enable;
+  bool enable;
+  std::string img_directory;
+  std::string log_directory;
+public:
+  Config(bool enable, const std::string &imgDirectory, const std::string &logDirectory,
+         const std::string &gaussRefImage, const std::string &refImage, const std::string &targetImage, int qp,
+         int ctuWidth, int ctuHeight, int divisionStep, bool lambdaEnable, double lambda);
 
 private:
+
+  std::string gauss_ref_image;
+  std::string ref_image;
+  std::string target_image;
+  int qp;
+  int ctu_width;
+  int ctu_height;
+  int division_step;
+  bool lambda_enable;
   double lambda;
 
 public:
@@ -51,10 +56,6 @@ public:
     bool isEnable() const;
 
     const std::string &getLogDirectory() const;
-
-    Config(const std::string &gaussRefImage, const std::string &refImage, const std::string &targetImage, int qp,
-         int ctuWidth, int ctuHeight, int divisionStep, bool enable, const std::string &imgDirectory,
-         const std::string &logDirectory, bool lambdaEnable, double lambda);
 
 };
 
