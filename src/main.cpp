@@ -111,6 +111,8 @@ void run(std::string config_name) {
         std::cout << "QP                     : " << qp << std::endl;
         std::cout << "CTU_WIDTH              : " << block_size_x << std::endl;
         std::cout << "CTU_HEIGHT             : " << block_size_y << std::endl;
+        std::cout << "lambda_inject_flag     : " << lambda_inject_flag << std::endl;
+        std::cout << "injected lambda        : " << injected_lambda << std::endl;
 
         // 時間計測
         clock_t start = clock();
