@@ -386,7 +386,9 @@ std::vector<Config> readTasks(std::string config_name) {
         int ctu_height              = static_cast<int>(task["ctu_height"     ].get<double>());
         int division_steps          = static_cast<int>(task["division_step"  ].get<double>());
 
-        tasks.emplace_back(enable_flag, img_directory, log_directory, gauss_ref_image, ref_image, target_image, qp, ctu_width, ctu_height, division_steps);
+        bool lambda_enable          = task["lambda_enable"].get<bool>();
+        double lambda               = static_cast<double>(task["lambda"].get<double>());
+        tasks.emplace_back(enable_flag, img_directory, log_directory, gauss_ref_image, ref_image, target_image, qp, ctu_width, ctu_height, division_steps, lambda_enable, lambda);
     }
 
     return tasks;

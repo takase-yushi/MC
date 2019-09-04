@@ -35,6 +35,9 @@ int qp;
 int block_size_x;
 int block_size_y;
 int division_steps;
+double injected_lambda;
+bool lambda_inject_flag;
+
 std::string out_file_suffix = "_parallel_only";
 
 int main(int argc, char *argv[]){
@@ -94,6 +97,9 @@ void run(std::string config_name) {
         qp                                      = task.getQp();
         division_steps                          = task.getDivisionStep();
 
+        lambda_inject_flag                      = task.isLambdaEnable();
+        injected_lambda                         = task.getLambda();
+
         std::cout << "img_directory          : " << img_directory << std::endl;
         std::cout << "log_directory          : " << log_directory << std::endl;
         std::cout << "target_file_name       : " << target_file_name << std::endl;
@@ -105,6 +111,12 @@ void run(std::string config_name) {
         std::cout << "QP                     : " << qp << std::endl;
         std::cout << "CTU_WIDTH              : " << block_size_x << std::endl;
         std::cout << "CTU_HEIGHT             : " << block_size_y << std::endl;
+        std::cout << "lambda_inject_flag     : " << lambda_inject_flag << std::endl;
+        std::cout << "injected lambda        : " << injected_lambda << std::endl;
+
+        if(lambda_inject_flag) {
+            out_file_suffix = "_lambda_" + std::to_string(injected_lambda) + "_";
+        }
 
         // 時間計測
         clock_t start = clock();
