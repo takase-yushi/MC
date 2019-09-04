@@ -1136,40 +1136,29 @@ std::vector<int> SquareDivision::getSpatialSquareList(int s_idx){
     reverse(mutualIndexSet2.begin(), mutualIndexSet2.end());
     reverse(mutualIndexSet3.begin(), mutualIndexSet3.end());
 
-    int suffer[5], count = 0;
-    bool suffer_flag = true;
-
     std::vector<int> ret;
 
     //優先度が高い順に入れていく
     for(auto idx : mutualIndexSet3){
-        suffer[count] = idx;
-        count++;
         ret.emplace_back(idx);
     }
 
     for(auto idx : mutualIndexSet2){
-        for(int i = 0 ; i < count ; i++) {
-            if(suffer[i] == idx) suffer_flag = false;
-        }
-        if(suffer_flag) {
-            suffer[count] = idx;
-            count++;
-            ret.emplace_back(idx);
-        }
-        else suffer_flag = true;
+        ret.emplace_back(idx);
     }
 
     for(auto idx : mutualIndexSet1){
-        for(int i = 0 ; i < count ; i++) {
-            if(suffer[i] == idx) suffer_flag = false;
+        ret.emplace_back(idx);
+    }
+
+    //重複部分を削除
+    for(int i = 0 ; i < ret.size() ; i++) {
+        for(int j = i + 1 ; j < ret.size() ; j++) {
+            if(ret[i] == ret[j]) {
+                ret.erase(ret.begin() + j);
+                j--;
+            }
         }
-        if(suffer_flag) {
-            suffer[count] = idx;
-            count++;
-            ret.emplace_back(idx);
-        }
-        else suffer_flag = true;
     }
 
     ret.emplace_back(s_idx);
