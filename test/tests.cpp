@@ -16,6 +16,7 @@
 #include "../includes/Reconstruction.h"
 #include "../includes/psnr.h"
 #include "../includes/env.h"
+#include "../includes/ConfigUtil.h"
 
 void storeResidualImage(){
 //    cv::imwrite(getProjectDirectory(OS) + "/img/minato/p_residual_image_22_divide_5_billinear.png", getResidualImage(cv::imread(getProjectDirectory(OS)+ "/img/minato/p_image_22_divide_5_billinear.png"), cv::imread(getProjectDirectory(OS) + "/img/minato/minato_000413_limit.bmp"),2));
