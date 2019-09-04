@@ -1306,9 +1306,11 @@ bool SquareDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE
  * @param[in] ctu CodingTreeUnit 符号木
  * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
  */
-std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDivision::getMVD(cv::Point2f mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, std::vector<cv::Point2f> &pixels){
+std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDivision::getMVD(cv::Point2f mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, std::vector<cv::Point2f> &pixels, std::vector<int> spatial_squares){
     // 空間予測と時間予測の候補を取り出す
-    std::vector<int> spatial_squares = getSpatialSquareList(square_idx);
+    if(spatial_squares.empty()) {
+        spatial_squares = getSpatialSquareList(square_idx);
+    }
     int spatial_square_size = static_cast<int>(spatial_squares.size());
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors; // ベクトルとモードを表すフラグのペア
 
@@ -1743,6 +1745,7 @@ std::tuple<std::vector<cv::Point2f>, double> SquareDivision::blockMatching(Point
     int spread_quarter = 64;
     int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
     std::vector<cv::Point2f> pixels = getPixelsInSquare(square);
+    std::vector<int> spatial_squares = getSpatialSquareList(square_index);
 
     for(int j = -SY * 4 ; j <= SY * 4 ; j += s) {            //j : y方向のMV
         for(int i = -SX * 4 ; i <= SX * 4 ; i += s) {        //i : x方向のMV
@@ -1756,7 +1759,7 @@ std::tuple<std::vector<cv::Point2f>, double> SquareDivision::blockMatching(Point
                     }
                 }
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
-                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD(cv::Point2f((double)i/4.0, (double)j/4.0), e, square_index, cmt, ctu, pixels);
+                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD(cv::Point2f((double)i/4.0, (double)j/4.0), e, square_index, cmt, ctu, pixels, spatial_squares);
                 if(rd_min > rd){
                     e_min = e;
                     rd_min = rd;
@@ -1785,7 +1788,7 @@ std::tuple<std::vector<cv::Point2f>, double> SquareDivision::blockMatching(Point
                     }
                 }
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
-                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD(cv::Point2f((double)i/4.0, (double)j/4.0), e, square_index, cmt, ctu, pixels);
+                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD(cv::Point2f((double)i/4.0, (double)j/4.0), e, square_index, cmt, ctu, pixels, spatial_squares);
                 if(rd_min > rd){
                     e_min = e;
                     rd_min = rd;
@@ -1813,7 +1816,7 @@ std::tuple<std::vector<cv::Point2f>, double> SquareDivision::blockMatching(Point
                     }
                 }
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
-                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD(cv::Point2f((double)i/4.0, (double)j/4.0), e, square_index, cmt, ctu, pixels);
+                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD(cv::Point2f((double)i/4.0, (double)j/4.0), e, square_index, cmt, ctu, pixels, spatial_squares);
                 if(rd_min > rd){
                     e_min = e;
                     rd_min = rd;
