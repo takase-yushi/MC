@@ -179,6 +179,4 @@ cv::Mat half(cv::Mat &in,int k);
 
 std::string getCurrentTimestamp();
 
-std::vector<Config> readTasks(std::string config_name = "config.json");
-
 #endif //ENCODER_UTILS_H

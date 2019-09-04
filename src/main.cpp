@@ -27,6 +27,7 @@
 #include "../includes/tests.h"
 #include "../includes/Decoder.h"
 #include "../includes/env.h"
+#include "../includes/ConfigUtil.h"
 
 void run(std::string config_name);
 void tests();
