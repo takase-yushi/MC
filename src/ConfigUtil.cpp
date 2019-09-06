@@ -116,10 +116,10 @@ void appendConfigItem(std::string input_file_path, std::string output_file_path)
             ofs << "        {" << std::endl;
             ofs << R"(            "enable"         : )" << std::boolalpha << task["enable"].get<bool>() << "," << std::endl;
             ofs << R"(            "img_directory"  : ")" << task["img_directory"].get<std::string>() << "\"," << std::endl;
-            ofs << R"(            "log_directory"  : ")" << task["gauss_ref_image"].get<std::string>() << "\"," << std::endl;
-            ofs << R"(            "gauss_ref_image": ")" << task["ref_image"].get<std::string>() << "\"," << std::endl;
-            ofs << R"(            "ref_image"      : ")" << task["target_image"].get<std::string>() << "\"," << std::endl;
-            ofs << R"(            "target_image"   : ")" << task["log_directory"].get<std::string>() << "\"," << std::endl;
+            ofs << R"(            "log_directory"  : ")" << task["log_directory"].get<std::string>() << "\"," << std::endl;
+            ofs << R"(            "gauss_ref_image": ")" << task["gauss_ref_image"].get<std::string>() << "\"," << std::endl;
+            ofs << R"(            "ref_image"      : ")" << task["ref_image"].get<std::string>() << "\"," << std::endl;
+            ofs << R"(            "target_image"   : ")" << task["target_image"].get<std::string>() << "\"," << std::endl;
             ofs << "            \"QP\"             : " << static_cast<int>(task["QP"].get<double>()) << "," << std::endl;
             ofs << "            \"ctu_width\"      : " << static_cast<int>(task["ctu_width"].get<double>()) << "," << std::endl;
             ofs << "            \"ctu_height\"     : " << static_cast<int>(task["ctu_height"].get<double>()) << "," << std::endl;
