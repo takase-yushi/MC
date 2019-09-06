@@ -76,6 +76,9 @@ void run(std::string config_name) {
     // 各タスクの情報が入ったvector
     std::vector<Config> tasks = readTasks(std::move(config_name));
 
+    std::ofstream ofs;
+    ofs.open(getProjectDirectory(OS) + tasks[0].getLogDirectory() + "/" + getCurrentTimestamp() + ".csv");
+
     // 全画像分ループ
     for(const auto& task : tasks){
 
@@ -268,9 +271,11 @@ void run(std::string config_name) {
         Analyzer analayzer(log_file_suffix);
         analayzer.storeDistributionOfMv(foo, log_directory);
         analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
+        analayzer.storeMarkdownFile(ofs, getPSNR(target_image, p_image));
 #endif
 #endif
 #endif
 
     }
+    ofs.close();
 }
