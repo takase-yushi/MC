@@ -66,3 +66,76 @@ std::vector<Config> readTasks(std::string config_name) {
 
     return tasks;
 }
+
+
+void appendConfigItem(std::string input_file_path, std::string output_file_path){
+    std::ifstream fs;
+
+    fs.open(input_file_path, std::ios::binary);
+
+    if(fs.fail()){
+        std::cerr << "Failed to open config.json" << std::endl;
+        exit(-1);
+    }
+
+    std::string json_string((std::istreambuf_iterator<char>(fs)), std::istreambuf_iterator<char>());
+    fs.close();
+
+    picojson::value val;
+    const std::string err = picojson::parse(val, json_string);
+
+    if(!err.empty()){
+        std::cerr << "Failed to parse json string" << std::endl;
+        exit(-1);
+    }
+
+    picojson::object& obj = val.get<picojson::object>();
+    picojson::array& ary = obj["tasks"].get<picojson::array>();
+
+    std::ofstream ofs;
+    ofs.open(output_file_path);
+
+    ofs << "{" << std::endl;
+    ofs << "  \"tasks\":[" << std::endl;
+
+    // iterate each-tasks
+    int count = 0;
+    int array_size = ary.size() - 1;
+    std::vector<double> lambdas{
+            0.0, 0.5, 1.0, 2.0, 3.0, 4.0,
+            5.0, 6.0, 7.0, 8.0, 9.0, 10.0,
+            12.0, 14.0, 16.0, 18.0, 20.0,
+            25.0, 30.0, 40.0, 50.0, 60.0
+    };
+
+    array_size = lambdas.size() * ary.size();
+    for(auto& item : ary){
+        picojson::object& task      = item.get<picojson::object>();
+
+        for(int i = 0 ; i < lambdas.size() ; i++) {
+            ofs << "        {" << std::endl;
+            ofs << R"(            "enable"         : )" << std::boolalpha << task["enable"].get<bool>() << "," << std::endl;
+            ofs << R"(            "img_directory"  : ")" << task["img_directory"].get<std::string>() << "\"," << std::endl;
+            ofs << R"(            "log_directory"  : ")" << task["gauss_ref_image"].get<std::string>() << "\"," << std::endl;
+            ofs << R"(            "gauss_ref_image": ")" << task["ref_image"].get<std::string>() << "\"," << std::endl;
+            ofs << R"(            "ref_image"      : ")" << task["target_image"].get<std::string>() << "\"," << std::endl;
+            ofs << R"(            "target_image"   : ")" << task["log_directory"].get<std::string>() << "\"," << std::endl;
+            ofs << "            \"QP\"             : " << static_cast<int>(task["QP"].get<double>()) << "," << std::endl;
+            ofs << "            \"ctu_width\"      : " << static_cast<int>(task["ctu_width"].get<double>()) << "," << std::endl;
+            ofs << "            \"ctu_height\"     : " << static_cast<int>(task["ctu_height"].get<double>()) << "," << std::endl;
+            ofs << "            \"division_step\"  : " << static_cast<int>(task["division_step"].get<double>()) << "," << std::endl;
+            ofs << "            \"lambda_enable\"  : true," << std::endl;
+            ofs << "            \"lambda\"         : " << lambdas[i] << std::endl;
+
+            if (count == array_size - 1) {
+                ofs << "        }" << std::endl;
+            } else {
+                ofs << "        }," << std::endl;
+            }
+            count++;
+        }
+    }
+
+    ofs << "    ]" << std::endl;
+    ofs << "}" << std::endl;
+}
