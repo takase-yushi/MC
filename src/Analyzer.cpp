@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <iostream>
 #include <sys/stat.h>
+#include <fstream>
 
 /**
  *
@@ -166,4 +167,11 @@ void Analyzer::storeMarkdownFile(double psnr, std::string log_path) {
     FILE *fp = fopen((log_path + "/result.md").c_str(), "w");
     fprintf(fp, "|%d|%f|%d|%f|%d|\n", qp, getLambdaPred(qp, 1.0), code_sum, psnr, warping_patch_num + parallel_patch_num);
     fclose(fp);
+}
+
+
+void Analyzer::storeMarkdownFile(std::ofstream &ofs, double psnr) {
+    extern int qp;
+
+    ofs << qp << "," << getLambdaPred(qp, 1.0) << "," << code_sum << "," << psnr << std::endl;
 }

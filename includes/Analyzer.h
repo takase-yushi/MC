@@ -17,6 +17,7 @@ public:
     void storeDistributionOfMv(std::vector<CodingTreeUnit*> ctus, std::string log_path);
     void storeMarkdownFile(double psnr, std::string log_path);
     Analyzer(const std::string &fileSuffix);
+    void storeMarkdownFile(std::ofstream &ofs, double psnr);
 
 private:
     void storeDistributionOfMv(CodingTreeUnit *ctu);
