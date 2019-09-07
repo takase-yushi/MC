@@ -170,7 +170,7 @@ void Analyzer::storeMarkdownFile(double psnr, std::string log_path) {
 }
 
 
-void Analyzer::storeMarkdownFile(std::ofstream &ofs, double psnr) {
+void Analyzer::storeCsvFileWithStream(std::ofstream &ofs, double psnr) {
     extern int qp;
 
     ofs << qp << "," << getLambdaPred(qp, 1.0) << "," << code_sum << "," << psnr << std::endl;
