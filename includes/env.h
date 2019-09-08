@@ -22,6 +22,4 @@
 #define STORE_IMG_LOG false
 #define DIVIDE_MODE LEFT_DIVIDE
 
-const std::string OS = "Ubuntu";
-
 #endif //ENCODER_ENV_H

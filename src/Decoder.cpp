@@ -10,7 +10,6 @@
 #include "../includes/TriangleDivision.h"
 #include "../includes/ImageUtil.h"
 #include "../includes/ME.hpp"
-#include "../includes/env.h"
 
 void Decoder::initTriangle(int _block_size_x, int _block_size_y, int _divide_steps, int _qp, int divide_flag) {
     block_size_x = _block_size_x;
