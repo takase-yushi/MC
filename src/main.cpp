@@ -85,6 +85,9 @@ void run(std::string config_name) {
     std::ofstream ofs;
     ofs.open(getProjectDirectory(OS) + tasks[0].getLogDirectory() + "/" + getCurrentTimestamp() + ".csv");
 
+    std::map<int, std::vector<std::vector<cv::Mat>>> ref_images_with_qp, target_images_with_qp;
+    std::map<int, EXPAND_ARRAY_TYPE> expand_images_with_qp;
+
     // 全画像分ループ
     for(const auto& task : tasks){
 
@@ -202,14 +205,28 @@ void run(std::string config_name) {
 
         std::vector<std::vector<cv::Mat>> ref_images, target_images;
 
-        ref_images = getRefImages(ref_image, gaussRefImage);
-        target_images = getTargetImages(target_image);
+        if(ref_images_with_qp.count(qp) == 0) {
+            ref_images = getRefImages(ref_image, gaussRefImage);
+            ref_images_with_qp[qp] = ref_images;
+        }else{
+            ref_images = ref_images_with_qp[qp];
+        }
+
+        if(target_images_with_qp.count(qp) == 0) {
+            target_images = getTargetImages(target_image);
+            target_images_with_qp[qp] = target_images;
+        }else{
+            target_images = target_images_with_qp[qp];
+        }
 
         std::vector<std::vector<std::vector<unsigned char **>>> expand_images;
-
-        int expand = 500;
-        expand_images = getExpandImages(ref_images, target_images, expand);
-
+        int expand = 16;
+        if(expand_images_with_qp.count(qp) == 0) {
+            expand_images = getExpandImages(ref_images, target_images, expand);
+            expand_images_with_qp[qp] = expand_images;
+        }else{
+            expand_images = expand_images_with_qp[qp];
+        }
         triangle_division.constructPreviousCodingTree(foo, 0);
 
         std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_triangles.size(), std::vector< std::vector<int> >(block_size_x, std::vector<int>(block_size_y, -1)) );
