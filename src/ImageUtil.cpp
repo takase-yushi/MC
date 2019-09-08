@@ -163,7 +163,7 @@ double getTriangleResidual(unsigned char **ref_image, const cv::Mat &target_imag
  * @param gauss_ref_image ガウスニュートン法で使う参照画像
  * @return あつまれ～！
  */
-std::vector<std::vector<cv::Mat>> getRefImages(const cv::Mat ref_image, const cv::Mat gauss_ref_image){
+std::vector<std::vector<cv::Mat>> getRefImages(const cv::Mat& ref_image, const cv::Mat& gauss_ref_image){
     std::vector<std::vector<cv::Mat>> ref_images;
 
     // 参照画像のフィルタ処理（１）
