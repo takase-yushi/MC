@@ -22,7 +22,8 @@
 #include <random>
 #include "../includes/ImageUtil.h"
 #include "../includes/Analyzer.h"
-#include <algorithm>
+#include "../includes/Flags.h"
+#include "../includes/env.h"
 
 SquareDivision::SquareDivision(const cv::Mat &refImage, const cv::Mat &targetImage, const cv::Mat &refGaussImage) : target_image(targetImage),
                                                                                                                     ref_image(refImage), ref_gauss_image(refGaussImage) {}

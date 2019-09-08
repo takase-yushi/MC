@@ -1,3 +1,5 @@
+#include <utility>
+
 /**
  * @file main.cpp
  * @brief 実行ファイル
@@ -15,33 +17,30 @@
 #include <cassert>
 #include "../includes/Analyzer.h"
 #include "../includes/Encode.h"
-#include "../includes/config.h"
 #include "../includes/ME.hpp"
-#include "../includes/DelaunayTriangulation.hpp"
 #include "../includes/Vector.hpp"
 #include "../includes/psnr.h"
-#include "../includes/Golomb.hpp"
 #include "../includes/TriangleDivision.h"
 #include "../includes/Reconstruction.h"
 #include "../includes/ImageUtil.h"
 #include "../includes/Utils.h"
 #include "../includes/tests.h"
+#include "../includes/Decoder.h"
+#include "../includes/env.h"
+#include "../includes/ConfigUtil.h"
 #include "../includes/SquareDivision.h"
 
-void run(std::string config_path);
-void run_square(std::string config_path);
-
-#define HARRIS false
-#define THRESHOLD true
-#define LAMBDA 0.2
-#define INTER_DIV true // 頂点追加するかしないか
-
-#define DIVIDE_MODE LEFT_DIVIDE
+void run(std::string config_name);
+void run_square(std::string config_name);
+void tests();
 
 int qp;
 int block_size_x;
 int block_size_y;
 int division_steps;
+double injected_lambda;
+bool lambda_inject_flag;
+
 std::string out_file_suffix = "_square";
 
 int main(int argc, char *argv[]){
@@ -49,72 +48,83 @@ int main(int argc, char *argv[]){
 #if TEST_MODE
     tests();
 #else
-    std::string config_path = std::string(argv[1]);
-//    run(config_path);
-    run_square(config_path);
+
+    std::string config_name;
+    if(argc == 1) {
+        config_name = "config.json";
+    }else{
+        config_name = std::string(argv[1]);
+    }
+
+//    run(config_name);
+    run_square(config_name);
 #endif
 
 }
 
+void tests(){
+    test_config_file();
+    testPredMv();
+}
 
-void run(std::string config_path) {
+void run(std::string config_name) {
 
     std::cout << "OpenCV_version : " << getVersionOfOpenCV() << std::endl;
 
     const std::string project_directory_path = getProjectDirectory(OS);
-    FILE *img_list;
-
-    std::string list_path = (OS == "Win" ? replaceBackslash(project_directory_path + config_path) :
-                             project_directory_path + config_path);
-    if ((img_list = fopen((list_path).c_str(), "r")) == NULL) {
-        std::cerr << "Error : Can not open file" << std::endl;
-        exit(1);
-    }
-
-    char buf[512];
 
     std::vector<cv::Point2f> corners, corners_org;
     std::vector<cv::Point2f> ref_corners, ref_corners_org;
 
+    // 各タスクの情報が入ったvector
+    std::vector<Config> tasks = readTasks(std::move(config_name));
+
     // 全画像分ループ
-    while (fgets(buf, sizeof(buf), img_list) != nullptr) {
-        if (buf[0] == '#') continue;
-        char t_file_name[256], r_file_name[256], o_file_name[256], i_file_path[256], csv_prefix[256], r_intra_file_name[256], target_color_file_name[256], c_file_name[256];
-        sscanf(buf, "%s %s %s %s %s %s %s %d %d %d %d", i_file_path, r_file_name, t_file_name, o_file_name,
-               r_intra_file_name, target_color_file_name, c_file_name, &qp, &block_size_x, &block_size_y,
-               &division_steps);
+    for(const auto& task : tasks){
 
-        std::string img_path = ((OS == "Win") ? replaceBackslash(std::string(i_file_path)) : std::string(i_file_path));
-        std::string img_directory = project_directory_path + img_path;
-        std::string target_file_name = std::string(t_file_name);
+        if(!task.isEnable()) continue;
 
-        std::string ref_file_name = std::string(r_file_name);
-        std::string ref_intra_file_name = std::string(r_intra_file_name);
-        std::string corner_file_name = std::string(c_file_name);
-        std::string csv_file_prefix = std::string("aaa");
+        std::string img_path                    = ((OS == "Win") ? replaceBackslash(task.getImgDirectory()) : std::string(task.getImgDirectory()));
+        std::string img_directory               = project_directory_path + img_path;
+        std::string log_directory               = project_directory_path + task.getLogDirectory();
+        const std::string& target_file_name     = task.getTargetImage();
 
-        std::string ref_file_path = project_directory_path + img_path + ref_file_name;
-        std::string target_file_path = project_directory_path + img_path + target_file_name;
-        std::string ref_intra_file_path = project_directory_path + img_path + ref_intra_file_name;
-        std::string target_color_file_path = project_directory_path + img_path + target_color_file_name;
+        const std::string& ref_file_name        = task.getGaussRefImage();
+        const std::string& ref_intra_file_name  = task.getRefImage();
 
-        std::vector<std::string> out_file = splitString(std::string(o_file_name), '.');
+        std::string ref_file_path               = project_directory_path + img_path + ref_file_name;
+        std::string target_file_path            = project_directory_path + img_path + target_file_name;
+        std::string ref_intra_file_path         = project_directory_path + img_path + ref_intra_file_name;
 
-        std::cout << "img_path               : " << img_path << std::endl;
+        block_size_x                            = task.getCtuWidth();
+        block_size_y                            = task.getCtuHeight();
+        qp                                      = task.getQp();
+        division_steps                          = task.getDivisionStep();
+
+        lambda_inject_flag                      = task.isLambdaEnable();
+        injected_lambda                         = task.getLambda();
+
+        std::cout << "img_directory          : " << img_directory << std::endl;
+        std::cout << "log_directory          : " << log_directory << std::endl;
         std::cout << "target_file_name       : " << target_file_name << std::endl;
         std::cout << "ref_file_name          : " << ref_file_name << std::endl;
         std::cout << "ref_file_path          : " << ref_file_path << std::endl;
         std::cout << "target_image file path : " << target_file_path << std::endl;
         std::cout << "ref_intra_file_path    : " << ref_intra_file_path << std::endl;
-        std::cout << "target_color_file_path : " << target_color_file_path << std::endl;
         std::cout << "ref_gauss file path    : " << ref_file_path << std::endl;
+        std::cout << "QP                     : " << qp << std::endl;
+        std::cout << "CTU_WIDTH              : " << block_size_x << std::endl;
+        std::cout << "CTU_HEIGHT             : " << block_size_y << std::endl;
+        std::cout << "lambda_inject_flag     : " << lambda_inject_flag << std::endl;
+        std::cout << "injected lambda        : " << injected_lambda << std::endl;
 
-        //RD性能グラフにしたい
-        std::ofstream rate_psnr_csv;
-        rate_psnr_csv = std::ofstream(img_directory + target_file_name + "rate_psnr_csv.csv");
+        if(lambda_inject_flag) {
+            out_file_suffix = "_lambda_" + std::to_string(injected_lambda) + "_";
+        }
 
         // 時間計測
         clock_t start = clock();
+
         // 準備 --------------------------------------------------------------------------------
         // 画像の読み込み
         cv::Mat ref_gauss, ref_gauss_gray;          // 参照フレーム
@@ -160,13 +170,20 @@ void run(std::string config_path) {
         std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
 
         std::vector<std::pair<Point3Vec, int> > init_triangles = triangle_division.getTriangles();
-        std::cout << init_triangles.size() << std::endl;
+
         std::vector<CodingTreeUnit *> foo(init_triangles.size());
         for (int i = 0; i < init_triangles.size(); i++) {
             foo[i] = new CodingTreeUnit();
             foo[i]->split_cu_flag = false;
             foo[i]->node1 = foo[i]->node2 = foo[i]->node3 = foo[i]->node4 = nullptr;
             foo[i]->triangle_index = i;
+            foo[i]->mvds.resize(3);
+            foo[i]->x_greater_0_flag.resize(3);
+            foo[i]->x_greater_1_flag.resize(3);
+            foo[i]->y_greater_0_flag.resize(3);
+            foo[i]->y_greater_1_flag.resize(3);
+            foo[i]->x_sign_flag.resize(3);
+            foo[i]->y_sign_flag.resize(3);
         }
 
         cv::Mat spatialMvTestImage;
@@ -193,8 +210,7 @@ void run(std::string config_path) {
 
         std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_triangles.size(), std::vector< std::vector<int> >(block_size_x, std::vector<int>(block_size_y, -1)) );
 
-        for (int i = 0; i < init_triangles.size(); i++) {
-//            std::vector<std::vector<int>> diagonal_line_area_flag(block_size_x, std::vector<int>(block_size_y, 0)); // 斜め線でどちらを取るか表すフラグ flag[x][y]
+        for (int i = 239; i < init_triangles.size(); i++) {
             if(i % 2 == 0){
                 bool flag = false;
                 for (int x = 0; x < block_size_x; x++) {
@@ -217,21 +233,21 @@ void run(std::string config_path) {
         // ===========================================================
         // ログ出力
         // ===========================================================
-        getReconstructionDivisionImage(gaussRefImage, foo, block_size_x, block_size_y);
+        cv::Mat recon = getReconstructionDivisionImage(gaussRefImage, foo, block_size_x, block_size_y);
         cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo, diagonal_line_area_flag);
-        cv::Mat color = triangle_division.getPredictedColorImageFromCtu(foo, diagonal_line_area_flag, getPSNR(target_image, p_image));
+//        cv::Mat color = triangle_division.getPredictedColorImageFromCtu(foo, diagonal_line_area_flag, getPSNR(target_image, p_image));
 
-//#if STORE_DISTRIBUTION_LOG
-//#if STORE_MVD_DISTRIBUTION_LOG
-//#if GAUSS_NEWTON_PARALLEL_ONLY
-//        Analyzer analayzer("_warping_and_parallel_" + std::to_string(qp) + "_" + getCurrentTimestamp());
+#if STORE_DISTRIBUTION_LOG
+#if STORE_MVD_DISTRIBUTION_LOG
+#if GAUSS_NEWTON_PARALLEL_ONLY
+//        Analyzer analayzer("_warping_and_parallel_" + std::to_string(qp) + "_");
 //        analayzer.storeDistributionOfMv(foo, getProjectDirectory(OS) + "/log/minato");
-//#else
-//        Analyzer analayzer("_warping_and_parallel_average_mv_" + std::to_string(qp) + "_" + getCurrentTimestamp());
+#else
+//        Analyzer analayzer("_warping_and_parallel_average_mv_" + std::to_string(qp) + "_");
 //        analayzer.storeDistributionOfMv(foo, getProjectDirectory(OS) + "/log/minato");
-//#endif
-//#endif
-//#endif
+#endif
+#endif
+#endif
 
         int code_length = triangle_division.getCtuCodeLength(foo);
         std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
@@ -240,69 +256,69 @@ void run(std::string config_path) {
         cv::imwrite(img_directory + "p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
         cv::imwrite( img_directory + "p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
         cv::imwrite(img_directory + "p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", triangle_division.getMvImage(foo));
-        cv::imwrite(img_directory + "p_color_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
+//        cv::imwrite(img_directory + "p_color_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
         std::cout << "triangle_size:" << triangle_division.getTriangleCoordinateList().size() << std::endl;
     }
 }
 
-void run_square(std::string config_path) {
+void run_square(std::string config_name) {
 
     std::cout << "OpenCV_version : " << getVersionOfOpenCV() << std::endl;
 
     const std::string project_directory_path = getProjectDirectory(OS);
-    FILE *img_list;
-
-    std::string list_path = (OS == "Win" ? replaceBackslash(project_directory_path + config_path) :
-                             project_directory_path + config_path);
-    if ((img_list = fopen((list_path).c_str(), "r")) == NULL) {
-        std::cerr << "Error : Can not open file" << std::endl;
-        exit(1);
-    }
-
-    char buf[512];
 
     std::vector<cv::Point2f> corners, corners_org;
     std::vector<cv::Point2f> ref_corners, ref_corners_org;
 
+    // 各タスクの情報が入ったvector
+    std::vector<Config> tasks = readTasks(std::move(config_name));
+
     // 全画像分ループ
-    while (fgets(buf, sizeof(buf), img_list) != nullptr) {
-        if (buf[0] == '#') continue;
-        char t_file_name[256], r_file_name[256], o_file_name[256], i_file_path[256], csv_prefix[256], r_intra_file_name[256], target_color_file_name[256], c_file_name[256];
-        sscanf(buf, "%s %s %s %s %s %s %s %d %d %d %d", i_file_path, r_file_name, t_file_name, o_file_name,
-               r_intra_file_name, target_color_file_name, c_file_name, &qp, &block_size_x, &block_size_y,
-               &division_steps);
+    for(const auto& task : tasks){
 
-        std::string img_path = ((OS == "Win") ? replaceBackslash(std::string(i_file_path)) : std::string(i_file_path));
-        std::string img_directory = project_directory_path + img_path;
-        std::string target_file_name = std::string(t_file_name);
+        if(!task.isEnable()) continue;
 
-        std::string ref_file_name = std::string(r_file_name);
-        std::string ref_intra_file_name = std::string(r_intra_file_name);
-        std::string corner_file_name = std::string(c_file_name);
-        std::string csv_file_prefix = std::string("aaa");
+        std::string img_path                    = ((OS == "Win") ? replaceBackslash(task.getImgDirectory()) : std::string(task.getImgDirectory()));
+        std::string img_directory               = project_directory_path + img_path;
+        std::string log_directory               = project_directory_path + task.getLogDirectory();
+        const std::string& target_file_name     = task.getTargetImage();
 
-        std::string ref_file_path = project_directory_path + img_path + ref_file_name;
-        std::string target_file_path = project_directory_path + img_path + target_file_name;
-        std::string ref_intra_file_path = project_directory_path + img_path + ref_intra_file_name;
-        std::string target_color_file_path = project_directory_path + img_path + target_color_file_name;
+        const std::string& ref_file_name        = task.getGaussRefImage();
+        const std::string& ref_intra_file_name  = task.getRefImage();
 
-        std::vector<std::string> out_file = splitString(std::string(o_file_name), '.');
+        std::string ref_file_path               = project_directory_path + img_path + ref_file_name;
+        std::string target_file_path            = project_directory_path + img_path + target_file_name;
+        std::string ref_intra_file_path         = project_directory_path + img_path + ref_intra_file_name;
 
-        std::cout << "img_path               : " << img_path << std::endl;
+        block_size_x                            = task.getCtuWidth();
+        block_size_y                            = task.getCtuHeight();
+        qp                                      = task.getQp();
+        division_steps                          = task.getDivisionStep();
+
+        lambda_inject_flag                      = task.isLambdaEnable();
+        injected_lambda                         = task.getLambda();
+
+        std::cout << "img_directory          : " << img_directory << std::endl;
+        std::cout << "log_directory          : " << log_directory << std::endl;
         std::cout << "target_file_name       : " << target_file_name << std::endl;
         std::cout << "ref_file_name          : " << ref_file_name << std::endl;
         std::cout << "ref_file_path          : " << ref_file_path << std::endl;
         std::cout << "target_image file path : " << target_file_path << std::endl;
         std::cout << "ref_intra_file_path    : " << ref_intra_file_path << std::endl;
-        std::cout << "target_color_file_path : " << target_color_file_path << std::endl;
         std::cout << "ref_gauss file path    : " << ref_file_path << std::endl;
+        std::cout << "QP                     : " << qp << std::endl;
+        std::cout << "CTU_WIDTH              : " << block_size_x << std::endl;
+        std::cout << "CTU_HEIGHT             : " << block_size_y << std::endl;
+        std::cout << "lambda_inject_flag     : " << lambda_inject_flag << std::endl;
+        std::cout << "injected lambda        : " << injected_lambda << std::endl;
 
-        //RD性能グラフにしたい
-        std::ofstream rate_psnr_csv;
-        rate_psnr_csv = std::ofstream(img_directory + target_file_name + "rate_psnr_csv.csv");
+        if(lambda_inject_flag) {
+            out_file_suffix = "_lambda_" + std::to_string(injected_lambda) + "_";
+        }
 
         // 時間計測
         clock_t start = clock();
+
         // 準備 --------------------------------------------------------------------------------
         // 画像の読み込み
         cv::Mat ref_gauss, ref_gauss_gray;          // 参照フレーム
@@ -348,22 +364,26 @@ void run_square(std::string config_path) {
         std::vector<Point4Vec> squares = square_division.getSquareCoordinateList();
 
         std::vector<Point4Vec> init_squares = square_division.getSquares();
-        std::cout << init_squares.size() << std::endl;
+
         std::vector<CodingTreeUnit *> foo(init_squares.size());
         for (int i = 0; i < init_squares.size(); i++) {
             foo[i] = new CodingTreeUnit();
             foo[i]->split_cu_flag = false;
             foo[i]->node1 = foo[i]->node2 = foo[i]->node3 = foo[i]->node4 = nullptr;
             foo[i]->square_index = i;
+            foo[i]->mvds.resize(3);
+            foo[i]->x_greater_0_flag.resize(3);
+            foo[i]->x_greater_1_flag.resize(3);
+            foo[i]->y_greater_0_flag.resize(3);
+            foo[i]->y_greater_1_flag.resize(3);
+            foo[i]->x_sign_flag.resize(3);
+            foo[i]->y_sign_flag.resize(3);
         }
 
         cv::Mat spatialMvTestImage;
         cv::Mat new_gauss_output_image = cv::Mat::zeros(gaussRefImage.rows, gaussRefImage.cols, CV_8UC3);
 
-        std::vector<Square> tt = square_division.getSquareIndexList();
         corners = square_division.getCorners();
-
-        std::vector<cv::Point2f> tmp_ref_corners(corners.size()), add_corners;
 
         cv::Mat r_ref = cv::Mat::zeros(target_image.rows, target_image.cols, CV_8UC1);
 
@@ -379,7 +399,9 @@ void run_square(std::string config_path) {
 
         square_division.constructPreviousCodingTree(foo, 0);
 
-        for (int i = 0; i < init_squares.size() ; i++) {
+        std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_squares.size(), std::vector< std::vector<int> >(block_size_x, std::vector<int>(block_size_y, -1)) );
+
+        for (int i = 0; i < init_squares.size(); i++) {
 
             Point4Vec square = init_squares[i];
             cv::Point2f p1 = square.p1;
@@ -395,12 +417,20 @@ void run_square(std::string config_path) {
         // ===========================================================
         // ログ出力
         // ===========================================================
-        getReconstructionDivisionImage(gaussRefImage, foo, block_size_x, block_size_y);
+        cv::Mat recon = getReconstructionDivisionImage(gaussRefImage, foo, block_size_x, block_size_y);
         cv::Mat p_image = square_division.getPredictedImageFromCtu(foo);
-//        cv::Mat color = square_division.getPredictedColorImageFromCtu(foo, getPSNR(target_image, p_image));
 
-//        Analyzer analayzer("_bm_fullsearch_" + std::to_string(qp) + "_" + getCurrentTimestamp());
-//        analayzer.storeDistributionOfMv(foo);
+#if STORE_DISTRIBUTION_LOG
+#if STORE_MVD_DISTRIBUTION_LOG
+#if GAUSS_NEWTON_PARALLEL_ONLY
+        //        Analyzer analayzer("_warping_and_parallel_" + std::to_string(qp) + "_");
+//        analayzer.storeDistributionOfMv(foo, getProjectDirectory(OS) + "/log/minato");
+#else
+//        Analyzer analayzer("_warping_and_parallel_average_mv_" + std::to_string(qp) + "_");
+//        analayzer.storeDistributionOfMv(foo, getProjectDirectory(OS) + "/log/minato");
+#endif
+#endif
+#endif
 
         int code_length = square_division.getCtuCodeLength(foo);
         std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
@@ -410,6 +440,6 @@ void run_square(std::string config_path) {
         cv::imwrite( img_directory + "p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
         cv::imwrite(img_directory + "p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", square_division.getMvImage(foo));
 //        cv::imwrite(img_directory + "p_color_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
-        std::cout << "Num of squares : " << square_division.getSquareCoordinateList().size() << std::endl;
+        std::cout << "squares_size:" << square_division.getSquareCoordinateList().size() << std::endl;
     }
 }

@@ -8,6 +8,7 @@
 #include "Utils.h"
 #include "CodingTreeUnit.h"
 #include "CollocatedMvTree.h"
+#include "GaussResult.h"
 #include <set>
 #include <vector>
 
@@ -97,22 +98,6 @@ class TriangleDivision {
 
 public:
 
-    class GaussResult{
-    public:
-        GaussResult();
-
-        GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvParallel, double residual,
-                    int triangleSize, bool parallelFlag, double residual_bm, double residual_newton);
-        std::vector<cv::Point2f> mv_warping;
-        cv::Point2f mv_parallel;
-        double residual;
-        int triangle_size;
-        bool parallel_flag;
-        double residual_bm;
-        double residual_newton;
-        MV_CODE_METHOD method;
-    };
-
     struct SplitResult {
     public:
         Point3Vec t1, t2;
@@ -191,6 +176,7 @@ private:
     void constructPreviousCodingTree(CodingTreeUnit* codingTree, CollocatedMvTree* constructedTree);
     static cv::Point2f getQuantizedMv(cv::Point2f &mv, double quantize_step);
     bool isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> &vectors, const cv::Point2f &mv);
+    static bool isMvExists(const std::vector<Point3Vec> &vectors, const std::vector<cv::Point2f> &mvs);
     void eraseTriangle(int t_idx);
     void getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, std::vector<std::vector<int>> &area_Flag);
     int getCtuCodeLength(CodingTreeUnit *ctu);

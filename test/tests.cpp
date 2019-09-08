@@ -15,6 +15,8 @@
 #include "../includes/TriangleDivision.h"
 #include "../includes/Reconstruction.h"
 #include "../includes/psnr.h"
+#include "../includes/env.h"
+#include "../includes/ConfigUtil.h"
 
 void storeResidualImage(){
 //    cv::imwrite(getProjectDirectory(OS) + "/img/minato/p_residual_image_22_divide_5_billinear.png", getResidualImage(cv::imread(getProjectDirectory(OS)+ "/img/minato/p_image_22_divide_5_billinear.png"), cv::imread(getProjectDirectory(OS) + "/img/minato/minato_000413_limit.bmp"),2));
@@ -815,32 +817,59 @@ void filterTest(){
     cv::imwrite(img_directory + "quarter_scaled_target_dctfilter_image.bmp", dctfilter_image);
 }
 
-//void test() {
-//
-//    const std::string img_directory = getProjectDirectory(OS) + "\\img\\minato\\";
-//
-//    std::cout << "img_directory:" << img_directory << std::endl;
-//
-//    //path
-//    std::string target_image_path = img_directory + "minato_limit_2_I22.bmp";
-//
-//    cv::Mat target_image;
-//    //read
-//    target_image = cv::imread(target_image_path);
-//
-//    unsigned int **expansion_image;
-//
-//    expansion_image = getDCTFilterUnIntImage(target_image, 0);
-//
-//    cv::Mat dctfilter_image = cv::Mat::zeros(target_image.rows, target_image.cols, CV_8UC3);
-//
-//    for(int y = 0 ; y < target_image.rows ; y++) {
-//        for (int x = 0; x < target_image.cols; x++) {
-//            R(dctfilter_image, x, y) = limit(expansion_image[x][y]);
-//            G(dctfilter_image, x, y) = limit(expansion_image[x][y]);
-//            B(dctfilter_image, x, y) = limit(expansion_image[x][y]);
-//        }
-//    }
-//
-//    cv::imwrite(img_directory + "target_dctfilter_image.bmp", dctfilter_image);
-//}
+void test_config_file() {
+    std::vector<Config> tasks = readTasks();
+
+    for(auto& task : tasks){
+        std::cout << task.getImgDirectory() << std::endl;
+        std::cout << task.getGaussRefImage() << std::endl;
+        std::cout << task.getRefImage() << std::endl;
+        std::cout << task.getTargetImage() << std::endl;
+
+        std::cout << task.getQp() << std::endl;
+        std::cout << task.getCtuWidth() << std::endl;
+        std::cout << task.getCtuHeight() << std::endl;
+        std::cout << task.getDivisionStep() << std::endl;
+    }
+
+}
+
+/**
+ *
+ */
+void testPredMv() {
+
+    std::vector<cv::Point2f> ref_triangle_coordinate;
+    std::vector<cv::Point2f> target_triangle_coordinate;
+    std::vector<cv::Point2f> ref_mvs;
+
+    ref_triangle_coordinate.emplace_back(127, 0);
+    ref_triangle_coordinate.emplace_back(0, 127);
+    ref_triangle_coordinate.emplace_back(127, 127);
+
+    target_triangle_coordinate.emplace_back(128, 0);
+    target_triangle_coordinate.emplace_back(255, 0);
+    target_triangle_coordinate.emplace_back(128, 127);
+
+    ref_mvs.emplace_back(-10.75, 3.5);
+    ref_mvs.emplace_back(-11, 4);
+    ref_mvs.emplace_back(-10.5, 4.25);
+
+    std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_triangle_coordinate, ref_mvs, target_triangle_coordinate);
+
+    std::cout << "Warping test ==================================" << std::endl;
+    for(const auto& mv : mvs){
+        std::cout << mv << std::endl;
+    }
+
+    std::cout << "Parallel test =================================" << std::endl;
+    target_triangle_coordinate.clear();
+    cv::Point2f center_of_gravity((128.0 + 255.0 + 128.0) / 3.0, (127.0) / 3.0);
+    target_triangle_coordinate.emplace_back(center_of_gravity);
+
+    mvs = getPredictedWarpingMv(ref_triangle_coordinate, ref_mvs, target_triangle_coordinate);
+    for(const auto& mv : mvs){
+        std::cout << mv << std::endl;
+    }
+
+}
