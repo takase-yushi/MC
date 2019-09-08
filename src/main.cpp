@@ -298,6 +298,10 @@ void run(std::string config_name) {
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mode_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
         }
 
+        for(int i = 0 ; i < foo.size() ; i++) {
+            delete foo[i];
+        }
+        std::vector<CodingTreeUnit *>().swap(foo);
 
     }
     ofs.close();
