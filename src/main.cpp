@@ -124,9 +124,7 @@ void run(std::string config_name) {
         std::cout << "lambda_inject_flag     : " << lambda_inject_flag << std::endl;
         std::cout << "injected lambda        : " << injected_lambda << std::endl;
 
-        if(lambda_inject_flag) {
-            out_file_suffix = "_lambda_" + std::to_string(injected_lambda) + "_";
-        }
+        out_file_suffix = "_lambda_" + std::to_string(getLambdaPred(qp)) + "_";
 
         // 時間計測
         clock_t start = clock();
@@ -246,7 +244,7 @@ void run(std::string config_name) {
         cv::imwrite(img_directory + "/p_recon_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", recon);
 
         int code_length = triangle_division.getCtuCodeLength(foo);
-        std::string log_file_suffix = "_lambda_plus_30_" + std::to_string(qp) + "_" + getCurrentTimestamp();
+        std::string log_file_suffix = out_file_suffix + std::to_string(qp) + "_" + getCurrentTimestamp();
         std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
         std::cout << "PSNR:" << getPSNR(target_image, p_image) << " code_length:" << code_length << std::endl;
         std::cout << log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png" << std::endl;
