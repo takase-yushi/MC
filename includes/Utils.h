@@ -87,7 +87,7 @@ enum {
 #define GAUSS_NEWTON_HEVC_IMAGE true
 #define HEVC_REF_IMAGE true
 #define STORE_MVD_DISTRIBUTION_LOG true
-#define MVD_DEBUG_LOG true
+#define MVD_DEBUG_LOG false
 #define TEST_MODE false
 #define STORE_DISTRIBUTION_LOG true
 #define USE_BM_PARALLEL_MV false
