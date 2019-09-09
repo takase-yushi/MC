@@ -23,7 +23,6 @@
 #include "../includes/ImageUtil.h"
 #include "../includes/Analyzer.h"
 #include "../includes/Flags.h"
-#include "../includes/env.h"
 
 SquareDivision::SquareDivision(const cv::Mat &refImage, const cv::Mat &targetImage, const cv::Mat &refGaussImage) : target_image(targetImage),
                                                                                                                     ref_image(refImage), ref_gauss_image(refGaussImage) {}
@@ -491,7 +490,7 @@ std::vector<int> SquareDivision::getIdxCoveredSquareIndexList(int target_vertex_
         tmp_s = covered_square[same_corner];
         for(auto idx : tmp_s) s.emplace(idx);
     }
-    std::vector<int> v(s.size());
+    std::vector<int> v;
 
     for(auto square_idx : s) {
         v.emplace_back(square_idx);

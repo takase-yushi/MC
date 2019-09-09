@@ -1,0 +1,64 @@
+{
+  "tasks":[
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/cactus",
+      "log_directory"  : "/log/cactus",
+      "gauss_ref_image": "/cactus_I_qp22.png",
+      "ref_image"      : "/cactus_I_qp27.png",
+      "target_image"   : "/cactus_target.png",
+      "QP"             : 27,
+      "ctu_width"      : 128,
+      "ctu_height"     : 128,
+      "division_step"  : 8
+    },
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/cactus",
+      "log_directory"  : "/log/cactus",
+      "gauss_ref_image": "/cactus_I_qp22.png",
+      "ref_image"      : "/cactus_I_qp29.png",
+      "target_image"   : "/cactus_target.png",
+      "QP"             : 29,
+      "ctu_width"      : 128,
+      "ctu_height"     : 128,
+      "division_step"  : 8
+    },
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/cactus",
+      "log_directory"  : "/log/cactus",
+      "gauss_ref_image": "/cactus_I_qp22.png",
+      "ref_image"      : "/cactus_I_qp31.png",
+      "target_image"   : "/cactus_target.png",
+      "QP"             : 31,
+      "ctu_width"      : 128,
+      "ctu_height"     : 128,
+      "division_step"  : 8
+    },
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/cactus",
+      "log_directory"  : "/log/cactus",
+      "gauss_ref_image": "/cactus_I_qp22.png",
+      "ref_image"      : "/cactus_I_qp35.png",
+      "target_image"   : "/cactus_target.png",
+      "QP"             : 35,
+      "ctu_width"      : 128,
+      "ctu_height"     : 128,
+      "division_step"  : 8
+    },
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/cactus",
+      "log_directory"  : "/log/cactus",
+      "gauss_ref_image": "/cactus_I_qp22.png",
+      "ref_image"      : "/cactus_I_qp37.png",
+      "target_image"   : "/cactus_target.png",
+      "QP"             : 37,
+      "ctu_width"      : 128,
+      "ctu_height"     : 128,
+      "division_step"  : 8
+    }
+  ]
+}

@@ -12,7 +12,6 @@
 #include "../includes/CodingTreeUnit.h"
 #include "../includes/Reconstruction.h"
 #include "../includes/TriangleDivision.h"
-#include "../includes/env.h"
 
 /**
  * @fn get_residual(const cv::Mat &target_image, const cv::Mat &predict_image)
@@ -195,7 +194,7 @@ double getTriangleResidual(unsigned char **ref_image, const cv::Mat &target_imag
  * @param gauss_ref_image ガウスニュートン法で使う参照画像
  * @return あつまれ～！
  */
-std::vector<std::vector<cv::Mat>> getRefImages(const cv::Mat ref_image, const cv::Mat gauss_ref_image){
+std::vector<std::vector<cv::Mat>> getRefImages(const cv::Mat& ref_image, const cv::Mat& gauss_ref_image){
     std::vector<std::vector<cv::Mat>> ref_images;
 
     // 参照画像のフィルタ処理（１）
@@ -296,7 +295,7 @@ EXPAND_ARRAY_TYPE getExpandImages(std::vector<std::vector<cv::Mat>> ref_images, 
                 expand_images[filter][step][1] = getExpansionHEVCImage(ref_images[0][3], 4, expand);
                 expand_images[filter][step][2] = getExpansionHEVCImage(current_target_image, 4, expand);
                 expand_images[filter][step][3] = getExpansionHEVCImage(target_images[0][3], 4, expand);
-            }
+            } 
 #else
             auto **current_target_expand = (unsigned char **) std::malloc(
                     sizeof(unsigned char *) * (current_target_image.cols + expand * 2));
@@ -599,6 +598,14 @@ unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size, IP_M
                 expansion_image[x][y] = img_ip(expansion_image_tmp, cv::Rect(-expansion_size, -expansion_size, image.cols + 2 * expansion_size, image.rows + 2 * expansion_size), (double) x / k, (double) y / k, IP_MODE::BICUBIC);
             }
         }
+
+        for(int i = -scaled_expansion_size ; i < image.cols + scaled_expansion_size ; i++){
+            expansion_image_tmp[i] -= scaled_expansion_size;
+            free(expansion_image_tmp[i]);
+        }
+        expansion_image_tmp -= scaled_expansion_size;
+        free(expansion_image_tmp);
+
         return expansion_image;
     }else if(mode == IP_MODE::HEVC){
 
@@ -748,6 +755,21 @@ unsigned char** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
         }
     }
 
+    for(int i = - k * scaled_expansion_size; i < (k * image.cols + k * scaled_expansion_size) ; i++){
+        expansion_image[i] -= k * scaled_expansion_size;
+        free(expansion_image[i]);
+    }
+    expansion_image -= k * scaled_expansion_size;
+    free(expansion_image);
+
+    for(int i = -scaled_expansion_size ; i < (image.cols + scaled_expansion_size) ; i++) {
+        expansion_image_tmp[i] -= scaled_expansion_size;
+        free(expansion_image_tmp[i]);
+    }
+    expansion_image_tmp -= scaled_expansion_size;
+    free(expansion_image_tmp);
+
+    std::cout << "scaled_expantion_size:" << k * scaled_expansion_size << std::endl;
     return ret;
 }
 

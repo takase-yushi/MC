@@ -26,13 +26,19 @@
 #include "../includes/Utils.h"
 #include "../includes/tests.h"
 #include "../includes/Decoder.h"
-#include "../includes/env.h"
 #include "../includes/ConfigUtil.h"
 #include "../includes/SquareDivision.h"
 
 void run(std::string config_name);
 void run_square(std::string config_name);
 void tests();
+
+#define HARRIS false
+#define THRESHOLD true
+#define LAMBDA 0.2
+#define INTER_DIV true // 頂点追加するかしないか
+
+#define DIVIDE_MODE LEFT_DIVIDE
 
 int qp;
 int block_size_x;
@@ -79,6 +85,12 @@ void run(std::string config_name) {
     // 各タスクの情報が入ったvector
     std::vector<Config> tasks = readTasks(std::move(config_name));
 
+    std::ofstream ofs;
+    ofs.open(getProjectDirectory(OS) + tasks[0].getLogDirectory() + "/triangle.csv");
+
+    std::map<int, std::vector<std::vector<cv::Mat>>> ref_images_with_qp, target_images_with_qp;
+    std::map<int, EXPAND_ARRAY_TYPE> expand_images_with_qp;
+
     // 全画像分ループ
     for(const auto& task : tasks){
 
@@ -118,9 +130,7 @@ void run(std::string config_name) {
         std::cout << "lambda_inject_flag     : " << lambda_inject_flag << std::endl;
         std::cout << "injected lambda        : " << injected_lambda << std::endl;
 
-        if(lambda_inject_flag) {
-            out_file_suffix = "_lambda_" + std::to_string(injected_lambda) + "_";
-        }
+        out_file_suffix = "_lambda_" + std::to_string(getLambdaPred(qp)) + "_";
 
         // 時間計測
         clock_t start = clock();
@@ -198,19 +208,33 @@ void run(std::string config_name) {
 
         std::vector<std::vector<cv::Mat>> ref_images, target_images;
 
-        ref_images = getRefImages(ref_image, gaussRefImage);
-        target_images = getTargetImages(target_image);
+        if(ref_images_with_qp.count(qp) == 0) {
+            ref_images = getRefImages(ref_image, gaussRefImage);
+            ref_images_with_qp[qp] = ref_images;
+        }else{
+            ref_images = ref_images_with_qp[qp];
+        }
+
+        if(target_images_with_qp.count(qp) == 0) {
+            target_images = getTargetImages(target_image);
+            target_images_with_qp[qp] = target_images;
+        }else{
+            target_images = target_images_with_qp[qp];
+        }
 
         std::vector<std::vector<std::vector<unsigned char **>>> expand_images;
-
-        int expand = 500;
-        expand_images = getExpandImages(ref_images, target_images, expand);
-
+        int expand = 16;
+        if(expand_images_with_qp.count(qp) == 0) {
+            expand_images = getExpandImages(ref_images, target_images, expand);
+            expand_images_with_qp[qp] = expand_images;
+        }else{
+            expand_images = expand_images_with_qp[qp];
+        }
         triangle_division.constructPreviousCodingTree(foo, 0);
 
         std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_triangles.size(), std::vector< std::vector<int> >(block_size_x, std::vector<int>(block_size_y, -1)) );
 
-        for (int i = 239; i < init_triangles.size(); i++) {
+        for (int i = 0; i < init_triangles.size(); i++) {
             if(i % 2 == 0){
                 bool flag = false;
                 for (int x = 0; x < block_size_x; x++) {
@@ -237,28 +261,53 @@ void run(std::string config_name) {
         cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo, diagonal_line_area_flag);
 //        cv::Mat color = triangle_division.getPredictedColorImageFromCtu(foo, diagonal_line_area_flag, getPSNR(target_image, p_image));
 
+        cv::imwrite(img_directory + "/p_recon_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", recon);
+
+        int code_length = triangle_division.getCtuCodeLength(foo);
+        std::string log_file_suffix = out_file_suffix + std::to_string(qp) + "_";
+        std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
+        std::cout << "PSNR:" << getPSNR(target_image, p_image) << " code_length:" << code_length << std::endl;
+        std::cout << log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png" << std::endl;
+
+//        Decoder decoder(ref_image, target_image);
+//        decoder.initTriangle(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);
+//        decoder.reconstructionTriangle(foo);
+//        cv::imwrite(img_directory + "/p_recon_decoder_test.png", decoder.getReconstructionTriangleImage());
+//        cv::imwrite(img_directory + "/p_recon_mode_image_test.png", decoder.getModeImage(foo, diagonal_line_area_flag));
+//
+//        cv::imwrite(img_directory + "/p_mv_image_test.png", decoder.getMvImage(color));
+
 #if STORE_DISTRIBUTION_LOG
 #if STORE_MVD_DISTRIBUTION_LOG
 #if GAUSS_NEWTON_PARALLEL_ONLY
-//        Analyzer analayzer("_warping_and_parallel_" + std::to_string(qp) + "_");
-//        analayzer.storeDistributionOfMv(foo, getProjectDirectory(OS) + "/log/minato");
+        Analyzer analayzer("_parallel_only_" + std::to_string(qp) + "_";
+        analayzer.storeDistributionOfMv(foo, log_directory);
+        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
+
 #else
-//        Analyzer analayzer("_warping_and_parallel_average_mv_" + std::to_string(qp) + "_");
-//        analayzer.storeDistributionOfMv(foo, getProjectDirectory(OS) + "/log/minato");
+//        Analyzer analayzer(log_file_suffix);
+//        analayzer.storeDistributionOfMv(foo, log_directory);
+//        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
+//        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image));
 #endif
 #endif
 #endif
 
-        int code_length = triangle_division.getCtuCodeLength(foo);
-        std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
-        std::cout << "PSNR:" << getPSNR(target_image, p_image) << " code_length:" << code_length << std::endl;
-        std::cout << img_directory + "p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png" << std::endl;
-        cv::imwrite(img_directory + "p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
-        cv::imwrite( img_directory + "p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
-        cv::imwrite(img_directory + "p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", triangle_division.getMvImage(foo));
-//        cv::imwrite(img_directory + "p_color_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
-        std::cout << "triangle_size:" << triangle_division.getTriangleCoordinateList().size() << std::endl;
+
+        if(STORE_IMG_LOG) {
+            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
+            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
+            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", triangle_division.getMvImage(foo));
+//            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mode_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
+        }
+
+        for(int i = 0 ; i < foo.size() ; i++) {
+            delete foo[i];
+        }
+        std::vector<CodingTreeUnit *>().swap(foo);
+
     }
+    ofs.close();
 }
 
 void run_square(std::string config_name) {
@@ -272,6 +321,12 @@ void run_square(std::string config_name) {
 
     // 各タスクの情報が入ったvector
     std::vector<Config> tasks = readTasks(std::move(config_name));
+
+    std::ofstream ofs;
+    ofs.open(getProjectDirectory(OS) + tasks[0].getLogDirectory() + "/square.csv");
+
+    std::map<int, std::vector<std::vector<cv::Mat>>> ref_images_with_qp, target_images_with_qp;
+    std::map<int, EXPAND_ARRAY_TYPE> expand_images_with_qp;
 
     // 全画像分ループ
     for(const auto& task : tasks){
@@ -312,9 +367,7 @@ void run_square(std::string config_name) {
         std::cout << "lambda_inject_flag     : " << lambda_inject_flag << std::endl;
         std::cout << "injected lambda        : " << injected_lambda << std::endl;
 
-        if(lambda_inject_flag) {
-            out_file_suffix = "_lambda_" + std::to_string(injected_lambda) + "_";
-        }
+        out_file_suffix = "_lambda_" + std::to_string(getLambdaPred(qp)) + "_";
 
         // 時間計測
         clock_t start = clock();
@@ -383,20 +436,37 @@ void run_square(std::string config_name) {
         cv::Mat spatialMvTestImage;
         cv::Mat new_gauss_output_image = cv::Mat::zeros(gaussRefImage.rows, gaussRefImage.cols, CV_8UC3);
 
+        std::vector<Square> tt = square_division.getSquareIndexList();
         corners = square_division.getCorners();
+
+        std::vector<cv::Point2f> tmp_ref_corners(corners.size()), add_corners;
 
         cv::Mat r_ref = cv::Mat::zeros(target_image.rows, target_image.cols, CV_8UC1);
 
         std::vector<std::vector<cv::Mat>> ref_images, target_images;
 
-        ref_images = getRefImages(ref_image, gaussRefImage);
-        target_images = getTargetImages(target_image);
+        if(ref_images_with_qp.count(qp) == 0) {
+            ref_images = getRefImages(ref_image, gaussRefImage);
+            ref_images_with_qp[qp] = ref_images;
+        }else{
+            ref_images = ref_images_with_qp[qp];
+        }
+
+        if(target_images_with_qp.count(qp) == 0) {
+            target_images = getTargetImages(target_image);
+            target_images_with_qp[qp] = target_images;
+        }else{
+            target_images = target_images_with_qp[qp];
+        }
 
         std::vector<std::vector<std::vector<unsigned char **>>> expand_images;
-
-        int expand = 500;
-        expand_images = getExpandImages(ref_images, target_images, expand);
-
+        int expand = 16;
+        if(expand_images_with_qp.count(qp) == 0) {
+            expand_images = getExpandImages(ref_images, target_images, expand);
+            expand_images_with_qp[qp] = expand_images;
+        }else{
+            expand_images = expand_images_with_qp[qp];
+        }
         square_division.constructPreviousCodingTree(foo, 0);
 
         std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_squares.size(), std::vector< std::vector<int> >(block_size_x, std::vector<int>(block_size_y, -1)) );
@@ -419,27 +489,53 @@ void run_square(std::string config_name) {
         // ===========================================================
         cv::Mat recon = getReconstructionDivisionImage(gaussRefImage, foo, block_size_x, block_size_y);
         cv::Mat p_image = square_division.getPredictedImageFromCtu(foo);
+//        cv::Mat color = square_division.getPredictedColorImageFromCtu(foo, diagonal_line_area_flag, getPSNR(target_image, p_image));
+
+        cv::imwrite(img_directory + "/p_recon_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", recon);
+
+        int code_length = square_division.getCtuCodeLength(foo);
+        std::string log_file_suffix = out_file_suffix + std::to_string(qp) + "_";
+        std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
+        std::cout << "PSNR:" << getPSNR(target_image, p_image) << " code_length:" << code_length << std::endl;
+        std::cout << log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png" << std::endl;
+
+//        Decoder decoder(ref_image, target_image);
+//        decoder.initSquare(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);
+//        decoder.reconstructionSquare(foo);
+//        cv::imwrite(img_directory + "/p_recon_decoder_test.png", decoder.getReconstructionSquareImage());
+//        cv::imwrite(img_directory + "/p_recon_mode_image_test.png", decoder.getModeImage(foo, diagonal_line_area_flag));
+//
+//        cv::imwrite(img_directory + "/p_mv_image_test.png", decoder.getMvImage(color));
 
 #if STORE_DISTRIBUTION_LOG
 #if STORE_MVD_DISTRIBUTION_LOG
 #if GAUSS_NEWTON_PARALLEL_ONLY
-        //        Analyzer analayzer("_warping_and_parallel_" + std::to_string(qp) + "_");
-//        analayzer.storeDistributionOfMv(foo, getProjectDirectory(OS) + "/log/minato");
+        Analyzer analayzer("_parallel_only_" + std::to_string(qp) + "_";
+        analayzer.storeDistributionOfMv(foo, log_directory);
+        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
+
 #else
-//        Analyzer analayzer("_warping_and_parallel_average_mv_" + std::to_string(qp) + "_");
-//        analayzer.storeDistributionOfMv(foo, getProjectDirectory(OS) + "/log/minato");
+//        Analyzer analayzer(log_file_suffix);
+//        analayzer.storeDistributionOfMv(foo, log_directory);
+//        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
+//        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image));
 #endif
 #endif
 #endif
 
-        int code_length = square_division.getCtuCodeLength(foo);
-        std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
-        std::cout << "PSNR:" << getPSNR(target_image, p_image) << " code_length:" << code_length << std::endl;
-        std::cout << img_directory + "p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png" << std::endl;
-        cv::imwrite(img_directory + "p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
-        cv::imwrite( img_directory + "p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
-        cv::imwrite(img_directory + "p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", square_division.getMvImage(foo));
-//        cv::imwrite(img_directory + "p_color_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
-        std::cout << "squares_size:" << square_division.getSquareCoordinateList().size() << std::endl;
+
+        if(STORE_IMG_LOG) {
+            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
+            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
+            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", square_division.getMvImage(foo));
+//            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mode_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
+        }
+
+        for(int i = 0 ; i < foo.size() ; i++) {
+            delete foo[i];
+        }
+        std::vector<CodingTreeUnit *>().swap(foo);
+
     }
+    ofs.close();
 }

@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <iostream>
 #include <sys/stat.h>
+#include <fstream>
 
 /**
  *
@@ -159,6 +160,12 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
 
 Analyzer::Analyzer(const std::string &fileSuffix) : file_suffix(fileSuffix) {}
 
+/**
+ * @fn void Analyzer::storeMarkdownFile(double psnr, std::string log_path)
+ * @brief Markdownとして結果を書き出す
+ * @param psnr PSNR
+ * @param log_path ログのパス
+ */
 void Analyzer::storeMarkdownFile(double psnr, std::string log_path) {
     log_path = log_path + "/log" + file_suffix;
 
@@ -166,4 +173,16 @@ void Analyzer::storeMarkdownFile(double psnr, std::string log_path) {
     FILE *fp = fopen((log_path + "/result.md").c_str(), "w");
     fprintf(fp, "|%d|%f|%d|%f|%d|\n", qp, getLambdaPred(qp, 1.0), code_sum, psnr, warping_patch_num + parallel_patch_num);
     fclose(fp);
+}
+
+/**
+ * @fn void Analyzer::storeCsvFileWithStream(std::ofstream &ofs, double psnr)
+ * @breif 外部からOutputStreamを受け取って，そこにCSV形式で書き出す
+ * @param ofs OutputStream
+ * @param psnr PSNR値
+ */
+void Analyzer::storeCsvFileWithStream(std::ofstream &ofs, double psnr) {
+    extern int qp;
+
+    ofs << qp << "," << getLambdaPred(qp, 1.0) << "," << code_sum << "," << psnr << std::endl;
 }

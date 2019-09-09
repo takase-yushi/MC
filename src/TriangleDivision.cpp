@@ -23,7 +23,6 @@
 #include "../includes/ImageUtil.h"
 #include "../includes/Analyzer.h"
 #include "../includes/Flags.h"
-#include "../includes/env.h"
 
 TriangleDivision::TriangleDivision(const cv::Mat &refImage, const cv::Mat &targetImage, const cv::Mat &refGaussImage) : target_image(targetImage),
                                                                                                                         ref_image(refImage), ref_gauss_image(refGaussImage) {}
@@ -2667,4 +2666,36 @@ bool TriangleDivision::isMvExists(const std::vector<Point3Vec> &vectors, const s
     }
 
     return false;
+}
+
+TriangleDivision::~TriangleDivision() {
+    std::vector<cv::Point2f>().swap(corners);
+    std::vector<std::pair<Triangle, int> >().swap(triangles);
+    std::vector<std::set<int> >().swap(neighbor_vtx);
+    std::vector<std::set<int> >().swap(covered_triangle);
+    std::vector<std::set<int> >().swap(same_corner_list);
+    std::vector<std::vector<int> >().swap(corner_flag);
+    std::vector<bool>().swap(delete_flag);
+    std::vector<bool>().swap(isCodedTriangle);
+    std::vector<std::vector<CollocatedMvTree*>>().swap(previousMvList);
+    std::vector<cv::Mat>().swap(predicted_buf);
+    std::vector<GaussResult>().swap(triangle_gauss_results);
+    std::vector<std::vector<cv::Mat>>().swap(ref_images);
+    std::vector<std::vector<cv::Mat>>().swap(target_images);
+
+    int scaled_expansion_size = 16 + 2;
+    for(int i = -scaled_expansion_size ; i < target_image.cols + scaled_expansion_size ; i++){
+        expansion_ref_uchar[i] -= scaled_expansion_size;
+        free(expansion_ref_uchar[i]);
+    }
+    expansion_ref_uchar -= scaled_expansion_size;
+    free(expansion_ref_uchar);
+
+    for(int i = 4 * 20 ; i < 4 * (ref_image.cols + 20) ; i++) {
+        ref_hevc[i] -= 4 * 20;
+        free(ref_hevc[i]);
+    }
+    ref_hevc -= 4 * 20;
+    free(ref_hevc);
+
 }

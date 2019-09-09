@@ -1,0 +1,52 @@
+{
+  "tasks":[
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/fungus",
+      "log_directory"  : "/log/fungus",
+      "gauss_ref_image": "/fungus_I_qp22_limit.png",
+      "ref_image"      : "/fungus_I_qp27_limit.png",
+      "target_image"   : "/fungus_target_limit.png",
+      "QP"             : 27,
+      "ctu_width"      : 128,
+      "ctu_height"     : 128,
+      "division_step"  : 8
+    },
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/fungus",
+      "log_directory"  : "/log/fungus",
+      "gauss_ref_image": "/fungus_I_qp22_limit.png",
+      "ref_image"      : "/fungus_I_qp29_limit.png",
+      "target_image"   : "/fungus_target_limit.png",
+      "QP"             : 29,
+      "ctu_width"      : 128,
+      "ctu_height"     : 128,
+      "division_step"  : 8
+    },
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/fungus",
+      "log_directory"  : "/log/fungus",
+      "gauss_ref_image": "/fungus_I_qp22_limit.png",
+      "ref_image"      : "/fungus_I_qp35_limit.png",
+      "target_image"   : "/fungus_target_limit.png",
+      "QP"             : 35,
+      "ctu_width"      : 128,
+      "ctu_height"     : 128,
+      "division_step"  : 8
+    },
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/fungus",
+      "log_directory"  : "/log/fungus",
+      "gauss_ref_image": "/fungus_I_qp22_limit.png",
+      "ref_image"      : "/fungus_I_qp37_limit.png",
+      "target_image"   : "/fungus_target_limit.png",
+      "QP"             : 37,
+      "ctu_width"      : 128,
+      "ctu_height"     : 128,
+      "division_step"  : 8
+    }
+  ]
+}

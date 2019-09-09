@@ -11,7 +11,6 @@
 #include "../includes/Utils.h"
 #include "../includes/CodingTreeUnit.h"
 #include "../includes/Config.h"
-#include "../includes/env.h"
 #include <unistd.h>
 #include <fstream>
 #include <tuple>

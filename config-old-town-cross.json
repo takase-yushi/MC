@@ -1,0 +1,40 @@
+{
+  "tasks":[
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/old_town_cross",
+      "log_directory"  : "/log/old_town_cross",
+      "gauss_ref_image": "/old_town_cross_I_qp22.png",
+      "ref_image"      : "/old_town_cross_I_qp27.png",
+      "target_image"   : "/old_town_cross_281_crop.png",
+      "QP"             : 27,
+      "ctu_width"      : 128,
+      "ctu_height"     : 128,
+      "division_step"  : 8
+    },
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/old_town_cross",
+      "log_directory"  : "/log/old_town_cross",
+      "gauss_ref_image": "/old_town_cross_I_qp22.png",
+      "ref_image"      : "/old_town_cross_I_qp32.png",
+      "target_image"   : "/old_town_cross_281_crop.png",
+      "QP"             : 32,
+      "ctu_width"      : 128,
+      "ctu_height"     : 128,
+      "division_step"  : 8
+    },
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/old_town_cross",
+      "log_directory"  : "/log/old_town_cross",
+      "gauss_ref_image": "/old_town_cross_I_qp22.png",
+      "ref_image"      : "/old_town_cross_I_qp37.png",
+      "target_image"   : "/old_town_cross_281_crop.png",
+      "QP"             : 37,
+      "ctu_width"      : 128,
+      "ctu_height"     : 128,
+      "division_step"  : 8
+    }
+  ]
+}

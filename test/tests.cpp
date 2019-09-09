@@ -15,7 +15,6 @@
 #include "../includes/TriangleDivision.h"
 #include "../includes/Reconstruction.h"
 #include "../includes/psnr.h"
-#include "../includes/env.h"
 #include "../includes/ConfigUtil.h"
 
 void storeResidualImage(){
