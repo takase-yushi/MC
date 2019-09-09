@@ -33,6 +33,7 @@ public:
     std::vector<int> mvds_x, mvds_y;
     std::vector<cv::Point2f> mvds;
     int ref_triangle_idx;
+    int ref_square_idx;
     std::vector<int> original_mvds_x, original_mvds_y;
     double error_bm, error_newton;
     cv::Point2f collocated_mv;
@@ -43,6 +44,7 @@ public:
     std::vector<bool> x_sign_flag, y_sign_flag;
 
     cv::Point2f merge_triangle_ref_vector;
+    cv::Point2f merge_square_ref_vector;
 };
 
 

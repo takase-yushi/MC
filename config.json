@@ -1,7 +1,7 @@
 {
   "tasks":[
     {
-      "enable"         : true,
+      "enable"         : false,
       "img_directory"  : "/img/minato",
       "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_limit_2_I22.bmp",
@@ -15,13 +15,13 @@
       "division_step"  : 6
     },
     {
-      "enable"         : false,
+      "enable"         : true,
       "img_directory"  : "/img/minato",
       "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_limit_2_I22.bmp",
       "ref_image"      : "/minato_limit_2_I22.bmp",
       "target_image"   : "/minato_000413_limit.bmp",
-      "lambda_enable"  : true,
+      "lambda_enable"  : false,
       "lambda"         : 0.0,
       "QP"             : 22,
       "ctu_width"      : 64,

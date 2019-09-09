@@ -57,19 +57,20 @@ class SquareDivision {
 public:
 
     class GaussResult{
-    public:
-        GaussResult();
+public:
+    GaussResult();
 
-        GaussResult(const cv::Point2f &mvParallel, double residual,
-                    int squareSize, bool parallelFlag, double residual_bm, double residual_newton);
-        cv::Point2f mv_parallel;
-        double residual;
-        int square_size;
-        bool parallel_flag;
-        double residual_bm;
-        double residual_newton;
-        MV_CODE_METHOD method;
-    };
+    GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvParallel, double residual,
+                int squareSize, bool parallelFlag, double residual_bm, double residual_newton);
+    std::vector<cv::Point2f> mv_warping;
+    cv::Point2f mv_parallel;
+    double residual;
+    int square_size;
+    bool parallel_flag;
+    double residual_bm;
+    double residual_newton;
+    MV_CODE_METHOD method;
+};
 
     struct SplitResult {
     public:
@@ -109,11 +110,13 @@ public:
     int divide_steps; // 分割回数
 
     cv::Mat getMvImage(std::vector<CodingTreeUnit*> ctus);
-    std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point4Vec square, const cv::Mat& target_image, cv::Mat expansion_ref_image, int square_index, CodingTreeUnit *ctu);
+    std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point4Vec square, const cv::Mat& target_image, cv::Mat expansion_ref_image, int square_index, CodingTreeUnit *ctu);
 
     cv::Mat getPredictedDiagonalImageFromCtu(std::vector<CodingTreeUnit*> ctus);
     cv::Mat getPredictedColorImageFromCtu(std::vector<CodingTreeUnit*> ctus, double original_psnr);
-    std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> getMVD(cv::Point2f mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, std::vector<cv::Point2f> &pixels, std::vector<int> spatial_squares = std::vector<int>());
+    std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool parallel_flag, std::vector<cv::Point2f> &pixels, std::vector<int> spatial_squares = std::vector<int>());
+
+    virtual ~SquareDivision();
 
 private:
     std::vector<cv::Point2f> corners;
@@ -150,6 +153,7 @@ private:
     void constructPreviousCodingTree(CodingTreeUnit* codingTree, CollocatedMvTree* constructedTree);
     static cv::Point2f getQuantizedMv(cv::Point2f &mv, double quantize_step);
     bool isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> &vectors, const cv::Point2f &mv);
+    bool isMvExists(const std::vector<Point3Vec> &vectors, const std::vector<cv::Point2f> &mvs);
     void eraseSquare(int s_idx);
     void getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out);
     int getCtuCodeLength(CodingTreeUnit *ctu);

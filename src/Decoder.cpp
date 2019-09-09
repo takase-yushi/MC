@@ -316,13 +316,13 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
                 cv::Point2f p3 = spatial_triangle_info.mv_warping[2];
 #if MVD_DEBUG_LOG
                 std::cout << "target_triangle_coordinate:";
-            std::cout << corners[triangles[triangle_idx].first.p1_idx] << " ";
-            std::cout << corners[triangles[triangle_idx].first.p2_idx] << " ";
-            std::cout << corners[triangles[triangle_idx].first.p3_idx] << std::endl;
-            std::cout << "ref_triangle_coordinate:";
-            std::cout << corners[triangles[spatial_triangle_index].first.p1_idx] << " ";
-            std::cout << corners[triangles[spatial_triangle_index].first.p2_idx] << " ";
-            std::cout << corners[triangles[spatial_triangle_index].first.p3_idx] << std::endl;
+            std::cout << corners[triangles[triangle_index].first.p1_idx] << " ";
+            std::cout << corners[triangles[triangle_index].first.p2_idx] << " ";
+            std::cout << corners[triangles[triangle_index].first.p3_idx] << std::endl;
+//            std::cout << "ref_triangle_coordinate:";
+//            std::cout << corners[triangles[spatial_triangle_index].first.p1_idx] << " ";
+//            std::cout << corners[triangles[spatial_triangle_index].first.p2_idx] << " ";
+//            std::cout << corners[triangles[spatial_triangle_index].first.p3_idx] << std::endl;
             std::cout << "ref_triangle_mvs:";
             std::cout << p1 << " " << p2 << " " << p3 << std::endl;
 #endif
@@ -711,23 +711,23 @@ std::vector<int> Decoder::getSpatialTriangleList(int triangle_index) {
     std::set<int> mutualIndexSet1, mutualIndexSet2, mutualIndexSet3;
 
 #if MVD_DEBUG_LOG
-    std::cout << "p1:" << triangles[t_idx].first.p1_idx << std::endl;
+    std::cout << "p1:" << triangles[triangle_index].first.p1_idx << std::endl;
     for(auto item : list1){
         std::cout << item << std::endl;
     }
     puts("");
 
-    std::cout << "p2:" << triangles[t_idx].first.p2_idx << std::endl;
+    std::cout << "p2:" << triangles[triangle_index].first.p2_idx << std::endl;
     for(auto item : list2){
         std::cout << item << std::endl;
     }
     puts("");
-    std::cout << "p3:" << triangles[t_idx].first.p3_idx << std::endl;
+    std::cout << "p3:" << triangles[triangle_index].first.p3_idx << std::endl;
 
     for(auto item : list3){
         std::cout << item << std::endl;
     }
-    std::cout << "t_idx:" << t_idx << std::endl;
+    std::cout << "t_idx:" << triangle_index << std::endl;
     puts("");
 
 #endif

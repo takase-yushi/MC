@@ -7,7 +7,7 @@
 
 #include <string>
 
-#define PRED_MODE NEWTON
+#define PRED_MODE BM
 #define GAUSS_NEWTON_PARALLEL_ONLY false
 #define GAUSS_NEWTON_INIT_VECTOR false
 #define GAUSS_NEWTON_HEVC_IMAGE true

@@ -81,18 +81,18 @@ enum {
     NEWTON,
 };
 
-#define PRED_MODE NEWTON
+#define PRED_MODE BM
 #define GAUSS_NEWTON_PARALLEL_ONLY false
 #define GAUSS_NEWTON_INIT_VECTOR false
 #define GAUSS_NEWTON_HEVC_IMAGE true
 #define HEVC_REF_IMAGE true
 #define STORE_MVD_DISTRIBUTION_LOG true
-#define MVD_DEBUG_LOG false
+#define MVD_DEBUG_LOG true
 #define TEST_MODE false
 #define STORE_DISTRIBUTION_LOG true
 #define USE_BM_PARALLEL_MV false
 #define MV_LIST_MAX_NUM 5
-#define MERGE_MODE true
+#define MERGE_MODE false
 #define STORE_IMG_LOG false
 
 const std::string OS = "Ubuntu";

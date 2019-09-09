@@ -498,6 +498,7 @@ void run_square(std::string config_name) {
         std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
         std::cout << "PSNR:" << getPSNR(target_image, p_image) << " code_length:" << code_length << std::endl;
         std::cout << log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png" << std::endl;
+        std::cout << "squares_size:" << square_division.getSquareCoordinateList().size() << std::endl;
 
 //        Decoder decoder(ref_image, target_image);
 //        decoder.initSquare(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);

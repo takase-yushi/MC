@@ -115,13 +115,13 @@ double getTriangleResidual(const cv::Mat ref_image, const cv::Mat &target_image,
  * @param vec 動きベクトル
  * @return 残差
  */
-double getSquareResidual(unsigned char **expand_ref, const cv::Mat &target_image, cv::Point2f mv, const std::vector<cv::Point2f> &in_square_pixels, unsigned char **ref_hevc){
+double getSquareResidual(unsigned char **expand_ref, const cv::Mat &target_image, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_square_pixels, unsigned char **ref_hevc){
     cv::Point2f X_later;
 
     double squared_error = 0.0;
 
     for(const auto& pixel : in_square_pixels) {
-        X_later = pixel + mv;
+        X_later = pixel + mv[0];
 
         int y;
         if(ref_hevc != nullptr){
