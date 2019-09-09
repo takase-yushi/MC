@@ -976,6 +976,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 //    #pragma omp parallel for
 #endif
     for (int j = 0; j < (int) subdiv_ref_squares.size(); j++) {
+        square_gauss_results.emplace_back();
         double error_warping_tmp, error_parallel_tmp;
         int square_size_tmp;
         cv::Point2f mv_parallel_tmp;
@@ -1025,7 +1026,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             }
 
         }else if(PRED_MODE == BM){
-            std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(square, target_image, expansion_ref, square_index, ctu);
+            square_gauss_results[square_indexes[j]].parallel_flag = true;
+            std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_squares[j], target_image, expansion_ref, square_indexes[j], ctu);
             mv_warping_tmp = tmp_bm_mv;
             mv_parallel_tmp = tmp_bm_mv[2];
             error_parallel_tmp = tmp_bm_errors[2];
@@ -1033,7 +1035,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
             split_mv_result[j] = GaussResult(mv_warping_tmp, mv_parallel_tmp, error_parallel_tmp, square_size_tmp, true, tmp_bm_errors[2], tmp_error_newton);
 
-            square_gauss_results[square_indexes[j]].parallel_flag = true;
             square_gauss_results[square_indexes[j]].mv_parallel = mv_parallel_tmp;
         }
 
