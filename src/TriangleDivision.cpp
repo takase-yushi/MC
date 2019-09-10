@@ -2562,11 +2562,11 @@ void TriangleDivision::drawMvImage(cv::Mat &out, CodingTreeUnit *ctu){
         if(ctu->parallel_flag) {
             cv::Point2f g = (p1 + p2 + p3) / 3.0;
 
-            cv::line(out, g, g + ctu->mv1, GREEN);
+            cv::arrowedLine(out, g, g + ctu->mv1, GREEN);
         }else{
-            cv::line(out, p1, p1 + ctu->mv1, GREEN);
-            cv::line(out, p2, p2 + ctu->mv2, GREEN);
-            cv::line(out, p3, p3 + ctu->mv3, GREEN);
+            cv::arrowedLine(out, p1, p1 + ctu->mv1, GREEN);
+            cv::arrowedLine(out, p2, p2 + ctu->mv2, GREEN);
+            cv::arrowedLine(out, p3, p3 + ctu->mv3, GREEN);
         }
     }
 
