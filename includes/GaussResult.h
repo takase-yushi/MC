@@ -14,12 +14,12 @@ public:
     GaussResult();
 
     GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvParallel, double residual,
-                int triangleSize, bool parallelFlag, double residual_bm, double residual_newton);
+                int triangleSize, bool translationFlag, double residual_bm, double residual_newton);
     std::vector<cv::Point2f> mv_warping;
-    cv::Point2f mv_parallel;
+    cv::Point2f mv_translation;
     double residual;
     int triangle_size;
-    bool parallel_flag;
+    bool translation_flag;
     double residual_bm;
     double residual_newton;
     MV_CODE_METHOD method;

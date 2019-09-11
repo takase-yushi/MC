@@ -295,7 +295,7 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
         decode_ctu->method              = ctu->method;           // SPATIAL or MERGE(符号化データ)
         decode_ctu->triangle_index      = triangle_index;        // 復号側で求めた三角パッチの番号
-        decode_ctu->parallel_flag       = ctu->parallel_flag;    // 平行移動を表すフラグ(符号化データ)
+        decode_ctu->translation_flag       = ctu->translation_flag;    // 平行移動を表すフラグ(符号化データ)
         decode_ctu->ref_triangle_idx    = ctu->ref_triangle_idx; // 参照パッチインデックス(符号化データ)
         isCodedTriangle[triangle_index] = true;
 
@@ -305,9 +305,9 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
 
         for(int i = 0 ; i < spatial_triangle_list.size() ; i++){
             GaussResult spatial_triangle_info = triangle_info[spatial_triangle_list[i]];
-            if(spatial_triangle_info.parallel_flag){
-                if(!isMvExists(vector_list, spatial_triangle_info.mv_parallel) && vector_list.size() < MV_LIST_MAX_NUM) {
-                    vector_list.emplace_back(spatial_triangle_info.mv_parallel, SPATIAL);
+            if(spatial_triangle_info.translation_flag){
+                if(!isMvExists(vector_list, spatial_triangle_info.mv_translation) && vector_list.size() < MV_LIST_MAX_NUM) {
+                    vector_list.emplace_back(spatial_triangle_info.mv_translation, SPATIAL);
                     warping_vector_list.emplace_back();
                 }
             }else{
@@ -336,7 +336,7 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
                 std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_triangle_coordinates, ref_mvs, target_triangle_coordinates);
                 mv_average = mvs[0];
 
-                if (!decode_ctu->parallel_flag) {
+                if (!decode_ctu->translation_flag) {
                     target_triangle_coordinates.clear();
                     target_triangle_coordinates.emplace_back(pp1);
                     target_triangle_coordinates.emplace_back(pp2);
@@ -378,7 +378,7 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
         if(decode_ctu->method == SPATIAL){
             std::pair<cv::Point2f, MV_CODE_METHOD> ref_mv = vector_list[decode_ctu->ref_triangle_idx];
             std::vector<cv::Point2f> ref_warping_mv = warping_vector_list[decode_ctu->ref_triangle_idx];
-            if(decode_ctu->parallel_flag){
+            if(decode_ctu->translation_flag){
 
                 cv::Point2f mvd = ctu->mvds[0];
                 if(!ctu->x_greater_0_flag[0]) mvd.x = 0;
@@ -413,8 +413,8 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
                 decode_ctu->mv1 = ref_mv.first - mvd;
                 decode_ctu->mv2 = ref_mv.first - mvd;
                 decode_ctu->mv3 = ref_mv.first - mvd;
-                triangle_info[triangle_index].mv_parallel = decode_ctu->mv1;
-                triangle_info[triangle_index].parallel_flag = true;
+                triangle_info[triangle_index].mv_translation = decode_ctu->mv1;
+                triangle_info[triangle_index].translation_flag = true;
             }else {
                 std::vector<cv::Point2f> mvds;
                 for(int i = 0 ; i < 3 ; i++){
@@ -464,21 +464,21 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
                 triangle_info[triangle_index].mv_warping.emplace_back(decode_ctu->mv1);
                 triangle_info[triangle_index].mv_warping.emplace_back(decode_ctu->mv2);
                 triangle_info[triangle_index].mv_warping.emplace_back(decode_ctu->mv3);
-                triangle_info[triangle_index].parallel_flag = false;
+                triangle_info[triangle_index].translation_flag = false;
             }
         }else{
-            if(decode_ctu->parallel_flag){
+            if(decode_ctu->translation_flag){
                 std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> merge_list;
                 std::vector<Triangle> merge_triangle_coordinate;
 
                 for(int i = 0 ; i < spatial_triangle_list.size() ; i++){
                     GaussResult spatial_triangle = triangle_info[spatial_triangle_list[i]];
 
-                    if(spatial_triangle.parallel_flag){
-                        if(spatial_triangle.mv_parallel.x + sx < -16 || spatial_triangle.mv_parallel.y + sy < -16 || spatial_triangle.mv_parallel.x + lx >= target_image.cols + 16 || spatial_triangle.mv_parallel.y + ly >= target_image.rows + 16) continue;
+                    if(spatial_triangle.translation_flag){
+                        if(spatial_triangle.mv_translation.x + sx < -16 || spatial_triangle.mv_translation.y + sy < -16 || spatial_triangle.mv_translation.x + lx >= target_image.cols + 16 || spatial_triangle.mv_translation.y + ly >= target_image.rows + 16) continue;
 
-                        if(!isMvExists(merge_list, spatial_triangle.mv_parallel) && merge_list.size() < MV_LIST_MAX_NUM) {
-                            merge_list.emplace_back(spatial_triangle.mv_parallel, MERGE);
+                        if(!isMvExists(merge_list, spatial_triangle.mv_translation) && merge_list.size() < MV_LIST_MAX_NUM) {
+                            merge_list.emplace_back(spatial_triangle.mv_translation, MERGE);
                             merge_triangle_coordinate.emplace_back(triangles[spatial_triangle_list[i]].first);
                         }
 
@@ -504,8 +504,8 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
                 decode_ctu->merge_triangle_ref_vector.y = (merge_triangle_p1.y + merge_triangle_p2.y + merge_triangle_p3.y) / 3.0;
                 std::cout << merge_triangle_p1 << " " << merge_triangle_p2 << " " << merge_triangle_p3   << std::endl;
 
-                triangle_info[triangle_index].mv_parallel = ref_mv.first;
-                triangle_info[triangle_index].parallel_flag = true;
+                triangle_info[triangle_index].mv_translation = ref_mv.first;
+                triangle_info[triangle_index].translation_flag = true;
 
             }else{
                 int merge_idx = decode_ctu->ref_triangle_idx;
@@ -545,10 +545,10 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
             }
         }
 
-        triangle_info[triangle_index].parallel_flag = ctu->parallel_flag;
+        triangle_info[triangle_index].translation_flag = ctu->translation_flag;
         triangle_info[triangle_index].method = ctu->method;
 
-//        std::cout << (decode_ctu->method == MERGE ? "MERGE" : "SPATIAL") << " " << (decode_ctu->parallel_flag ? "PARALLEL" : "WARPING") << " "  <<decode_ctu->mv1 << " " << decode_ctu->mv2 << " " << decode_ctu->mv3 << std::endl;
+//        std::cout << (decode_ctu->method == MERGE ? "MERGE" : "SPATIAL") << " " << (decode_ctu->translation_flag ? "PARALLEL" : "WARPING") << " "  <<decode_ctu->mv1 << " " << decode_ctu->mv2 << " " << decode_ctu->mv3 << std::endl;
         return;
     }
 
@@ -661,7 +661,7 @@ void Decoder::getModeImage(CodingTreeUnit* ctu, cv::Mat &out, const std::vector<
 
         std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, diagonal_area_flag, triangle_index, ctu, block_size_x, block_size_y);
 
-        if(ctu->parallel_flag) {
+        if(ctu->translation_flag) {
             if(ctu->method == MV_CODE_METHOD::MERGE){
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = 0;
@@ -1164,7 +1164,7 @@ cv::Mat Decoder::getMvImage(const cv::Mat base_image) {
 
 void Decoder::getMvImage(CodingTreeUnit *ctu, const cv::Mat &out) {
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr){
-        if(ctu->parallel_flag){
+        if(ctu->translation_flag){
             std::pair<Triangle, int> t = triangles[ctu->triangle_index];
             cv::Point2f p1 = corners[t.first.p1_idx];
             cv::Point2f p2 = corners[t.first.p2_idx];
