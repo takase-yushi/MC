@@ -82,7 +82,7 @@ enum {
 };
 
 #define PRED_MODE BM
-#define GAUSS_NEWTON_PARALLEL_ONLY false
+#define GAUSS_NEWTON_TRANSLATION_ONLY false
 #define GAUSS_NEWTON_INIT_VECTOR false
 #define GAUSS_NEWTON_HEVC_IMAGE true
 #define HEVC_REF_IMAGE true
@@ -90,9 +90,9 @@ enum {
 #define MVD_DEBUG_LOG false
 #define TEST_MODE false
 #define STORE_DISTRIBUTION_LOG true
-#define USE_BM_PARALLEL_MV false
+#define USE_BM_TRANSLATION_MV false
 #define MV_LIST_MAX_NUM 5
-#define MERGE_MODE false
+#define MERGE_MODE true
 #define STORE_IMG_LOG false
 #define RD_BLOCK_MATCHING true
 

@@ -60,13 +60,13 @@ public:
 public:
     GaussResult();
 
-    GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvParallel, double residual,
-                int squareSize, bool parallelFlag, double residual_bm, double residual_newton);
+    GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvTranslation, double residual,
+                int squareSize, bool translationFlag, double residual_bm, double residual_newton);
     std::vector<cv::Point2f> mv_warping;
-    cv::Point2f mv_parallel;
+    cv::Point2f mv_translation;
     double residual;
     int square_size;
-    bool parallel_flag;
+    bool translation_flag;
     double residual_bm;
     double residual_newton;
     MV_CODE_METHOD method;
@@ -114,7 +114,7 @@ public:
 
     cv::Mat getPredictedDiagonalImageFromCtu(std::vector<CodingTreeUnit*> ctus);
     cv::Mat getPredictedColorImageFromCtu(std::vector<CodingTreeUnit*> ctus, double original_psnr);
-    std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool parallel_flag, std::vector<cv::Point2f> &pixels, std::vector<int> spatial_squares = std::vector<int>());
+    std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, std::vector<int> spatial_squares = std::vector<int>());
 
     virtual ~SquareDivision();
 

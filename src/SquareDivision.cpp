@@ -671,18 +671,18 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
 
     double RMSE_before_subdiv = 0.0;
-    double error_warping, error_parallel;
+    double error_warping, error_translation;
     cv::Point2f p1 = square.p1;
     cv::Point2f p2 = square.p2;
     cv::Point2f p3 = square.p3;
     cv::Point2f p4 = square.p4;
 
     int square_size = 0;
-    bool parallel_flag;
+    bool translation_flag;
 
     std::vector<cv::Point2f> dummy;
     std::vector<cv::Point2f> gauss_result_warping;
-    cv::Point2f gauss_result_parallel;
+    cv::Point2f gauss_result_translation;
 
     int warping_limit = 6;
 
@@ -693,12 +693,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     if(square_gauss_results[square_index].residual > 0) {
         GaussResult result_before = square_gauss_results[square_index];
         gauss_result_warping = result_before.mv_warping;
-        gauss_result_parallel = result_before.mv_parallel;
+        gauss_result_translation = result_before.mv_translation;
         RMSE_before_subdiv = result_before.residual;
         square_size = result_before.square_size;
-        parallel_flag = result_before.parallel_flag;
-        if(parallel_flag){
-            error_parallel = result_before.residual;
+        translation_flag = result_before.translation_flag;
+        if(translation_flag){
+            error_translation = result_before.residual;
         }else{
             error_warping = result_before.residual;
         }
@@ -711,44 +711,44 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 //                std::vector<double> tmp_bm_errors;
 //                std::tie(tmp_bm_mv, tmp_bm_errors) = fullpellBlockMatching(triangle, target_image, expansion_ref,
 //                                                                   diagonal_line_area_flag, triangle_index, ctu);
-//                std::tie(gauss_result_warping, gauss_result_parallel, error_warping, error_parallel, triangle_size) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
+//                std::tie(gauss_result_warping, gauss_result_translation, error_warping, error_translation, triangle_size) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
 //                                                      diagonal_line_area_flag, triangle_index, ctu, block_size_x,
 //                                                      block_size_y, tmp_bm_mv[2], ref_hevc);
-//#if USE_BM_PARALLEL_MV
-//                gauss_result_parallel = tmp_bm_mv[2];
-//                error_parallel = tmp_bm_errors[2];
+//#if USE_BM_translation_MV
+//                gauss_result_translation = tmp_bm_mv[2];
+//                error_translation = tmp_bm_errors[2];
 //#endif
             }else{
-//                std::tie(gauss_result_warping, gauss_result_parallel, error_warping, error_parallel, triangle_size) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
+//                std::tie(gauss_result_warping, gauss_result_translation, error_warping, error_translation, triangle_size) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
 //                                                      diagonal_line_area_flag, triangle_index, ctu, block_size_x,
 //                                                      block_size_y, cv::Point2f(-1000, -1000), ref_hevc);
             }
 
             square_gauss_results[square_index].mv_warping = gauss_result_warping;
-            square_gauss_results[square_index].mv_parallel = gauss_result_parallel;
+            square_gauss_results[square_index].mv_translation = gauss_result_translation;
             square_gauss_results[square_index].square_size = square_size;
             square_gauss_results[square_index].residual = RMSE_before_subdiv;
 
-            int cost_warping, cost_parallel;
-            MV_CODE_METHOD method_warping, method_parallel;
-            std::tie(cost_parallel, std::ignore, std::ignore, std::ignore, method_parallel) = getMVD(
-                    {gauss_result_parallel, gauss_result_parallel, gauss_result_parallel}, error_parallel,
+            int cost_warping, cost_translation;
+            MV_CODE_METHOD method_warping, method_translation;
+            std::tie(cost_translation, std::ignore, std::ignore, std::ignore, method_translation) = getMVD(
+                    {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
                     square_index, cmt->mv1, ctu, true, dummy);
-#if !GAUSS_NEWTON_PARALLEL_ONLY
+#if !GAUSS_NEWTON_TRANSLATION_ONLY
             std::tie(cost_warping, std::ignore, std::ignore, std::ignore, method_warping) = getMVD(
                     square_gauss_results[square_index].mv_warping, error_warping,
                     square_index, cmt->mv1, ctu, false, dummy);
 #endif
-            if(cost_parallel < cost_warping || (steps <= warping_limit)|| GAUSS_NEWTON_PARALLEL_ONLY){
-                square_gauss_results[square_index].parallel_flag = true;
-                square_gauss_results[square_index].residual = error_parallel;
-                square_gauss_results[square_index].method = method_parallel;
-                parallel_flag = true;
+            if(cost_translation < cost_warping || (steps <= warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
+                square_gauss_results[square_index].translation_flag = true;
+                square_gauss_results[square_index].residual = error_translation;
+                square_gauss_results[square_index].method = method_translation;
+                translation_flag = true;
             }else{
-                square_gauss_results[square_index].parallel_flag = false;
+                square_gauss_results[square_index].translation_flag = false;
                 square_gauss_results[square_index].residual = error_warping;
                 square_gauss_results[square_index].method = method_warping;
-                parallel_flag = false;
+                translation_flag = false;
             }
 
         }else if(PRED_MODE == BM) {
@@ -763,14 +763,14 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             square_gauss_results[square_index].residual_bm = tmp_bm_errors[2];
             ctu->error_bm = tmp_bm_errors[2];
             gauss_result_warping = tmp_bm_mv;
-            gauss_result_parallel = tmp_bm_mv[2];
+            gauss_result_translation = tmp_bm_mv[2];
             RMSE_before_subdiv = tmp_bm_errors[2];
-            error_parallel = tmp_bm_errors[2];
+            error_translation = tmp_bm_errors[2];
             square_gauss_results[square_index].mv_warping = gauss_result_warping;
-            square_gauss_results[square_index].mv_parallel = gauss_result_parallel;
+            square_gauss_results[square_index].mv_translation = gauss_result_translation;
             square_gauss_results[square_index].square_size = square_size;
             square_gauss_results[square_index].residual = RMSE_before_subdiv;
-            parallel_flag = true;
+            translation_flag = true;
 
         }
     }
@@ -781,9 +781,9 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     double cost_before_subdiv;
     int code_length;
 
-    if(square_gauss_results[square_index].parallel_flag) {
+    if(square_gauss_results[square_index].translation_flag) {
         std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
-                {gauss_result_parallel, gauss_result_parallel, gauss_result_parallel}, error_parallel,
+                {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
                 square_index, cmt->mv1, ctu, true, dummy);
     }else{
         std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
@@ -794,17 +794,17 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     std::vector<cv::Point2i> ret_gauss2;
 
     if(method_flag == MV_CODE_METHOD::MERGE) {
-        square_gauss_results[square_index].mv_parallel = mvd[0];
+        square_gauss_results[square_index].mv_translation = mvd[0];
         square_gauss_results[square_index].mv_warping = mvd;
-        gauss_result_parallel = mvd[0];
+        gauss_result_translation = mvd[0];
         gauss_result_warping = mvd;
     }
 
     std::vector<cv::Point2f> mv;
-    if (parallel_flag) {
-        mv.emplace_back(gauss_result_parallel);
-        mv.emplace_back(gauss_result_parallel);
-        mv.emplace_back(gauss_result_parallel);
+    if (translation_flag) {
+        mv.emplace_back(gauss_result_translation);
+        mv.emplace_back(gauss_result_translation);
+        mv.emplace_back(gauss_result_translation);
     } else {
         mv = gauss_result_warping;
     }
@@ -815,13 +815,13 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     ctu->square_index = square_index;
     ctu->code_length = code_length;
     ctu->collocated_mv = cmt->mv1;
-    ctu->parallel_flag = parallel_flag;
+    ctu->translation_flag = translation_flag;
     ctu->method = method_flag;
     ctu->ref_square_idx = selected_index;
 
     if(method_flag == SPATIAL) {
         ctu->mvds.clear();
-        if(ctu->parallel_flag) {
+        if(ctu->translation_flag) {
             ctu->mvds.emplace_back(mvd[0]);
             ctu->mvds.emplace_back(mvd[0]);
             ctu->mvds.emplace_back(mvd[0]);
@@ -981,52 +981,52 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 #endif
     for (int j = 0; j < (int) subdiv_ref_squares.size(); j++) {
         square_gauss_results.emplace_back();
-        double error_warping_tmp, error_parallel_tmp;
+        double error_warping_tmp, error_translation_tmp;
         int square_size_tmp;
-        cv::Point2f mv_parallel_tmp;
+        cv::Point2f mv_translation_tmp;
         std::vector<cv::Point2f> mv_warping_tmp;
         std::vector<cv::Point2f> tmp_bm_mv;
         std::vector<double> tmp_bm_errors;
-        double cost_warping_tmp, cost_parallel_tmp;
+        double cost_warping_tmp, cost_translation_tmp;
         double tmp_error_newton;
-        MV_CODE_METHOD method_warping_tmp, method_parallel_tmp;
+        MV_CODE_METHOD method_warping_tmp, method_translation_tmp;
         if(PRED_MODE == NEWTON){
             if(GAUSS_NEWTON_INIT_VECTOR) {
 //                std::tie(tmp_bm_mv, tmp_bm_errors) = fullpellBlockMatching(subdiv_target_triangles[j], target_image,
 //                                                                   expansion_ref, diagonal_line_area_flag,
 //                                                                   triangle_indexes[j], ctus[j]);
-//                std::tie(mv_warping_tmp, mv_parallel_tmp, error_warping_tmp, error_parallel_tmp,triangle_size_tmp) = GaussNewton(
+//                std::tie(mv_warping_tmp, mv_translation_tmp, error_warping_tmp, error_translation_tmp,triangle_size_tmp) = GaussNewton(
 //                        ref_images, target_images, expand_images, subdiv_target_triangles[j], diagonal_line_area_flag,
 //                        triangle_indexes[j], ctus[j], block_size_x, block_size_y,
 //                        tmp_bm_mv[2], ref_hevc);
-#if USE_BM_PARALLEL_MV
-                error_parallel_tmp = tmp_bm_errors[2];
-                mv_parallel_tmp = tmp_bm_mv[2];
+#if USE_BM_TRANSLATION_MV
+                error_translation_tmp = tmp_bm_errors[2];
+                mv_translation_tmp = tmp_bm_mv[2];
 #endif
             }else{
-//                std::tie(mv_warping_tmp, mv_parallel_tmp, error_warping_tmp, error_parallel_tmp, triangle_size_tmp) = GaussNewton(
+//                std::tie(mv_warping_tmp, mv_translation_tmp, error_warping_tmp, error_translation_tmp, triangle_size_tmp) = GaussNewton(
 //                        ref_images, target_images, expand_images, subdiv_target_triangles[j], diagonal_line_area_flag,
 //                        triangle_indexes[j], ctus[j], block_size_x, block_size_y,
 //                        cv::Point2f(-1000, -1000), ref_hevc);
             }
 
-            std::tie(cost_parallel_tmp,std::ignore, std::ignore, std::ignore, method_parallel_tmp) = getMVD(
-                    {mv_parallel_tmp, mv_parallel_tmp, mv_parallel_tmp}, error_parallel_tmp,
+            std::tie(cost_translation_tmp,std::ignore, std::ignore, std::ignore, method_translation_tmp) = getMVD(
+                    {mv_translation_tmp, mv_translation_tmp, mv_translation_tmp}, error_translation_tmp,
                     square_indexes[j], cmt->mv1, ctus[j], true, dummy);
-#if !GAUSS_NEWTON_PARALLEL_ONLY
+#if !GAUSS_NEWTON_TRANSLATION_ONLY
 
             std::tie(cost_warping_tmp, std::ignore, std::ignore, std::ignore, method_warping_tmp) = getMVD(
                     mv_warping_tmp, error_warping_tmp,
                     square_indexes[j], cmt->mv1, ctus[j], false, dummy);
 #endif
-            if(cost_parallel_tmp < cost_warping_tmp || (steps <= warping_limit) || GAUSS_NEWTON_PARALLEL_ONLY){
-                square_gauss_results[square_indexes[j]].parallel_flag = true;
-                square_gauss_results[square_indexes[j]].mv_parallel = mv_parallel_tmp;
-                split_mv_result[j] = GaussResult(mv_warping_tmp, mv_parallel_tmp, error_parallel_tmp, square_size_tmp, true, error_parallel_tmp, error_warping_tmp);
+            if(cost_translation_tmp < cost_warping_tmp || (steps <= warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY){
+                square_gauss_results[square_indexes[j]].translation_flag = true;
+                square_gauss_results[square_indexes[j]].mv_translation = mv_translation_tmp;
+                split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_translation_tmp, square_size_tmp, true, error_translation_tmp, error_warping_tmp);
             }else{
-                 square_gauss_results[square_indexes[j]].parallel_flag = false;
+                 square_gauss_results[square_indexes[j]].translation_flag = false;
                  square_gauss_results[square_indexes[j]].mv_warping = mv_warping_tmp;
-                split_mv_result[j] = GaussResult(mv_warping_tmp, mv_parallel_tmp, error_warping_tmp, square_size_tmp, false, error_parallel_tmp, error_warping_tmp);
+                split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_warping_tmp, square_size_tmp, false, error_translation_tmp, error_warping_tmp);
             }
 
         }else if(PRED_MODE == BM){
@@ -1037,13 +1037,13 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             std::tie(tmp_bm_mv, tmp_bm_errors) = ::blockMatching(subdiv_target_squares[j], target_image, expansion_ref);
 #endif
             mv_warping_tmp = tmp_bm_mv;
-            mv_parallel_tmp = tmp_bm_mv[2];
-            error_parallel_tmp = tmp_bm_errors[2];
+            mv_translation_tmp = tmp_bm_mv[2];
+            error_translation_tmp = tmp_bm_errors[2];
             square_size_tmp = (double)1e6;
 
-            split_mv_result[j] = GaussResult(mv_warping_tmp, mv_parallel_tmp, error_parallel_tmp, square_size_tmp, true, tmp_bm_errors[2], tmp_error_newton);
+            split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_translation_tmp, square_size_tmp, true, tmp_bm_errors[2], tmp_error_newton);
 
-            square_gauss_results[square_indexes[j]].mv_parallel = mv_parallel_tmp;
+            square_gauss_results[square_indexes[j]].mv_translation = mv_translation_tmp;
         }
 
         isCodedSquare[square_indexes[j]] = true;
@@ -1063,16 +1063,16 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     cmt_right_right  = (cmt->node4 == nullptr ? cmt : cmt->node4);
 
     MV_CODE_METHOD method_flag1, method_flag2, method_flag3, method_flag4;
-    if(split_mv_result[0].parallel_flag) {
+    if(split_mv_result[0].translation_flag) {
         std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag1) = getMVD(
-                {split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel, split_mv_result[0].mv_parallel},
+                {split_mv_result[0].mv_translation, split_mv_result[0].mv_translation, split_mv_result[0].mv_translation},
                 split_mv_result[0].residual,
                 square_indexes[0], cmt_left_left->mv1, ctu->node1, true, dummy);
 
         if(method_flag1 == MV_CODE_METHOD::MERGE) {
-            if(split_mv_result[0].parallel_flag) {
-                gauss_result_parallel = mvd[0];
-                square_gauss_results[square_indexes[0]].mv_parallel = gauss_result_parallel;
+            if(split_mv_result[0].translation_flag) {
+                gauss_result_translation = mvd[0];
+                square_gauss_results[square_indexes[0]].mv_translation = gauss_result_translation;
             }else{
                 square_gauss_results[square_indexes[0]].mv_warping = mvd;
             }
@@ -1086,15 +1086,15 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
     double cost_after_subdiv2;
     int code_length2;
-    if(split_mv_result[1].parallel_flag){
+    if(split_mv_result[1].translation_flag){
         std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
-                {split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel, split_mv_result[1].mv_parallel}, split_mv_result[1].residual,
+                {split_mv_result[1].mv_translation, split_mv_result[1].mv_translation, split_mv_result[1].mv_translation}, split_mv_result[1].residual,
                 square_indexes[1], cmt_left_right->mv1, ctu->node2, true, dummy);
 
         if(method_flag2 == MV_CODE_METHOD::MERGE) {
-            if(split_mv_result[1].parallel_flag) {
-                gauss_result_parallel = mvd[0];
-                square_gauss_results[square_indexes[1]].mv_parallel = gauss_result_parallel;
+            if(split_mv_result[1].translation_flag) {
+                gauss_result_translation = mvd[0];
+                square_gauss_results[square_indexes[1]].mv_translation = gauss_result_translation;
             }else{
                 square_gauss_results[square_indexes[1]].mv_warping = mvd;
             }
@@ -1108,16 +1108,16 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
     double cost_after_subdiv3;
     int code_length3;
-    if(split_mv_result[2].parallel_flag) {
+    if(split_mv_result[2].translation_flag) {
         std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag3) = getMVD(
-                {split_mv_result[2].mv_parallel, split_mv_result[2].mv_parallel, split_mv_result[2].mv_parallel},
+                {split_mv_result[2].mv_translation, split_mv_result[2].mv_translation, split_mv_result[2].mv_translation},
                 split_mv_result[2].residual,
                 square_indexes[2], cmt_right_left->mv1, ctu->node3, true, dummy);
 
         if(method_flag3 == MV_CODE_METHOD::MERGE) {
-            if(split_mv_result[2].parallel_flag) {
-                gauss_result_parallel = mvd[0];
-                square_gauss_results[square_indexes[2]].mv_parallel = gauss_result_parallel;
+            if(split_mv_result[2].translation_flag) {
+                gauss_result_translation = mvd[0];
+                square_gauss_results[square_indexes[2]].mv_translation = gauss_result_translation;
             }else{
                 square_gauss_results[square_indexes[2]].mv_warping = mvd;
             }
@@ -1131,15 +1131,15 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
     double cost_after_subdiv4;
     int code_length4;
-    if(split_mv_result[3].parallel_flag){
+    if(split_mv_result[3].translation_flag){
         std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
-                {split_mv_result[3].mv_parallel, split_mv_result[3].mv_parallel, split_mv_result[3].mv_parallel}, split_mv_result[3].residual,
+                {split_mv_result[3].mv_translation, split_mv_result[3].mv_translation, split_mv_result[3].mv_translation}, split_mv_result[3].residual,
                 square_indexes[3], cmt_right_right->mv1, ctu->node4, true, dummy);
 
         if(method_flag4 == MV_CODE_METHOD::MERGE) {
-            if(split_mv_result[3].parallel_flag) {
-                gauss_result_parallel = mvd[0];
-                square_gauss_results[square_indexes[3]].mv_parallel = gauss_result_parallel;
+            if(split_mv_result[3].translation_flag) {
+                gauss_result_translation = mvd[0];
+                square_gauss_results[square_indexes[3]].mv_translation = gauss_result_translation;
             }else{
                 square_gauss_results[square_indexes[3]].mv_warping = mvd;
             }
@@ -1167,24 +1167,24 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
         // 1つ目の頂点追加
         ctu->node1->square_index = s1_idx;
-        if(split_mv_result[0].parallel_flag) {
-            ctu->node1->mv1 = split_mv_result[0].mv_parallel;
-            ctu->node1->mv2 = split_mv_result[0].mv_parallel;
-            ctu->node1->mv3 = split_mv_result[0].mv_parallel;
+        if(split_mv_result[0].translation_flag) {
+            ctu->node1->mv1 = split_mv_result[0].mv_translation;
+            ctu->node1->mv2 = split_mv_result[0].mv_translation;
+            ctu->node1->mv3 = split_mv_result[0].mv_translation;
         }else{
             ctu->node1->mv1 = split_mv_result[0].mv_warping[0];
             ctu->node1->mv2 = split_mv_result[0].mv_warping[1];
             ctu->node1->mv3 = split_mv_result[0].mv_warping[2];
         }
         ctu->node1->code_length = code_length1;
-        ctu->node1->parallel_flag = split_mv_result[0].parallel_flag;
+        ctu->node1->translation_flag = split_mv_result[0].translation_flag;
         ctu->node1->method = method_flag1;
         square_gauss_results[s1_idx] = split_mv_result[0];
         if(method_flag1 == MV_CODE_METHOD::MERGE) {
-            if(ctu->node1->parallel_flag){
-                ctu->node1->mv1 = square_gauss_results[square_indexes[0]].mv_parallel;
-                ctu->node1->mv2 = square_gauss_results[square_indexes[0]].mv_parallel;
-                ctu->node1->mv3 = square_gauss_results[square_indexes[0]].mv_parallel;
+            if(ctu->node1->translation_flag){
+                ctu->node1->mv1 = square_gauss_results[square_indexes[0]].mv_translation;
+                ctu->node1->mv2 = square_gauss_results[square_indexes[0]].mv_translation;
+                ctu->node1->mv3 = square_gauss_results[square_indexes[0]].mv_translation;
             }else{
                 ctu->node1->mv1 = square_gauss_results[square_indexes[0]].mv_warping[0];
                 ctu->node1->mv2 = square_gauss_results[square_indexes[0]].mv_warping[1];
@@ -1195,25 +1195,25 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
         // 2つ目の四角形
         ctu->node2->square_index = s2_idx;
-        if(split_mv_result[1].parallel_flag){
-            ctu->node2->mv1 = split_mv_result[1].mv_parallel;
-            ctu->node2->mv2 = split_mv_result[1].mv_parallel;
-            ctu->node2->mv3 = split_mv_result[1].mv_parallel;
+        if(split_mv_result[1].translation_flag){
+            ctu->node2->mv1 = split_mv_result[1].mv_translation;
+            ctu->node2->mv2 = split_mv_result[1].mv_translation;
+            ctu->node2->mv3 = split_mv_result[1].mv_translation;
         }else{
             ctu->node2->mv1 = split_mv_result[1].mv_warping[0];
             ctu->node2->mv2 = split_mv_result[1].mv_warping[1];
             ctu->node2->mv3 = split_mv_result[1].mv_warping[2];
         }
         ctu->node2->code_length = code_length2;
-        ctu->node2->parallel_flag = split_mv_result[1].parallel_flag;
+        ctu->node2->translation_flag = split_mv_result[1].translation_flag;
         ctu->node2->method = method_flag2;
 
         square_gauss_results[s2_idx] = split_mv_result[1];
         if(method_flag2 == MV_CODE_METHOD::MERGE) {
-            if(ctu->node2->parallel_flag){
-                ctu->node2->mv1 = square_gauss_results[square_indexes[1]].mv_parallel;
-                ctu->node2->mv2 = square_gauss_results[square_indexes[1]].mv_parallel;
-                ctu->node2->mv3 = square_gauss_results[square_indexes[1]].mv_parallel;
+            if(ctu->node2->translation_flag){
+                ctu->node2->mv1 = square_gauss_results[square_indexes[1]].mv_translation;
+                ctu->node2->mv2 = square_gauss_results[square_indexes[1]].mv_translation;
+                ctu->node2->mv3 = square_gauss_results[square_indexes[1]].mv_translation;
             }else{
                 ctu->node2->mv1 = square_gauss_results[square_indexes[1]].mv_warping[0];
                 ctu->node2->mv2 = square_gauss_results[square_indexes[1]].mv_warping[1];
@@ -1224,24 +1224,24 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
         // 3つ目の四角形
         ctu->node3->square_index = s3_idx;
-        if(split_mv_result[2].parallel_flag) {
-            ctu->node3->mv1 = split_mv_result[2].mv_parallel;
-            ctu->node3->mv2 = split_mv_result[2].mv_parallel;
-            ctu->node3->mv3 = split_mv_result[2].mv_parallel;
+        if(split_mv_result[2].translation_flag) {
+            ctu->node3->mv1 = split_mv_result[2].mv_translation;
+            ctu->node3->mv2 = split_mv_result[2].mv_translation;
+            ctu->node3->mv3 = split_mv_result[2].mv_translation;
         }else{
             ctu->node3->mv1 = split_mv_result[2].mv_warping[0];
             ctu->node3->mv2 = split_mv_result[2].mv_warping[1];
             ctu->node3->mv3 = split_mv_result[2].mv_warping[2];
         }
         ctu->node3->code_length = code_length3;
-        ctu->node3->parallel_flag = split_mv_result[2].parallel_flag;
+        ctu->node3->translation_flag = split_mv_result[2].translation_flag;
         ctu->node3->method = method_flag3;
         square_gauss_results[s3_idx] = split_mv_result[2];
         if(method_flag3 == MV_CODE_METHOD::MERGE) {
-            if(ctu->node3->parallel_flag){
-                ctu->node3->mv1 = square_gauss_results[square_indexes[2]].mv_parallel;
-                ctu->node3->mv2 = square_gauss_results[square_indexes[2]].mv_parallel;
-                ctu->node3->mv3 = square_gauss_results[square_indexes[2]].mv_parallel;
+            if(ctu->node3->translation_flag){
+                ctu->node3->mv1 = square_gauss_results[square_indexes[2]].mv_translation;
+                ctu->node3->mv2 = square_gauss_results[square_indexes[2]].mv_translation;
+                ctu->node3->mv3 = square_gauss_results[square_indexes[2]].mv_translation;
             }else{
                 ctu->node3->mv1 = square_gauss_results[square_indexes[2]].mv_warping[0];
                 ctu->node3->mv2 = square_gauss_results[square_indexes[2]].mv_warping[1];
@@ -1252,24 +1252,24 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
         // 4つ目の四角形
         ctu->node4->square_index = s4_idx;
-        if(split_mv_result[3].parallel_flag) {
-            ctu->node4->mv1 = split_mv_result[3].mv_parallel;
-            ctu->node4->mv2 = split_mv_result[3].mv_parallel;
-            ctu->node4->mv3 = split_mv_result[3].mv_parallel;
+        if(split_mv_result[3].translation_flag) {
+            ctu->node4->mv1 = split_mv_result[3].mv_translation;
+            ctu->node4->mv2 = split_mv_result[3].mv_translation;
+            ctu->node4->mv3 = split_mv_result[3].mv_translation;
         }else{
             ctu->node4->mv1 = split_mv_result[3].mv_warping[0];
             ctu->node4->mv2 = split_mv_result[3].mv_warping[1];
             ctu->node4->mv3 = split_mv_result[3].mv_warping[2];
         }
         ctu->node4->code_length = code_length4;
-        ctu->node4->parallel_flag = split_mv_result[3].parallel_flag;
+        ctu->node4->translation_flag = split_mv_result[3].translation_flag;
         ctu->node4->method = method_flag4;
         square_gauss_results[s4_idx] = split_mv_result[3];
         if(method_flag4 == MV_CODE_METHOD::MERGE) {
-            if(ctu->node4->parallel_flag){
-                ctu->node4->mv1 = square_gauss_results[square_indexes[3]].mv_parallel;
-                ctu->node4->mv2 = square_gauss_results[square_indexes[3]].mv_parallel;
-                ctu->node4->mv3 = square_gauss_results[square_indexes[3]].mv_parallel;
+            if(ctu->node4->translation_flag){
+                ctu->node4->mv1 = square_gauss_results[square_indexes[3]].mv_translation;
+                ctu->node4->mv2 = square_gauss_results[square_indexes[3]].mv_translation;
+                ctu->node4->mv3 = square_gauss_results[square_indexes[3]].mv_translation;
             }else{
                 ctu->node4->mv1 = square_gauss_results[square_indexes[3]].mv_warping[0];
                 ctu->node4->mv2 = square_gauss_results[square_indexes[3]].mv_warping[1];
@@ -1296,7 +1296,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         addNeighborVertex(squares[square_index].p1_idx,squares[square_index].p2_idx,squares[square_index].p3_idx,squares[square_index].p4_idx);
         addCoveredSquare(squares[square_index].p1_idx,squares[square_index].p2_idx,squares[square_index].p3_idx,squares[square_index].p4_idx, square_index);
 
-//        std::cout << (ctu->method == MERGE ? "MERGE" : "SPATIAL") << " " << (ctu->parallel_flag ? "PARALLEL" : "WARPING") << " "  << ctu->mv1 << " " << ctu->mv2 << " " << ctu->mv3 << std::endl;
+//        std::cout << (ctu->method == MERGE ? "MERGE" : "SPATIAL") << " " << (ctu->translation_flag ? "TRANSLATION" : "WARPING") << " "  << ctu->mv1 << " " << ctu->mv2 << " " << ctu->mv3 << std::endl;
         return false;
     }
 
@@ -1611,7 +1611,7 @@ bool SquareDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE
  * @param[in] ctu CodingTreeUnit 符号木
  * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
  */
-std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool parallel_flag, std::vector<cv::Point2f> &pixels, std::vector<int> spatial_squares){
+std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, std::vector<int> spatial_squares){
     // 空間予測と時間予測の候補を取り出す
     if(spatial_squares.empty()) {
         spatial_squares = getSpatialSquareList(square_idx);
@@ -1625,9 +1625,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
         int spatial_square_index = spatial_squares[i];
         GaussResult spatial_square = square_gauss_results[spatial_square_index];
 
-        if(spatial_square.parallel_flag){
-            if(!isMvExists(vectors, spatial_square.mv_parallel) && vectors.size() < MV_LIST_MAX_NUM) {
-                vectors.emplace_back(spatial_square.mv_parallel, SPATIAL);
+        if(spatial_square.translation_flag){
+            if(!isMvExists(vectors, spatial_square.mv_translation) && vectors.size() < MV_LIST_MAX_NUM) {
+                vectors.emplace_back(spatial_square.mv_translation, SPATIAL);
                 warping_vectors.emplace_back();
             }
         }else{
@@ -1659,7 +1659,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
             std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_square_coordinates, ref_mvs, target_square_coordinates);
             mv_average = mvs[0];
 
-            if (!parallel_flag) {
+            if (!translation_flag) {
                 target_square_coordinates.clear();
                 target_square_coordinates.emplace_back(pp1);
                 target_square_coordinates.emplace_back(pp2);
@@ -1694,7 +1694,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
         warping_vectors.emplace_back();
     }
 
-    double lambda = getLambdaPred(qp, (parallel_flag ? 1.0 : 1.0));
+    double lambda = getLambdaPred(qp, (translation_flag ? 1.0 : 1.0));
 
     //                      コスト, 差分ベクトル, 番号, タイプ
     std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> > results;
@@ -1702,15 +1702,15 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
         std::pair<cv::Point2f, MV_CODE_METHOD> vector = vectors[i];
         cv::Point2f current_mv = vector.first;
         // TODO: ワーピング対応
-        if(parallel_flag) { // 平行移動成分に関してはこれまで通りにやる
+        if(translation_flag) { // 平行移動成分に関してはこれまで通りにやる
             FlagsCodeSum flag_code_sum(0, 0, 0, 0);
             Flags flags;
 
             cv::Point2f mvd = current_mv - mv[0];
 #if MVD_DEBUG_LOG
             std::cout << "target_vector_idx       :" << i << std::endl;
-            std::cout << "diff_target_mv(parallel):" << current_mv << std::endl;
-            std::cout << "encode_mv(parallel)     :" << mv[0] << std::endl;
+            std::cout << "diff_target_mv(translation):" << current_mv << std::endl;
+            std::cout << "encode_mv(translation)     :" << mv[0] << std::endl;
 #endif
             mvd = getQuantizedMv(mvd, 4);
 
@@ -1722,7 +1722,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
             flags.y_sign_flag.emplace_back(is_y_minus);
 
 #if MVD_DEBUG_LOG
-            std::cout << "mvd(parallel)           :" << mvd << std::endl;
+            std::cout << "mvd(translation)           :" << mvd << std::endl;
 #endif
             mvd.x = std::fabs(mvd.x);
             mvd.y = std::fabs(mvd.y);
@@ -1731,7 +1731,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
             int abs_x = mvd.x;
             int abs_y = mvd.y;
 #if MVD_DEBUG_LOG
-            std::cout << "4 * mvd(parallel)       :" << mvd << std::endl;
+            std::cout << "4 * mvd(translation)       :" << mvd << std::endl;
 #endif
 
             // 動きベクトル差分の絶対値が0より大きいのか？
@@ -1928,7 +1928,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     int merge_count = 0;
 
 #if MERGE_MODE
-    if(parallel_flag) {
+    if(translation_flag) {
         for (int i = 0; i < spatial_square_size; i++) {
             int spatial_square_index = spatial_squares[i];
             GaussResult spatial_square = square_gauss_results[spatial_square_index];
@@ -1936,14 +1936,14 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
             cv::Rect rect(-64, -64, 4 * (target_image.cols + 2 * 16), 4 * (target_image.rows + 2 * 16));
             std::vector<cv::Point2f> mvs;
 
-            if (spatial_square.parallel_flag) {
-                if(spatial_square.mv_parallel.x + sx < -16 || spatial_square.mv_parallel.y + sy < -16 || spatial_square.mv_parallel.x + lx >= target_image.cols + 16 || spatial_square.mv_parallel.y + ly >= target_image.rows + 16) continue;
-                if (!isMvExists(merge_vectors, spatial_square.mv_parallel) && merge_count < MV_LIST_MAX_NUM) {
-                    merge_vectors.emplace_back(spatial_square.mv_parallel, MERGE);
-                    mvs.emplace_back(spatial_square.mv_parallel);
-                    mvs.emplace_back(spatial_square.mv_parallel);
-                    mvs.emplace_back(spatial_square.mv_parallel);
-                    double ret_residual = getSquareResidual(expansion_ref_uchar,target_image, mvs, pixels_in_square, ref_hevc);
+            if (spatial_square.translation_flag) {
+                if(spatial_square.mv_translation.x + sx < -16 || spatial_square.mv_translation.y + sy < -16 || spatial_square.mv_translation.x + lx >= target_image.cols + 16 || spatial_square.mv_translation.y + ly >= target_image.rows + 16) continue;
+                if (!isMvExists(merge_vectors, spatial_square.mv_translation) && merge_count < MV_LIST_MAX_NUM) {
+                    merge_vectors.emplace_back(spatial_square.mv_translation, MERGE);
+                    mvs.emplace_back(spatial_square.mv_translation);
+                    mvs.emplace_back(spatial_square.mv_translation);
+                    mvs.emplace_back(spatial_square.mv_translation);
+                    double ret_residual = getSquareResidual(target_image, mvs, pixels_in_square, ref_hevc);
                     double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
                     results.emplace_back(rd, getUnaryCodeLength(merge_count) + 1, mvs, merge_count, MERGE,
                                          FlagsCodeSum(0, 0, 0, 0), Flags());
@@ -1956,7 +1956,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
                     mvs.emplace_back(spatial_square.mv_warping[0]);
                     mvs.emplace_back(spatial_square.mv_warping[0]);
                     mvs.emplace_back(spatial_square.mv_warping[0]);
-                    double ret_residual = getSquareResidual(expansion_ref_uchar,target_image, mvs, pixels_in_square, ref_hevc);
+                    double ret_residual = getSquareResidual(target_image, mvs, pixels_in_square, ref_hevc);
                     double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
                     results.emplace_back(rd, getUnaryCodeLength(merge_count) + 1, mvs, merge_count, MERGE,
                                          FlagsCodeSum(0, 0, 0, 0), Flags());
@@ -1982,7 +1982,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
                 if(mvs[2].x + sx < -16 || mvs[2].y + sy < -16 || mvs[2].x + lx >= target_image.cols + 16  || mvs[2].y + ly>=target_image.rows + 16 ) continue;
 
                 if (!isMvExists(warping_vector_history, mvs) && warping_vector_history.size() < MV_LIST_MAX_NUM) {
-                    double ret_residual = getSquareResidual(expansion_ref_uchar,target_image, mvs, pixels_in_square, ref_hevc);
+                    double ret_residual = getSquareResidual(target_image, mvs, pixels_in_square, ref_hevc);
                     double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
                     results.emplace_back(rd, getUnaryCodeLength(merge_count), mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
@@ -2018,7 +2018,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     std::cout << "code_length:" << code_length << std::endl;
     std::cout << "cost       :" << cost << std::endl;
     if(method != MERGE){
-        if(parallel_flag) {
+        if(translation_flag) {
             std::cout << "mvd        :" << mvds[0] << std::endl;
         }else{
             for(auto mvd : mvds){
@@ -2036,7 +2036,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
         (ctu->original_mvds_x).clear();
         (ctu->original_mvds_y).clear();
 
-        if (parallel_flag) {
+        if (translation_flag) {
             (ctu->mvds_x).emplace_back(mvds[0].x);
             (ctu->mvds_y).emplace_back(mvds[0].y);
         } else {
@@ -2137,7 +2137,7 @@ void SquareDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out)
         Point4Vec square(corners[square_corner_idx.p1_idx], corners[square_corner_idx.p2_idx], corners[square_corner_idx.p3_idx], corners[square_corner_idx.p4_idx]);
 
         std::vector<cv::Point2f> mvs;
-        if(ctu->parallel_flag){
+        if(ctu->translation_flag){
             mvs.emplace_back(mv);
             mvs.emplace_back(mv);
             mvs.emplace_back(mv);
@@ -2192,7 +2192,7 @@ void SquareDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat 
         std::vector<cv::Point2f> mvs{mv, mv, mv};
         std::vector<cv::Point2f> pixels = getPixelsInSquare(square);
 
-        if(ctu->parallel_flag) {
+        if(ctu->translation_flag) {
             if(ctu->method == MV_CODE_METHOD::MERGE){
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = 0;
@@ -2273,7 +2273,7 @@ void SquareDivision::drawMvImage(cv::Mat &out, CodingTreeUnit *ctu){
         cv::Point2f p3 = corners[s.p3_idx];
         cv::Point2f p4 = corners[s.p4_idx];
 
-        if(ctu->parallel_flag) {
+        if(ctu->translation_flag) {
             cv::Point2f g = (p1 + p2 + p3 + p4) / 4.0;
 
             cv::line(out, g, g + ctu->mv1, GREEN);
@@ -2294,9 +2294,9 @@ SquareDivision::SquareDivision() {}
 
 SquareDivision::SplitResult::SplitResult(const Point4Vec &s1, const Point4Vec &s2, int type) : s1(s1), s2(s2), s_type(type) {}
 
-SquareDivision::GaussResult::GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvParallel,
-                         double residual, int squareSize, bool parallelFlag, double residualBm, double residualNewton) : mv_warping(
-        mvWarping), mv_parallel(mvParallel), residual(residual), square_size(squareSize), parallel_flag(parallelFlag), residual_bm(residualBm), residual_newton(residualNewton) {}
+SquareDivision::GaussResult::GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvTranslation,
+                         double residual, int squareSize, bool translationFlag, double residualBm, double residualNewton) : mv_warping(
+        mvWarping), mv_translation(mvTranslation), residual(residual), square_size(squareSize), translation_flag(translationFlag), residual_bm(residualBm), residual_newton(residualNewton) {}
 
 SquareDivision::GaussResult::GaussResult() {}
 

@@ -24,7 +24,7 @@ public:
 
     int code_length;
     bool split_cu_flag;
-    bool parallel_flag;
+    bool translation_flag;
     CodingTreeUnit *node1, *node2, *node3, *node4;
     CodingTreeUnit *parentNode;
     int triangle_index;

@@ -15,8 +15,8 @@
  * @param ctus
  */
 void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::string log_path) {
-    greater_0_flag_sum = greater_1_flag_sum = sign_flag_sum = mvd_code_sum = warping_patch_num = parallel_patch_num = 0;
-    mvd_warping_code_sum = mvd_parallel_code_sum = 0;
+    greater_0_flag_sum = greater_1_flag_sum = sign_flag_sum = mvd_code_sum = warping_patch_num = translation_patch_num = 0;
+    mvd_warping_code_sum = mvd_translation_code_sum = 0;
     merge_counter = spatial_counter = 0;
     code_sum = 0;
 
@@ -73,8 +73,8 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     fprintf(fp, "mvd_code              :%d\n", mvd_code_sum);
     fprintf(fp, "warping_code          :%d\n", mvd_warping_code_sum);
     fprintf(fp, "warping_patch         :%d\n", warping_patch_num);
-    fprintf(fp, "parallel_code         :%d\n", mvd_parallel_code_sum);
-    fprintf(fp, "parallel_patch        :%d\n", parallel_patch_num);
+    fprintf(fp, "translation_code         :%d\n", mvd_translation_code_sum);
+    fprintf(fp, "translation_patch        :%d\n", translation_patch_num);
     fprintf(fp, "Spatial_patch         :%d\n", spatial_counter);
     fprintf(fp, "merge_patch           :%d\n", merge_counter);
 
@@ -90,7 +90,7 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr){
         code_sum += (1 + ctu->code_length);
         if(ctu->method != MV_CODE_METHOD::MERGE){
-            if(ctu->parallel_flag){
+            if(ctu->translation_flag){
                 int x_ = (int)abs(((ctu->mv1).x * 4));
                 int y_ = (int)abs(((ctu->mv1).y * 4));
                 MV_counter[x_]++;
@@ -113,7 +113,7 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
                     greater_1_flag_counter[(int)(ctu->flags_code_sum.getYGreater1Flag()[0])]++;
                 }
 
-                mvd_parallel_code_sum += ctu->flags_code_sum.getMvdCodeLength();
+                mvd_translation_code_sum += ctu->flags_code_sum.getMvdCodeLength();
             }else{
                 for(int i = 0 ; i < 3 ; i++) {
                     int x = (ctu->mvds_x)[i];
@@ -145,7 +145,7 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
             merge_counter++;
         }
 
-        if(ctu->parallel_flag) parallel_patch_num++;
+        if(ctu->translation_flag) translation_patch_num++;
         else warping_patch_num++;
 
         return;
@@ -171,7 +171,7 @@ void Analyzer::storeMarkdownFile(double psnr, std::string log_path) {
 
     extern int qp;
     FILE *fp = fopen((log_path + "/result.md").c_str(), "w");
-    fprintf(fp, "|%d|%f|%d|%f|%d|\n", qp, getLambdaPred(qp, 1.0), code_sum, psnr, warping_patch_num + parallel_patch_num);
+    fprintf(fp, "|%d|%f|%d|%f|%d|\n", qp, getLambdaPred(qp, 1.0), code_sum, psnr, warping_patch_num + translation_patch_num);
     fclose(fp);
 }
 
