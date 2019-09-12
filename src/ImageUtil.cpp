@@ -105,7 +105,7 @@ double getTriangleResidual(const cv::Mat ref_image, const cv::Mat &target_image,
 
     return squared_error;
 }
-
+//TODO ワーピング対応
 /***
  * @fn double getTriangleResidual(const cv::Mat &target_image, const cv::Mat ref_image, Point3Vec vec)
  * @brief ある四角形を平行移動した際の残差を返す
@@ -115,7 +115,7 @@ double getTriangleResidual(const cv::Mat ref_image, const cv::Mat &target_image,
  * @param vec 動きベクトル
  * @return 残差
  */
-double getSquareResidual(unsigned char **expand_ref, const cv::Mat &target_image, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_square_pixels, unsigned char **ref_hevc){
+double getSquareResidual(const cv::Mat &target_image, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_square_pixels, unsigned char **ref_hevc){
     cv::Point2f X_later;
 
     double squared_error = 0.0;
@@ -124,14 +124,10 @@ double getSquareResidual(unsigned char **expand_ref, const cv::Mat &target_image
         X_later = pixel + mv[0];
 
         int y;
-        if(ref_hevc != nullptr){
-            y = img_ip(ref_hevc  , cv::Rect(-64, -64, 4 * (target_image.cols + 2 * 16), 4 * (target_image.rows + 2 * 16)), 4 * X_later.x, 4 * X_later.y, 1);
-        }else{
-            std::cout << X_later.x << " " << X_later.y << std::endl;
-            y = img_ip(expand_ref, cv::Rect(-16, -16,     (target_image.cols + 2 * 16),      (target_image.rows + 2 * 16)),    X_later.x,     X_later.y, 2);
-        }
 
-        squared_error += pow((M(target_image, (int)pixel.x, (int)pixel.y) - (0.299 * y + 0.587 * y + 0.114 * y)), 2);
+        y = img_ip(ref_hevc  , cv::Rect(-64, -64, 4 * (target_image.cols + 2 * 16), 4 * (target_image.rows + 2 * 16)), 4 * X_later.x, 4 * X_later.y, 1);
+
+        squared_error += fabs(y - (M(target_image, (int)pixel.x, (int)pixel.y)));
     }
 
     return squared_error;
