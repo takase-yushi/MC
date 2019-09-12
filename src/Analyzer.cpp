@@ -73,8 +73,8 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     fprintf(fp, "mvd_code              :%d\n", mvd_code_sum);
     fprintf(fp, "warping_code          :%d\n", mvd_warping_code_sum);
     fprintf(fp, "warping_patch         :%d\n", warping_patch_num);
-    fprintf(fp, "translation_code         :%d\n", mvd_translation_code_sum);
-    fprintf(fp, "translation_patch        :%d\n", translation_patch_num);
+    fprintf(fp, "translation_code      :%d\n", mvd_translation_code_sum);
+    fprintf(fp, "translation_patch     :%d\n", translation_patch_num);
     fprintf(fp, "Spatial_patch         :%d\n", spatial_counter);
     fprintf(fp, "merge_patch           :%d\n", merge_counter);
 
