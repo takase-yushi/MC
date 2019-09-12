@@ -2062,9 +2062,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
  */
 double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, std::vector<int> spatial_squares){
     // 空間予測と時間予測の候補を取り出す
-    if(spatial_squares.empty()) {
-        spatial_squares = getSpatialSquareList(square_idx);
-    }
     int spatial_square_size = static_cast<int>(spatial_squares.size());
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors; // ベクトルとモードを表すフラグのペア
     std::vector<std::vector<cv::Point2f>> warping_vectors;
@@ -2084,20 +2081,6 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
             cv::Point2f p1 = spatial_square.mv_warping[0];
             cv::Point2f p2 = spatial_square.mv_warping[1];
             cv::Point2f p3 = spatial_square.mv_warping[2];
-#if MVD_DEBUG_LOG
-            std::cout << "target_square_coordinate:";
-            std::cout << corners[squares[square_idx].p1_idx] << " ";
-            std::cout << corners[squares[square_idx].p2_idx] << " ";
-            std::cout << corners[squares[square_idx].p3_idx] << " ";
-            std::cout << corners[squares[square_idx].p4_idx] << std::endl;
-            std::cout << "ref_square_coordinate:";
-            std::cout << corners[squares[spatial_square_index].p1_idx] << " ";
-            std::cout << corners[squares[spatial_square_index].p2_idx] << " ";
-            std::cout << corners[squares[spatial_square_index].p3_idx] << " ";
-            std::cout << corners[squares[spatial_square_index].p4_idx] <<std::endl;
-            std::cout << "ref_square_mvs:";
-            std::cout << p1 << " " << p2 << " " << p3 << std::endl;
-#endif
             cv::Point2f mv_average;
             std::vector<cv::Point2f> ref_mvs{p1, p2, p3};
             Square target_square = squares[square_idx];
@@ -2129,10 +2112,6 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
         }
     }
 
-#if MVD_DEBUG_LOG
-    std::cout << corners[squares[square_idx].p1_idx] << " " << corners[squares[square_idx].p2_idx] << " " << corners[squares[square_idx].p3_idx] << " " << corners[squares[square_idx].p4_idx] << std::endl;
-#endif
-
     if(!isMvExists(vectors, collocated_mv)) {
         vectors.emplace_back(collocated_mv, SPATIAL);
         warping_vectors.emplace_back();
@@ -2156,11 +2135,7 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
             Flags flags;
 
             cv::Point2f mvd = current_mv - mv[0];
-#if MVD_DEBUG_LOG
-            std::cout << "target_vector_idx       :" << i << std::endl;
-            std::cout << "diff_target_mv(translation):" << current_mv << std::endl;
-            std::cout << "encode_mv(translation)     :" << mv[0] << std::endl;
-#endif
+
             mvd = getQuantizedMv(mvd, 4);
 
             // 正負の判定(使ってません！！！)
@@ -2170,18 +2145,12 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
             flags.x_sign_flag.emplace_back(is_x_minus);
             flags.y_sign_flag.emplace_back(is_y_minus);
 
-#if MVD_DEBUG_LOG
-            std::cout << "mvd(translation)           :" << mvd << std::endl;
-#endif
             mvd.x = std::fabs(mvd.x);
             mvd.y = std::fabs(mvd.y);
 
             mvd *= 4;
             int abs_x = mvd.x;
             int abs_y = mvd.y;
-#if MVD_DEBUG_LOG
-            std::cout << "4 * mvd(translation)       :" << mvd << std::endl;
-#endif
 
             // 動きベクトル差分の絶対値が0より大きいのか？
             bool is_x_greater_than_zero = abs_x > 0;
@@ -2259,13 +2228,6 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
             FlagsCodeSum flag_code_sum(0, 0, 0, 0);
             Flags flags;
             for(int j = 0 ; j < mvds.size() ; j++){
-
-#if MVD_DEBUG_LOG
-                std::cout << "target_vector_idx       :" << j << std::endl;
-                std::cout << "diff_target_mv(warping) :" << current_mv << std::endl;
-                std::cout << "encode_mv(warping)      :" << mv[j] << std::endl;
-#endif
-
                 cv::Point2f mvd = getQuantizedMv(mvds[j], 4);
 
                 // 正負の判定
@@ -2276,15 +2238,10 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
 
                 mvd.x = std::fabs(mvd.x);
                 mvd.y = std::fabs(mvd.y);
-#if MVD_DEBUG_LOG
-                std::cout << "mvd(warping)            :" << mvd << std::endl;
-#endif
+
                 mvd *= 4;
                 mvds[j] = mvd;
 
-#if MVD_DEBUG_LOG
-                std::cout << "4 * mvd(warping)        :" << mvd << std::endl;
-#endif
                 int abs_x = mvd.x;
                 int abs_y = mvd.y;
 
@@ -2356,24 +2313,6 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
         return std::get<0>(a) < std::get<0>(b);
     });
     double cost = std::get<0>(results[0]);
-
-
-#if MVD_DEBUG_LOG
-    puts("Result ===========================================");
-    std::cout << "code_length:" << code_length << std::endl;
-    std::cout << "cost       :" << cost << std::endl;
-    if(method != MERGE){
-        if(translation_flag) {
-            std::cout << "mvd        :" << mvds[0] << std::endl;
-        }else{
-            for(auto mvd : mvds){
-                std::cout << "mvd        :" << mvd << std::endl;
-            }
-        }
-    }
-    puts("");
-#endif
-
 
     return cost;
 }
