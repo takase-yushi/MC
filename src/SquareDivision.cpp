@@ -2050,6 +2050,335 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     return {cost, code_length, mvds, selected_idx, method};
 }
 
+
+/**
+ * @fn double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, std::vector<int> spatial_squares)
+ * @brief RDを行い，最適な差分ベクトルを返す
+ * @param[in] mv 動きベクトル
+ * @param[in] square_idx 四角パッチの番号
+ * @param[in] residual そのパッチの残差
+ * @param[in] ctu CodingTreeUnit 符号木
+ * @return RDコスト
+ */
+double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, std::vector<int> spatial_squares){
+    // 空間予測と時間予測の候補を取り出す
+    if(spatial_squares.empty()) {
+        spatial_squares = getSpatialSquareList(square_idx);
+    }
+    int spatial_square_size = static_cast<int>(spatial_squares.size());
+    std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors; // ベクトルとモードを表すフラグのペア
+    std::vector<std::vector<cv::Point2f>> warping_vectors;
+
+    // すべてのベクトルを格納する．
+    for(int i = 0 ; i < spatial_square_size ; i++) {
+        int spatial_square_index = spatial_squares[i];
+        GaussResult spatial_square = square_gauss_results[spatial_square_index];
+
+        if(spatial_square.translation_flag){
+            if(!isMvExists(vectors, spatial_square.mv_translation) && vectors.size() < MV_LIST_MAX_NUM) {
+                vectors.emplace_back(spatial_square.mv_translation, SPATIAL);
+                warping_vectors.emplace_back();
+            }
+        }else{
+            // 隣接パッチがワーピングで予想されている場合、そのパッチの0番の動きベクトルを候補とする
+            cv::Point2f p1 = spatial_square.mv_warping[0];
+            cv::Point2f p2 = spatial_square.mv_warping[1];
+            cv::Point2f p3 = spatial_square.mv_warping[2];
+#if MVD_DEBUG_LOG
+            std::cout << "target_square_coordinate:";
+            std::cout << corners[squares[square_idx].p1_idx] << " ";
+            std::cout << corners[squares[square_idx].p2_idx] << " ";
+            std::cout << corners[squares[square_idx].p3_idx] << " ";
+            std::cout << corners[squares[square_idx].p4_idx] << std::endl;
+            std::cout << "ref_square_coordinate:";
+            std::cout << corners[squares[spatial_square_index].p1_idx] << " ";
+            std::cout << corners[squares[spatial_square_index].p2_idx] << " ";
+            std::cout << corners[squares[spatial_square_index].p3_idx] << " ";
+            std::cout << corners[squares[spatial_square_index].p4_idx] <<std::endl;
+            std::cout << "ref_square_mvs:";
+            std::cout << p1 << " " << p2 << " " << p3 << std::endl;
+#endif
+            cv::Point2f mv_average;
+            std::vector<cv::Point2f> ref_mvs{p1, p2, p3};
+            Square target_square = squares[square_idx];
+            cv::Point2f pp1 = corners[target_square.p1_idx], pp2 = corners[target_square.p2_idx], pp3 = corners[target_square.p3_idx], pp4 = corners[target_square.p4_idx];
+            Square ref_square = squares[spatial_square_index];
+            std::vector<cv::Point2f> ref_square_coordinates{corners[ref_square.p1_idx], corners[ref_square.p2_idx], corners[ref_square.p3_idx], corners[ref_square.p4_idx]};
+            std::vector<cv::Point2f> target_square_coordinates{cv::Point2f((pp1.x + pp2.x + pp3.x + pp4.x) / 4.0, (pp1.y + pp2.y + pp3.y + pp4.y) / 4.0)};
+            std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_square_coordinates, ref_mvs, target_square_coordinates);
+            mv_average = mvs[0];
+
+            if (!translation_flag) {
+                target_square_coordinates.clear();
+                target_square_coordinates.emplace_back(pp1);
+                target_square_coordinates.emplace_back(pp2);
+                target_square_coordinates.emplace_back(pp3);
+                target_square_coordinates.emplace_back(pp4);
+                mvs = getPredictedWarpingMv(ref_square_coordinates, ref_mvs, target_square_coordinates);
+                std::vector<cv::Point2f> v{mvs[0], mvs[1], mvs[2]};
+                warping_vectors.emplace_back(v);
+
+            }else{
+                warping_vectors.emplace_back();
+            }
+
+            mv_average = roundVecQuarter(mv_average);
+            if(!isMvExists(vectors, mv_average) && vectors.size() < MV_LIST_MAX_NUM){
+                vectors.emplace_back(mv_average, SPATIAL);
+            }
+        }
+    }
+
+#if MVD_DEBUG_LOG
+    std::cout << corners[squares[square_idx].p1_idx] << " " << corners[squares[square_idx].p2_idx] << " " << corners[squares[square_idx].p3_idx] << " " << corners[squares[square_idx].p4_idx] << std::endl;
+#endif
+
+    if(!isMvExists(vectors, collocated_mv)) {
+        vectors.emplace_back(collocated_mv, SPATIAL);
+        warping_vectors.emplace_back();
+    }
+
+    if(vectors.size() < 2) {
+        vectors.emplace_back(cv::Point2f(0.0, 0.0), Collocated);
+        warping_vectors.emplace_back();
+    }
+
+    double lambda = getLambdaPred(qp, (translation_flag ? 1.0 : 1.0));
+
+    //                      コスト, 差分ベクトル, 番号, タイプ
+    std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> > results;
+    for(int i = 0 ; i < vectors.size() ; i++) {
+        std::pair<cv::Point2f, MV_CODE_METHOD> vector = vectors[i];
+        cv::Point2f current_mv = vector.first;
+        // TODO: ワーピング対応
+        if(translation_flag) { // 平行移動成分に関してはこれまで通りにやる
+            FlagsCodeSum flag_code_sum(0, 0, 0, 0);
+            Flags flags;
+
+            cv::Point2f mvd = current_mv - mv[0];
+#if MVD_DEBUG_LOG
+            std::cout << "target_vector_idx       :" << i << std::endl;
+            std::cout << "diff_target_mv(translation):" << current_mv << std::endl;
+            std::cout << "encode_mv(translation)     :" << mv[0] << std::endl;
+#endif
+            mvd = getQuantizedMv(mvd, 4);
+
+            // 正負の判定(使ってません！！！)
+            bool is_x_minus = mvd.x < 0;
+            bool is_y_minus = mvd.y < 0;
+
+            flags.x_sign_flag.emplace_back(is_x_minus);
+            flags.y_sign_flag.emplace_back(is_y_minus);
+
+#if MVD_DEBUG_LOG
+            std::cout << "mvd(translation)           :" << mvd << std::endl;
+#endif
+            mvd.x = std::fabs(mvd.x);
+            mvd.y = std::fabs(mvd.y);
+
+            mvd *= 4;
+            int abs_x = mvd.x;
+            int abs_y = mvd.y;
+#if MVD_DEBUG_LOG
+            std::cout << "4 * mvd(translation)       :" << mvd << std::endl;
+#endif
+
+            // 動きベクトル差分の絶対値が0より大きいのか？
+            bool is_x_greater_than_zero = abs_x > 0;
+            bool is_y_greater_than_zero = abs_y > 0;
+
+            flags.x_greater_0_flag.emplace_back(is_x_greater_than_zero);
+            flags.y_greater_0_flag.emplace_back(is_y_greater_than_zero);
+
+            flag_code_sum.countGreater0Code();
+            flag_code_sum.countGreater0Code();
+            flag_code_sum.setXGreater0Flag(is_x_greater_than_zero);
+            flag_code_sum.setYGreater0Flag(is_y_greater_than_zero);
+
+            // 動きベクトル差分の絶対値が1より大きいのか？
+            bool is_x_greater_than_one = abs_x > 1;
+            bool is_y_greater_than_one = abs_y > 1;
+
+            flags.x_greater_1_flag.emplace_back(is_x_greater_than_one);
+            flags.y_greater_1_flag.emplace_back(is_y_greater_than_one);
+
+            int mvd_code_length = 2;
+            if(is_x_greater_than_zero){
+                mvd_code_length += 1;
+
+                if(is_x_greater_than_one){
+                    int mvd_x_minus_2 = mvd.x - 2.0;
+                    mvd.x -= 2.0;
+                    mvd_code_length += getExponentialGolombCodeLength((int) mvd_x_minus_2, 0);
+                    flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_x_minus_2, 0));
+                }
+
+                flag_code_sum.countGreater1Code();
+                flag_code_sum.setXGreater1Flag(is_x_greater_than_one);
+                flag_code_sum.countSignFlagCode();
+            }
+
+            if(is_y_greater_than_zero){
+                mvd_code_length += 1;
+
+                if(is_y_greater_than_one){
+                    int mvd_y_minus_2 = mvd.y - 2.0;
+                    mvd.y -= 2.0;
+                    mvd_code_length += getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
+                    flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_y_minus_2, 0));
+                }
+
+                flag_code_sum.countGreater1Code();
+                flag_code_sum.setYGreater1Flag(is_y_greater_than_one);
+                flag_code_sum.countSignFlagCode();
+            }
+
+            // 参照箇所符号化
+            int reference_index = std::get<1>(vector);
+            int reference_index_code_length = getUnaryCodeLength(reference_index);
+
+            // 各種フラグ分を(3*2)bit足してます
+            double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
+
+            std::vector<cv::Point2f> mvds{mvd};
+            // 結果に入れる
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum, flags);
+        }else{
+            std::vector<cv::Point2f> mvds;
+            if(!warping_vectors[i].empty()){
+                mvds.emplace_back(warping_vectors[i][0] - mv[0]);
+                mvds.emplace_back(warping_vectors[i][1] - mv[1]);
+                mvds.emplace_back(warping_vectors[i][2] - mv[2]);
+            }else {
+                mvds.emplace_back(current_mv - mv[0]);
+                mvds.emplace_back(current_mv - mv[1]);
+                mvds.emplace_back(current_mv - mv[2]);
+            }
+
+            int mvd_code_length = 6;
+            FlagsCodeSum flag_code_sum(0, 0, 0, 0);
+            Flags flags;
+            for(int j = 0 ; j < mvds.size() ; j++){
+
+#if MVD_DEBUG_LOG
+                std::cout << "target_vector_idx       :" << j << std::endl;
+                std::cout << "diff_target_mv(warping) :" << current_mv << std::endl;
+                std::cout << "encode_mv(warping)      :" << mv[j] << std::endl;
+#endif
+
+                cv::Point2f mvd = getQuantizedMv(mvds[j], 4);
+
+                // 正負の判定
+                bool is_x_minus = mvd.x < 0;
+                bool is_y_minus = mvd.y < 0;
+                flags.x_sign_flag.emplace_back(is_x_minus);
+                flags.y_sign_flag.emplace_back(is_y_minus);
+
+                mvd.x = std::fabs(mvd.x);
+                mvd.y = std::fabs(mvd.y);
+#if MVD_DEBUG_LOG
+                std::cout << "mvd(warping)            :" << mvd << std::endl;
+#endif
+                mvd *= 4;
+                mvds[j] = mvd;
+
+#if MVD_DEBUG_LOG
+                std::cout << "4 * mvd(warping)        :" << mvd << std::endl;
+#endif
+                int abs_x = mvd.x;
+                int abs_y = mvd.y;
+
+                // 動きベクトル差分の絶対値が0より大きいのか？
+                bool is_x_greater_than_zero = abs_x > 0;
+                bool is_y_greater_than_zero = abs_y > 0;
+
+                flags.x_greater_0_flag.emplace_back(is_x_greater_than_zero);
+                flags.y_greater_0_flag.emplace_back(is_y_greater_than_zero);
+
+                flag_code_sum.countGreater0Code();
+                flag_code_sum.countGreater0Code();
+                flag_code_sum.setXGreater0Flag(is_x_greater_than_zero);
+                flag_code_sum.setYGreater0Flag(is_y_greater_than_zero);
+
+                // 動きベクトル差分の絶対値が1より大きいのか？
+                bool is_x_greater_than_one = abs_x > 1;
+                bool is_y_greater_than_one = abs_y > 1;
+
+                flags.x_greater_1_flag.emplace_back(is_x_greater_than_one);
+                flags.y_greater_1_flag.emplace_back(is_y_greater_than_one);
+
+                if(is_x_greater_than_zero){
+                    mvd_code_length += 1;
+
+                    if(is_x_greater_than_one){
+                        int mvd_x_minus_2 = mvd.x - 2.0;
+                        mvd.x -= 2.0;
+                        mvd_code_length += getExponentialGolombCodeLength((int) mvd_x_minus_2, 0);
+                        flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_x_minus_2, 0));
+                    }
+
+                    flag_code_sum.countGreater1Code();
+                    flag_code_sum.setXGreater1Flag(is_x_greater_than_one);
+                    flag_code_sum.countSignFlagCode();
+                }
+
+                if(is_y_greater_than_zero){
+                    mvd_code_length += 1;
+
+                    if(is_y_greater_than_one){
+                        int mvd_y_minus_2 = mvd.y - 2.0;
+                        mvd.y -= 2.0;
+                        mvd_code_length +=  getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
+                        flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_y_minus_2, 0));
+                    }
+                    flag_code_sum.countGreater1Code();
+                    flag_code_sum.setYGreater1Flag(is_y_greater_than_one);
+                    flag_code_sum.countSignFlagCode();
+                }
+                mvds[j].x = mvd.x;
+                mvds[j].y = mvd.y;
+            }
+
+            // 参照箇所符号化
+            int reference_index = std::get<1>(vector);
+            int reference_index_code_length = getUnaryCodeLength(reference_index);
+
+            // 各種フラグ分を(3*2)bit足してます
+            double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
+
+            // 結果に入れる
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum, flags);
+        }
+    }
+
+    // RDしたスコアが小さい順にソート
+    std::sort(results.begin(), results.end(), [](const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags >& a, const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags>& b){
+        return std::get<0>(a) < std::get<0>(b);
+    });
+    double cost = std::get<0>(results[0]);
+
+
+#if MVD_DEBUG_LOG
+    puts("Result ===========================================");
+    std::cout << "code_length:" << code_length << std::endl;
+    std::cout << "cost       :" << cost << std::endl;
+    if(method != MERGE){
+        if(translation_flag) {
+            std::cout << "mvd        :" << mvds[0] << std::endl;
+        }else{
+            for(auto mvd : mvds){
+                std::cout << "mvd        :" << mvd << std::endl;
+            }
+        }
+    }
+    puts("");
+#endif
+
+
+    return cost;
+}
+
+
 /**
  * @fn cv::Point2f SquareDivision::getQuantizedMv(cv::Point2f mv, int quantize_step)
  * @param mv 動きベクトル
@@ -2339,7 +2668,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
                 }
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
-                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
+                rd = getRDCost({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
                 if(rd_min > rd){
                     e_min = e;
                     rd_min = rd;
@@ -2371,7 +2700,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
                 }
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
-                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
+                rd = getRDCost({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
                 if(rd_min > rd){
                     e_min = e;
                     rd_min = rd;
@@ -2401,7 +2730,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
                 }
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
-                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
+                rd = getRDCost({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
                 if(rd_min > rd){
                     e_min = e;
                     rd_min = rd;
