@@ -754,8 +754,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         }else if(PRED_MODE == BM) {
             std::vector<cv::Point2f> tmp_bm_mv;
             std::vector<double> tmp_bm_errors;
-            square_gauss_results[square_index].parallel_flag = true;
+            square_gauss_results[square_index].translation_flag = true;
+#if RD_BLOCK_MATCHING
             std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(square, target_image, expansion_ref, square_index, ctu);
+#else
+            std::tie(tmp_bm_mv, tmp_bm_errors) = ::blockMatching(square, target_image, expansion_ref);
+#endif
             square_gauss_results[square_index].residual_bm = tmp_bm_errors[2];
             ctu->error_bm = tmp_bm_errors[2];
             gauss_result_warping = tmp_bm_mv;
@@ -1026,8 +1030,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             }
 
         }else if(PRED_MODE == BM){
-            square_gauss_results[square_indexes[j]].parallel_flag = true;
+            square_gauss_results[square_indexes[j]].translation_flag = true;
+#if RD_BLOCK_MATCHING
             std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_squares[j], target_image, expansion_ref, square_indexes[j], ctu);
+#else
+            std::tie(tmp_bm_mv, tmp_bm_errors) = ::blockMatching(subdiv_target_squares[j], target_image, expansion_ref);
+#endif
             mv_warping_tmp = tmp_bm_mv;
             mv_parallel_tmp = tmp_bm_mv[2];
             error_parallel_tmp = tmp_bm_errors[2];
