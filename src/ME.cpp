@@ -173,110 +173,110 @@ std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point3Vec tr, const c
  * @details
  *
  */
-std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point4Vec square, const cv::Mat& target_image, cv::Mat expansion_image) {
-    double sx, sy, lx, ly;
-    cv::Point2f sp1, sp2, sp3, sp4;
+std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point4Vec square, const cv::Mat& target_image, cv::Mat expansion_ref_image) {
+        double sx, sy, lx, ly;
+        cv::Point2f sp1, sp4;
 
-    sp1 = square.p1;
-    sp2 = square.p2;
-    sp3 = square.p3;
-    sp4 = square.p4;
+        sp1 = square.p1;
+        sp4 = square.p4;
 
-    sx = 4 * std::min({sp1.x, sp2.x, sp3.x, sp4.x});
-    sy = 4 * std::min({sp1.y, sp2.y, sp3.y, sp4.y});
-    lx = 4 * std::max({sp1.x, sp2.x, sp3.x, sp4.x}) + 3;
-    ly = 4 * std::max({sp1.y, sp2.y, sp3.y, sp4.y}) + 3;
+        sx = 4 * sp1.x;
+        sy = 4 * sp1.y;
+        lx = 4 * sp4.x + 3;
+        ly = 4 * sp4.y + 3;
 
-    cv::Point2f mv_tmp(0.0, 0.0); //ブロックの動きベクトル
-    int SX = 16;                 // ブロックマッチングの探索範囲(X)
-    int SY = 16;                 // ブロックマッチングの探索範囲(Y)
-    int neighbor_pixels = 2;     //1 : 近傍 1 画素     2 : 近傍 2 画素
+        cv::Point2f mv_tmp(0.0, 0.0); //ブロックの動きベクトル
+        int SX = 16;                 // ブロックマッチングの探索範囲(X)
+        int SY = 16;                 // ブロックマッチングの探索範囲(Y)
+        int neighbor_pixels = 2;     //1 : 近傍 1 画素,  2 : 近傍 2 画素,   n : 近傍 n 画素
 
-    double e, error_min;
+        double e;
+        double e_min = 1e9;
 
-    error_min = 1 << 20;
-    cv::Point2f mv_min;
-    int spread_quarter = 64;
-    int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
+        cv::Point2f mv_min;
+        int spread_quarter = 64;
+        int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
+        std::vector<cv::Point2f> pixels = getPixelsInSquare(square);
 
-    for(int j = -SY * 4 ; j <= SY * 4 ; j += s) {            //j : y方向のMV
-        for(int i = -SX * 4 ; i <= SX * 4 ; i += s) {        //i : x方向のMV
-            //探索範囲が画像上かどうか判定
-            if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_image.cols - spread_quarter
-               && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_image.rows - spread_quarter) {
-                e = 0.0;
-                for (int y = (int) (round(sy) / 4); y <= (int) (round(ly) / 4); y++) {
-                    for (int x = (int) (round(sx) / 4); x <= (int) (round(lx) / 4); x++) {
-                        e += fabs(R(expansion_image, i + 4 * x + spread_quarter, j + 4 * y + spread_quarter) - R(target_image, x, y));
+        for(int j = -SY * 4 ; j <= SY * 4 ; j += s) {            //j : y方向のMV
+            for(int i = -SX * 4 ; i <= SX * 4 ; i += s) {        //i : x方向のMV
+                //探索範囲が画像上かどうか判定
+                if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
+                   && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
+                    e = 0.0;
+                    for (int y = (int) (round(sy) / 4); y <= (int) (round(ly) / 4); y++) {
+                        for (int x = (int) (round(sx) / 4); x <= (int) (round(lx) / 4); x++) {
+                            e += fabs(R(expansion_ref_image, i + 4 * x + spread_quarter, j + 4 * y + spread_quarter) - R(target_image, x, y));
+                        }
                     }
-                }
-                if(error_min > e){
-                    error_min = e;
-                    mv_min.x = (double)i / 4.0;
-                    mv_min.y = (double)j / 4.0;
+                    if(e_min > e){
+                        e_min = e;
+                        mv_min.x = (double)i / 4.0;
+                        mv_min.y = (double)j / 4.0;
+                    }
                 }
             }
         }
-    }
 
-    std::vector<cv::Point2f> mvs;
-    mvs.emplace_back(mv_min.x, mv_min.y);
+        std::vector<cv::Point2f> mvs;
+        std::vector<double> errors;
+        mvs.emplace_back(mv_min.x, mv_min.y);
+        errors.emplace_back(e_min);
 
-    mv_tmp.x = mv_min.x * 4;
-    mv_tmp.y = mv_min.y * 4;
+        mv_tmp.x = mv_min.x * 4;
+        mv_tmp.y = mv_min.y * 4;
 
-    s = 2;
-    error_min = 1 << 20;
-    for(int j = - neighbor_pixels * s + mv_tmp.y ; j <= neighbor_pixels * s + mv_tmp.y ; j += s){            //j : y方向のMV
-        for(int i = - neighbor_pixels * s + mv_tmp.x ; i <= neighbor_pixels * s + mv_tmp.x ; i += s){        //i : x方向のMV
-            if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_image.cols - spread_quarter
-               && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_image.rows - spread_quarter) {
-                e = 0.0;
-                for (int y = (int) (round(sy) / 4); y <= (int) (round(ly) / 4); y++) {
-                    for (int x = (int) (round(sx) / 4); x <= (int) (round(lx) / 4); x++) {
-                        e += fabs(R(expansion_image, i + 4 * x + spread_quarter, j + 4 * y + spread_quarter) - R(target_image, x, y));
+        s = 2;
+        for(int j = - neighbor_pixels * s + mv_tmp.y ; j <= neighbor_pixels * s + mv_tmp.y ; j += s){            //j : y方向のMV
+            for(int i = - neighbor_pixels * s + mv_tmp.x ; i <= neighbor_pixels * s + mv_tmp.x ; i += s){        //i : x方向のMV
+                if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
+                   && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
+                    e = 0.0;
+                    for (int y = (int) (round(sy) / 4); y <= (int) (round(ly) / 4); y++) {
+                        for (int x = (int) (round(sx) / 4); x <= (int) (round(lx) / 4); x++) {
+                            e += fabs(R(expansion_ref_image, i + 4 * x + spread_quarter, j + 4 * y + spread_quarter) - R(target_image, x, y));
+                        }
                     }
-                }
-                if(error_min > e){
-                    error_min = e;
-                    mv_min.x = (double)i / 4.0;
-                    mv_min.y = (double)j / 4.0;
+                    if(e_min > e){
+                        e_min = e;
+                        mv_min.x = (double)i / 4.0;
+                        mv_min.y = (double)j / 4.0;
+                    }
                 }
             }
         }
-    }
 
-    mvs.emplace_back(mv_min.x, mv_min.y);
-    mv_tmp.x = mv_min.x * 4;
-    mv_tmp.y = mv_min.y * 4;
+        mvs.emplace_back(mv_min.x, mv_min.y);
+        errors.emplace_back(e_min);
+        mv_tmp.x = mv_min.x * 4;
+        mv_tmp.y = mv_min.y * 4;
 
-    s = 1;
-    error_min = 1 << 20;
+        s = 1;
 
-    for(int j = - neighbor_pixels * s + mv_tmp.y ; j <= neighbor_pixels * s + mv_tmp.y ; j += s){            //j : y方向のMV
-        for(int i = - neighbor_pixels * s + mv_tmp.x ; i <= neighbor_pixels * s + mv_tmp.x ; i += s){        //i : x方向のMV
-            if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_image.cols - spread_quarter
-               && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_image.rows - spread_quarter) {
-                e = 0.0;
-                for (int y = (int) (round(sy) / 4); y <= (int) (round(ly) / 4); y++) {
-                    for (int x = (int) (round(sx) / 4); x <= (int) (round(lx) / 4); x++) {
-                        e += fabs(R(expansion_image, i + 4 * x + spread_quarter, j + 4 * y + spread_quarter) - R(target_image, x, y));
+        for(int j = - neighbor_pixels * s + mv_tmp.y ; j <= neighbor_pixels * s + mv_tmp.y ; j += s){            //j : y方向のMV
+            for(int i = - neighbor_pixels * s + mv_tmp.x ; i <= neighbor_pixels * s + mv_tmp.x ; i += s){        //i : x方向のMV
+                if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
+                   && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
+                    e = 0.0;
+                    for (int y = (int) (round(sy) / 4); y <= (int) (round(ly) / 4); y++) {
+                        for (int x = (int) (round(sx) / 4); x <= (int) (round(lx) / 4); x++) {
+                            e += fabs(R(expansion_ref_image, i + 4 * x + spread_quarter, j + 4 * y + spread_quarter) - R(target_image, x, y));
+                        }
                     }
-                }
-                if(error_min > e){
-                    error_min = e;
-                    mv_min.x = (double)i / 4.0;
-                    mv_min.y = (double)j / 4.0;
+                    if(e_min > e){
+                        e_min = e;
+                        mv_min.x = (double)i / 4.0;
+                        mv_min.y = (double)j / 4.0;
+                    }
                 }
             }
         }
+
+        errors.emplace_back(e_min);
+        mvs.emplace_back(mv_min.x, mv_min.y);
+
+        return std::make_tuple(mvs, errors);
     }
-
-    double error = error_min;
-    mvs.emplace_back(mv_min.x, mv_min.y);
-
-    return std::make_tuple(mvs, error);
-}
 /**
  * @fn std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point3Vec tr, const cv::Mat& target_image, cv::Mat expansion_image, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu)
  * @brief ブロックマッチング（三段探索）をして，動きベクトルを求める
