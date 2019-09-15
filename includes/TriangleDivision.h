@@ -166,6 +166,7 @@ private:
     cv::Mat expansion_ref;
     unsigned char **ref_hevc;
     unsigned char **expansion_ref_uchar;
+    cv::Mat intra_tmp_image;
 
     void getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, std::vector<std::vector<int>> &area_flag, double original_psnr, std::vector<cv::Scalar> &colors);
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);

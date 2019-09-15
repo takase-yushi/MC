@@ -268,6 +268,9 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
         same_corner_list[p1_idx].emplace(p2_idx);
         same_corner_list[p2_idx].emplace(p1_idx);
     }
+
+    // イントラ用のMatを作る
+    intra_tmp_image = cv::Mat::zeros(target_image.rows, target_image.cols, CV_8UC3);
 }
 
 /**
@@ -1104,6 +1107,21 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
     if(steps <= 0){
         isCodedTriangle[triangle_index] = true;
+
+        if(ctu->method != MV_CODE_METHOD::INTRA) {
+            std::vector<cv::Point2f> mvs;
+            if(ctu->parallel_flag){
+                mvs.emplace_back(ctu->mv1);
+                mvs.emplace_back(ctu->mv1);
+                mvs.emplace_back(ctu->mv1);
+            }else{
+                mvs.emplace_back(ctu->mv1);
+                mvs.emplace_back(ctu->mv2);
+                mvs.emplace_back(ctu->mv3);
+            }
+            getPredictedImage(expansion_ref_uchar, target_image, intra_tmp_image, triangle, mvs, 16, diagonal_line_area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
+        }
+
         return false;
     }
 
@@ -1506,7 +1524,21 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         addNeighborVertex(triangles[triangle_index].first.p1_idx,triangles[triangle_index].first.p2_idx,triangles[triangle_index].first.p3_idx);
         addCoveredTriangle(triangles[triangle_index].first.p1_idx,triangles[triangle_index].first.p2_idx,triangles[triangle_index].first.p3_idx, triangle_index);
 
-//        std::cout << (ctu->method == MERGE ? "MERGE" : "SPATIAL") << " " << (ctu->translation_flag ? "PARALLEL" : "WARPING") << " "  << ctu->mv1 << " " << ctu->mv2 << " " << ctu->mv3 << std::endl;
+            if(method_flag != MV_CODE_METHOD::INTRA) {
+            std::vector<cv::Point2f> mvs;
+            if(ctu->parallel_flag){
+                mvs.emplace_back(ctu->mv1);
+                mvs.emplace_back(ctu->mv1);
+                mvs.emplace_back(ctu->mv1);
+            }else{
+                mvs.emplace_back(ctu->mv1);
+                mvs.emplace_back(ctu->mv2);
+                mvs.emplace_back(ctu->mv3);
+            }
+            getPredictedImage(expansion_ref_uchar, target_image, intra_tmp_image, triangle, mvs, 16, diagonal_line_area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
+        }
+
+//        std::cout << (ctu->method == MERGE ? "MERGE" : "SPATIAL") << " " << (ctu->parallel_flag ? "PARALLEL" : "WARPING") << " "  << ctu->mv1 << " " << ctu->mv2 << " " << ctu->mv3 << std::endl;
         return false;
     }
 
@@ -2008,7 +2040,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             flags.y_sign_flag.emplace_back(is_y_minus);
 
 #if MVD_DEBUG_LOG
-            std::cout << "mvd(translation)           :" << mvd << std::endl;
+            std::cout << "mvd(parallel)           :" << mvd << std::endl;
 #endif
             mvd.x = std::fabs(mvd.x);
             mvd.y = std::fabs(mvd.y);
@@ -2017,7 +2049,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             int abs_x = mvd.x;
             int abs_y = mvd.y;
 #if MVD_DEBUG_LOG
-            std::cout << "4 * mvd(translation)       :" << mvd << std::endl;
+            std::cout << "4 * mvd(parallel)       :" << mvd << std::endl;
 #endif
 
             // 動きベクトル差分の絶対値が0より大きいのか？
