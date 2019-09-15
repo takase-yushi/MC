@@ -1544,6 +1544,16 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
 }
 
+void TriangleDivision::storeIntraImage(){
+
+    std::vector<Point3Vec> _triangles = getTriangleCoordinateList();
+    for(const auto triangle : _triangles) {
+        drawTriangle(intra_tmp_image, triangle.p1, triangle.p2, triangle.p3, WHITE);
+    }
+    cv::imwrite(getProjectDirectory(OS) + "/intra.png", intra_tmp_image);
+
+}
+
 /**
  * @fn TriangleDivision::SplitResult TriangleDivision::getSplitTriangle(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, int type)
  * @details ３点の座標とtypeを受け取り，分割した形状を返す
