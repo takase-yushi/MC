@@ -19,6 +19,7 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     mvd_warping_code_sum = mvd_translation_code_sum = 0;
     merge_counter = spatial_counter = 0;
     code_sum = 0;
+    intra_counter = 0;
 
     for(auto ctu : ctus){
         storeDistributionOfMv(ctu);
@@ -77,6 +78,7 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     fprintf(fp, "translation_patch        :%d\n", translation_patch_num);
     fprintf(fp, "Spatial_patch         :%d\n", spatial_counter);
     fprintf(fp, "merge_patch           :%d\n", merge_counter);
+    fprintf(fp, "intra_patch           :%d\n", intra_counter);
 
     fclose(fp);
 }
@@ -141,8 +143,10 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
             sign_flag_sum += ctu->flags_code_sum.getSignFlagCodeLength();
             mvd_code_sum += ctu->flags_code_sum.getMvdCodeLength();
             spatial_counter++;
-        }else{
+        }else if(ctu->method == MV_CODE_METHOD::MERGE){
             merge_counter++;
+        }else if(ctu->method == MV_CODE_METHOD::INTRA){
+            intra_counter++;
         }
 
         if(ctu->translation_flag) translation_patch_num++;

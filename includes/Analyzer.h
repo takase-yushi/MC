@@ -55,6 +55,7 @@ private:
     int merge_counter;
     int spatial_counter;
 
+    int intra_counter;
 };
 
 
