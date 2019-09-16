@@ -271,6 +271,11 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
 
     // イントラ用のMatを作る
     intra_tmp_image = cv::Mat::zeros(target_image.rows, target_image.cols, CV_8UC3);
+
+    intra_flag.resize(target_image.cols);
+    for(int i = 0 ; i < intra_flag.size() ; i++){
+        intra_tmp_image.resize(target_image.rows);
+    }
 }
 
 /**
