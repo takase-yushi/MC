@@ -2746,3 +2746,101 @@ TriangleDivision::~TriangleDivision() {
     free(ref_hevc);
 
 }
+
+/**
+ * @fn void TriangleDivision::setIntraImage(std::vector<cv::Point2f> pixels)
+ * @attention 呼び出す前にかならずisIntraAvailableでチェックをすること
+ * @param[in] pixels 画素値
+ */
+void TriangleDivision::setIntraImage(std::vector<cv::Point2f> pixels, Point3Vec triangle) {
+
+    // まずは参照画素を列挙する
+    int sx = std::min({(int)triangle.p1.x, (int)triangle.p2.x, (int)triangle.p3.x});
+    int sy = std::min({(int)triangle.p1.y, (int)triangle.p2.y, (int)triangle.p3.y});
+    int lx = std::max({(int)triangle.p1.x, (int)triangle.p2.x, (int)triangle.p3.x});
+    int ly = std::max({(int)triangle.p1.y, (int)triangle.p2.y, (int)triangle.p3.y});
+
+    std::vector<int> y_axis_luminance(ly - sy + 1);
+    std::vector<int> x_axis_luminance(lx - sx + 1);
+
+    for(int y = sy ; y <= ly + 1; y++) {
+        for (int x = sx; 0 <= x; x--) {
+            if (intra_flag[x][y]) {
+                y_axis_luminance[y - sy] = R(intra_tmp_image, x, y);
+            }
+        }
+    }
+
+    for(int x = sx ; x <= lx + 1 ; x++) {
+        for(int y = sy ; 0 <= y ; y--){
+            if (intra_flag[sx][y]) {
+                x_axis_luminance[x - sx] = R(intra_tmp_image, x, y);
+            }
+        }
+    }
+
+    // 線形補間して補間画素を求める
+    int pixel_nums = (int)pixels.size();
+    for(const auto pixel : pixels) {
+        int x = pixel.x;
+        int y = pixel.y;
+
+        //   *************
+        //   *   |β      *
+        //   *---+       *
+        //   * α         *
+        //   *           *
+        //   *           *
+        //   *************
+        //
+        double alpha = (double)x / (lx - sx);
+        double beta  = (double)y / (ly - sy);
+
+        //                          upper left                 upper left                 right                           bottom
+        R(intra_tmp_image, x, y) = (  (double)(lx - x) * x_axis_luminance[x - sx]
+                                    + (double)(ly - y) * y_axis_luminance[y - sy]
+                                    + (double)(x + 1 ) * x_axis_luminance[lx - sx + 1]
+                                    + (double)(ly + 1) * y_axis_luminance[ly - sy + 1]
+                                    ) / (pixel_nums);
+    }
+
+}
+
+/**
+ * @fn イントラ符号化できるかチェックする
+ * @param _x イントラ符号化するx座標
+ * @param _y イントラ符号化するy座標
+ * @return 符号化できるならtrue, そうでないならfalse
+ */
+bool TriangleDivision::isIntraAvailable(Point3Vec triangle){
+    int sx = std::min({(int)triangle.p1.x, (int)triangle.p2.x, (int)triangle.p3.x});
+    int sy = std::min({(int)triangle.p1.y, (int)triangle.p2.y, (int)triangle.p3.y});
+    int lx = std::max({(int)triangle.p1.x, (int)triangle.p2.x, (int)triangle.p3.x});
+    int ly = std::max({(int)triangle.p1.y, (int)triangle.p2.y, (int)triangle.p3.y});
+
+    if(sx == 0 || sy == 0 || lx == target_image.cols - 1 || ly == target_image.rows - 1) return false;
+
+    for(int y = sy ; y <= ly ; y++) {
+        bool check_flag_x = false;
+        for (int x = sx; 0 <= x; x--) {
+            if (intra_flag[x][y]) {
+                check_flag_x = true;
+                break;
+            }
+        }
+        if(!check_flag_x) return false;
+    }
+
+    for(int x = sx ; x <= lx ; x++) {
+        for(int y = sy ; 0 <= y ; y--){
+            bool check_flag_y = false;
+            if (intra_flag[sx][y]) {
+                check_flag_y = true;
+                break;
+            }
+        }
+        if(!check_flag_y) return false;
+    }
+
+    return true;
+}

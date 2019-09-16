@@ -187,6 +187,9 @@ private:
     int getCtuCodeLength(CodingTreeUnit *ctu);
     void drawMvImage(cv::Mat &out, CodingTreeUnit *ctu);
     void getPredictedDiagonalImageFromCtu(CodingTreeUnit* ctu, std::vector<std::vector<int>> &area_flag, const cv::Mat &out);
+    void setIntraImage(std::vector<cv::Point2f> pixels, Point3Vec triangle);
+    bool isIntraAvailable(Point3Vec triangle);
+
 };
 
 #endif //ENCODER_TRIANGLEDIVISION_H
