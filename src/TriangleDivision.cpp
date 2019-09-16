@@ -1113,9 +1113,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     if(steps <= 0){
         isCodedTriangle[triangle_index] = true;
 
-        if(ctu->method != MV_CODE_METHOD::INTRA) {
+        if(ctu->method != MV_CODE_METHOD::INTRA && ctu->method != MV_CODE_METHOD::INTRA) {
             std::vector<cv::Point2f> mvs;
-            if(ctu->parallel_flag){
+            if(ctu->translation_flag){
                 mvs.emplace_back(ctu->mv1);
                 mvs.emplace_back(ctu->mv1);
                 mvs.emplace_back(ctu->mv1);
@@ -1532,7 +1532,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         addNeighborVertex(triangles[triangle_index].first.p1_idx,triangles[triangle_index].first.p2_idx,triangles[triangle_index].first.p3_idx);
         addCoveredTriangle(triangles[triangle_index].first.p1_idx,triangles[triangle_index].first.p2_idx,triangles[triangle_index].first.p3_idx, triangle_index);
 
-            if(method_flag != MV_CODE_METHOD::INTRA) {
+        if(method_flag != MV_CODE_METHOD::INTRA) {
             std::vector<cv::Point2f> mvs;
             if(ctu->parallel_flag){
                 mvs.emplace_back(ctu->mv1);
@@ -1543,11 +1543,10 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 mvs.emplace_back(ctu->mv2);
                 mvs.emplace_back(ctu->mv3);
             }
-            std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, diagonal_line_area_flag, triangle_index, ctu, block_size_x, block_size_y);
-            for(const auto& p : pixels) intra_flag[p.x][p.y] = true;
             getPredictedImage(expansion_ref_uchar, target_image, intra_tmp_image, triangle, mvs, 16, diagonal_line_area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
-
         }
+        std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, diagonal_line_area_flag, triangle_index, ctu, block_size_x, block_size_y);
+        for(const auto& p : pixels) intra_flag[p.x][p.y] = true;
 
 //        std::cout << (ctu->method == MERGE ? "MERGE" : "SPATIAL") << " " << (ctu->parallel_flag ? "PARALLEL" : "WARPING") << " "  << ctu->mv1 << " " << ctu->mv2 << " " << ctu->mv3 << std::endl;
         return false;
@@ -1557,10 +1556,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
 void TriangleDivision::storeIntraImage(){
 
-    std::vector<Point3Vec> _triangles = getTriangleCoordinateList();
-    for(const auto triangle : _triangles) {
-        drawTriangle(intra_tmp_image, triangle.p1, triangle.p2, triangle.p3, WHITE);
-    }
     cv::imwrite(getProjectDirectory(OS) + "/intra.png", intra_tmp_image);
 
 }
@@ -2371,7 +2366,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
     puts("Result ===========================================");
     std::cout << "code_length:" << code_length << std::endl;
     std::cout << "cost       :" << cost << std::endl;
-    if(method != MERGE){
+    if(method != MERGE && method != INTRA){
         if(translation_flag) {
             std::cout << "mvd        :" << mvds[0] << std::endl;
         }else{
@@ -2384,7 +2379,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 #endif
 
     ctu->flags_code_sum = flag_code_sum;
-    if(method != MERGE) {
+    if(method != MERGE && method != INTRA) {
         (ctu->mvds_x).clear();
         (ctu->mvds_y).clear();
         (ctu->original_mvds_x).clear();
