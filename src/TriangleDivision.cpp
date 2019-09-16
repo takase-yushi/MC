@@ -2796,12 +2796,13 @@ void TriangleDivision::setIntraImage(std::vector<cv::Point2f> pixels, Point3Vec 
         double alpha = (double)x / (lx - sx);
         double beta  = (double)y / (ly - sy);
 
-        //                          upper left                 upper left                 right                           bottom
-        R(intra_tmp_image, x, y) = (  (double)(lx - x) * x_axis_luminance[x - sx]
-                                    + (double)(ly - y) * y_axis_luminance[y - sy]
-                                    + (double)(x + 1 ) * x_axis_luminance[lx - sx + 1]
-                                    + (double)(ly + 1) * y_axis_luminance[ly - sy + 1]
-                                    ) / (pixel_nums);
+        // ref:
+        R(intra_tmp_image, x, y) = (  (double)(lx - sx - 1 - x) * x_axis_luminance[x - sx]
+                                    + (double)(x + 1          ) * x_axis_luminance[lx - sx]
+                                    + (double)(ly - sy - 1 - y) * y_axis_luminance[y - sy]
+                                    + (double)(y + 1          ) * y_axis_luminance[ly - sy]
+                                    + (lx - sx)
+                                    ) / (2 * (lx - sx));
     }
 
 }
@@ -2832,8 +2833,8 @@ bool TriangleDivision::isIntraAvailable(Point3Vec triangle){
     }
 
     for(int x = sx ; x <= lx ; x++) {
+        bool check_flag_y = false;
         for(int y = sy ; 0 <= y ; y--){
-            bool check_flag_y = false;
             if (intra_flag[sx][y]) {
                 check_flag_y = true;
                 break;
