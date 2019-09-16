@@ -1127,6 +1127,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             getPredictedImage(expansion_ref_uchar, target_image, intra_tmp_image, triangle, mvs, 16, diagonal_line_area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
         }
 
+        std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, diagonal_line_area_flag, triangle_index, ctu, block_size_x, block_size_y);
+        for(const auto& p : pixels) intra_flag[p.x][p.y] = true;
+
         return false;
     }
 
@@ -1540,7 +1543,10 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 mvs.emplace_back(ctu->mv2);
                 mvs.emplace_back(ctu->mv3);
             }
+            std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, diagonal_line_area_flag, triangle_index, ctu, block_size_x, block_size_y);
+            for(const auto& p : pixels) intra_flag[p.x][p.y] = true;
             getPredictedImage(expansion_ref_uchar, target_image, intra_tmp_image, triangle, mvs, 16, diagonal_line_area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
+
         }
 
 //        std::cout << (ctu->method == MERGE ? "MERGE" : "SPATIAL") << " " << (ctu->parallel_flag ? "PARALLEL" : "WARPING") << " "  << ctu->mv1 << " " << ctu->mv2 << " " << ctu->mv3 << std::endl;
