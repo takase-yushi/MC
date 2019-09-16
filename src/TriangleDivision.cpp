@@ -274,7 +274,7 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
 
     intra_flag.resize(target_image.cols);
     for(int i = 0 ; i < intra_flag.size() ; i++){
-        intra_tmp_image.resize(target_image.rows);
+        intra_flag[i].resize(target_image.rows);
     }
 }
 
