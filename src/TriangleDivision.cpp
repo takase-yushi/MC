@@ -2333,6 +2333,20 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
     }
 #endif
 
+    Triangle t = triangles[triangle_idx].first;
+
+    // イントラ
+    if(isIntraAvailable(Point3Vec(corners[t.p1_idx], corners[t.p2_idx], corners[t.p3_idx])) && INTRA_MODE){
+        double sad = 0.0;
+        setIntraImage(pixels_in_triangle, Point3Vec(corners[t.p1_idx], corners[t.p2_idx], corners[t.p3_idx]));
+        for(const auto &p : pixels_in_triangle){
+            sad += std::abs(R(intra_tmp_image, (int)p.x, (int)p.y) - R(target_image, (int)p.x, (int)p.y));
+        }
+
+        std::vector<cv::Point2f> mvs;
+        results.emplace_back(sad, 1, mvs, 0, MV_CODE_METHOD::INTRA, FlagsCodeSum(0, 0, 0, 0), Flags());
+    }
+
     // RDしたスコアが小さい順にソート
     std::sort(results.begin(), results.end(), [](const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags >& a, const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags>& b){
         return std::get<0>(a) < std::get<0>(b);

@@ -94,6 +94,7 @@ enum {
 #define MV_LIST_MAX_NUM 5
 #define MERGE_MODE true
 #define STORE_IMG_LOG false
+#define INTRA_MODE true
 
 const std::string OS = "Ubuntu";
 
