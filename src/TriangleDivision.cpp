@@ -2812,12 +2812,19 @@ void TriangleDivision::setIntraImage(std::vector<cv::Point2f> pixels, Point3Vec 
         double beta  = (double)y / (ly - sy);
 
         // ref:
-        R(intra_tmp_image, x, y) = (  (double)(lx - sx - 1 - x) * x_axis_luminance[x - sx]
-                                    + (double)(x + 1          ) * x_axis_luminance[lx - sx]
-                                    + (double)(ly - sy - 1 - y) * y_axis_luminance[y - sy]
-                                    + (double)(y + 1          ) * y_axis_luminance[ly - sy]
-                                    + (lx - sx)
-                                    ) / (2 * (lx - sx));
+        int N = lx - sx + 1;
+        int luminance = (int)((double)(lx - sx - x + sx) * x_axis_luminance[x - sx]
+                            + (double)(x + 1 - sx      ) * x_axis_luminance[N     ]
+                            + (double)(ly - sy - y + sy) * y_axis_luminance[y - sy]
+                            + (double)(y + 1 - sy      ) * y_axis_luminance[N     ]
+                            + N
+                        ) / (2 * N);
+
+        luminance = (luminance > 255 ? 255 : (luminance < 0 ? 0 : luminance));
+
+        R(intra_tmp_image, x, y) = luminance;
+        G(intra_tmp_image, x, y) = luminance;
+        B(intra_tmp_image, x, y) = luminance;
     }
 
 }
