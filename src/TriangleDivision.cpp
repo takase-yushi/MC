@@ -2497,7 +2497,20 @@ void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &ou
             mvs.emplace_back(ctu->mv3);
         }
 
-        getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, 16, area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
+        if(ctu->method == MV_CODE_METHOD::INTRA){
+            std::cout << "INTRA!!!!!!!!!!!!!" << std::endl;
+            Triangle t = triangles[ctu->triangle_index].first;
+            auto pixels = getPixelsInTriangle(Point3Vec(corners[t.p1_idx], corners[t.p2_idx], corners[t.p3_idx]), area_flag, ctu->triangle_index, ctu, block_size_x, block_size_y);
+            for(const auto& pixel : pixels) {
+                R(out, (int)pixel.x, (int)pixel.y) = R(intra_tmp_image, (int)pixel.x, (int)pixel.y);
+                G(out, (int)pixel.x, (int)pixel.y) = G(intra_tmp_image, (int)pixel.x, (int)pixel.y);
+                B(out, (int)pixel.x, (int)pixel.y) = B(intra_tmp_image, (int)pixel.x, (int)pixel.y);
+            }
+
+        }else {
+            getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, 16, area_flag, ctu->triangle_index,
+                              ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
+        }
         return;
     }
 
