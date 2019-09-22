@@ -2340,7 +2340,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
         }
 
         std::vector<cv::Point2f> mvs;
-        results.emplace_back(sad, 1, mvs, 0, MV_CODE_METHOD::INTRA, FlagsCodeSum(0, 0, 0, 0), Flags());
+        results.emplace_back(sad, 0, mvs, 0, MV_CODE_METHOD::INTRA, FlagsCodeSum(0, 0, 0, 0), Flags());
     }
 
     // RDしたスコアが小さい順にソート
