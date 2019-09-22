@@ -90,7 +90,9 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
  */
 void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr){
-        code_sum += (1 + ctu->code_length);
+        if(INTRA_MODE) code_sum += (1 + ctu->code_length + 1);
+        else code_sum += (1 + ctu->code_length);
+
         if(ctu->method != MV_CODE_METHOD::MERGE && ctu->method != MV_CODE_METHOD::INTRA){
             if(ctu->translation_flag){
                 int x_ = (int)abs(((ctu->mv1).x * 4));

@@ -2605,7 +2605,8 @@ int TriangleDivision::getCtuCodeLength(std::vector<CodingTreeUnit*> ctus) {
 int TriangleDivision::getCtuCodeLength(CodingTreeUnit *ctu){
 
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
-        return 1 + ctu->code_length + 1; // イントラのフラグで1ビット更に増えた
+        if(INTRA_MODE) return 1 + ctu->code_length + 1; // イントラのフラグで1ビット更に増えた
+        else return 1 + ctu->code_length;
     }
 
     // ここで足している1はsplit_cu_flag分です
