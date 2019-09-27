@@ -45,7 +45,7 @@ int division_steps;
 double injected_lambda;
 bool lambda_inject_flag;
 
-std::string out_file_suffix = "_translation_only";
+std::string out_file_suffix = "_parallel_only";
 
 int main(int argc, char *argv[]){
     // Write test codes below
@@ -280,6 +280,7 @@ void run(std::string config_name) {
         Analyzer analayzer("_translation_only_" + std::to_string(qp) + "_" + getCurrentTimestamp());
         analayzer.storeDistributionOfMv(foo, log_directory);
         analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
+        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image));
 
 #else
         Analyzer analayzer(log_file_suffix);
