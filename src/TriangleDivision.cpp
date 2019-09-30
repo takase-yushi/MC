@@ -2348,7 +2348,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 
     int width = std::max({corners[t.p1_idx].x, corners[t.p2_idx].x, corners[t.p3_idx].x}) - std::min({corners[t.p1_idx].x, corners[t.p2_idx].x, corners[t.p3_idx].x});
     // イントラ
-    if(INTRA_MODE && width <= 8){
+    if(INTRA_MODE){
         double sad = 0.0;
         setIntraImage(pixels_in_triangle, Point3Vec(corners[t.p1_idx], corners[t.p2_idx], corners[t.p3_idx]));
         for(const auto &p : pixels_in_triangle){
