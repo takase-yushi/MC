@@ -2855,7 +2855,7 @@ void TriangleDivision::setIntraImage(std::vector<cv::Point2f> pixels, Point3Vec 
         if(lx == target_image.cols - 1){
             for (int x = sx; x <= lx; x++) {
                 for (int y = ly; 0 <= y; y--) {
-                    if (intra_flag[sx][y]) {
+                    if (intra_flag[x][y]) {
                         x_axis_luminance[x - sx] = R(intra_tmp_image, x, y);
                     }
                 }
@@ -2864,7 +2864,7 @@ void TriangleDivision::setIntraImage(std::vector<cv::Point2f> pixels, Point3Vec 
         }else {
             for (int x = sx; x <= lx + 1; x++) {
                 for (int y = ly; 0 <= y; y--) {
-                    if (intra_flag[sx][y]) {
+                    if (intra_flag[x][y]) {
                         x_axis_luminance[x - sx] = R(intra_tmp_image, x, y);
                     }
                 }
