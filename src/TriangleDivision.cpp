@@ -2822,7 +2822,7 @@ void TriangleDivision::setIntraImage(std::vector<cv::Point2f> pixels, Point3Vec 
     std::vector<int> y_axis_luminance(ly - sy + 1);
     std::vector<int> x_axis_luminance(lx - sx + 1);
 
-    if(0 <= sx){
+    if(0 < sx){
         if(ly == target_image.cols - 1) {
             // 左端は問題ないが、右端が画像の外枠上にある場合
             for (int y = sy; y <= ly; y++) {
