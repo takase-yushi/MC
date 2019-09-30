@@ -2822,63 +2822,62 @@ void TriangleDivision::setIntraImage(std::vector<cv::Point2f> pixels, Point3Vec 
     std::vector<int> y_axis_luminance(ly - sy + 1);
     std::vector<int> x_axis_luminance(lx - sx + 1);
 
-    if(0 < sx){
-        if(ly == target_image.cols - 1) {
-            // 下端が外周上に乗っている場合は，一番最後だけ127にする
-            for (int y = sy; y <= ly; y++) {
-                for (int x = lx; 0 <= x; x--) {
-                    if (intra_flag[x][y]) {
-                        y_axis_luminance[y - sy] = R(intra_tmp_image, x, y);
-                        break;
-                    }
+
+    if(ly == target_image.cols - 1) {
+        // 下端が外周上に乗っている場合は，一番最後だけ127にする
+        for (int y = sy; y <= ly; y++) {
+            bool flag = false;
+            for (int x = lx; 0 <= x; x--) {
+                if (intra_flag[x][y]) {
+                    y_axis_luminance[y - sy] = R(intra_tmp_image, x, y);
+                    flag = true;
+                    break;
                 }
             }
-            y_axis_luminance[(ly + 1)- sy] = 127;
-        }else{
-            for (int y = sy; y <= ly + 1; y++) {
-                for (int x = lx; 0 <= x; x--) {
-                    if (intra_flag[x][y]) {
-                        y_axis_luminance[y - sy] = R(intra_tmp_image, x, y);
-                        break;
-                    }
-                }
-            }
+            if(!flag) y_axis_luminance[y - sy] = 127;
         }
+        y_axis_luminance[(ly + 1)- sy] = 127;
     }else{
-        // 左端にあるパッチは、yの輝度値を全部127で埋める
-        for(int y = sy ; y <= ly + 1; y++) {
-            y_axis_luminance[y - sy] = 127;
+        for (int y = sy; y <= ly + 1; y++) {
+            bool flag = false;
+            for (int x = lx; 0 <= x; x--) {
+                if (intra_flag[x][y]) {
+                    y_axis_luminance[y - sy] = R(intra_tmp_image, x, y);
+                    flag = true;
+                    break;
+                }
+            }
+            if(!flag) y_axis_luminance[y - sy] = 127;
         }
     }
 
-
-
-    if(0 < sy) {
-        if(lx == target_image.cols - 1){
-            for (int x = sx; x <= lx; x++) {
-                for (int y = ly; 0 <= y; y--) {
-                    if (intra_flag[x][y]) {
-                        x_axis_luminance[x - sx] = R(intra_tmp_image, x, y);
-                        break;
-                    }
+    if(lx == target_image.cols - 1){
+        for (int x = sx; x <= lx; x++) {
+            bool flag = false;
+            for (int y = ly; 0 <= y; y--) {
+                if (intra_flag[x][y]) {
+                    x_axis_luminance[x - sx] = R(intra_tmp_image, x, y);
+                    flag = true;
+                    break;
                 }
             }
-            x_axis_luminance[lx + 1 - sx] = 127;
-        }else {
-            for (int x = sx; x <= lx + 1; x++) {
-                for (int y = ly; 0 <= y; y--) {
-                    if (intra_flag[x][y]) {
-                        x_axis_luminance[x - sx] = R(intra_tmp_image, x, y);
-                        break;
-                    }
-                }
-            }
+            if (!flag) x_axis_luminance[x - sx] = 127;
         }
-    }else{
+        x_axis_luminance[lx + 1 - sx] = 127;
+    }else {
         for (int x = sx; x <= lx + 1; x++) {
-            x_axis_luminance[x - sx] = 127;
+            bool flag = false;
+            for (int y = ly; 0 <= y; y--) {
+                if (intra_flag[x][y]) {
+                    x_axis_luminance[x - sx] = R(intra_tmp_image, x, y);
+                    flag = true;
+                    break;
+                }
+            }
+            if (!flag) x_axis_luminance[x - sx] = 127;
         }
     }
+
 
     // 線形補間して補間画素を求める
     int pixel_nums = (int)pixels.size();
