@@ -2826,7 +2826,7 @@ void TriangleDivision::setIntraImage(std::vector<cv::Point2f> pixels, Point3Vec 
         if(ly == target_image.cols - 1) {
             // 下端が外周上に乗っている場合は，一番最後だけ127にする
             for (int y = sy; y <= ly; y++) {
-                for (int x = sx; 0 <= x; x--) {
+                for (int x = lx; 0 <= x; x--) {
                     if (intra_flag[x][y]) {
                         y_axis_luminance[y - sy] = R(intra_tmp_image, x, y);
                     }
@@ -2835,7 +2835,7 @@ void TriangleDivision::setIntraImage(std::vector<cv::Point2f> pixels, Point3Vec 
             y_axis_luminance[(ly + 1)- sy] = 127;
         }else{
             for (int y = sy; y <= ly + 1; y++) {
-                for (int x = sx; 0 <= x; x--) {
+                for (int x = lx; 0 <= x; x--) {
                     if (intra_flag[x][y]) {
                         y_axis_luminance[y - sy] = R(intra_tmp_image, x, y);
                     }
@@ -2854,7 +2854,7 @@ void TriangleDivision::setIntraImage(std::vector<cv::Point2f> pixels, Point3Vec 
     if(0 < sy) {
         if(lx == target_image.cols - 1){
             for (int x = sx; x <= lx; x++) {
-                for (int y = sy; 0 <= y; y--) {
+                for (int y = ly; 0 <= y; y--) {
                     if (intra_flag[sx][y]) {
                         x_axis_luminance[x - sx] = R(intra_tmp_image, x, y);
                     }
@@ -2863,7 +2863,7 @@ void TriangleDivision::setIntraImage(std::vector<cv::Point2f> pixels, Point3Vec 
             x_axis_luminance[lx + 1 - sx] = 127;
         }else {
             for (int x = sx; x <= lx + 1; x++) {
-                for (int y = sy; 0 <= y; y--) {
+                for (int y = ly; 0 <= y; y--) {
                     if (intra_flag[sx][y]) {
                         x_axis_luminance[x - sx] = R(intra_tmp_image, x, y);
                     }
