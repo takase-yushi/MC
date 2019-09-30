@@ -2824,7 +2824,7 @@ void TriangleDivision::setIntraImage(std::vector<cv::Point2f> pixels, Point3Vec 
 
     if(0 < sx){
         if(ly == target_image.cols - 1) {
-            // 左端は問題ないが、右端が画像の外枠上にある場合
+            // 下端が外周上に乗っている場合は，一番最後だけ127にする
             for (int y = sy; y <= ly; y++) {
                 for (int x = sx; 0 <= x; x--) {
                     if (intra_flag[x][y]) {
