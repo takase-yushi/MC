@@ -2071,7 +2071,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             }
 
             // 参照箇所符号化
-            int reference_index = std::get<1>(vector);
+            int reference_index = i;
             int reference_index_code_length = getUnaryCodeLength(reference_index);
 
             // 各種フラグ分を(3*2)bit足してます
@@ -2177,7 +2177,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             }
 
             // 参照箇所符号化
-            int reference_index = std::get<1>(vector);
+            int reference_index = i;
             int reference_index_code_length = getUnaryCodeLength(reference_index);
 
             // 各種フラグ分を(3*2)bit足してます
