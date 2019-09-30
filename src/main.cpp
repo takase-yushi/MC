@@ -277,7 +277,7 @@ void run(std::string config_name) {
 #if STORE_DISTRIBUTION_LOG
 #if STORE_MVD_DISTRIBUTION_LOG
 #if GAUSS_NEWTON_TRANSLATION_ONLY
-        Analyzer analayzer("_translation_only_" + std::to_string(qp) + "_" + getCurrentTimestamp());
+        Analyzer analayzer(log_file_suffix);
         analayzer.storeDistributionOfMv(foo, log_directory);
         analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
         analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image));
