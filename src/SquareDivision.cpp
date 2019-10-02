@@ -206,15 +206,15 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
         for(int block_x = 1 ; block_x < (block_num_x * 2 - 1) ; block_x+=2){         //   ---------------     ---------------
             int p1_idx = block_x +     2 * block_num_x * block_y;                    //   |             |     |             |
             int p2_idx = block_x + 1 + 2 * block_num_x * block_y;                    //   |             |     |             |
-                                                                                     //   |             |     |             |
+            //   |             |     |             |
             int p3_idx = p1_idx + 2 * block_num_x;                                   //   |          p1 |     | p2          |
             int p4_idx = p3_idx + 1;                                                 //   ---------------     ---------------
-                                                                                     //
+            //
             same_corner_list[p2_idx].emplace(p1_idx);                                //   ---------------     ---------------
-                                                                                     //   |          p3 |     | p4          |
+            //   |          p3 |     | p4          |
             same_corner_list[p3_idx].emplace(p1_idx);                                //   |             |     |             |
             same_corner_list[p3_idx].emplace(p2_idx);                                //   |             |     |             |
-                                                                                     //   |             |     |             |
+            //   |             |     |             |
             same_corner_list[p4_idx].emplace(p1_idx);                                //   ---------------     ---------------
 
         }
@@ -925,11 +925,11 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     }                                                                    //
     else {                                                               //　-1 のとき、インデックスを上下左右に動かし、頂点を探索
         for(int i = 1 ; i < 7 ; i++) {
-           sp2.y -= 8;
-           if((sp2_idx = getCornerIndex(sp2)) != -1) {
-               same_corner_list[sub2_s1_p1_idx].emplace(sp2_idx);
-               break;
-           }
+            sp2.y -= 8;
+            if((sp2_idx = getCornerIndex(sp2)) != -1) {
+                same_corner_list[sub2_s1_p1_idx].emplace(sp2_idx);
+                break;
+            }
         }
     }
 
@@ -1024,8 +1024,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 square_gauss_results[square_indexes[j]].mv_translation = mv_translation_tmp;
                 split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_translation_tmp, square_size_tmp, true, error_translation_tmp, error_warping_tmp);
             }else{
-                 square_gauss_results[square_indexes[j]].translation_flag = false;
-                 square_gauss_results[square_indexes[j]].mv_warping = mv_warping_tmp;
+                square_gauss_results[square_indexes[j]].translation_flag = false;
+                square_gauss_results[square_indexes[j]].mv_warping = mv_warping_tmp;
                 split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_warping_tmp, square_size_tmp, false, error_translation_tmp, error_warping_tmp);
             }
 
@@ -1931,7 +1931,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
 
 #if MVD_DEBUG_LOG
     std::cout << corners[squares[square_idx].p1_idx] << " " << corners[squares[square_idx].p2_idx] << " " << corners[squares[square_idx].p3_idx] << " " << corners[squares[square_idx].p4_idx] << std::endl;
-    #endif
+#endif
 
     if(!isMvExists(vectors, collocated_mv)) {
         vectors.emplace_back(collocated_mv, SPATIAL);
@@ -2034,7 +2034,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
             }
 
             // 参照箇所符号化
-            int reference_index = std::get<1>(vector);
+            int reference_index = i; //std::get<1>(vector);
             int reference_index_code_length = getUnaryCodeLength(reference_index);
 
             // 各種フラグ分を(3*2)bit足してます
@@ -2140,7 +2140,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
             }
 
             // 参照箇所符号化
-            int reference_index = std::get<1>(vector);
+            int reference_index = i; //std::get<1>(vector);
             int reference_index_code_length = getUnaryCodeLength(reference_index);
 
             // 各種フラグ分を(3*2)bit足してます
@@ -2812,7 +2812,7 @@ SquareDivision::SquareDivision() {}
 SquareDivision::SplitResult::SplitResult(const Point4Vec &s1, const Point4Vec &s2, int type) : s1(s1), s2(s2), s_type(type) {}
 
 SquareDivision::GaussResult::GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvTranslation,
-                         double residual, int squareSize, bool translationFlag, double residualBm, double residualNewton) : mv_warping(
+                                         double residual, int squareSize, bool translationFlag, double residualBm, double residualNewton) : mv_warping(
         mvWarping), mv_translation(mvTranslation), residual(residual), square_size(squareSize), translation_flag(translationFlag), residual_bm(residualBm), residual_newton(residualNewton) {}
 
 SquareDivision::GaussResult::GaussResult() {}
