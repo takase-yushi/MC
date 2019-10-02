@@ -1431,7 +1431,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             }
         }
         int next_step = steps - 2;
-        if(ctu->node1->method == MV_CODE_METHOD::INTRA){
+        if(ctu->node1->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
             next_step = 0;
         }
         bool result = split(expand_images, ctu->node1, cmt_left_left, split_sub_triangles1.t1, t1_idx,split_sub_triangles1.t1_type, next_step, diagonal_line_area_flag);
@@ -1464,7 +1464,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             }
         }
         next_step = steps - 2;
-        if(ctu->node2->method == MV_CODE_METHOD::INTRA){
+        if(ctu->node2->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
             next_step = 0;
         }
         result = split(expand_images, ctu->node2, cmt_left_right, split_sub_triangles1.t2, t2_idx, split_sub_triangles1.t2_type, next_step, diagonal_line_area_flag);
@@ -1496,7 +1496,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             }
         }
         next_step = steps - 2;
-        if(ctu->node3->method == MV_CODE_METHOD::INTRA){
+        if(ctu->node3->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
             next_step = 0;
         }
         result = split(expand_images, ctu->node3, cmt_right_left, split_sub_triangles2.t1, t3_idx, split_sub_triangles2.t1_type, next_step, diagonal_line_area_flag);
@@ -1528,7 +1528,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             }
         }
         next_step = steps - 2;
-        if(ctu->node4->method == MV_CODE_METHOD::INTRA){
+        if(ctu->node4->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
             next_step = 0;
         }
         result = split(expand_images, ctu->node4, cmt_right_right, split_sub_triangles2.t2, t4_idx, split_sub_triangles2.t2_type, next_step, diagonal_line_area_flag);
