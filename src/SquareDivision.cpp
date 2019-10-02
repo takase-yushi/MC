@@ -1151,8 +1151,16 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     }
     isCodedSquare[square_indexes[3]] = true;
 
-    double alpha = 1;
+    double lambda = getLambdaPred(qp, (translation_flag ? 1.0 : 1.0));
+
+    double alpha = 1.0;
     std::cout << "before:" << cost_before_subdiv << " after:" << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4) << std::endl;
+    std::cout << "D before:" << cost_before_subdiv - lambda * code_length<< " D after:" << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4 - lambda * (code_length1 + code_length2 + code_length3 + code_length4)) << std::endl;
+    std::cout << "R before:" << code_length<< " R after:" << alpha * (code_length1 + code_length2 + code_length3 + code_length4) << std::endl;
+    std::cout << "D after1:" << alpha * (cost_after_subdiv1) << "R after1:" << alpha * (code_length1) << ",   ";
+    std::cout << "D after1:" << alpha * (cost_after_subdiv2) << "R after1:" << alpha * (code_length2) << ",   ";
+    std::cout << "D after1:" << alpha * (cost_after_subdiv3) << "R after1:" << alpha * (code_length3) << ",   ";
+    std::cout << "D after1:" << alpha * (cost_after_subdiv4) << "R after1:" << alpha * (code_length4) << std::endl;
     if(cost_before_subdiv >= alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4)) {
 
         for(int i = 0 ; i < 4 ; i++){
@@ -1424,6 +1432,8 @@ std::vector<int> SquareDivision::getSpatialSquareList(int s_idx){
             }
         }
     }
+
+//    std::cout << "SpatialSquareList_size : " << ret.size() << std::endl;
 
     ret.emplace_back(s_idx);
 
