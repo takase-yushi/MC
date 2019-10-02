@@ -1550,7 +1550,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
         if(method_flag != MV_CODE_METHOD::INTRA) {
             std::vector<cv::Point2f> mvs;
-            if(ctu->parallel_flag){
+            if(ctu->translation_flag){
                 mvs.emplace_back(ctu->mv1);
                 mvs.emplace_back(ctu->mv1);
                 mvs.emplace_back(ctu->mv1);
