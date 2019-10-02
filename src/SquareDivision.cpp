@@ -1626,7 +1626,7 @@ bool SquareDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE
 //        GaussResult spatial_square = square_gauss_results[spatial_square_index];
 //
 //        if(spatial_square.translation_flag){
-//            if(!isMvExists(vectors, spatial_square.mv_translation) && vectors.size() < MV_LIST_MAX_NUM) {
+//            if(!isMvExists(vectors, spatial_square.mv_translation)) {
 //                vectors.emplace_back(spatial_square.mv_translation, SPATIAL);
 //                warping_vectors.emplace_back();
 //            }
@@ -1787,7 +1787,7 @@ bool SquareDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE
 //
 //            if (spatial_square.translation_flag) {
 //                if(spatial_square.mv_translation.x + sx < -16 || spatial_square.mv_translation.y + sy < -16 || spatial_square.mv_translation.x + lx >= target_image.cols + 16 || spatial_square.mv_translation.y + ly >= target_image.rows + 16) continue;
-//                if (!isMvExists(merge_vectors, spatial_square.mv_translation) && merge_count < MV_LIST_MAX_NUM) {
+//                if (!isMvExists(merge_vectors, spatial_square.mv_translation)) {
 //                    merge_vectors.emplace_back(spatial_square.mv_translation, MERGE);
 //                    mvs.emplace_back(spatial_square.mv_translation);
 //                    mvs.emplace_back(spatial_square.mv_translation);
@@ -1875,7 +1875,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
         GaussResult spatial_square = square_gauss_results[spatial_square_index];
 
         if(spatial_square.translation_flag){
-            if(!isMvExists(vectors, spatial_square.mv_translation) && vectors.size() < MV_LIST_MAX_NUM) {
+            if(!isMvExists(vectors, spatial_square.mv_translation)) {
                 vectors.emplace_back(spatial_square.mv_translation, SPATIAL);
                 warping_vectors.emplace_back();
             }
@@ -1923,7 +1923,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
             }
 
             mv_average = roundVecQuarter(mv_average);
-            if(!isMvExists(vectors, mv_average) && vectors.size() < MV_LIST_MAX_NUM){
+            if(!isMvExists(vectors, mv_average)){
                 vectors.emplace_back(mv_average, SPATIAL);
             }
         }
@@ -2164,7 +2164,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     std::vector<cv::Point2f> pixels_in_square;
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> merge_vectors;
     if(pixels.empty()) {
-         pixels_in_square = getPixelsInSquare(coordinate);
+        pixels_in_square = getPixelsInSquare(coordinate);
     }else{
         pixels_in_square = pixels;
     }
@@ -2187,12 +2187,12 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
 
             if (spatial_square.translation_flag) {
                 if(spatial_square.mv_translation.x + sx < -16 || spatial_square.mv_translation.y + sy < -16 || spatial_square.mv_translation.x + lx >= target_image.cols + 16 || spatial_square.mv_translation.y + ly >= target_image.rows + 16) continue;
-                if (!isMvExists(merge_vectors, spatial_square.mv_translation) && merge_count < MV_LIST_MAX_NUM) {
+                if (!isMvExists(merge_vectors, spatial_square.mv_translation)) {
                     merge_vectors.emplace_back(spatial_square.mv_translation, MERGE);
                     mvs.emplace_back(spatial_square.mv_translation);
                     mvs.emplace_back(spatial_square.mv_translation);
                     mvs.emplace_back(spatial_square.mv_translation);
-                    double ret_residual = getSquareResidual(target_image, mvs, pixels_in_square, ref_hevc);
+                    double ret_residual = getSquareResidual(target_image, mvs, pixels_in_square, expansion_ref);
                     double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
                     results.emplace_back(rd, getUnaryCodeLength(merge_count) + 1, mvs, merge_count, MERGE,
                                          FlagsCodeSum(0, 0, 0, 0), Flags());
@@ -2200,12 +2200,12 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
                 }
             } else {
                 if(spatial_square.mv_warping[0].x + sx < -16 || spatial_square.mv_warping[0].y + sy < -16 || spatial_square.mv_warping[0].x + lx >= target_image.cols + 16 || spatial_square.mv_warping[0].y + ly >= target_image.rows + 16) continue;
-                if (!isMvExists(merge_vectors, spatial_square.mv_warping[0]) && merge_count < MV_LIST_MAX_NUM) {
+                if (!isMvExists(merge_vectors, spatial_square.mv_warping[0])) {
                     merge_vectors.emplace_back(spatial_square.mv_warping[0], MERGE);
                     mvs.emplace_back(spatial_square.mv_warping[0]);
                     mvs.emplace_back(spatial_square.mv_warping[0]);
                     mvs.emplace_back(spatial_square.mv_warping[0]);
-                    double ret_residual = getSquareResidual(target_image, mvs, pixels_in_square, ref_hevc);
+                    double ret_residual = getSquareResidual(target_image, mvs, pixels_in_square, expansion_ref);
                     double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
                     results.emplace_back(rd, getUnaryCodeLength(merge_count) + 1, mvs, merge_count, MERGE,
                                          FlagsCodeSum(0, 0, 0, 0), Flags());
@@ -2230,8 +2230,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
                 if(mvs[1].x + sx < -16 || mvs[1].y + sy < -16 || mvs[1].x + lx >= target_image.cols + 16  || mvs[1].y + ly>=target_image.rows + 16 ) continue;
                 if(mvs[2].x + sx < -16 || mvs[2].y + sy < -16 || mvs[2].x + lx >= target_image.cols + 16  || mvs[2].y + ly>=target_image.rows + 16 ) continue;
 
-                if (!isMvExists(warping_vector_history, mvs) && warping_vector_history.size() < MV_LIST_MAX_NUM) {
-                    double ret_residual = getSquareResidual(target_image, mvs, pixels_in_square, ref_hevc);
+                if (!isMvExists(warping_vector_history, mvs)) {
+                    double ret_residual = getSquareResidual(target_image, mvs, pixels_in_square, expansion_ref);
                     double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
                     results.emplace_back(rd, getUnaryCodeLength(merge_count) + 1, mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
@@ -2321,7 +2321,7 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
         GaussResult spatial_square = square_gauss_results[spatial_square_index];
 
         if(spatial_square.translation_flag){
-            if(!isMvExists(vectors, spatial_square.mv_translation) && vectors.size() < MV_LIST_MAX_NUM) {
+            if(!isMvExists(vectors, spatial_square.mv_translation)) {
                 vectors.emplace_back(spatial_square.mv_translation, SPATIAL);
                 warping_vectors.emplace_back();
             }
@@ -2355,7 +2355,7 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
             }
 
             mv_average = roundVecQuarter(mv_average);
-            if(!isMvExists(vectors, mv_average) && vectors.size() < MV_LIST_MAX_NUM){
+            if(!isMvExists(vectors, mv_average)){
                 vectors.emplace_back(mv_average, SPATIAL);
             }
         }
@@ -2857,6 +2857,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
                 std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
+//                rd = getRDCost({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
                 if(rd_min > rd){
                     e_min = e;
                     rd_min = rd;
@@ -2889,6 +2890,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
                 std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
+//                rd = getRDCost({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
                 if(rd_min > rd){
                     e_min = e;
                     rd_min = rd;
@@ -2919,6 +2921,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
                 std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
+//                rd = getRDCost({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
                 if(rd_min > rd){
                     e_min = e;
                     rd_min = rd;

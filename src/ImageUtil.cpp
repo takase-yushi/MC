@@ -115,9 +115,28 @@ double getTriangleResidual(const cv::Mat ref_image, const cv::Mat &target_image,
  * @param vec 動きベクトル
  * @return 残差
  */
-double getSquareResidual(const cv::Mat &target_image, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_square_pixels, unsigned char **ref_hevc){
+double getSquareResidual(const cv::Mat &target_image, cv::Point2f mv, const std::vector<cv::Point2f> &in_square_pixels, unsigned char **ref_hevc){
     cv::Point2f X_later;
 
+    double squared_error = 0.0;
+
+    for(const auto& pixel : in_square_pixels) {
+        X_later = pixel + mv;
+
+        int y;
+
+        y = img_ip(ref_hevc  , cv::Rect(-64, -64, 4 * (target_image.cols + 2 * 16), 4 * (target_image.rows + 2 * 16)), 4 * X_later.x, 4 * X_later.y, 1);
+
+        squared_error += fabs(y - (M(target_image, (int)pixel.x, (int)pixel.y)));
+    }
+
+    return squared_error;
+}
+
+double getSquareResidual(const cv::Mat &target_image, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_square_pixels, cv::Mat expansion_ref_image){
+    cv::Point2f X_later;
+
+    int spread_quarter = 64;
     double squared_error = 0.0;
 
     for(const auto& pixel : in_square_pixels) {
@@ -125,7 +144,8 @@ double getSquareResidual(const cv::Mat &target_image, std::vector<cv::Point2f> m
 
         int y;
 
-        y = img_ip(ref_hevc  , cv::Rect(-64, -64, 4 * (target_image.cols + 2 * 16), 4 * (target_image.rows + 2 * 16)), 4 * X_later.x, 4 * X_later.y, 1);
+//        y = img_ip(ref_hevc  , cv::Rect(-64, -64, 4 * (target_image.cols + 2 * 16), 4 * (target_image.rows + 2 * 16)), 4 * X_later.x, 4 * X_later.y, 1);
+    y = R(expansion_ref_image, (int)(4 * X_later.x + spread_quarter), (int)(4 * X_later.y + spread_quarter));
 
         squared_error += fabs(y - (M(target_image, (int)pixel.x, (int)pixel.y)));
     }
@@ -768,7 +788,7 @@ unsigned char** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
     std::cout << "scaled_expantion_size:" << k * scaled_expansion_size << std::endl;
     return ret;
 }
-
+                                                 // 4      16
 cv::Mat getExpansionMatHEVCImage(cv::Mat image, int k, int expansion_size){
     unsigned char **expansion_image = getExpansionHEVCImage(image, k, expansion_size);
 
