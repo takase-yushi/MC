@@ -1435,7 +1435,7 @@ std::vector<int> SquareDivision::getSpatialSquareList(int s_idx){
 
 //    std::cout << "SpatialSquareList_size : " << ret.size() << std::endl;
 
-    ret.emplace_back(s_idx);
+//    ret.emplace_back(s_idx);
 
     return ret;
 }
