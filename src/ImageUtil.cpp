@@ -167,7 +167,7 @@ double getSquareResidual_Pred(const cv::Mat &target_image, std::vector<cv::Point
 
         y = R(expansion_ref_image, (int)(4 * X_later.x + spread_quarter), (int)(4 * X_later.y + spread_quarter));
 
-        squared_error += fabs(y - (M(target_image, (int)pixel.x, (int)pixel.y)));
+        squared_error += fabs(y - (R(target_image, (int)pixel.x, (int)pixel.y)));
     }
 
     return squared_error;
