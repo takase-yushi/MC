@@ -1032,7 +1032,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         }else if(PRED_MODE == BM){
             square_gauss_results[square_indexes[j]].translation_flag = true;
 #if RD_BLOCK_MATCHING
-            std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_squares[j], target_image, expansion_ref, square_indexes[j], ctu);
+            std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_squares[j], target_image, expansion_ref, square_indexes[j], ctus[j]);
 #else
             std::tie(tmp_bm_mv, tmp_bm_errors) = ::blockMatching(subdiv_target_squares[j], target_image, expansion_ref);
 #endif
