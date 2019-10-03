@@ -1301,6 +1301,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         eraseSquare(squares.size() - 1);
         eraseSquare(squares.size() - 1);
         eraseSquare(squares.size() - 1);
+        covered_square.erase(covered_square.end() - 12, covered_square.end());
         addNeighborVertex(squares[square_index].p1_idx,squares[square_index].p2_idx,squares[square_index].p3_idx,squares[square_index].p4_idx);
         addCoveredSquare(squares[square_index].p1_idx,squares[square_index].p2_idx,squares[square_index].p3_idx,squares[square_index].p4_idx, square_index);
 
