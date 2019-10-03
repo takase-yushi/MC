@@ -980,7 +980,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 //    #pragma omp parallel for
 #endif
     for (int j = 0; j < (int) subdiv_ref_squares.size(); j++) {
-        square_gauss_results.emplace_back();
+//        square_gauss_results.emplace_back();
         double error_warping_tmp, error_translation_tmp;
         int square_size_tmp;
         cv::Point2f mv_translation_tmp;
