@@ -1151,16 +1151,16 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     }
     isCodedSquare[square_indexes[3]] = true;
 
-    double lambda = getLambdaPred(qp, (translation_flag ? 1.0 : 1.0));
+    double lambda = getLambdaMode(qp);
 
     double alpha = 1.0;
     std::cout << "before:" << cost_before_subdiv << " after:" << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4) << std::endl;
-    std::cout << "D before:" << cost_before_subdiv - lambda * code_length<< " D after:" << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4 - lambda * (code_length1 + code_length2 + code_length3 + code_length4)) << std::endl;
-    std::cout << "R before:" << code_length<< " R after:" << alpha * (code_length1 + code_length2 + code_length3 + code_length4) << std::endl;
-    std::cout << "D after1:" << alpha * (cost_after_subdiv1) << "R after1:" << alpha * (code_length1) << ",   ";
-    std::cout << "D after1:" << alpha * (cost_after_subdiv2) << "R after1:" << alpha * (code_length2) << ",   ";
-    std::cout << "D after1:" << alpha * (cost_after_subdiv3) << "R after1:" << alpha * (code_length3) << ",   ";
-    std::cout << "D after1:" << alpha * (cost_after_subdiv4) << "R after1:" << alpha * (code_length4) << std::endl;
+//    std::cout << "D before:" << cost_before_subdiv - lambda * code_length<< " D after:" << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4 - lambda * (code_length1 + code_length2 + code_length3 + code_length4)) << std::endl;
+//    std::cout << "R before:" << code_length<< " R after:" << alpha * (code_length1 + code_length2 + code_length3 + code_length4) << std::endl;
+//    std::cout << "D after1:" << alpha * (cost_after_subdiv1) << " R after1:" << alpha * (code_length1) << ",  ";
+//    std::cout << "D after2:" << alpha * (cost_after_subdiv2) << " R after2:" << alpha * (code_length2) << ",  ";
+//    std::cout << "D after3:" << alpha * (cost_after_subdiv3) << " R after3:" << alpha * (code_length3) << ",  ";
+//    std::cout << "D after4:" << alpha * (cost_after_subdiv4) << " R after4:" << alpha * (code_length4) << std::endl;
     if(cost_before_subdiv >= alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4)) {
 
         for(int i = 0 ; i < 4 ; i++){
@@ -1630,6 +1630,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors; // ベクトルとモードを表すフラグのペア
     std::vector<std::vector<cv::Point2f>> warping_vectors;
 
+//    std::cout << "spatial_square_size : " << spatial_square_size << std::endl;
+
     // すべてのベクトルを格納する．
     for(int i = 0 ; i < spatial_square_size ; i++) {
         int spatial_square_index = spatial_squares[i];
@@ -1793,6 +1795,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
                 flag_code_sum.setYGreater1Flag(is_y_greater_than_one);
                 flag_code_sum.countSignFlagCode();
             }
+
+//            std::cout << "mvd_code_length" << mvd_code_length << std::endl;
 
             // 参照箇所符号化
             int reference_index = i; //std::get<1>(vector);
