@@ -291,7 +291,7 @@ std::vector<Square> SquareDivision::getAllSquareIndexList() {
 
 
 std::vector<Point4Vec> SquareDivision::getSquares() {
-    std::vector<Point4Vec> ts;
+    std::vector<Point4Vec> ss;
 
     cv::Point2f p1, p2, p3, p4;
     for(auto & square : squares){
@@ -299,10 +299,10 @@ std::vector<Point4Vec> SquareDivision::getSquares() {
         p2 = corners[square.p2_idx];
         p3 = corners[square.p3_idx];
         p4 = corners[square.p4_idx];
-        ts.emplace_back(Point4Vec(p1, p2, p3, p4));
+        ss.emplace_back(Point4Vec(p1, p2, p3, p4));
     }
 
-    return ts;
+    return ss;
 }
 
 /**
