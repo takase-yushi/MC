@@ -1408,7 +1408,7 @@ std::vector<int> SquareDivision::getSpatialSquareList(int s_idx){
     reverse(mutualIndexSet2.begin(), mutualIndexSet2.end());
     reverse(mutualIndexSet3.begin(), mutualIndexSet3.end());
 
-    std::vector<int> ret;
+    std::vector<int> ret = std::vector<int>();
 
     //優先度が高い順に入れていく
     for(auto idx : mutualIndexSet3){
@@ -2202,7 +2202,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
                     mvs.emplace_back(spatial_square.mv_translation);
                     mvs.emplace_back(spatial_square.mv_translation);
                     mvs.emplace_back(spatial_square.mv_translation);
-                    double ret_residual = getSquareResidual(target_image, mvs, pixels_in_square, expansion_ref);
+                    double ret_residual = getSquareResidual_Pred(target_image, mvs, pixels_in_square, expansion_ref);
                     double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
                     results.emplace_back(rd, getUnaryCodeLength(merge_count) + 1, mvs, merge_count, MERGE,
                                          FlagsCodeSum(0, 0, 0, 0), Flags());
@@ -2215,7 +2215,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
                     mvs.emplace_back(spatial_square.mv_warping[0]);
                     mvs.emplace_back(spatial_square.mv_warping[0]);
                     mvs.emplace_back(spatial_square.mv_warping[0]);
-                    double ret_residual = getSquareResidual(target_image, mvs, pixels_in_square, expansion_ref);
+                    double ret_residual = getSquareResidual_Pred(target_image, mvs, pixels_in_square, expansion_ref);
                     double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
                     results.emplace_back(rd, getUnaryCodeLength(merge_count) + 1, mvs, merge_count, MERGE,
                                          FlagsCodeSum(0, 0, 0, 0), Flags());
@@ -2241,7 +2241,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
                 if(mvs[2].x + sx < -16 || mvs[2].y + sy < -16 || mvs[2].x + lx >= target_image.cols + 16  || mvs[2].y + ly>=target_image.rows + 16 ) continue;
 
                 if (!isMvExists(warping_vector_history, mvs)) {
-                    double ret_residual = getSquareResidual(target_image, mvs, pixels_in_square, expansion_ref);
+                    double ret_residual = getSquareResidual_Pred(target_image, mvs, pixels_in_square, expansion_ref);
                     double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
                     results.emplace_back(rd, getUnaryCodeLength(merge_count) + 1, mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
@@ -2256,6 +2256,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     std::sort(results.begin(), results.end(), [](const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags >& a, const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags>& b){
         return std::get<0>(a) < std::get<0>(b);
     });
+
+    //4分割の判定の為にRDコスト(mode)を計算し直す
+    double RDCost;
+    lambda = getLambdaMode(qp);
     double cost = std::get<0>(results[0]);
     int code_length = std::get<1>(results[0]);
     std::vector<cv::Point2f> mvds = std::get<2>(results[0]);
@@ -2263,6 +2267,36 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     MV_CODE_METHOD method = std::get<4>(results[0]);
     FlagsCodeSum flag_code_sum = std::get<5>(results[0]);
     Flags result_flags = std::get<6>(results[0]);
+
+    if(method == MERGE){
+        int spatial_square_index = spatial_squares[selected_idx];
+        GaussResult spatial_square = square_gauss_results[spatial_square_index];
+        if(translation_flag) {
+            if (spatial_square.translation_flag) {
+                double ret_residual = getSquareResidual_Mode(target_image, mvds, pixels_in_square, expansion_ref);
+                RDCost = ret_residual + lambda * code_length;
+            } else {
+                double ret_residual = getSquareResidual_Mode(target_image, mvds, pixels_in_square, expansion_ref);
+                RDCost = ret_residual + lambda * code_length;
+            }
+        }else{
+            double ret_residual = getSquareResidual_Mode(target_image, mvds, pixels_in_square, expansion_ref);
+            RDCost = ret_residual + lambda * code_length;
+        }
+    }
+    else {
+        std::pair<cv::Point2f, MV_CODE_METHOD> vector = vectors[selected_idx];
+        cv::Point2f current_mv = vector.first;
+        // TODO: ワーピング対応
+        if (translation_flag) {
+            double ret_residual = getSquareResidual_Mode(target_image, {current_mv, current_mv, current_mv}, pixels_in_square, expansion_ref);
+            RDCost = ret_residual + lambda * code_length;
+        } else {
+            double ret_residual = getSquareResidual_Mode(target_image, {current_mv, current_mv, current_mv}, pixels_in_square, expansion_ref);
+            RDCost = ret_residual + lambda * code_length;
+        }
+    }
+
     ctu->x_greater_0_flag = result_flags.x_greater_0_flag;
     ctu->y_greater_0_flag = result_flags.y_greater_0_flag;
     ctu->x_greater_1_flag = result_flags.x_greater_1_flag;
@@ -2306,7 +2340,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
         }
     }
 
-    return {cost, code_length, mvds, selected_idx, method};
+    return {RDCost, code_length, mvds, selected_idx, method};
 }
 
 
@@ -2370,7 +2404,6 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
             }
         }
     }
-
     if(!isMvExists(vectors, collocated_mv)) {
         vectors.emplace_back(collocated_mv, SPATIAL);
         warping_vectors.emplace_back();
@@ -2394,7 +2427,6 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
             Flags flags;
 
             cv::Point2f mvd = current_mv - mv[0];
-
             mvd = getQuantizedMv(mvd, 4);
 
             // 正負の判定(使ってません！！！)
@@ -2462,7 +2494,7 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
             }
 
             // 参照箇所符号化
-            int reference_index = std::get<1>(vector);
+            int reference_index = i; //std::get<1>(vector);
             int reference_index_code_length = getUnaryCodeLength(reference_index);
 
             // 各種フラグ分を(3*2)bit足してます
@@ -2497,7 +2529,6 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
 
                 mvd.x = std::fabs(mvd.x);
                 mvd.y = std::fabs(mvd.y);
-
                 mvd *= 4;
                 mvds[j] = mvd;
 
@@ -2556,7 +2587,7 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
             }
 
             // 参照箇所符号化
-            int reference_index = std::get<1>(vector);
+            int reference_index = i; //std::get<1>(vector);
             int reference_index_code_length = getUnaryCodeLength(reference_index);
 
             // 各種フラグ分を(3*2)bit足してます
@@ -2866,8 +2897,8 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
                 }
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
-                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
-//                rd = getRDCost({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
+//                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
+                rd = getRDCost({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
                 if(rd_min > rd){
                     e_min = e;
                     rd_min = rd;
@@ -2899,8 +2930,8 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
                 }
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
-                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
-//                rd = getRDCost({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
+//                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
+                rd = getRDCost({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
                 if(rd_min > rd){
                     e_min = e;
                     rd_min = rd;
@@ -2930,8 +2961,8 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
                 }
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
-                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
-//                rd = getRDCost({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
+//                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
+                rd = getRDCost({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
                 if(rd_min > rd){
                     e_min = e;
                     rd_min = rd;
