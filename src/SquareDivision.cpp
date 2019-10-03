@@ -2890,10 +2890,8 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
             if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
                && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
                 e = 0.0;
-                for (int y = (int) (round(sy) / 4); y <= (int) (round(ly) / 4); y++) {
-                    for (int x = (int) (round(sx) / 4); x <= (int) (round(lx) / 4); x++) {
-                        e += fabs(R(expansion_ref_image, i + 4 * x + spread_quarter, j + 4 * y + spread_quarter) - R(target_image, x, y));
-                    }
+                for(const auto& pixel : pixels) {
+                        e += fabs(R(expansion_ref_image, i + (int)(4 * pixel.x) + spread_quarter, j + (int)(4 * pixel.y) + spread_quarter) - R(target_image, (int)(pixel.x), (int)(pixel.y)));
                 }
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
@@ -2923,10 +2921,8 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
             if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
                && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
                 e = 0.0;
-                for (int y = (int) (round(sy) / 4); y <= (int) (round(ly) / 4); y++) {
-                    for (int x = (int) (round(sx) / 4); x <= (int) (round(lx) / 4); x++) {
-                        e += fabs(R(expansion_ref_image, i + 4 * x + spread_quarter, j + 4 * y + spread_quarter) - R(target_image, x, y));
-                    }
+                for(const auto& pixel : pixels) {
+                    e += fabs(R(expansion_ref_image, i + (int)(4 * pixel.x) + spread_quarter, j + (int)(4 * pixel.y) + spread_quarter) - R(target_image, (int)(pixel.x), (int)(pixel.y)));
                 }
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
@@ -2954,10 +2950,8 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
             if(-spread_quarter <= round(sx) + i && round(lx) + i < expansion_ref_image.cols - spread_quarter
                && -spread_quarter <= round(sy) + j && round(ly) + j < expansion_ref_image.rows - spread_quarter) {
                 e = 0.0;
-                for (int y = (int) (round(sy) / 4); y <= (int) (round(ly) / 4); y++) {
-                    for (int x = (int) (round(sx) / 4); x <= (int) (round(lx) / 4); x++) {
-                        e += fabs(R(expansion_ref_image, i + 4 * x + spread_quarter, j + 4 * y + spread_quarter) - R(target_image, x, y));
-                    }
+                for(const auto& pixel : pixels) {
+                    e += fabs(R(expansion_ref_image, i + (int)(4 * pixel.x) + spread_quarter, j + (int)(4 * pixel.y) + spread_quarter) - R(target_image, (int)(pixel.x), (int)(pixel.y)));
                 }
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
