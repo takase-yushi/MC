@@ -95,6 +95,7 @@ enum {
 #define MERGE_MODE true
 #define STORE_IMG_LOG false
 #define RD_BLOCK_MATCHING true
+#define SPLIT_USE_SSE false
 
 const std::string OS = "Ubuntu";
 

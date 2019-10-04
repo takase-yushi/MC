@@ -2023,7 +2023,33 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     MV_CODE_METHOD method = std::get<4>(results[0]);
     FlagsCodeSum flag_code_sum = std::get<5>(results[0]);
     Flags result_flags = std::get<6>(results[0]);
+    ctu->x_greater_0_flag = result_flags.x_greater_0_flag;
+    ctu->y_greater_0_flag = result_flags.y_greater_0_flag;
+    ctu->x_greater_1_flag = result_flags.x_greater_1_flag;
+    ctu->y_greater_1_flag = result_flags.y_greater_1_flag;
+    ctu->x_sign_flag = result_flags.x_sign_flag;
+    ctu->y_sign_flag = result_flags.y_sign_flag;
+    ctu->mvds = mvds;
+    ctu->ref_triangle_idx = selected_idx;
+    ctu->flags_code_sum = flag_code_sum;
+    if(method != MERGE) {
+        (ctu->mvds_x).clear();
+        (ctu->mvds_y).clear();
+        (ctu->original_mvds_x).clear();
+        (ctu->original_mvds_y).clear();
 
+        if (translation_flag) {
+            (ctu->mvds_x).emplace_back(mvds[0].x);
+            (ctu->mvds_y).emplace_back(mvds[0].y);
+        } else {
+            for (int i = 0; i < 3; i++) {
+                (ctu->mvds_x).emplace_back(mvds[i].x);
+                (ctu->mvds_y).emplace_back(mvds[i].y);
+            }
+        }
+    }
+
+#if SPLIT_USE_SSE
     if(method == MERGE){
         int spatial_square_index = spatial_squares[selected_idx];
         GaussResult spatial_square = square_gauss_results[spatial_square_index];
@@ -2053,33 +2079,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
         }
     }
 
-    ctu->x_greater_0_flag = result_flags.x_greater_0_flag;
-    ctu->y_greater_0_flag = result_flags.y_greater_0_flag;
-    ctu->x_greater_1_flag = result_flags.x_greater_1_flag;
-    ctu->y_greater_1_flag = result_flags.y_greater_1_flag;
-    ctu->x_sign_flag = result_flags.x_sign_flag;
-    ctu->y_sign_flag = result_flags.y_sign_flag;
-    ctu->mvds = mvds;
-    ctu->ref_triangle_idx = selected_idx;
-    ctu->flags_code_sum = flag_code_sum;
-    if(method != MERGE) {
-        (ctu->mvds_x).clear();
-        (ctu->mvds_y).clear();
-        (ctu->original_mvds_x).clear();
-        (ctu->original_mvds_y).clear();
-
-        if (translation_flag) {
-            (ctu->mvds_x).emplace_back(mvds[0].x);
-            (ctu->mvds_y).emplace_back(mvds[0].y);
-        } else {
-            for (int i = 0; i < 3; i++) {
-                (ctu->mvds_x).emplace_back(mvds[i].x);
-                (ctu->mvds_y).emplace_back(mvds[i].y);
-            }
-        }
-    }
-
     return {RDCost, code_length, mvds, selected_idx, method};
+#endif
+    return {cost, code_length, mvds, selected_idx, method};
 }
 
 
