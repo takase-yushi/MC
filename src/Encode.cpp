@@ -65,6 +65,7 @@ int getBinaryLength(int x){
  * @return ラムダの値
  */
 double getLambdaMode(int qp){
+    qp = 45;
     double alpha = 1.0; // P picture
     double wk = 0.578;  // Low-Delay P
     return alpha * wk * std::pow(2, (qp - 12)/3.0);
