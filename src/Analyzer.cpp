@@ -189,6 +189,8 @@ void Analyzer::storeMarkdownFile(double psnr, std::string log_path) {
  */
 void Analyzer::storeCsvFileWithStream(std::ofstream &ofs, double psnr) {
     extern int qp;
+    int tmp_code_sum = code_sum - (int)ceil(greater_0_flag_sum * getEntropy({greater_0_flag_counter[0], greater_0_flag_counter[1]}));
+    tmp_code_sum = tmp_code_sum - (int)ceil(greater_1_flag_sum * getEntropy({greater_1_flag_counter[0], greater_1_flag_counter[1]}));
 
-    ofs << qp << "," << getLambdaPred(qp, 1.0) << "," << code_sum << "," << psnr << std::endl;
+    ofs << qp << "," << getLambdaPred(qp, 1.0) << "," << code_sum << "," << tmp_code_sum << "," << psnr << std::endl;
 }
