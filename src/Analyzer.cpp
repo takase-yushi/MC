@@ -19,6 +19,7 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     mvd_warping_code_sum = mvd_translation_code_sum = 0;
     merge_counter = spatial_counter = 0;
     code_sum = 0;
+    intra_counter = 0;
 
     for(auto ctu : ctus){
         storeDistributionOfMv(ctu);
@@ -77,6 +78,7 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     fprintf(fp, "translation_patch        :%d\n", translation_patch_num);
     fprintf(fp, "Spatial_patch         :%d\n", spatial_counter);
     fprintf(fp, "merge_patch           :%d\n", merge_counter);
+    fprintf(fp, "intra_patch           :%d\n", intra_counter);
 
     fclose(fp);
 }
@@ -88,8 +90,10 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
  */
 void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr){
-        code_sum += (1 + ctu->code_length);
-        if(ctu->method != MV_CODE_METHOD::MERGE){
+        if(INTRA_MODE) code_sum += (1 + ctu->code_length + 1);
+        else code_sum += (1 + ctu->code_length);
+
+        if(ctu->method != MV_CODE_METHOD::MERGE && ctu->method != MV_CODE_METHOD::INTRA){
             if(ctu->translation_flag){
                 int x_ = (int)abs(((ctu->mv1).x * 4));
                 int y_ = (int)abs(((ctu->mv1).y * 4));
@@ -141,8 +145,10 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
             sign_flag_sum += ctu->flags_code_sum.getSignFlagCodeLength();
             mvd_code_sum += ctu->flags_code_sum.getMvdCodeLength();
             spatial_counter++;
-        }else{
+        }else if(ctu->method == MV_CODE_METHOD::MERGE){
             merge_counter++;
+        }else if(ctu->method == MV_CODE_METHOD::INTRA){
+            intra_counter++;
         }
 
         if(ctu->translation_flag) translation_patch_num++;
@@ -183,6 +189,8 @@ void Analyzer::storeMarkdownFile(double psnr, std::string log_path) {
  */
 void Analyzer::storeCsvFileWithStream(std::ofstream &ofs, double psnr) {
     extern int qp;
+    int tmp_code_sum = code_sum - (int)ceil(greater_0_flag_sum * getEntropy({greater_0_flag_counter[0], greater_0_flag_counter[1]}));
+    tmp_code_sum = tmp_code_sum - (int)ceil(greater_1_flag_sum * getEntropy({greater_1_flag_counter[0], greater_1_flag_counter[1]}));
 
-    ofs << qp << "," << getLambdaPred(qp, 1.0) << "," << code_sum << "," << psnr << std::endl;
+    ofs << qp << "," << getLambdaPred(qp, 1.0) << "," << code_sum << "," << tmp_code_sum << "," << psnr << std::endl;
 }

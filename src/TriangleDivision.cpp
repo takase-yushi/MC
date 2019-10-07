@@ -268,6 +268,14 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
         same_corner_list[p1_idx].emplace(p2_idx);
         same_corner_list[p2_idx].emplace(p1_idx);
     }
+
+    // イントラ用のMatを作る
+    intra_tmp_image = cv::Mat::zeros(target_image.rows, target_image.cols, CV_8UC3);
+
+    intra_flag.resize(target_image.cols);
+    for(int i = 0 ; i < intra_flag.size() ; i++){
+        intra_flag[i].resize(target_image.rows);
+    }
 }
 
 /**
@@ -1104,6 +1112,24 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
     if(steps <= 0){
         isCodedTriangle[triangle_index] = true;
+
+        if(ctu->method != MV_CODE_METHOD::INTRA && ctu->method != MV_CODE_METHOD::INTRA) {
+            std::vector<cv::Point2f> mvs;
+            if(ctu->translation_flag){
+                mvs.emplace_back(ctu->mv1);
+                mvs.emplace_back(ctu->mv1);
+                mvs.emplace_back(ctu->mv1);
+            }else{
+                mvs.emplace_back(ctu->mv1);
+                mvs.emplace_back(ctu->mv2);
+                mvs.emplace_back(ctu->mv3);
+            }
+            getPredictedImage(expansion_ref_uchar, target_image, intra_tmp_image, triangle, mvs, 16, diagonal_line_area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
+        }
+
+        std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, diagonal_line_area_flag, triangle_index, ctu, block_size_x, block_size_y);
+        for(const auto& p : pixels) intra_flag[p.x][p.y] = true;
+
         return false;
     }
 
@@ -1404,7 +1430,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 ctu->node1->mv3 = triangle_gauss_results[triangle_indexes[0]].mv_warping[2];
             }
         }
-        bool result = split(expand_images, ctu->node1, cmt_left_left, split_sub_triangles1.t1, t1_idx,split_sub_triangles1.t1_type, steps - 2, diagonal_line_area_flag);
+        int next_step = steps - 2;
+        if(ctu->node1->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
+            next_step = 0;
+        }
+        bool result = split(expand_images, ctu->node1, cmt_left_left, split_sub_triangles1.t1, t1_idx,split_sub_triangles1.t1_type, next_step, diagonal_line_area_flag);
 
         // 2つ目の三角形
         ctu->node2->triangle_index = t2_idx;
@@ -1433,7 +1463,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 ctu->node2->mv3 = triangle_gauss_results[triangle_indexes[1]].mv_warping[2];
             }
         }
-        result = split(expand_images, ctu->node2, cmt_left_right, split_sub_triangles1.t2, t2_idx, split_sub_triangles1.t2_type, steps - 2, diagonal_line_area_flag);
+        next_step = steps - 2;
+        if(ctu->node2->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
+            next_step = 0;
+        }
+        result = split(expand_images, ctu->node2, cmt_left_right, split_sub_triangles1.t2, t2_idx, split_sub_triangles1.t2_type, next_step, diagonal_line_area_flag);
 
         // 3つ目の三角形
         ctu->node3->triangle_index = t3_idx;
@@ -1461,7 +1495,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 ctu->node3->mv3 = triangle_gauss_results[triangle_indexes[2]].mv_warping[2];
             }
         }
-        result = split(expand_images, ctu->node3, cmt_right_left, split_sub_triangles2.t1, t3_idx, split_sub_triangles2.t1_type, steps - 2, diagonal_line_area_flag);
+        next_step = steps - 2;
+        if(ctu->node3->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
+            next_step = 0;
+        }
+        result = split(expand_images, ctu->node3, cmt_right_left, split_sub_triangles2.t1, t3_idx, split_sub_triangles2.t1_type, next_step, diagonal_line_area_flag);
 
         // 4つ目の三角形
         ctu->node4->triangle_index = t4_idx;
@@ -1489,7 +1527,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 ctu->node4->mv3 = triangle_gauss_results[triangle_indexes[3]].mv_warping[2];
             }
         }
-        result = split(expand_images, ctu->node4, cmt_right_right, split_sub_triangles2.t2, t4_idx, split_sub_triangles2.t2_type, steps - 2, diagonal_line_area_flag);
+        next_step = steps - 2;
+        if(ctu->node4->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
+            next_step = 0;
+        }
+        result = split(expand_images, ctu->node4, cmt_right_right, split_sub_triangles2.t2, t4_idx, split_sub_triangles2.t2_type, next_step, diagonal_line_area_flag);
 
         return true;
     }else{
@@ -1506,9 +1548,31 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         addNeighborVertex(triangles[triangle_index].first.p1_idx,triangles[triangle_index].first.p2_idx,triangles[triangle_index].first.p3_idx);
         addCoveredTriangle(triangles[triangle_index].first.p1_idx,triangles[triangle_index].first.p2_idx,triangles[triangle_index].first.p3_idx, triangle_index);
 
-//        std::cout << (ctu->method == MERGE ? "MERGE" : "SPATIAL") << " " << (ctu->translation_flag ? "PARALLEL" : "WARPING") << " "  << ctu->mv1 << " " << ctu->mv2 << " " << ctu->mv3 << std::endl;
+        if(method_flag != MV_CODE_METHOD::INTRA) {
+            std::vector<cv::Point2f> mvs;
+            if(ctu->translation_flag){
+                mvs.emplace_back(ctu->mv1);
+                mvs.emplace_back(ctu->mv1);
+                mvs.emplace_back(ctu->mv1);
+            }else{
+                mvs.emplace_back(ctu->mv1);
+                mvs.emplace_back(ctu->mv2);
+                mvs.emplace_back(ctu->mv3);
+            }
+            getPredictedImage(expansion_ref_uchar, target_image, intra_tmp_image, triangle, mvs, 16, diagonal_line_area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
+        }
+        std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, diagonal_line_area_flag, triangle_index, ctu, block_size_x, block_size_y);
+        for(const auto& p : pixels) intra_flag[p.x][p.y] = true;
+
+//        std::cout << (ctu->method == MERGE ? "MERGE" : "SPATIAL") << " " << (ctu->parallel_flag ? "PARALLEL" : "WARPING") << " "  << ctu->mv1 << " " << ctu->mv2 << " " << ctu->mv3 << std::endl;
         return false;
     }
+
+}
+
+void TriangleDivision::storeIntraImage(){
+
+    cv::imwrite(getProjectDirectory(OS) + "/intra.png", intra_tmp_image);
 
 }
 
@@ -2008,7 +2072,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             flags.y_sign_flag.emplace_back(is_y_minus);
 
 #if MVD_DEBUG_LOG
-            std::cout << "mvd(translation)           :" << mvd << std::endl;
+            std::cout << "mvd(parallel)           :" << mvd << std::endl;
 #endif
             mvd.x = std::fabs(mvd.x);
             mvd.y = std::fabs(mvd.y);
@@ -2017,7 +2081,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             int abs_x = mvd.x;
             int abs_y = mvd.y;
 #if MVD_DEBUG_LOG
-            std::cout << "4 * mvd(translation)       :" << mvd << std::endl;
+            std::cout << "4 * mvd(parallel)       :" << mvd << std::endl;
 #endif
 
             // 動きベクトル差分の絶対値が0より大きいのか？
@@ -2280,6 +2344,21 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
     }
 #endif
 
+    Triangle t = triangles[triangle_idx].first;
+
+    int width = std::max({corners[t.p1_idx].x, corners[t.p2_idx].x, corners[t.p3_idx].x}) - std::min({corners[t.p1_idx].x, corners[t.p2_idx].x, corners[t.p3_idx].x});
+    // イントラ
+    if(INTRA_MODE){
+        double sad = 0.0;
+        setIntraImage(pixels_in_triangle, Point3Vec(corners[t.p1_idx], corners[t.p2_idx], corners[t.p3_idx]));
+        for(const auto &p : pixels_in_triangle){
+            sad += std::abs(R(intra_tmp_image, (int)p.x, (int)p.y) - R(target_image, (int)p.x, (int)p.y));
+        }
+
+        std::vector<cv::Point2f> mvs;
+        results.emplace_back(sad, 0, mvs, 0, MV_CODE_METHOD::INTRA, FlagsCodeSum(0, 0, 0, 0), Flags());
+    }
+
     // RDしたスコアが小さい順にソート
     std::sort(results.begin(), results.end(), [](const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags >& a, const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags>& b){
         return std::get<0>(a) < std::get<0>(b);
@@ -2304,7 +2383,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
     puts("Result ===========================================");
     std::cout << "code_length:" << code_length << std::endl;
     std::cout << "cost       :" << cost << std::endl;
-    if(method != MERGE){
+    if(method != MERGE && method != INTRA){
         if(translation_flag) {
             std::cout << "mvd        :" << mvds[0] << std::endl;
         }else{
@@ -2317,7 +2396,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 #endif
 
     ctu->flags_code_sum = flag_code_sum;
-    if(method != MERGE) {
+    if(method != MERGE && method != INTRA) {
         (ctu->mvds_x).clear();
         (ctu->mvds_y).clear();
         (ctu->original_mvds_x).clear();
@@ -2434,7 +2513,20 @@ void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &ou
             mvs.emplace_back(ctu->mv3);
         }
 
-        getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, 16, area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
+        if(ctu->method == MV_CODE_METHOD::INTRA){
+            std::cout << "INTRA!!!!!!!!!!!!!" << std::endl;
+            Triangle t = triangles[ctu->triangle_index].first;
+            auto pixels = getPixelsInTriangle(Point3Vec(corners[t.p1_idx], corners[t.p2_idx], corners[t.p3_idx]), area_flag, ctu->triangle_index, ctu, block_size_x, block_size_y);
+            for(const auto& pixel : pixels) {
+                R(out, (int)pixel.x, (int)pixel.y) = R(intra_tmp_image, (int)pixel.x, (int)pixel.y);
+                G(out, (int)pixel.x, (int)pixel.y) = G(intra_tmp_image, (int)pixel.x, (int)pixel.y);
+                B(out, (int)pixel.x, (int)pixel.y) = B(intra_tmp_image, (int)pixel.x, (int)pixel.y);
+            }
+
+        }else {
+            getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, 16, area_flag, ctu->triangle_index,
+                              ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
+        }
         return;
     }
 
@@ -2486,10 +2578,16 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
                     G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     B(out, (int)pixel.x, (int)pixel.y) = 0;
                 }
-            }else{
+            }else if(ctu->method == MV_CODE_METHOD::SPATIAL){
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
+                    B(out, (int)pixel.x, (int)pixel.y) = 0;
+                }
+            }else if(ctu->method == MV_CODE_METHOD::INTRA){
+                for(auto pixel : pixels) {
+                    R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
+                    G(out, (int)pixel.x, (int)pixel.y) = 0;
                     B(out, (int)pixel.x, (int)pixel.y) = 0;
                 }
             }
@@ -2501,13 +2599,20 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
                     G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     B(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                 }
-            }else{
+            }else if(ctu->method == MV_CODE_METHOD::SPATIAL){
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = 0;
                     G(out, (int)pixel.x, (int)pixel.y) = 0;
                     B(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                 }
+            }else if(ctu->method == MV_CODE_METHOD::INTRA){
+                for(auto pixel : pixels) {
+                    R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
+                    G(out, (int)pixel.x, (int)pixel.y) = 0;
+                    B(out, (int)pixel.x, (int)pixel.y) = 0;
+                }
             }
+
 //            getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, 16, area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
         }
         return;
@@ -2530,7 +2635,8 @@ int TriangleDivision::getCtuCodeLength(std::vector<CodingTreeUnit*> ctus) {
 int TriangleDivision::getCtuCodeLength(CodingTreeUnit *ctu){
 
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
-        return 1+ctu->code_length;
+        if(INTRA_MODE) return 1 + ctu->code_length + 1; // イントラのフラグで1ビット更に増えた
+        else return 1 + ctu->code_length;
     }
 
     // ここで足している1はsplit_cu_flag分です
@@ -2698,4 +2804,151 @@ TriangleDivision::~TriangleDivision() {
     ref_hevc -= 4 * 20;
     free(ref_hevc);
 
+}
+
+/**
+ * @fn void TriangleDivision::setIntraImage(std::vector<cv::Point2f> pixels)
+ * @attention 呼び出す前にかならずisIntraAvailableでチェックをすること
+ * @param[in] pixels 画素値
+ */
+void TriangleDivision::setIntraImage(std::vector<cv::Point2f> pixels, Point3Vec triangle) {
+
+    // まずは参照画素を列挙する
+    int sx = std::min({(int)triangle.p1.x, (int)triangle.p2.x, (int)triangle.p3.x});
+    int sy = std::min({(int)triangle.p1.y, (int)triangle.p2.y, (int)triangle.p3.y});
+    int lx = std::max({(int)triangle.p1.x, (int)triangle.p2.x, (int)triangle.p3.x});
+    int ly = std::max({(int)triangle.p1.y, (int)triangle.p2.y, (int)triangle.p3.y});
+
+    std::vector<int> y_axis_luminance(ly - sy + 1);
+    std::vector<int> x_axis_luminance(lx - sx + 1);
+
+
+    if(ly == target_image.cols - 1) {
+        // 下端が外周上に乗っている場合は，一番最後だけ127にする
+        for (int y = sy; y <= ly; y++) {
+            bool flag = false;
+            for (int x = lx; 0 <= x; x--) {
+                if (intra_flag[x][y]) {
+                    y_axis_luminance[y - sy] = R(intra_tmp_image, x, y);
+                    flag = true;
+                    break;
+                }
+            }
+            if(!flag) y_axis_luminance[y - sy] = 127;
+        }
+        y_axis_luminance[(ly + 1)- sy] = 127;
+    }else{
+        for (int y = sy; y <= ly + 1; y++) {
+            bool flag = false;
+            for (int x = lx; 0 <= x; x--) {
+                if (intra_flag[x][y]) {
+                    y_axis_luminance[y - sy] = R(intra_tmp_image, x, y);
+                    flag = true;
+                    break;
+                }
+            }
+            if(!flag) y_axis_luminance[y - sy] = 127;
+        }
+    }
+
+    if(lx == target_image.cols - 1){
+        for (int x = sx; x <= lx; x++) {
+            bool flag = false;
+            for (int y = ly; 0 <= y; y--) {
+                if (intra_flag[x][y]) {
+                    x_axis_luminance[x - sx] = R(intra_tmp_image, x, y);
+                    flag = true;
+                    break;
+                }
+            }
+            if (!flag) x_axis_luminance[x - sx] = 127;
+        }
+        x_axis_luminance[lx + 1 - sx] = 127;
+    }else {
+        for (int x = sx; x <= lx + 1; x++) {
+            bool flag = false;
+            for (int y = ly; 0 <= y; y--) {
+                if (intra_flag[x][y]) {
+                    x_axis_luminance[x - sx] = R(intra_tmp_image, x, y);
+                    flag = true;
+                    break;
+                }
+            }
+            if (!flag) x_axis_luminance[x - sx] = 127;
+        }
+    }
+
+
+    // 線形補間して補間画素を求める
+    int pixel_nums = (int)pixels.size();
+    for(const auto pixel : pixels) {
+        int x = pixel.x;
+        int y = pixel.y;
+
+        //   *************
+        //   *   |β      *
+        //   *---+       *
+        //   * α         *
+        //   *           *
+        //   *           *
+        //   *************
+        //
+        double alpha = (double)x / (lx - sx);
+        double beta  = (double)y / (ly - sy);
+
+        // ref:
+        int N = lx - sx + 1;
+        int luminance = (int)((double)(lx - sx - x + sx) * x_axis_luminance[x - sx]
+                            + (double)(x + 1 - sx      ) * x_axis_luminance[N     ]
+                            + (double)(ly - sy - y + sy) * y_axis_luminance[y - sy]
+                            + (double)(y + 1 - sy      ) * y_axis_luminance[N     ]
+                            + N
+                        ) / (2 * N);
+
+        luminance = (luminance > 255 ? 255 : (luminance < 0 ? 0 : luminance));
+
+        R(intra_tmp_image, x, y) = luminance;
+        G(intra_tmp_image, x, y) = luminance;
+        B(intra_tmp_image, x, y) = luminance;
+    }
+
+}
+
+/**
+ * @fn イントラ符号化できるかチェックする
+ * @param _x イントラ符号化するx座標
+ * @param _y イントラ符号化するy座標
+ * @return 符号化できるならtrue, そうでないならfalse
+ */
+bool TriangleDivision::isIntraAvailable(Point3Vec triangle){
+    int sx = std::min({(int)triangle.p1.x, (int)triangle.p2.x, (int)triangle.p3.x});
+    int sy = std::min({(int)triangle.p1.y, (int)triangle.p2.y, (int)triangle.p3.y});
+    int lx = std::max({(int)triangle.p1.x, (int)triangle.p2.x, (int)triangle.p3.x});
+    int ly = std::max({(int)triangle.p1.y, (int)triangle.p2.y, (int)triangle.p3.y});
+
+    if(sx == 0 || sy == 0 || lx == target_image.cols - 1 || ly == target_image.rows - 1) return false;
+
+    for(int y = sy ; y <= ly ; y++) {
+        bool check_flag_x = false;
+        for (int x = sx; 0 <= x; x--) {
+            if (intra_flag[x][y]) {
+                check_flag_x = true;
+                break;
+            }
+        }
+        if(!check_flag_x) return false;
+    }
+
+    for(int x = sx ; x <= lx ; x++) {
+        bool check_flag_y = false;
+        for(int y = sy ; 0 <= y ; y--){
+            if (intra_flag[sx][y]) {
+                check_flag_y = true;
+                break;
+            }
+        }
+        if(!check_flag_y) return false;
+    }
+
+    return true;
 }

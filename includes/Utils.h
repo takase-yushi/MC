@@ -93,7 +93,9 @@ enum {
 #define USE_BM_TRANSLATION_MV false
 #define MV_LIST_MAX_NUM 5
 #define MERGE_MODE true
-#define STORE_IMG_LOG false
+#define STORE_IMG_LOG true
+#define INTRA_MODE true
+#define INTRA_LIMIT_MODE false // イントラが選択されたらそれ以降は割らないモード
 
 const std::string OS = "Ubuntu";
 
