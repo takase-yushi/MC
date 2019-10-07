@@ -102,7 +102,6 @@ void appendConfigItem(std::string input_file_path, std::string output_file_path)
     int count = 0;
     int array_size = ary.size() - 1;
     std::vector<double> lambdas{
-            0.0, 0.5, 1.0, 2.0, 3.0, 4.0,
             5.0, 6.0, 7.0, 8.0, 9.0, 10.0,
             12.0, 14.0, 16.0, 18.0, 20.0,
             25.0, 30.0, 40.0, 50.0, 60.0,
@@ -128,7 +127,8 @@ void appendConfigItem(std::string input_file_path, std::string output_file_path)
             ofs << "            \"ctu_height\"     : " << static_cast<int>(task["ctu_height"].get<double>()) << "," << std::endl;
             ofs << "            \"division_step\"  : " << static_cast<int>(task["division_step"].get<double>()) << "," << std::endl;
             ofs << "            \"lambda_enable\"  : true," << std::endl;
-            ofs << "            \"lambda\"         : " << lambdas[i] << std::endl;
+            ofs << "            \"lambda\"         : " << lambdas[i] << "," << std::endl;
+            ofs << R"(            "QP_offset"      : 0)" << std::endl;
 
             if (count == array_size - 1) {
                 ofs << "        }" << std::endl;

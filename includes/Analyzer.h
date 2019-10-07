@@ -40,6 +40,12 @@ private:
     std::map<int, int> sign_flag_counter;
     int sign_flag_sum;
 
+    // マージの分布
+    std::map<int, int> merge_flag_counter;
+
+    // イントラの分布
+    std::map<int, int> intra_flag_counter;
+
     // 符号量関連
     int mvd_code_sum;
     int mvd_warping_code_sum;
