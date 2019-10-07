@@ -28,7 +28,7 @@
       "division_step"  : 8,
       "lambda"         : 0.0,
       "lambda_enable"  : false,
-      "QP_offset"      : 5
+      "QP_offset"      : 7
     },
     {
       "enable"         : true,
@@ -43,7 +43,7 @@
       "division_step"  : 8,
       "lambda"         : 0.0,
       "lambda_enable"  : false,
-      "QP_offset"      : 5
+      "QP_offset"      : 8
     },
     {
       "enable"         : true,
@@ -58,7 +58,7 @@
       "division_step"  : 8,
       "lambda"         : 0.0,
       "lambda_enable"  : false,
-      "QP_offset"      : 5
+      "QP_offset"      : 8
     }
   ]
 }
