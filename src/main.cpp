@@ -39,6 +39,7 @@ void tests();
 #define DIVIDE_MODE LEFT_DIVIDE
 
 int qp;
+int qp_offset;
 int block_size_x;
 int block_size_y;
 int division_steps;
@@ -108,6 +109,7 @@ void run(std::string config_name) {
         block_size_x                            = task.getCtuWidth();
         block_size_y                            = task.getCtuHeight();
         qp                                      = task.getQp();
+        qp_offset                               = task.getQpOffset();
         division_steps                          = task.getDivisionStep();
 
         lambda_inject_flag                      = task.isLambdaEnable();
@@ -122,10 +124,14 @@ void run(std::string config_name) {
         std::cout << "ref_intra_file_path    : " << ref_intra_file_path << std::endl;
         std::cout << "ref_gauss file path    : " << ref_file_path << std::endl;
         std::cout << "QP                     : " << qp << std::endl;
+        std::cout << "QP + offset            : " << qp + qp_offset << std::endl;
         std::cout << "CTU_WIDTH              : " << block_size_x << std::endl;
         std::cout << "CTU_HEIGHT             : " << block_size_y << std::endl;
         std::cout << "lambda_inject_flag     : " << lambda_inject_flag << std::endl;
         std::cout << "injected lambda        : " << injected_lambda << std::endl;
+
+        // オフセットを足して計測する
+        qp = qp + qp_offset;
 
         out_file_suffix = "_lambda_" + std::to_string(getLambdaPred(qp)) + "_";
 
