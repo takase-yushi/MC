@@ -16,7 +16,7 @@ private:
   std::string log_directory;
 public:
   Config(bool enable, const std::string &imgDirectory, const std::string &logDirectory,
-         const std::string &gaussRefImage, const std::string &refImage, const std::string &targetImage, int qp,
+         const std::string &gaussRefImage, const std::string &refImage, const std::string &targetImage, int qp, int qp_offset,
          int ctuWidth, int ctuHeight, int divisionStep, bool lambdaEnable, double lambda);
 
 private:
@@ -25,6 +25,7 @@ private:
   std::string ref_image;
   std::string target_image;
   int qp;
+  int qp_offset;
   int ctu_width;
   int ctu_height;
   int division_step;
@@ -57,6 +58,7 @@ public:
 
     const std::string &getLogDirectory() const;
 
+    int getQpOffset() const;
 };
 
 
