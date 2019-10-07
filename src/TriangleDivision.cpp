@@ -1247,7 +1247,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             }
 
         }else if(PRED_MODE == BM){
-            std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_triangles[j], target_image, expansion_ref, diagonal_line_area_flag, triangle_indexes[j], ctu);
+            std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_triangles[j], target_image, expansion_ref, diagonal_line_area_flag, triangle_indexes[j], ctus[j]);
             mv_warping_tmp = tmp_bm_mv;
             mv_translation_tmp = tmp_bm_mv[2];
             error_translation_tmp = tmp_bm_errors[2];
