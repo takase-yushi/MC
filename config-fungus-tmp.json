@@ -12,7 +12,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 0
+            "lambda"         : 5,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -26,7 +27,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 0.5
+            "lambda"         : 6,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -40,7 +42,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 1
+            "lambda"         : 7,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -54,7 +57,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 2
+            "lambda"         : 8,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -68,7 +72,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 3
+            "lambda"         : 9,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -82,7 +87,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 4
+            "lambda"         : 10,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -96,7 +102,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 5
+            "lambda"         : 12,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -110,7 +117,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 6
+            "lambda"         : 14,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -124,7 +132,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 7
+            "lambda"         : 16,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -138,7 +147,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 8
+            "lambda"         : 18,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -152,7 +162,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 9
+            "lambda"         : 20,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -166,7 +177,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 10
+            "lambda"         : 25,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -180,7 +192,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 12
+            "lambda"         : 30,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -194,7 +207,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 14
+            "lambda"         : 40,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -208,7 +222,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 16
+            "lambda"         : 50,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -222,7 +237,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 18
+            "lambda"         : 60,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -236,7 +252,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 20
+            "lambda"         : 70,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -250,7 +267,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 25
+            "lambda"         : 80,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -264,7 +282,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 30
+            "lambda"         : 90,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -278,7 +297,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 40
+            "lambda"         : 100,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -292,7 +312,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 50
+            "lambda"         : 110,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -306,7 +327,158 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 60
+            "lambda"         : 120,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp27_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 27,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 130,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp27_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 27,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 140,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp27_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 27,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 150,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp27_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 27,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 160,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp27_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 27,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 170,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp27_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 27,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 180,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp27_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 27,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 190,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp27_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 27,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 200,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp27_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 27,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 250,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp27_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 27,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 300,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -320,7 +492,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 0
+            "lambda"         : 5,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -334,7 +507,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 0.5
+            "lambda"         : 6,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -348,7 +522,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 1
+            "lambda"         : 7,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -362,7 +537,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 2
+            "lambda"         : 8,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -376,7 +552,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 3
+            "lambda"         : 9,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -390,7 +567,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 4
+            "lambda"         : 10,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -404,7 +582,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 5
+            "lambda"         : 12,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -418,7 +597,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 6
+            "lambda"         : 14,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -432,7 +612,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 7
+            "lambda"         : 16,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -446,7 +627,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 8
+            "lambda"         : 18,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -460,7 +642,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 9
+            "lambda"         : 20,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -474,7 +657,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 10
+            "lambda"         : 25,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -488,7 +672,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 12
+            "lambda"         : 30,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -502,7 +687,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 14
+            "lambda"         : 40,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -516,7 +702,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 16
+            "lambda"         : 50,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -530,7 +717,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 18
+            "lambda"         : 60,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -544,7 +732,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 20
+            "lambda"         : 70,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -558,7 +747,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 25
+            "lambda"         : 80,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -572,7 +762,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 30
+            "lambda"         : 90,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -586,7 +777,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 40
+            "lambda"         : 100,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -600,7 +792,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 50
+            "lambda"         : 110,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -614,7 +807,158 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 60
+            "lambda"         : 120,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp29_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 29,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 130,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp29_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 29,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 140,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp29_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 29,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 150,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp29_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 29,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 160,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp29_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 29,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 170,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp29_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 29,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 180,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp29_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 29,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 190,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp29_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 29,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 200,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp29_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 29,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 250,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp29_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 29,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 300,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -628,7 +972,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 0
+            "lambda"         : 5,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -642,7 +987,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 0.5
+            "lambda"         : 6,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -656,7 +1002,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 1
+            "lambda"         : 7,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -670,7 +1017,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 2
+            "lambda"         : 8,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -684,7 +1032,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 3
+            "lambda"         : 9,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -698,7 +1047,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 4
+            "lambda"         : 10,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -712,7 +1062,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 5
+            "lambda"         : 12,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -726,7 +1077,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 6
+            "lambda"         : 14,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -740,7 +1092,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 7
+            "lambda"         : 16,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -754,7 +1107,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 8
+            "lambda"         : 18,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -768,7 +1122,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 9
+            "lambda"         : 20,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -782,7 +1137,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 10
+            "lambda"         : 25,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -796,7 +1152,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 12
+            "lambda"         : 30,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -810,7 +1167,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 14
+            "lambda"         : 40,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -824,7 +1182,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 16
+            "lambda"         : 50,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -838,7 +1197,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 18
+            "lambda"         : 60,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -852,7 +1212,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 20
+            "lambda"         : 70,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -866,7 +1227,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 25
+            "lambda"         : 80,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -880,7 +1242,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 30
+            "lambda"         : 90,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -894,7 +1257,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 40
+            "lambda"         : 100,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -908,7 +1272,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 50
+            "lambda"         : 110,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -922,7 +1287,158 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 60
+            "lambda"         : 120,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp35_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 35,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 130,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp35_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 35,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 140,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp35_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 35,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 150,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp35_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 35,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 160,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp35_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 35,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 170,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp35_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 35,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 180,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp35_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 35,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 190,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp35_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 35,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 200,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp35_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 35,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 250,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp35_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 35,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 300,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -936,7 +1452,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 0
+            "lambda"         : 5,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -950,7 +1467,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 0.5
+            "lambda"         : 6,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -964,7 +1482,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 1
+            "lambda"         : 7,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -978,7 +1497,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 2
+            "lambda"         : 8,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -992,7 +1512,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 3
+            "lambda"         : 9,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -1006,7 +1527,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 4
+            "lambda"         : 10,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -1020,7 +1542,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 5
+            "lambda"         : 12,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -1034,7 +1557,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 6
+            "lambda"         : 14,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -1048,7 +1572,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 7
+            "lambda"         : 16,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -1062,7 +1587,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 8
+            "lambda"         : 18,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -1076,7 +1602,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 9
+            "lambda"         : 20,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -1090,7 +1617,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 10
+            "lambda"         : 25,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -1104,7 +1632,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 12
+            "lambda"         : 30,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -1118,7 +1647,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 14
+            "lambda"         : 40,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -1132,7 +1662,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 16
+            "lambda"         : 50,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -1146,7 +1677,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 18
+            "lambda"         : 60,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -1160,7 +1692,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 20
+            "lambda"         : 70,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -1174,7 +1707,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 25
+            "lambda"         : 80,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -1188,7 +1722,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 30
+            "lambda"         : 90,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -1202,7 +1737,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 40
+            "lambda"         : 100,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -1216,7 +1752,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 50
+            "lambda"         : 110,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -1230,7 +1767,158 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 60
+            "lambda"         : 120,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp37_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 37,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 130,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp37_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 37,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 140,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp37_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 37,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 150,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp37_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 37,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 160,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp37_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 37,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 170,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp37_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 37,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 180,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp37_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 37,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 190,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp37_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 37,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 200,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp37_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 37,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 250,
+            "QP_offset"      : 0
+        },
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/fungus",
+            "log_directory"  : "/log/fungus",
+            "gauss_ref_image": "/fungus_I_qp22_limit.png",
+            "ref_image"      : "/fungus_I_qp37_limit.png",
+            "target_image"   : "/fungus_target_limit.png",
+            "QP"             : 37,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 300,
+            "QP_offset"      : 0
         }
     ]
 }
