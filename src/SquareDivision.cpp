@@ -180,12 +180,12 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
     ref_images = getRefImages(ref_image, ref_gauss_image);
     target_images = getTargetImages(target_image);
 
-    int expansion_size = 16;
+    int expansion_size = SERACH_RANGE;
     int scaled_expansion_size = expansion_size + 2;
     if(HEVC_REF_IMAGE) expansion_ref = getExpansionMatHEVCImage(ref_image, 4, expansion_size);
     else expansion_ref = getExpansionMatImage(ref_image, 4, scaled_expansion_size);
 
-    ref_hevc = getExpansionHEVCImage(ref_image, 4, 16);
+    ref_hevc = getExpansionHEVCImage(ref_image, 4, SERACH_RANGE);
 
     cv::Mat tmp_mat = getExpansionMatImage(ref_image, 1, scaled_expansion_size);
 
@@ -1948,11 +1948,11 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
             int spatial_square_index = spatial_squares[i];
             GaussResult spatial_square = square_gauss_results[spatial_square_index];
             std::vector<cv::Point2f> mvds;
-            cv::Rect rect(-64, -64, 4 * (target_image.cols + 2 * 16), 4 * (target_image.rows + 2 * 16));
+            cv::Rect rect(-4 * SERACH_RANGE, -4 * SERACH_RANGE, 4 * (target_image.cols + 2 * SERACH_RANGE), 4 * (target_image.rows + 2 * SERACH_RANGE));
             std::vector<cv::Point2f> mvs;
 
             if (spatial_square.translation_flag) {
-                if(spatial_square.mv_translation.x + sx < -16 || spatial_square.mv_translation.y + sy < -16 || spatial_square.mv_translation.x + lx >= target_image.cols + 16 || spatial_square.mv_translation.y + ly >= target_image.rows + 16) continue;
+                if(spatial_square.mv_translation.x + sx < -SERACH_RANGE || spatial_square.mv_translation.y + sy < -SERACH_RANGE || spatial_square.mv_translation.x + lx >= target_image.cols + SERACH_RANGE || spatial_square.mv_translation.y + ly >= target_image.rows + SERACH_RANGE) continue;
                 if (!isMvExists(merge_vectors, spatial_square.mv_translation)) {
                     merge_vectors.emplace_back(spatial_square.mv_translation, MERGE);
                     mvs.emplace_back(spatial_square.mv_translation);
@@ -1965,7 +1965,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
                     merge_count++;
                 }
             } else {
-                if(spatial_square.mv_warping[0].x + sx < -16 || spatial_square.mv_warping[0].y + sy < -16 || spatial_square.mv_warping[0].x + lx >= target_image.cols + 16 || spatial_square.mv_warping[0].y + ly >= target_image.rows + 16) continue;
+                if(spatial_square.mv_warping[0].x + sx < -SERACH_RANGE || spatial_square.mv_warping[0].y + sy < -SERACH_RANGE || spatial_square.mv_warping[0].x + lx >= target_image.cols + SERACH_RANGE || spatial_square.mv_warping[0].y + ly >= target_image.rows + SERACH_RANGE) continue;
                 if (!isMvExists(merge_vectors, spatial_square.mv_warping[0])) {
                     merge_vectors.emplace_back(spatial_square.mv_warping[0], MERGE);
                     mvs.emplace_back(spatial_square.mv_warping[0]);
@@ -1983,7 +1983,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     }else{
         std::vector<Point3Vec> warping_vector_history;
         for(int i = 0 ; i < warping_vectors.size() ; i++){
-            cv::Rect rect(-64, -64, 4 * (target_image.cols + 2 * 16), 4 * (target_image.rows + 2 * 16));
+            cv::Rect rect(-4 * SERACH_RANGE, -4 * SERACH_RANGE, 4 * (target_image.cols + 2 * SERACH_RANGE), 4 * (target_image.rows + 2 * SERACH_RANGE));
             std::vector<cv::Point2f> mvs;
             std::vector<cv::Point2f> mvds;
 
@@ -1992,9 +1992,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
                 mvs.emplace_back(warping_vectors[i][1]);
                 mvs.emplace_back(warping_vectors[i][2]);
 
-                if(mvs[0].x + sx < -16 || mvs[0].y + sy < -16 || mvs[0].x + lx >= target_image.cols + 16  || mvs[0].y + ly>=target_image.rows + 16 ) continue;
-                if(mvs[1].x + sx < -16 || mvs[1].y + sy < -16 || mvs[1].x + lx >= target_image.cols + 16  || mvs[1].y + ly>=target_image.rows + 16 ) continue;
-                if(mvs[2].x + sx < -16 || mvs[2].y + sy < -16 || mvs[2].x + lx >= target_image.cols + 16  || mvs[2].y + ly>=target_image.rows + 16 ) continue;
+                if(mvs[0].x + sx < -SERACH_RANGE || mvs[0].y + sy < -SERACH_RANGE || mvs[0].x + lx >= target_image.cols + SERACH_RANGE  || mvs[0].y + ly>=target_image.rows + SERACH_RANGE ) continue;
+                if(mvs[1].x + sx < -SERACH_RANGE || mvs[1].y + sy < -SERACH_RANGE || mvs[1].x + lx >= target_image.cols + SERACH_RANGE  || mvs[1].y + ly>=target_image.rows + SERACH_RANGE ) continue;
+                if(mvs[2].x + sx < -SERACH_RANGE || mvs[2].y + sy < -SERACH_RANGE || mvs[2].x + lx >= target_image.cols + SERACH_RANGE  || mvs[2].y + ly>=target_image.rows + SERACH_RANGE ) continue;
 
                 if (!isMvExists(warping_vector_history, mvs)) {
                     double ret_residual = getSquareResidual_Pred(target_image, mvs, pixels_in_square, expansion_ref);
@@ -2612,15 +2612,15 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
     ly = 4 * sp4.y + 3;
 
     cv::Point2f mv_tmp(0.0, 0.0); //ブロックの動きベクトル
-    int SX = 16;                 // ブロックマッチングの探索範囲(X)
-    int SY = 16;                 // ブロックマッチングの探索範囲(Y)
-    int neighbor_pixels = 2;     //1 : 近傍 1 画素,  2 : 近傍 2 画素,   n : 近傍 n 画素
+    int SX = SERACH_RANGE;                 // ブロックマッチングの探索範囲(X)
+    int SY = SERACH_RANGE;                 // ブロックマッチングの探索範囲(Y)
+    int neighbor_pixels = BLOCKMATCHING_NEIGHBOR_PIXELS;     //1 : 近傍 1 画素,  2 : 近傍 2 画素,   n : 近傍 n 画素
 
     double rd, e;
     double rd_min = 1e9, e_min = 1e9;
 
     cv::Point2f mv_min;
-    int spread_quarter = 64;
+    int spread_quarter = 4 * SERACH_RANGE;
     int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
     std::vector<cv::Point2f> pixels = getPixelsInSquare(square);
     std::vector<int> spatial_squares = getSpatialSquareList(square_index);
@@ -2736,7 +2736,7 @@ SquareDivision::~SquareDivision() {
     std::vector<std::vector<cv::Mat>>().swap(ref_images);
     std::vector<std::vector<cv::Mat>>().swap(target_images);
 
-    int scaled_expansion_size = 16 + 2;
+    int scaled_expansion_size = SERACH_RANGE + 2;
     for(int i = -scaled_expansion_size ; i < target_image.cols + scaled_expansion_size ; i++){
         expansion_ref_uchar[i] -= scaled_expansion_size;
         free(expansion_ref_uchar[i]);
@@ -2744,11 +2744,11 @@ SquareDivision::~SquareDivision() {
     expansion_ref_uchar -= scaled_expansion_size;
     free(expansion_ref_uchar);
 
-    for(int i = 4 * 20 ; i < 4 * (ref_image.cols + 20) ; i++) {
-        ref_hevc[i] -= 4 * 20;
+    for(int i = 4 * (4 + SERACH_RANGE) ; i < 4 * (ref_image.cols + (4 + SERACH_RANGE)) ; i++) {
+        ref_hevc[i] -= 4 * (4 + SERACH_RANGE);
         free(ref_hevc[i]);
     }
-    ref_hevc -= 4 * 20;
+    ref_hevc -= 4 * (4 + SERACH_RANGE);
     free(ref_hevc);
 
 }

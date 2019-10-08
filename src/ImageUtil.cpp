@@ -125,7 +125,7 @@ double getSquareResidual(const cv::Mat &target_image, cv::Point2f mv, const std:
 
         int y;
 
-        y = img_ip(ref_hevc  , cv::Rect(-64, -64, 4 * (target_image.cols + 2 * 16), 4 * (target_image.rows + 2 * 16)), 4 * X_later.x, 4 * X_later.y, 1);
+        y = img_ip(ref_hevc  , cv::Rect(-4 * SERACH_RANGE, -4 * SERACH_RANGE, 4 * (target_image.cols + 2 * SERACH_RANGE), 4 * (target_image.rows + 2 * SERACH_RANGE)), 4 * X_later.x, 4 * X_later.y, 1);
 
         squared_error += fabs(y - (M(target_image, (int)pixel.x, (int)pixel.y)));
     }
@@ -136,7 +136,7 @@ double getSquareResidual(const cv::Mat &target_image, cv::Point2f mv, const std:
 double getSquareResidual_Mode(const cv::Mat &target_image, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_square_pixels, cv::Mat expansion_ref_image){
     cv::Point2f X_later;
 
-    int spread_quarter = 64;
+    int spread_quarter = 4 * SERACH_RANGE;
     double squared_error = 0.0;
 
     for(const auto& pixel : in_square_pixels) {
@@ -144,7 +144,7 @@ double getSquareResidual_Mode(const cv::Mat &target_image, std::vector<cv::Point
 
         int y;
 
-//        y = img_ip(ref_hevc  , cv::Rect(-64, -64, 4 * (target_image.cols + 2 * 16), 4 * (target_image.rows + 2 * 16)), 4 * X_later.x, 4 * X_later.y, 1);
+//        y = img_ip(ref_hevc  , cv::Rect(-4 * SERACH_RANGE, -4 * SERACH_RANGE, 4 * (target_image.cols + 2 * SERACH_RANGE), 4 * (target_image.rows + 2 * SERACH_RANGE)), 4 * X_later.x, 4 * X_later.y, 1);
     y = R(expansion_ref_image, (int)(4 * X_later.x + spread_quarter), (int)(4 * X_later.y + spread_quarter));
 
 //        squared_error += fabs(y - (M(target_image, (int)pixel.x, (int)pixel.y)));
@@ -157,7 +157,7 @@ double getSquareResidual_Mode(const cv::Mat &target_image, std::vector<cv::Point
 double getSquareResidual_Pred(const cv::Mat &target_image, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_square_pixels, cv::Mat expansion_ref_image){
     cv::Point2f X_later;
 
-    int spread_quarter = 64;
+    int spread_quarter = 4 * SERACH_RANGE;
     double squared_error = 0.0;
 
     for(const auto& pixel : in_square_pixels) {
@@ -380,7 +380,7 @@ EXPAND_ARRAY_TYPE getExpandImages(std::vector<std::vector<cv::Mat>> ref_images, 
                     }
                 }
             }
-            int spread = expand;// 双3次補間を行うために、画像の周り(16+2)=18ピクセルだけ折り返し
+            int spread = expand;// 双3次補間を行うために、画像の周り(SERACH_RANGE+2)=18ピクセルだけ折り返し
             for (int j = 0; j < current_target_image.rows; j++) {
                 for (int i = 1; i <= spread; i++) {
                     current_target_expand[-i][j] = current_target_expand[0][j];
@@ -808,7 +808,7 @@ unsigned char** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
     std::cout << "scaled_expantion_size:" << k * scaled_expansion_size << std::endl;
     return ret;
 }
-                                                 // 4      16
+                                                 // 4      SERACH_RANGE
 cv::Mat getExpansionMatHEVCImage(cv::Mat image, int k, int expansion_size){
     unsigned char **expansion_image = getExpansionHEVCImage(image, k, expansion_size);
 

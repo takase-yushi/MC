@@ -186,15 +186,15 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point4Ve
         ly = 4 * sp4.y + 3;
 
         cv::Point2f mv_tmp(0.0, 0.0); //ブロックの動きベクトル
-        int SX = 16;                 // ブロックマッチングの探索範囲(X)
-        int SY = 16;                 // ブロックマッチングの探索範囲(Y)
-        int neighbor_pixels = 2;     //1 : 近傍 1 画素,  2 : 近傍 2 画素,   n : 近傍 n 画素
+        int SX = SERACH_RANGE;                 // ブロックマッチングの探索範囲(X)
+        int SY = SERACH_RANGE;                 // ブロックマッチングの探索範囲(Y)
+        int neighbor_pixels = BLOCKMATCHING_NEIGHBOR_PIXELS;     //1 : 近傍 1 画素,  2 : 近傍 2 画素,   n : 近傍 n 画素
 
         double e;
         double e_min = 1e9;
 
         cv::Point2f mv_min;
-        int spread_quarter = 64;
+        int spread_quarter = 4 * SERACH_RANGE;
         int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
         std::vector<cv::Point2f> pixels = getPixelsInSquare(square);
 
@@ -560,7 +560,7 @@ double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::
 
         int y;
         if(ref_hevc != nullptr){
-            y = img_ip(ref_hevc, cv::Rect(-64, -64, 4 * (target_image.cols + 2 * 16), 4 * (target_image.rows + 2 * 16)), 4 * X_later.x, 4 * X_later.y, 1);
+            y = img_ip(ref_hevc, cv::Rect(-4 * SERACH_RANGE, -4 * SERACH_RANGE, 4 * (target_image.cols + 2 * SERACH_RANGE), 4 * (target_image.rows + 2 * SERACH_RANGE)), 4 * X_later.x, 4 * X_later.y, 1);
         }else{
             std::cout << X_later.x << " " << X_later.y << std::endl;
             y = bicubic_interpolation(expand_ref, X_later.x, X_later.y);
@@ -682,7 +682,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
             current_target_expand     = expand_image[filter_num][step][2];
             current_target_org_expand = expand_image[filter_num][step][3];
 
-            int spread = 16; // 探索範囲は16までなので16に戻す
+            int spread = SERACH_RANGE; // 探索範囲は16までなので16に戻す
 
             int scaled_spread = spread / scale;
             p0 = target_corners.p1 / scale;

@@ -96,6 +96,8 @@ enum {
 #define STORE_IMG_LOG false
 #define RD_BLOCK_MATCHING true
 #define SPLIT_USE_SSE false
+#define SERACH_RANGE 64
+#define BLOCKMATCHING_NEIGHBOR_PIXELS 1
 
 const std::string OS = "Ubuntu";
 

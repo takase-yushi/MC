@@ -223,7 +223,7 @@ void run(std::string config_name) {
         }
 
         std::vector<std::vector<std::vector<unsigned char **>>> expand_images;
-        int expand = 16;
+        int expand = SERACH_RANGE;
         if(expand_images_with_qp.count(qp) == 0) {
             expand_images = getExpandImages(ref_images, target_images, expand);
             expand_images_with_qp[qp] = expand_images;
@@ -460,7 +460,7 @@ void run_square(std::string config_name) {
         }
 
         std::vector<std::vector<std::vector<unsigned char **>>> expand_images;
-        int expand = 16;
+        int expand = SERACH_RANGE;
         if(expand_images_with_qp.count(qp) == 0) {
             expand_images = getExpandImages(ref_images, target_images, expand);
             expand_images_with_qp[qp] = expand_images;
