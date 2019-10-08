@@ -48,6 +48,8 @@ bool lambda_inject_flag;
 
 std::string out_file_suffix = "_parallel_only";
 
+#define SEARCH_RANGE 16
+
 int main(int argc, char *argv[]){
     // Write test codes below
 #if TEST_MODE
