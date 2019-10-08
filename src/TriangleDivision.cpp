@@ -207,12 +207,12 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
     ref_images = getRefImages(ref_image, ref_gauss_image);
     target_images = getTargetImages(target_image);
 
-    int expansion_size = 16;
+    int expansion_size = SEARCH_RANGE;
     int scaled_expansion_size = expansion_size + 2;
     if(HEVC_REF_IMAGE) expansion_ref = getExpansionMatHEVCImage(ref_image, 4, expansion_size);
     else expansion_ref = getExpansionMatImage(ref_image, 4, scaled_expansion_size);
 
-    ref_hevc = getExpansionHEVCImage(ref_image, 4, 16);
+    ref_hevc = getExpansionHEVCImage(ref_image, 4, SEARCH_RANGE);
 
     cv::Mat tmp_mat = getExpansionMatImage(ref_image, 1, scaled_expansion_size);
 
@@ -1124,7 +1124,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 mvs.emplace_back(ctu->mv2);
                 mvs.emplace_back(ctu->mv3);
             }
-            getPredictedImage(expansion_ref_uchar, target_image, intra_tmp_image, triangle, mvs, 16, diagonal_line_area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
+            getPredictedImage(expansion_ref_uchar, target_image, intra_tmp_image, triangle, mvs, SEARCH_RANGE, diagonal_line_area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
         }
 
         std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, diagonal_line_area_flag, triangle_index, ctu, block_size_x, block_size_y);
@@ -1559,7 +1559,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 mvs.emplace_back(ctu->mv2);
                 mvs.emplace_back(ctu->mv3);
             }
-            getPredictedImage(expansion_ref_uchar, target_image, intra_tmp_image, triangle, mvs, 16, diagonal_line_area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
+            getPredictedImage(expansion_ref_uchar, target_image, intra_tmp_image, triangle, mvs, SEARCH_RANGE, diagonal_line_area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
         }
         std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, diagonal_line_area_flag, triangle_index, ctu, block_size_x, block_size_y);
         for(const auto& p : pixels) intra_flag[p.x][p.y] = true;
@@ -2283,11 +2283,11 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             int spatial_triangle_index = spatial_triangles[i];
             GaussResult spatial_triangle = triangle_gauss_results[spatial_triangle_index];
             std::vector<cv::Point2f> mvds;
-            cv::Rect rect(-64, -64, 4 * (target_image.cols + 2 * 16), 4 * (target_image.rows + 2 * 16));
+            cv::Rect rect(-SEARCH_RANGE * 4, -SEARCH_RANGE * 4, 4 * (target_image.cols + 2 * SEARCH_RANGE), 4 * (target_image.rows + 2 * SEARCH_RANGE));
             std::vector<cv::Point2f> mvs;
 
             if (spatial_triangle.translation_flag) {
-                if(spatial_triangle.mv_translation.x + sx < -16 || spatial_triangle.mv_translation.y + sy < -16 || spatial_triangle.mv_translation.x + lx >= target_image.cols + 16 || spatial_triangle.mv_translation.y + ly >= target_image.rows + 16) continue;
+                if(spatial_triangle.mv_translation.x + sx < -SEARCH_RANGE || spatial_triangle.mv_translation.y + sy < -SEARCH_RANGE || spatial_triangle.mv_translation.x + lx >= target_image.cols + SEARCH_RANGE || spatial_triangle.mv_translation.y + ly >= target_image.rows + SEARCH_RANGE) continue;
                 if (!isMvExists(merge_vectors, spatial_triangle.mv_translation) && merge_count < MV_LIST_MAX_NUM) {
                     merge_vectors.emplace_back(spatial_triangle.mv_translation, MERGE);
                     mvs.emplace_back(spatial_triangle.mv_translation);
@@ -2300,7 +2300,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                     merge_count++;
                 }
             } else {
-                if(spatial_triangle.mv_warping[0].x + sx < -16 || spatial_triangle.mv_warping[0].y + sy < -16 || spatial_triangle.mv_warping[0].x + lx >= target_image.cols + 16 || spatial_triangle.mv_warping[0].y + ly >= target_image.rows + 16) continue;
+                if(spatial_triangle.mv_warping[0].x + sx < -SEARCH_RANGE || spatial_triangle.mv_warping[0].y + sy < -SEARCH_RANGE || spatial_triangle.mv_warping[0].x + lx >= target_image.cols + SEARCH_RANGE || spatial_triangle.mv_warping[0].y + ly >= target_image.rows + SEARCH_RANGE) continue;
                 if (!isMvExists(merge_vectors, spatial_triangle.mv_warping[0]) && merge_count < MV_LIST_MAX_NUM) {
                     merge_vectors.emplace_back(spatial_triangle.mv_warping[0], MERGE);
                     mvs.emplace_back(spatial_triangle.mv_warping[0]);
@@ -2319,7 +2319,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
     }else{
         std::vector<Point3Vec> warping_vector_history;
         for(int i = 0 ; i < warping_vectors.size() ; i++){
-            cv::Rect rect(-64, -64, 4 * (target_image.cols + 2 * 16), 4 * (target_image.rows + 2 * 16));
+            cv::Rect rect(-SEARCH_RANGE * 4, -SEARCH_RANGE * 4, 4 * (target_image.cols + 2 * SEARCH_RANGE), 4 * (target_image.rows + 2 * SEARCH_RANGE));
             std::vector<cv::Point2f> mvs;
             std::vector<cv::Point2f> mvds;
 
@@ -2328,9 +2328,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 mvs.emplace_back(warping_vectors[i][1]);
                 mvs.emplace_back(warping_vectors[i][2]);
 
-                if(mvs[0].x + sx < -16 || mvs[0].y + sy < -16 || mvs[0].x + lx >= target_image.cols + 16  || mvs[0].y + ly>=target_image.rows + 16 ) continue;
-                if(mvs[1].x + sx < -16 || mvs[1].y + sy < -16 || mvs[1].x + lx >= target_image.cols + 16  || mvs[1].y + ly>=target_image.rows + 16 ) continue;
-                if(mvs[2].x + sx < -16 || mvs[2].y + sy < -16 || mvs[2].x + lx >= target_image.cols + 16  || mvs[2].y + ly>=target_image.rows + 16 ) continue;
+                if(mvs[0].x + sx < -SEARCH_RANGE || mvs[0].y + sy < -SEARCH_RANGE || mvs[0].x + lx >= target_image.cols + SEARCH_RANGE  || mvs[0].y + ly>=target_image.rows + SEARCH_RANGE ) continue;
+                if(mvs[1].x + sx < -SEARCH_RANGE || mvs[1].y + sy < -SEARCH_RANGE || mvs[1].x + lx >= target_image.cols + SEARCH_RANGE  || mvs[1].y + ly>=target_image.rows + SEARCH_RANGE ) continue;
+                if(mvs[2].x + sx < -SEARCH_RANGE || mvs[2].y + sy < -SEARCH_RANGE || mvs[2].x + lx >= target_image.cols + SEARCH_RANGE  || mvs[2].y + ly>=target_image.rows + SEARCH_RANGE ) continue;
 
                 if (!isMvExists(warping_vector_history, mvs) && warping_vector_history.size() <= MV_LIST_MAX_NUM) {
                     double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
@@ -2524,7 +2524,7 @@ void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &ou
             }
 
         }else {
-            getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, 16, area_flag, ctu->triangle_index,
+            getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, SEARCH_RANGE, area_flag, ctu->triangle_index,
                               ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
         }
         return;
@@ -2613,7 +2613,7 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
                 }
             }
 
-//            getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, 16, area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
+//            getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, SEARCH_RANGE, area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
         }
         return;
     }
@@ -2710,13 +2710,13 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> TriangleDivision::full
     ly = sy + height * 4 - 1;
 
     cv::Point2f mv_tmp(0.0, 0.0); //三角パッチの動きベクトル
-    int SX = 16; // ブロックマッチングの探索範囲(X)
-    int SY = 16; // ブロックマッチングの探索範囲(Y)
+    int SX = SEARCH_RANGE; // ブロックマッチングの探索範囲(X)
+    int SY = SEARCH_RANGE; // ブロックマッチングの探索範囲(Y)
 
     double error_min = 1e9, rd_min = 1e9;
     int e_count;
     cv::Point2f mv_min;
-    int spread_quarter = 64;
+    int spread_quarter = SEARCH_RANGE * 4;
     int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
     std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, block_size_x, block_size_y);
 
@@ -2789,7 +2789,7 @@ TriangleDivision::~TriangleDivision() {
     std::vector<std::vector<cv::Mat>>().swap(ref_images);
     std::vector<std::vector<cv::Mat>>().swap(target_images);
 
-    int scaled_expansion_size = 16 + 2;
+    int scaled_expansion_size = SEARCH_RANGE + 2;
     for(int i = -scaled_expansion_size ; i < target_image.cols + scaled_expansion_size ; i++){
         expansion_ref_uchar[i] -= scaled_expansion_size;
         free(expansion_ref_uchar[i]);
@@ -2797,11 +2797,11 @@ TriangleDivision::~TriangleDivision() {
     expansion_ref_uchar -= scaled_expansion_size;
     free(expansion_ref_uchar);
 
-    for(int i = 4 * 20 ; i < 4 * (ref_image.cols + 20) ; i++) {
-        ref_hevc[i] -= 4 * 20;
+    for(int i = 4 * (SEARCH_RANGE + 4) ; i < 4 * (ref_image.cols + (SEARCH_RANGE + 4)) ; i++) {
+        ref_hevc[i] -= 4 * (SEARCH_RANGE + 4);
         free(ref_hevc[i]);
     }
-    ref_hevc -= 4 * 20;
+    ref_hevc -= 4 * (SEARCH_RANGE + 4);
     free(ref_hevc);
 
 }
