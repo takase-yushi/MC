@@ -79,8 +79,11 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     fprintf(fp, "Spatial_patch         :%d\n", spatial_counter);
     fprintf(fp, "merge_patch           :%d\n", merge_counter);
     fprintf(fp, "merge_flag_entropy    :%f\n", getEntropy({merge_flag_counter[0], merge_flag_counter[1]}));
-    fprintf(fp, "intra_patch           :%d\n", intra_counter);
-    fprintf(fp, "intra_flag_entropy    :%f\n", getEntropy({intra_flag_counter[0], intra_flag_counter[1]}));
+
+    if(INTRA_MODE) {
+        fprintf(fp, "intra_patch           :%d\n", intra_counter);
+        fprintf(fp, "intra_flag_entropy    :%f\n", getEntropy({intra_flag_counter[0], intra_flag_counter[1]}));
+    }
 
     fclose(fp);
 }
@@ -201,6 +204,6 @@ void Analyzer::storeCsvFileWithStream(std::ofstream &ofs, double psnr) {
     int tmp_code_sum = code_sum - (int)ceil(greater_0_flag_sum * getEntropy({greater_0_flag_counter[0], greater_0_flag_counter[1]}));
     tmp_code_sum = tmp_code_sum - (int)ceil(greater_1_flag_sum * getEntropy({greater_1_flag_counter[0], greater_1_flag_counter[1]}));
     tmp_code_sum = tmp_code_sum - (int)ceil(merge_counter * getEntropy({merge_flag_counter[0], merge_flag_counter[1]}));
-    tmp_code_sum = tmp_code_sum - (int)ceil(intra_counter * getEntropy({intra_flag_counter[0], intra_flag_counter[1]}));
+    if(INTRA_MODE) tmp_code_sum = tmp_code_sum - (int)ceil(intra_counter * getEntropy({intra_flag_counter[0], intra_flag_counter[1]}));
     ofs << qp << "," << getLambdaPred(qp, 1.0) << "," << code_sum << "," << tmp_code_sum << "," << psnr << std::endl;
 }
