@@ -52,8 +52,8 @@ std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point3Vec tr, const c
     ly = std::max({tp1.y, tp2.y, tp3.y});
 
     cv::Point2f mv_tmp(0.0, 0.0); //三角パッチの動きベクトル
-    int SX = 16; // ブロックマッチングの探索範囲(X)
-    int SY = 16; // ブロックマッチングの探索範囲(Y)
+    int SX = SEARCH_RANGE; // ブロックマッチングの探索範囲(X)
+    int SY = SEARCH_RANGE; // ブロックマッチングの探索範囲(Y)
 
     double e, error_min;
     int e_count;
@@ -61,7 +61,7 @@ std::tuple<std::vector<cv::Point2f>, double> blockMatching(Point3Vec tr, const c
     error_min = 1 << 20;
     cv::Point2d xp(0.0, 0.0);
     cv::Point2f mv_min;
-    int spread_quarter = 64;
+    int spread_quarter = SEARCH_RANGE * 4;
     int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
 
     for(int j = -SY * 4 ; j <= SY * 4 ; j += s) {            //j : y方向のMV
@@ -203,7 +203,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
     double e = 1e9, error_min = 1e9;
     int e_count;
     cv::Point2f mv_min;
-    int spread_quarter = 64;
+    int spread_quarter = SEARCH_RANGE * 4;
     int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
     extern int block_size_x;
     extern int block_size_y;
@@ -397,7 +397,7 @@ double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::
 
         int y;
         if(ref_hevc != nullptr){
-            y = img_ip(ref_hevc, cv::Rect(-64, -64, 4 * (target_image.cols + 2 * 16), 4 * (target_image.rows + 2 * 16)), 4 * X_later.x, 4 * X_later.y, 1);
+            y = img_ip(ref_hevc, cv::Rect(-SEARCH_RANGE * 4, -SEARCH_RANGE * 4, 4 * (target_image.cols + 2 * SEARCH_RANGE), 4 * (target_image.rows + 2 * SEARCH_RANGE)), 4 * X_later.x, 4 * X_later.y, 1);
         }else{
             std::cout << X_later.x << " " << X_later.y << std::endl;
             y = bicubic_interpolation(expand_ref, X_later.x, X_later.y);
@@ -475,8 +475,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
     if(init_vector.x == -1000 && init_vector.y == -1000) {
         for (int by = -bm_y_offset; by < bm_y_offset; by++) {
             for (int bx = -bm_x_offset; bx < bm_x_offset; bx++) {
-                if (sx + bx < -16 || ref_images[0][3].cols + 16 <= (lx + bx) || sy + by < -16 ||
-                    ref_images[0][3].rows + 16 <= (ly + by))
+                if (sx + bx < -SEARCH_RANGE || ref_images[0][3].cols + SEARCH_RANGE <= (lx + bx) || sy + by < -SEARCH_RANGE ||
+                    ref_images[0][3].rows + SEARCH_RANGE <= (ly + by))
                     continue;
                 double error_tmp = 0.0;
                 for (const auto &pixel : pixels_in_triangle) {
@@ -519,7 +519,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
             current_target_expand     = expand_image[filter_num][step][2];
             current_target_org_expand = expand_image[filter_num][step][3];
 
-            int spread = 16; // 探索範囲は16までなので16に戻す
+            int spread = SEARCH_RANGE; // 探索範囲は16までなので16に戻す
 
             int scaled_spread = spread / scale;
             p0 = target_corners.p1 / scale;

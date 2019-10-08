@@ -48,8 +48,6 @@ bool lambda_inject_flag;
 
 std::string out_file_suffix = "_parallel_only";
 
-#define SEARCH_RANGE 16
-
 int main(int argc, char *argv[]){
     // Write test codes below
 #if TEST_MODE
@@ -228,7 +226,7 @@ void run(std::string config_name) {
         }
 
         std::vector<std::vector<std::vector<unsigned char **>>> expand_images;
-        int expand = 16;
+        int expand = SEARCH_RANGE;
         if(expand_images_with_qp.count(qp) == 0) {
             expand_images = getExpandImages(ref_images, target_images, expand);
             expand_images_with_qp[qp] = expand_images;
