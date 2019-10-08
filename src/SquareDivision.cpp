@@ -1959,9 +1959,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
                     mvs.emplace_back(spatial_square.mv_translation);
                     mvs.emplace_back(spatial_square.mv_translation);
                     double ret_residual = getSquareResidual_Pred(target_image, mvs, pixels_in_square, expansion_ref);
-                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
-                    results.emplace_back(rd, getUnaryCodeLength(merge_count) + 1, mvs, merge_count, MERGE,
-                                         FlagsCodeSum(0, 0, 0, 0), Flags());
+                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count));
+                    results.emplace_back(rd, getUnaryCodeLength(merge_count), mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
                 }
             } else {
@@ -1972,9 +1971,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
                     mvs.emplace_back(spatial_square.mv_warping[0]);
                     mvs.emplace_back(spatial_square.mv_warping[0]);
                     double ret_residual = getSquareResidual_Pred(target_image, mvs, pixels_in_square, expansion_ref);
-                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
-                    results.emplace_back(rd, getUnaryCodeLength(merge_count) + 1, mvs, merge_count, MERGE,
-                                         FlagsCodeSum(0, 0, 0, 0), Flags());
+                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count));
+                    results.emplace_back(rd, getUnaryCodeLength(merge_count), mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
                 }
             }
@@ -1998,8 +1996,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
 
                 if (!isMvExists(warping_vector_history, mvs)) {
                     double ret_residual = getSquareResidual_Pred(target_image, mvs, pixels_in_square, expansion_ref);
-                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
-                    results.emplace_back(rd, getUnaryCodeLength(merge_count) + 1, mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
+                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count));
+                    results.emplace_back(rd, getUnaryCodeLength(merge_count), mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
                     warping_vector_history.emplace_back(mvs[0], mvs[1], mvs[2]);
                 }
@@ -2542,7 +2540,8 @@ int SquareDivision::getCtuCodeLength(std::vector<CodingTreeUnit*> ctus) {
 int SquareDivision::getCtuCodeLength(CodingTreeUnit *ctu){
 
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
-        return 1+ctu->code_length;
+        // ここで足している1はマージフラグ分です
+        return 1 + ctu->code_length;
     }
 
     // ここで足している1はsplit_cu_flag分です
