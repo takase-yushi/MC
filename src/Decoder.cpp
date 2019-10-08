@@ -168,7 +168,7 @@ void Decoder::initTriangle(int _block_size_x, int _block_size_y, int _divide_ste
         delete_flag[i] = false;
     }
 
-    int expansion_size = 16;
+    int expansion_size = SEARCH_RANGE;
     int scaled_expansion_size = expansion_size + 2;
     hevc_expansion_ref = getExpansionMatHEVCImage(ref_image, 4, scaled_expansion_size);
 
@@ -475,7 +475,7 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
                     GaussResult spatial_triangle = triangle_info[spatial_triangle_list[i]];
 
                     if(spatial_triangle.translation_flag){
-                        if(spatial_triangle.mv_translation.x + sx < -16 || spatial_triangle.mv_translation.y + sy < -16 || spatial_triangle.mv_translation.x + lx >= target_image.cols + 16 || spatial_triangle.mv_translation.y + ly >= target_image.rows + 16) continue;
+                        if(spatial_triangle.mv_translation.x + sx < -SEARCH_RANGE || spatial_triangle.mv_translation.y + sy < -SEARCH_RANGE || spatial_triangle.mv_translation.x + lx >= target_image.cols + SEARCH_RANGE || spatial_triangle.mv_translation.y + ly >= target_image.rows + SEARCH_RANGE) continue;
 
                         if(!isMvExists(merge_list, spatial_triangle.mv_translation) && merge_list.size() < MV_LIST_MAX_NUM) {
                             merge_list.emplace_back(spatial_triangle.mv_translation, MERGE);
@@ -483,7 +483,7 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
                         }
 
                     }else{
-                        if (spatial_triangle.mv_warping[0].x + sx < -16 || spatial_triangle.mv_warping[0].y + sy < -16 || spatial_triangle.mv_warping[0].x + lx >= target_image.cols + 16 || spatial_triangle.mv_warping[0].y + ly >= target_image.rows + 16) continue;
+                        if (spatial_triangle.mv_warping[0].x + sx < -SEARCH_RANGE || spatial_triangle.mv_warping[0].y + sy < -SEARCH_RANGE || spatial_triangle.mv_warping[0].x + lx >= target_image.cols + SEARCH_RANGE || spatial_triangle.mv_warping[0].y + ly >= target_image.rows + SEARCH_RANGE) continue;
 
                         if(!isMvExists(merge_list, spatial_triangle.mv_warping[0]) && merge_list.size() < MV_LIST_MAX_NUM) {
                             merge_list.emplace_back(spatial_triangle.mv_warping[0], MERGE);
@@ -517,9 +517,9 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
                     if(warping_vector_list[i].empty()) continue;
                     std::vector<cv::Point2f> mvs = warping_vector_list[i];
 
-                    if(mvs[0].x + sx < -16 || mvs[0].y + sy < -16 || mvs[0].x + lx >= target_image.cols + 16  || mvs[0].y + ly>=target_image.rows + 16 ) continue;
-                    if(mvs[1].x + sx < -16 || mvs[1].y + sy < -16 || mvs[1].x + lx >= target_image.cols + 16  || mvs[1].y + ly>=target_image.rows + 16 ) continue;
-                    if(mvs[2].x + sx < -16 || mvs[2].y + sy < -16 || mvs[2].x + lx >= target_image.cols + 16  || mvs[2].y + ly>=target_image.rows + 16 ) continue;
+                    if(mvs[0].x + sx < -SEARCH_RANGE || mvs[0].y + sy < -SEARCH_RANGE || mvs[0].x + lx >= target_image.cols + SEARCH_RANGE  || mvs[0].y + ly>=target_image.rows + SEARCH_RANGE ) continue;
+                    if(mvs[1].x + sx < -SEARCH_RANGE || mvs[1].y + sy < -SEARCH_RANGE || mvs[1].x + lx >= target_image.cols + SEARCH_RANGE  || mvs[1].y + ly>=target_image.rows + SEARCH_RANGE ) continue;
+                    if(mvs[2].x + sx < -SEARCH_RANGE || mvs[2].y + sy < -SEARCH_RANGE || mvs[2].x + lx >= target_image.cols + SEARCH_RANGE  || mvs[2].y + ly>=target_image.rows + SEARCH_RANGE ) continue;
 
                     if(!isMvExists(merge_mv_list, warping_vector_list[i]) && merge_mv_list.size() < MV_LIST_MAX_NUM){
                         merge_mv_list.emplace_back(warping_vector_list[i]);
