@@ -127,9 +127,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
             // 前の動きベクトルを保持しておくやつ
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
-
-            //参照ブロックの頂点を入れておくやつ
-            reference_block_list.emplace_back();
         }
     }
 
