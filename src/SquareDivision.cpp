@@ -1368,74 +1368,33 @@ SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1
  * @return 候補のパッチの番号を返す
  */
 std::vector<int> SquareDivision::getSpatialSquareList(int s_idx){
-    Square square = squares[s_idx];
-//    std::set<int> spatialSquares;
-    std::vector<int> list1 = getIdxCoveredSquareIndexList(square.p1_idx);
-    std::vector<int> list2 = getIdxCoveredSquareIndexList(square.p2_idx);
-    std::vector<int> list3 = getIdxCoveredSquareIndexList(square.p3_idx);
+    //隣接するブロックを取得する
+    std::vector<int> reference_vertexes = reference_block_list[s_idx];
 
-    std::vector<int> mutualIndexSet1, mutualIndexSet2, mutualIndexSet3;
+    std::vector<int> reference_block;
+    std::set<int> tmp_rb;
+    for(auto reference_vertex : reference_vertexes){
+        tmp_rb = covered_square[reference_vertex];
+        for(auto idx : tmp_rb) reference_block.emplace_back(idx);
+    }
+
+    std::vector<int> ret;
 
 #if MVD_DEBUG_LOG
-    std::cout << "p1:" << squares[s_idx].p1_idx << std::endl;
-    for(auto item : list1){
-        std::cout << item << std::endl;
-    }
-    puts("");
-
-    std::cout << "p2:" << squares[s_idx].p2_idx << std::endl;
-    for(auto item : list2){
-        std::cout << item << std::endl;
-    }
-    puts("");
-    std::cout << "p3:" << squares[s_idx].p3_idx << std::endl;
-    puts("");
-    std::cout << "p4:" << squares[s_idx].p4_idx << std::endl;
-
-    for(auto item : list3){
-        std::cout << item << std::endl;
-    }
-    std::cout << "s_idx:" << s_idx << std::endl;
-    puts("");
+//    std::cout << "p1:" << squares[s_idx].p1_idx << std::endl;
+//    for(auto item : list1){
+//        std::cout << item << std::endl;
+//    }
+//    puts("");
+//
+//    std::cout << "s_idx:" << s_idx << std::endl;
+//    puts("");
 
 #endif
 
-    for(auto idx : list1) if(isCodedSquare[idx] && idx != s_idx) mutualIndexSet1.emplace_back(idx);
-    for(auto idx : list2) if(isCodedSquare[idx] && idx != s_idx) mutualIndexSet2.emplace_back(idx);
-    for(auto idx : list3) if(isCodedSquare[idx] && idx != s_idx) mutualIndexSet3.emplace_back(idx);
-
-    //四角形インデックスが若い順だとHMの優先度の逆になってしまうので逆順にする。
-    reverse(mutualIndexSet2.begin(), mutualIndexSet2.end());
-    reverse(mutualIndexSet3.begin(), mutualIndexSet3.end());
-
-    std::vector<int> ret = std::vector<int>();
-
-    //優先度が高い順に入れていく
-    for(auto idx : mutualIndexSet3){
-        ret.emplace_back(idx);
-    }
-
-    for(auto idx : mutualIndexSet2){
-        ret.emplace_back(idx);
-    }
-
-    for(auto idx : mutualIndexSet1){
-        ret.emplace_back(idx);
-    }
-
-    //重複部分を削除
-    for(int i = 0 ; i < ret.size() ; i++) {
-        for(int j = i + 1 ; j < ret.size() ; j++) {
-            if(ret[i] == ret[j]) {
-                ret.erase(ret.begin() + j);
-                j--;
-            }
-        }
-    }
+    for(auto idx : reference_block) if(isCodedSquare[idx] && idx != s_idx) ret.emplace_back(idx);
 
 //    std::cout << "SpatialSquareList_size : " << ret.size() << std::endl;
-
-//    ret.emplace_back(s_idx);
 
     return ret;
 }
