@@ -250,7 +250,19 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
         }
     }
 
-    std::cout << "reference_block_list.size = " << reference_block_list.size() << std::endl;
+//    for(int i = 0 ; i < reference_block_list.size() ; i++) {
+//        std::cout << "square_index : " << i << std::endl << "reference_block : ";
+//        for(auto rbl : reference_block_list[i]) {
+//            std::set<int> tmp_s;
+//            tmp_s = covered_square[rbl];
+//            for(auto idx : tmp_s)
+//                std::cout << idx << ", ";
+//        }
+//        std::cout << std::endl;
+//    }
+//
+//    std::cout << "reference_block_list.size = " << reference_block_list.size() << std::endl;
+//    exit(10);
 }
 
 /**
