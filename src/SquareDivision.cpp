@@ -373,6 +373,7 @@ int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx)
     square_gauss_results.emplace_back();
     square_gauss_results[square_gauss_results.size() - 1].residual = -1.0;
     delete_flag.emplace_back(false);
+    reference_block_list.emplace_back();
 
     return static_cast<int>(squares.size() - 1);
 }
