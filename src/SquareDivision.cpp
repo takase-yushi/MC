@@ -217,29 +217,29 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
                                                                                                 //   ---------------     ---------------
             int sp_idx = getCornerIndex(sp);                                                    //   ---------------
             if(sp_idx != -1) {                                                                  //   |           1●|
-                // 1の頂点を含む四角形を入れる                    　                              //   |             |
+                // 1の頂点を入れる                    　             　　　　　　　　　　   　　          //   |             |
                 reference_block_list[square_index].emplace_back(sp_idx);                        //   |             |
             }                                                                                   //   |             |
-            // 2の頂点を含む四角形を入れる                                                       //   ---------------
+            // 2の頂点を入れる                                       　　　　　　　　　                //   ---------------
             sp.y--;
             sp_idx = getCornerIndex(sp);
             if(sp_idx != -1) {
                 reference_block_list[square_index].emplace_back(sp_idx);
             }
-            // 3の頂点を含む四角形を入れる
+            // 3の頂点を入れる
             sp = corners[p2_idx];
             sp.x++; sp.y--;
             sp_idx = getCornerIndex(sp);
             if(sp_idx != -1) {
                 reference_block_list[square_index].emplace_back(sp_idx);
             }
-            // 4の頂点を含む四角形を入れる
+            // 4の頂点を入れる
             sp.x--;
             sp_idx = getCornerIndex(sp);
             if(sp_idx != -1) {
                 reference_block_list[square_index].emplace_back(sp_idx);
             }
-            // 5の頂点を含む四角形を入れる
+            // 5の頂点を入れる
             sp = corners[p1_idx];
             sp.x--; sp.y--;
             sp_idx = getCornerIndex(sp);
