@@ -978,8 +978,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 #if !MVD_DEBUG_LOG
 //    #pragma omp parallel for
 #endif
-    for (int j = 0; j < (int) subdiv_ref_squares.size(); j++) {
-//        square_gauss_results.emplace_back();
+    for (int j = 0; j < (int) subdiv_target_squares.size(); j++) {
         double error_warping_tmp, error_translation_tmp;
         int square_size_tmp;
         cv::Point2f mv_translation_tmp;
@@ -1288,7 +1287,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         return true;
     }else{
         //4分割により追加された頂点12個を消す
-//        same_corner_list.erase(same_corner_list.end() - 12,same_corner_list.end());
         corners.erase(corners.end() - 12, corners.end());
         eraseCornerFlag(split_sub_squares1.s1, split_sub_squares1.s2, split_sub_squares2.s1, split_sub_squares2.s2);
         isCodedSquare[square_index] = true;
