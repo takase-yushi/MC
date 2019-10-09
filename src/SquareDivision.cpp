@@ -589,7 +589,7 @@ int SquareDivision::getOrAddCornerIndex(cv::Point2f p) {
  * @return 頂点番号
  */
 int SquareDivision::getCornerIndex(cv::Point2f p) {
-    if(p.x != -1 && p.y != -1) {
+    if(0 <= p.x && p.x < 1920 && 0 <= p.y && p.y < 1024) {
         if (corner_flag[(int) (p.y)][(int) (p.x)] != -1)
             return corner_flag[(int) (p.y)][(int) (p.x)]; //すでに頂点がある場合
         return -1;
