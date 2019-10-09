@@ -943,10 +943,17 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             reference_block_list[square_indexes[j]].emplace_back(sp5_idx);
         }
         else {
+            cv::Point2f sp5_2 = sp5;
             sp5.y++;
+            sp5_2.x++;
             for(int i = 0 ; i < 7 ; i++) {
                 sp5.y -= 8;
                 if((sp5_idx = getCornerIndex(sp5)) != -1) {
+                    reference_block_list[square_indexes[j]].emplace_back(sp5_idx);
+                    break;
+                }
+                sp5_2.x--;
+                if((sp5_idx = getCornerIndex(sp5_2)) != -1) {
                     reference_block_list[square_indexes[j]].emplace_back(sp5_idx);
                     break;
                 }
