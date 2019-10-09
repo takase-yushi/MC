@@ -86,7 +86,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
 
             corners.emplace_back(nx, ny);
             corner_flag[ny][nx] = static_cast<int>(corners.size() - 1);
-            same_corner_list.emplace_back();
             neighbor_vtx.emplace_back();
 
             // 前の動きベクトルを保持しておくやつ
@@ -98,7 +97,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
 
             corners.emplace_back(nx, ny);
             corner_flag[ny][nx] = static_cast<int>(corners.size() - 1);
-            same_corner_list.emplace_back();
             neighbor_vtx.emplace_back();
 
             // 前の動きベクトルを保持しておくやつ
@@ -113,7 +111,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
 
             corners.emplace_back(nx, ny);
             corner_flag[ny][nx] = static_cast<int>(corners.size() - 1);
-            same_corner_list.emplace_back();
             neighbor_vtx.emplace_back();
 
             // 前の動きベクトルを保持しておくやつ
@@ -125,12 +122,14 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
 
             corners.emplace_back(nx, ny);
             corner_flag[ny][nx] = static_cast<int>(corners.size() - 1);
-            same_corner_list.emplace_back();
             neighbor_vtx.emplace_back();
 
             // 前の動きベクトルを保持しておくやつ
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
+
+            //参照ブロックの頂点を入れておくやつ
+            reference_block_list.emplace_back();
         }
     }
 
@@ -202,31 +201,59 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
         }
     }
 
-    for(int block_y = 1 ; block_y < (2 * block_num_y - 1) ; block_y+=2){             //
-        for(int block_x = 1 ; block_x < (block_num_x * 2 - 1) ; block_x+=2){         //   ---------------     ---------------
-            int p1_idx = block_x +     2 * block_num_x * block_y;                    //   |             |     |             |
-            int p2_idx = block_x + 1 + 2 * block_num_x * block_y;                    //   |             |     |             |
-                                                                                     //   |             |     |             |
-            int p3_idx = p1_idx + 2 * block_num_x;                                   //   |          p1 |     | p2          |
-            int p4_idx = p3_idx + 1;                                                 //   ---------------     ---------------
-                                                                                     //
-            same_corner_list[p2_idx].emplace(p1_idx);                                //   ---------------     ---------------
-                                                                                     //   |          p3 |     | p4          |
-            same_corner_list[p3_idx].emplace(p1_idx);                                //   |             |     |             |
-            same_corner_list[p3_idx].emplace(p2_idx);                                //   |             |     |             |
-                                                                                     //   |             |     |             |
-            same_corner_list[p4_idx].emplace(p1_idx);                                //   ---------------     ---------------
+    //参照ブロックを入れる
+    int square_index = 0;
 
+    for(int block_y = 0 ; block_y < block_num_y ; block_y++) {                                  //
+        for(int block_x = 0 ; block_x < block_num_x ; block_x++) {                              //   ---------------     ---------------     ---------------
+            //頂点番号                                                                          //   |             |     |             |     |             |
+            int p1_idx;                                                                         //   |             |     |             |     |             |
+            int p2_idx;                                                                         //   |             |     |             |     |             |
+            int p3_idx;                                                                         //   |           5●|     |           4●|     |3●           |
+                                                                                                //   ---------------     ---------------     ---------------
+            p1_idx = 2 * block_x + 4 * block_num_x * block_y;                                   //
+            p2_idx = p1_idx + 1;                                                                //   ---------------     ---------------
+            p3_idx = p1_idx + 2 * block_num_x;                                                  //   |            　|     | p1       p2 |
+                                                                                                //   |             |     |             |
+            cv::Point2f sp = corners[p3_idx];                                                   //   |             |     |             |
+            sp.x--; sp.y++;                                                                     //   |           2●|     | p3          |
+                                                                                                //   ---------------     ---------------
+            int sp_idx = getCornerIndex(sp);                                                    //   ---------------
+            if(sp_idx != -1) {                                                                  //   |           1●|
+                // 1の頂点を含む四角形を入れる                    　                              //   |             |
+                reference_block_list[square_index].emplace_back(sp_idx);                        //   |             |
+            }                                                                                   //   |             |
+            // 2の頂点を含む四角形を入れる                                                       //   ---------------
+            sp.y--;
+            sp_idx = getCornerIndex(sp);
+            if(sp_idx != -1) {
+                reference_block_list[square_index].emplace_back(sp_idx);
+            }
+            // 3の頂点を含む四角形を入れる
+            sp = corners[p2_idx];
+            sp.x++; sp.y--;
+            sp_idx = getCornerIndex(sp);
+            if(sp_idx != -1) {
+                reference_block_list[square_index].emplace_back(sp_idx);
+            }
+            // 4の頂点を含む四角形を入れる
+            sp.x--;
+            sp_idx = getCornerIndex(sp);
+            if(sp_idx != -1) {
+                reference_block_list[square_index].emplace_back(sp_idx);
+            }
+            // 5の頂点を含む四角形を入れる
+            sp = corners[p1_idx];
+            sp.x--; sp.y--;
+            sp_idx = getCornerIndex(sp);
+            if(sp_idx != -1) {
+                reference_block_list[square_index].emplace_back(sp_idx);
+            }
+            square_index++;
         }
     }
 
-    std::cout << "same_corner_list.size = " << same_corner_list.size() << std::endl;
-    // 最下行目                                                                      //   ---------------     ---------------
-    for(int block_x = 1 ; block_x < (block_num_x * 2) - 1; block_x+=2){              //   |             |     |             |
-        int p1_idx = block_x +     2 * block_num_x * (2 * block_num_y - 1);          //   |             |     |             |
-        int p2_idx = block_x + 1 + 2 * block_num_x * (2 * block_num_y - 1);          //   |             |     |             |
-        same_corner_list[p2_idx].emplace(p1_idx);                                    //   |          p1 |     | p2          |
-    }                                                                                //   ---------------     ---------------
+    std::cout << "reference_block_list.size = " << reference_block_list.size() << std::endl;
 }
 
 /**
