@@ -391,6 +391,7 @@ void SquareDivision::eraseSquare(int s_idx){
     squares.erase(squares.begin() + s_idx);
     square_gauss_results.erase(square_gauss_results.begin() + s_idx);
     delete_flag.erase(delete_flag.begin() + s_idx);
+    reference_block_list.erase(reference_block_list.begin() + s_idx);
 }
 
 /**
