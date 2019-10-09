@@ -2754,7 +2754,7 @@ SquareDivision::~SquareDivision() {
     std::vector<cv::Point2f>().swap(corners);
     std::vector<std::set<int> >().swap(neighbor_vtx);
     std::vector<std::set<int> >().swap(covered_square);
-    std::vector<std::set<int> >().swap(same_corner_list);
+    std::vector<std::vector<int> >().swap(reference_block_list);
     std::vector<std::vector<int> >().swap(corner_flag);
     std::vector<bool>().swap(delete_flag);
     std::vector<bool>().swap(isCodedSquare);
