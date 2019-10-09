@@ -964,7 +964,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                     reference_block_list[square_indexes[j]].emplace_back(sp5_idx);
                     break;
                 }
-                sp5_2.x--;
+                sp5_2.x -= 8;
                 if((sp5_idx = getCornerIndex(sp5_2)) != -1) {
                     reference_block_list[square_indexes[j]].emplace_back(sp5_idx);
                     break;
