@@ -900,6 +900,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
     int square_indexes[] = {(int)squares.size() - 4, (int)squares.size() - 3, (int)squares.size() - 2, (int)squares.size() - 1};
 
+//    std::cout << "reference_block_list.size = " << reference_block_list.size() << std::endl;
+
     //分割後の隣接ブロックを入れる
     for (int j = 0; j < (int) subdiv_target_squares.size(); j++) {
         //追加する頂点を宣言                                           //
@@ -981,7 +983,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 //    }
 //    std::cout << std::endl;
 
-    std::cout << "reference_block_list.size = " << reference_block_list.size() << std::endl;
     }
 
     ctu->node1 = new CodingTreeUnit();
