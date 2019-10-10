@@ -201,26 +201,26 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
     //参照ブロックを入れる
     int square_index = 0;
 
-    for(int block_y = 0 ; block_y < block_num_y ; block_y++) {                                  //
-        for(int block_x = 0 ; block_x < block_num_x ; block_x++) {                              //   ---------------     ---------------     ---------------
-            //頂点番号                                                                          //   |             |     |             |     |             |
-            int p1_idx;                                                                         //   |             |     |             |     |             |
-            int p2_idx;                                                                         //   |             |     |             |     |             |
-            int p3_idx;                                                                         //   |           5●|     |           4●|     |3●           |
-                                                                                                //   ---------------     ---------------     ---------------
-            p1_idx = 2 * block_x + 4 * block_num_x * block_y;                                   //
-            p2_idx = p1_idx + 1;                                                                //   ---------------     ---------------
-            p3_idx = p1_idx + 2 * block_num_x;                                                  //   |            　|     | p1       p2 |
-                                                                                                //   |             |     |             |
-            cv::Point2f sp = corners[p3_idx];                                                   //   |             |     |             |
-            sp.x--; sp.y++;                                                                     //   |           2●|     | p3          |
-                                                                                                //   ---------------     ---------------
-            int sp_idx = getCornerIndex(sp);                                                    //   ---------------
-            if(sp_idx != -1) {                                                                  //   |           1●|
-                // 1の頂点を入れる                    　             　　　　　　　　　　   　　          //   |             |
-                reference_block_list[square_index].emplace_back(sp_idx);                        //   |             |
-            }                                                                                   //   |             |
-            // 2の頂点を入れる                                       　　　　　　　　　                //   ---------------
+    for(int block_y = 0 ; block_y < block_num_y ; block_y++) {                     //
+        for(int block_x = 0 ; block_x < block_num_x ; block_x++) {                 //   ---------------     ---------------     ---------------
+            //頂点番号                                                             //   |             |     |             |     |             |
+            int p1_idx;                                                            //   |             |     |             |     |             |
+            int p2_idx;                                                            //   |             |     |             |     |             |
+            int p3_idx;                                                            //   |          5●|     |          4●|     |3●          |
+                                                                                   //   ---------------     ---------------     ---------------
+            p1_idx = 2 * block_x + 4 * block_num_x * block_y;                      //
+            p2_idx = p1_idx + 1;                                                   //   ---------------     ---------------
+            p3_idx = p1_idx + 2 * block_num_x;                                     //   |             |     | p1       p2 |
+                                                                                   //   |             |     |             |
+            cv::Point2f sp = corners[p3_idx];                                      //   |             |     |             |
+            sp.x--; sp.y++;                                                        //   |          2●|     | p3          |
+                                                                                   //   ---------------     ---------------
+            int sp_idx = getCornerIndex(sp);                                       //   ---------------
+            if(sp_idx != -1) {                                                     //   |          1●|
+                // 1の頂点を入れる                    　             　　　　　　　//   |             |
+                reference_block_list[square_index].emplace_back(sp_idx);           //   |             |
+            }                                                                      //   |             |
+            // 2の頂点を入れる                                       　　　　　　　//   ---------------
             sp.y--;
             sp_idx = getCornerIndex(sp);
             if(sp_idx != -1) {
@@ -902,26 +902,26 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
     //分割後の隣接ブロックを入れる
     for (int j = 0; j < (int) subdiv_target_squares.size(); j++) {
-        //追加する頂点を宣言                                                     //
-        cv::Point2f sp1 = subdiv_target_squares[j].p3;                          //   ---------------     ---------------     ---------------
-        cv::Point2f sp2 = subdiv_target_squares[j].p3;                          //   |             |     |             |     |             |
-        cv::Point2f sp3 = subdiv_target_squares[j].p2;                          //   |             |     |             |     |             |
-        cv::Point2f sp4 = subdiv_target_squares[j].p2;                          //   |             |     |             |     |             |
-        cv::Point2f sp5 = subdiv_target_squares[j].p1;                          //   |         sp5●|     |         sp4●|     |●sp3         |
-        //頂点の座標を調整                                                       //   ---------------     ---------------     ---------------
-        sp1.x--; sp1.y++;                                                       //
-        sp2.x--;                                                                //   ---------------     ---------------
-        sp3.x++; sp3.y--;                                                       //   |            　|     | p1       p2 |
-        sp4.x++;                                                                //   |             |     |             |
-        sp5.x--; sp5.y--;                                                       //   |             |     |             |
-        //頂点インデックスを取得                                                  //   |         sp2●|     | p3          |
-        int sp1_idx = getCornerIndex(sp1);                                      //   ---------------     ---------------
-        int sp2_idx = getCornerIndex(sp2);                                      //   ---------------
-        int sp3_idx = getCornerIndex(sp3);                                      //   |         sp1●|
-        int sp4_idx = getCornerIndex(sp4);                                      //   |             |
-        int sp5_idx = getCornerIndex(sp5);                                      //   |             |
-                                                                                //   |             |
-        if(sp1_idx != -1 && sp2_idx != -1) {                                    //   ---------------
+        //追加する頂点を宣言                                           //
+        cv::Point2f sp1 = subdiv_target_squares[j].p3;                 //   ---------------     ---------------     ---------------
+        cv::Point2f sp2 = subdiv_target_squares[j].p3;                 //   |             |     |             |     |             |
+        cv::Point2f sp3 = subdiv_target_squares[j].p2;                 //   |             |     |             |     |             |
+        cv::Point2f sp4 = subdiv_target_squares[j].p2;                 //   |             |     |             |     |             |
+        cv::Point2f sp5 = subdiv_target_squares[j].p1;                 //   |        sp5●|     |        sp4●|     |●sp3        |
+        //頂点の座標を調整                                             //   ---------------     ---------------     ---------------
+        sp1.x--; sp1.y++;                                              //
+        sp2.x--;                                                       //   ---------------     ---------------
+        sp3.x++; sp3.y--;                                              //   |           　|     | p1       p2 |
+        sp4.x++;                                                       //   |             |     |             |
+        sp5.x--; sp5.y--;                                              //   |             |     |             |
+        //頂点インデックスを取得                                       //   |        sp2●|     | p3          |
+        int sp1_idx = getCornerIndex(sp1);                             //   ---------------     ---------------
+        int sp2_idx = getCornerIndex(sp2);                             //   ---------------
+        int sp3_idx = getCornerIndex(sp3);                             //   |        sp1●|
+        int sp4_idx = getCornerIndex(sp4);                             //   |             |
+        int sp5_idx = getCornerIndex(sp5);                             //   |             |
+                                                                       //   |             |
+        if(sp1_idx != -1 && sp2_idx != -1) {                           //   ---------------
             // 1,2の頂点を入れる
             reference_block_list[square_indexes[j]].emplace_back(sp1_idx);
             reference_block_list[square_indexes[j]].emplace_back(sp2_idx);
