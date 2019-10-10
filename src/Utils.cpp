@@ -81,10 +81,10 @@ void drawSquare(cv::Mat &img, const cv::Point2f p1, const cv::Point2f p2, const 
     cv::line(img, p4, p3, color, 1);
     cv::line(img, p3, p1, color, 1);
 
-    drawPoint(img, p1, RED, 1);
-    drawPoint(img, p2, RED, 1);
-    drawPoint(img, p3, RED, 1);
-    drawPoint(img, p4, RED, 1);
+//    drawPoint(img, p1, RED, 1);
+//    drawPoint(img, p2, RED, 1);
+//    drawPoint(img, p3, RED, 1);
+//    drawPoint(img, p4, RED, 1);
 
 }
 
