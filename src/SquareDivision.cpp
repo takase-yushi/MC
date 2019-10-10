@@ -971,6 +971,17 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 }
             }
         }
+
+//    std::cout << "square_index : " << square_indexes[j] << std::endl << "reference_block : ";
+//    for(auto rbl : reference_block_list[square_indexes[j]]) {
+//        std::set<int> tmp_s;
+//        tmp_s = covered_square[rbl];
+//        for(auto idx : tmp_s)
+//            std::cout << idx << ", ";
+//    }
+//    std::cout << std::endl;
+
+    std::cout << "reference_block_list.size = " << reference_block_list.size() << std::endl;
     }
 
     ctu->node1 = new CodingTreeUnit();
