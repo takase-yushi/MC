@@ -1401,6 +1401,16 @@ std::vector<int> SquareDivision::getSpatialSquareList(int s_idx){
     }
 
     std::vector<int> ret;
+    //重複を判定する配列
+    bool duplicate[5] = {true, true, true, true, true};
+
+    //重複する場合はfalseにする
+    for(int j = 0 ; j < reference_block.size() ; j ++){
+        for(int i = j + 1 ; i < reference_block.size() ; i++){
+            if(reference_block[j] == reference_block[i])
+                duplicate[i] = false;
+        }
+    }
 
 #if MVD_DEBUG_LOG
 //    std::cout << "p1:" << squares[s_idx].p1_idx << std::endl;
@@ -1414,7 +1424,12 @@ std::vector<int> SquareDivision::getSpatialSquareList(int s_idx){
 
 #endif
 
-    for(auto idx : reference_block) if(isCodedSquare[idx] && idx != s_idx) ret.emplace_back(idx);
+    int j = 0;
+    for(auto idx : reference_block) {
+        if(isCodedSquare[idx] && idx != s_idx && duplicate[j]) ret.emplace_back(idx);
+        j++;
+    }
+
 
 //    std::cout << "SpatialSquareList_size : " << ret.size() << std::endl;
 
