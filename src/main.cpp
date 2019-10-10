@@ -64,6 +64,8 @@ int main(int argc, char *argv[]){
 
 //    run(config_name);
     run_square(config_name);
+
+//getDiff_image();
 #endif
 
 }

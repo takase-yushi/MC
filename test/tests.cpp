@@ -509,8 +509,8 @@ void getDiff_image(){
     std::cout << "img_directory:" << img_directory << std::endl;
 
     //path
-    std::string image1_path = img_directory + "minato_limit_2_I37.png";
-    std::string image2_path = img_directory + "minato_limit_2_I37.bmp";
+    std::string image1_path = img_directory + "minato_000413_limit.bmp";
+    std::string image2_path = img_directory + "minato_37_fullsearch16_Hadamard_FEN_OFF_nointra_limit.png";
 
     cv::Mat image1;
     cv::Mat image2;
@@ -535,8 +535,8 @@ void getDiff_image(){
             B(diff,i,j) = (unsigned char)y;
         }
     }
-//    std::cout << getPSNR(image1, image2) << std::endl;
-    cv::imwrite(img_directory + "diff.bmp", diff);
+    std::cout << getPSNR(image1, image2) << std::endl;
+//    cv::imwrite(img_directory + "diff.bmp", diff);
 
 }
 
