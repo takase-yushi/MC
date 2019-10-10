@@ -1401,6 +1401,8 @@ std::vector<int> SquareDivision::getSpatialSquareList(int s_idx){
     }
 
     std::vector<int> ret;
+    //重複を判定する配列
+    bool duplicate[5] = {true, true, true, true, true};
 
 #if MVD_DEBUG_LOG
 //    std::cout << "p1:" << squares[s_idx].p1_idx << std::endl;
