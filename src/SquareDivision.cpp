@@ -1404,42 +1404,33 @@ std::vector<int> SquareDivision::getSquareList(int s_idx, MV_CODE_METHOD method)
 
     std::vector<int> reference_block;
     std::set<int> tmp_rb;
-    for(auto reference_vertex : reference_vertexes){
+    for (auto reference_vertex : reference_vertexes) {
         tmp_rb = covered_square[reference_vertex];
-        for(auto idx : tmp_rb) reference_block.emplace_back(idx);
+        for (auto idx : tmp_rb) reference_block.emplace_back(idx);
     }
 
     std::vector<int> ret;
     //重複を判定する配列
     bool duplicate[5] = {true, true, true, true, true};
 
-    //重複する場合はfalseにする
-    for(int j = 0 ; j < reference_block.size() ; j ++){
-        for(int i = j + 1 ; i < reference_block.size() ; i++){
-            if(reference_block[j] == reference_block[i])
-                duplicate[i] = false;
+    if (method == MV_CODE_METHOD::SPATIAL) {
+        //重複する場合はfalseにする
+        for (int j = 0; j < reference_block.size(); j++) {
+            for (int i = j + 1; i < reference_block.size(); i++) {
+                if (reference_block[j] == reference_block[i])
+                    duplicate[i] = false;
+            }
         }
     }
-
-#if MVD_DEBUG_LOG
-//    std::cout << "p1:" << squares[s_idx].p1_idx << std::endl;
-//    for(auto item : list1){
-//        std::cout << item << std::endl;
-//    }
-//    puts("");
-//
-//    std::cout << "s_idx:" << s_idx << std::endl;
-//    puts("");
-
-#endif
-
-    int j = 0;
-    for(auto idx : reference_block) {
-        if(isCodedSquare[idx] && idx != s_idx && duplicate[j]) ret.emplace_back(idx);
-        j++;
+    else if (method == MV_CODE_METHOD::MERGE) {
+        if(reference_block.size())
     }
 
-
+    int j = 0;
+    for (auto idx : reference_block) {
+        if (isCodedSquare[idx] && idx != s_idx && duplicate[j]) ret.emplace_back(idx);
+        j++;
+    }
 //    std::cout << "SpatialSquareList_size : " << ret.size() << std::endl;
 
     return ret;
