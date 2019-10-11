@@ -983,14 +983,14 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         }
         std::cout << std::endl;
 
-//    std::cout << "square_index : " << square_indexes[j] << std::endl << "reference_block : ";
-//    for(auto rbl : reference_block_list[square_indexes[j]]) {
-//        std::set<int> tmp_s;
-//        tmp_s = covered_square[rbl];
-//        for(auto idx : tmp_s)
-//            std::cout << idx << ", ";
-//    }
-//    std::cout << std::endl;
+    std::cout << "square_index : " << square_indexes[j] << "reference_block_list[" << square_indexes[j] << "].size : " << reference_block_list[square_indexes[j]].size() << std::endl << "reference_block : ";
+    for(auto rbl : reference_block_list[square_indexes[j]]) {
+        std::set<int> tmp_s;
+        tmp_s = covered_square[rbl];
+        for(auto idx : tmp_s)
+            std::cout << idx << ", ";
+    }
+    std::cout << std::endl;
 
     }
 
@@ -1422,9 +1422,9 @@ std::vector<int> SquareDivision::getSquareList(int s_idx, MV_CODE_METHOD method)
             }
         }
     }
-    else if (method == MV_CODE_METHOD::MERGE) {
-        if(reference_block.size())
-    }
+//    else if (method == MV_CODE_METHOD::MERGE) {
+//        if(reference_block.size())
+//    }
 
     int j = 0;
     for (auto idx : reference_block) {
