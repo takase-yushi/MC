@@ -1398,7 +1398,7 @@ SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1
  * @param[in] t_idx 四角パッチのインデックス
  * @return 候補のパッチの番号を返す
  */
-std::vector<int> SquareDivision::getSpatialSquareList(int s_idx){
+std::vector<int> SquareDivision::getSquareList(int s_idx, MV_CODE_METHOD method) {
     //隣接するブロックを取得する
     std::vector<int> reference_vertexes = reference_block_list[s_idx];
 
@@ -1629,7 +1629,7 @@ bool SquareDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE
 std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, std::vector<int> spatial_squares){
     // 空間予測と時間予測の候補を取り出す
     if(spatial_squares.empty()) {
-        spatial_squares = getSpatialSquareList(square_idx);
+        spatial_squares = getSquareList(square_idx, SPATIAL);
     }
     int spatial_square_size = static_cast<int>(spatial_squares.size());
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors; // ベクトルとモードを表すフラグのペア
@@ -1939,6 +1939,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
         pixels_in_square = pixels;
     }
 
+    //マージ候補のリストを作成
+    std::vector<int> merge_squares;
+    merge_squares = getSquareList(square_idx, MERGE);
+
     double sx = coordinate.p1.x;
     double sy = coordinate.p1.y;
     double lx = coordinate.p4.x;
@@ -2034,7 +2038,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     ctu->mvds = mvds;
     ctu->ref_triangle_idx = selected_idx;
     ctu->flags_code_sum = flag_code_sum;
-    if(method != MERGE) {
+    if(method != MV_CODE_METHOD::MERGE) {
         (ctu->mvds_x).clear();
         (ctu->mvds_y).clear();
         (ctu->original_mvds_x).clear();

@@ -100,7 +100,7 @@ public:
 
     static SplitResult getSplitSquare(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, const cv::Point2f& p4, int type);
     bool split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point4Vec square, int square_index, int type, int steps);
-    std::vector<int> getSpatialSquareList(int s_idx);
+    std::vector<int> getSquareList(int s_idx, MV_CODE_METHOD method);
 //    cv::Point2f getCollocatedSquareList(CodingTreeUnit* unit);
     int getCtuCodeLength(std::vector<CodingTreeUnit*> ctus);
 
