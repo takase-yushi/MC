@@ -74,17 +74,20 @@ void drawTriangle(cv::Mat &img, const cv::Point2f p1, const cv::Point2f p2, cons
  *  p3               p4
  *
  */
-void drawSquare(cv::Mat &img, const cv::Point2f p1, const cv::Point2f p2, const cv::Point2f p3, const cv::Point2f p4, const cv::Scalar color){
+void drawSquare(cv::Mat &img, const cv::Point2f p1, const cv::Point2f p2, const cv::Point2f p3, const cv::Point2f p4, const cv::Scalar color, int select){
 
-    cv::line(img, p1, p2, color, 1);
-    cv::line(img, p2, p4, color, 1);
-    cv::line(img, p4, p3, color, 1);
-    cv::line(img, p3, p1, color, 1);
-
-//    drawPoint(img, p1, RED, 1);
-//    drawPoint(img, p2, RED, 1);
-//    drawPoint(img, p3, RED, 1);
-//    drawPoint(img, p4, RED, 1);
+    if(select == 0) {
+        cv::line(img, p1, p2, color, 1);
+        cv::line(img, p2, p4, color, 1);
+        cv::line(img, p4, p3, color, 1);
+        cv::line(img, p3, p1, color, 1);
+    }
+    if(select == 1) {
+        drawPoint(img, p1, RED, 1);
+        drawPoint(img, p2, RED, 1);
+        drawPoint(img, p3, RED, 1);
+        drawPoint(img, p4, RED, 1);
+    }
 
 }
 

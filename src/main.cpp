@@ -489,13 +489,15 @@ void run_square(std::string config_name) {
         // ===========================================================
         // ログ出力
         // ===========================================================
-        cv::Mat p_image = square_division.getPredictedImageFromCtu(foo);
-        cv::Mat color = square_division.getPredictedColorImageFromCtu(foo, getPSNR(target_image, p_image));
+        cv::Mat p_image = square_division.getPredictedImageFromCtu(foo);                              // 0 : line,  1 : vertex
+        cv::Mat color_line   = square_division.getPredictedColorImageFromCtu(foo, getPSNR(target_image, p_image), 0);
+        cv::Mat color_vertex = square_division.getPredictedColorImageFromCtu(foo, getPSNR(target_image, p_image), 1);
 
         cv::imwrite(img_directory + "_p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
         cv::imwrite(img_directory + "_p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", square_division.getMvImage(foo));
         cv::imwrite(img_directory + "_p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
-        cv::imwrite(img_directory + "_p_color_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
+        cv::imwrite(img_directory + "_p_color_image_line_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color_line);
+        cv::imwrite(img_directory + "_p_color_image_vertex_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color_vertex);
 
         int code_length = square_division.getCtuCodeLength(foo);
         std::string log_file_suffix = out_file_suffix + std::to_string(qp) + "_";

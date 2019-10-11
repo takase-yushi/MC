@@ -239,7 +239,7 @@ public: SQUARE(Square s) { p1_idx = s.p1_idx; p2_idx = s.p2_idx; p3_idx = s.p3_i
 //double log_2(double num);
 
 void drawTriangle(cv::Mat &img, cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, cv::Scalar color);
-void drawSquare(cv::Mat &img, const cv::Point2f p1, const cv::Point2f p2, const cv::Point2f p3, const cv::Point2f p4, const cv::Scalar color);
+void drawSquare(cv::Mat &img, const cv::Point2f p1, const cv::Point2f p2, const cv::Point2f p3, const cv::Point2f p4, const cv::Scalar color, int select);
 
 double intersectM(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, cv::Point2f p4);
 

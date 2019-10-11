@@ -2448,8 +2448,8 @@ void SquareDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out)
     if(ctu->node3 != nullptr) getPredictedImageFromCtu(ctu->node3, out);
     if(ctu->node4 != nullptr) getPredictedImageFromCtu(ctu->node4, out);
 }
-
-cv::Mat SquareDivision::getPredictedColorImageFromCtu(std::vector<CodingTreeUnit*> ctus, double original_psnr){
+//select  0 : 四角形の輪郭が白になる , 1 : 四角形の頂点が赤くなる
+cv::Mat SquareDivision::getPredictedColorImageFromCtu(std::vector<CodingTreeUnit*> ctus, double original_psnr, int select){
     cv::Mat out = cv::Mat::zeros(ref_image.size(), CV_8UC3);
 
     std::vector<cv::Scalar> colors;
@@ -2468,7 +2468,7 @@ cv::Mat SquareDivision::getPredictedColorImageFromCtu(std::vector<CodingTreeUnit
 
     std::vector<Point4Vec> ss = getSquareCoordinateList();
     for(const auto &t : ss) {
-        drawSquare(out, t.p1, t.p2, t.p3, t.p4, cv::Scalar(255, 255, 255));
+        drawSquare(out, t.p1, t.p2, t.p3, t.p4, cv::Scalar(255, 255, 255), select);
     }
 
     return out;
@@ -2487,13 +2487,13 @@ void SquareDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat 
         if(ctu->translation_flag) {
             if(ctu->method == MV_CODE_METHOD::MERGE){
                 for(auto pixel : pixels) {
-                    R(out, (int)pixel.x, (int)pixel.y) = 0;
-                    G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
+                    R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
+                    G(out, (int)pixel.x, (int)pixel.y) = 0;
                     B(out, (int)pixel.x, (int)pixel.y) = 0;
                 }
             }else{
                 for(auto pixel : pixels) {
-                    R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
+                    R(out, (int)pixel.x, (int)pixel.y) = 0;
                     G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     B(out, (int)pixel.x, (int)pixel.y) = 0;
                 }
@@ -2548,7 +2548,7 @@ cv::Mat SquareDivision::getMvImage(std::vector<CodingTreeUnit*> ctus){
     cv::Mat out = target_image.clone();
 
     for(auto square : getSquareCoordinateList()){
-        drawSquare(out, square.p1, square.p2, square.p3, square.p4, cv::Scalar(255, 255, 255));
+        drawSquare(out, square.p1, square.p2, square.p3, square.p4, cv::Scalar(255, 255, 255), 0);
     }
 
     for(int i = 0 ; i < ctus.size() ; i++){   //i番目のctuを書いていく
