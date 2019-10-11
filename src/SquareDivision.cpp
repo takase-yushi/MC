@@ -2621,7 +2621,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
     int spread_quarter = 4 * SERACH_RANGE;
     int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
     std::vector<cv::Point2f> pixels = getPixelsInSquare(square);
-    std::vector<int> spatial_squares = getSpatialSquareList(square_index);
+    std::vector<int> spatial_squares = getSquareList(square_index, SPATIAL);
 
     for(int j = -SY * 4 ; j <= SY * 4 ; j += s) {            //j : y方向のMV
         for(int i = -SX * 4 ; i <= SX * 4 ; i += s) {        //i : x方向のMV
