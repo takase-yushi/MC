@@ -1454,16 +1454,22 @@ std::vector<int> SquareDivision::getSquareList(int s_idx, MV_CODE_METHOD method)
         for (auto idx : tmp_rb) reference_block.emplace_back(idx);
     }
 
+//    std::cout << "reference_block_size : " << reference_block.size() << ", ";
+
     std::vector<int> ret;
     //重複を判定する配列
     bool duplicate[5] = {true, true, true, true, true};
 
     if (method == MV_CODE_METHOD::SPATIAL) {
-        //重複する場合はfalseにする
         for (int j = 0; j < reference_block.size(); j++) {
-            for (int i = j + 1; i < reference_block.size(); i++) {
-                if (reference_block[j] == reference_block[i])
-                    duplicate[i] = false;
+            //重複していない場合
+            if(duplicate[j]) {
+                for (int i = j + 1; i < reference_block.size(); i++) {
+                    //同一動き情報をもっている場合は重複配列をon(false)にする
+                    if (square_gauss_results[reference_block[j]].mv_translation ==
+                        square_gauss_results[reference_block[i]].mv_translation)
+                        duplicate[i] = false;
+                }
             }
         }
     }
@@ -1476,7 +1482,7 @@ std::vector<int> SquareDivision::getSquareList(int s_idx, MV_CODE_METHOD method)
         if (isCodedSquare[idx] && idx != s_idx && duplicate[j]) ret.emplace_back(idx);
         j++;
     }
-//    std::cout << "SpatialSquareList_size : " << ret.size() << std::endl;
+//    std::cout << "SquareList_size : " << ret.size() << std::endl;
 
     return ret;
 }
