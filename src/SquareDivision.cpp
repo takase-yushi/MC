@@ -1458,23 +1458,23 @@ std::vector<int> SquareDivision::getSquareList(int s_idx, MV_CODE_METHOD method)
 
     std::vector<int> ret;
     //重複を判定する配列
-    bool duplicate[5] = {true, true, true, true, true};
+    bool duplicate[5] = {false, false, false, false, false};
 
     if (method == MV_CODE_METHOD::SPATIAL) {
         for (int j = 0; j < reference_block.size(); j++) {
             //重複していない場合
-            if(duplicate[j]) {
+            if(!duplicate[j]) {
                 for (int i = j + 1; i < reference_block.size(); i++) {
                     //同一動き情報をもっている場合は重複配列をon(false)にする
                     if (square_gauss_results[reference_block[j]].mv_translation == square_gauss_results[reference_block[i]].mv_translation)
-                        duplicate[i] = false;
+                        duplicate[i] = true;
                 }
             }
         }
         //重複がなく，符号化済みのブロックのみ入れる
         int j = 0;
         for (auto idx : reference_block) {
-            if (isCodedSquare[idx] && idx != s_idx && duplicate[j]) ret.emplace_back(idx);
+            if (isCodedSquare[idx] && idx != s_idx && !duplicate[j]) ret.emplace_back(idx);
             j++;
         }
     }
@@ -1494,7 +1494,7 @@ std::vector<int> SquareDivision::getSquareList(int s_idx, MV_CODE_METHOD method)
             //同一動き情報をもっている場合は重複配列をon(false)にする
             //③
             if (square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[1]].mv_translation)
-                duplicate[1] = false;
+                duplicate[1] = true;
         }
         else if(reference_block.size() == 4) {
             if(flag){  //sp4がない場合
@@ -1504,14 +1504,14 @@ std::vector<int> SquareDivision::getSquareList(int s_idx, MV_CODE_METHOD method)
                 merge_reference_block[3] = reference_block[3];
                 //①
                 if (square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[1]].mv_translation)
-                    duplicate[1] = false;
+                    duplicate[1] = true;
                 //③
                 if (square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[2]].mv_translation)
-                    duplicate[2] = false;
+                    duplicate[2] = true;
                 //④
                 if (square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[3]].mv_translation ||
                     square_gauss_results[merge_reference_block[1]].mv_translation == square_gauss_results[merge_reference_block[3]].mv_translation)
-                    duplicate[3] = false;
+                    duplicate[3] = true;
             }
             else {
                 merge_reference_block[0] = reference_block[0];
@@ -1520,14 +1520,14 @@ std::vector<int> SquareDivision::getSquareList(int s_idx, MV_CODE_METHOD method)
                 merge_reference_block[3] = reference_block[3];
                 //①
                 if (square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[1]].mv_translation)
-                    duplicate[1] = false;
+                    duplicate[1] = true;
                 //②
                 if (square_gauss_results[merge_reference_block[1]].mv_translation == square_gauss_results[merge_reference_block[2]].mv_translation)
-                    duplicate[2] = false;
+                    duplicate[2] = true;
                 //④
                 if (square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[3]].mv_translation ||
                     square_gauss_results[merge_reference_block[1]].mv_translation == square_gauss_results[merge_reference_block[3]].mv_translation)
-                    duplicate[3] = false;
+                    duplicate[3] = true;
             }
         }
         else if(reference_block.size() == 5) {
@@ -1538,22 +1538,22 @@ std::vector<int> SquareDivision::getSquareList(int s_idx, MV_CODE_METHOD method)
             merge_reference_block[4] = reference_block[4];
             //①
             if (square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[1]].mv_translation)
-                duplicate[1] = false;
+                duplicate[1] = true;
             //②
             if (square_gauss_results[merge_reference_block[1]].mv_translation == square_gauss_results[merge_reference_block[2]].mv_translation)
-                duplicate[2] = false;
+                duplicate[2] = true;
             //③
             if (square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[3]].mv_translation)
-                duplicate[3] = false;
+                duplicate[3] = true;
             //④
             if (square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[4]].mv_translation ||
                 square_gauss_results[merge_reference_block[1]].mv_translation == square_gauss_results[merge_reference_block[4]].mv_translation)
-                duplicate[4] = false;
+                duplicate[4] = true;
         }
         //重複がなく，符号化済みのブロックのみ入れる
         int j = 0;
         for (auto idx : merge_reference_block) {
-            if (isCodedSquare[idx] && idx != s_idx && duplicate[j]) ret.emplace_back(idx);
+            if (isCodedSquare[idx] && idx != s_idx && !duplicate[j]) ret.emplace_back(idx);
             j++;
         }
     }
