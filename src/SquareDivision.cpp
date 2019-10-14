@@ -1028,7 +1028,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         }
         std::cout << std::endl;
 
-    std::cout << "square_index : " << square_indexes[j] << "reference_block_list[" << square_indexes[j] << "].size : " << reference_block_list[square_indexes[j]].size() << std::endl << "reference_block : ";
+    std::cout << "square_index : " << square_indexes[j] << ", reference_block_list[" << square_indexes[j] << "].size : " << reference_block_list[square_indexes[j]].size() << std::endl << "reference_block : ";
     for(auto rbl : reference_block_list[square_indexes[j]]) {
         std::set<int> tmp_s;
         tmp_s = covered_square[rbl];
@@ -1460,7 +1460,7 @@ std::vector<int> SquareDivision::getSquareList(int s_idx, MV_CODE_METHOD method)
     //重複を判定する配列
     bool duplicate[5] = {true, true, true, true, true};
 
-    if (method == MV_CODE_METHOD::SPATIAL) {
+//    if (method == MV_CODE_METHOD::SPATIAL) {
         for (int j = 0; j < reference_block.size(); j++) {
             //重複していない場合
             if(duplicate[j]) {
@@ -1472,7 +1472,7 @@ std::vector<int> SquareDivision::getSquareList(int s_idx, MV_CODE_METHOD method)
                 }
             }
         }
-    }
+//    }
 //    else if (method == MV_CODE_METHOD::MERGE) {
 //        if(reference_block.size())
 //    }
@@ -1482,7 +1482,7 @@ std::vector<int> SquareDivision::getSquareList(int s_idx, MV_CODE_METHOD method)
         if (isCodedSquare[idx] && idx != s_idx && duplicate[j]) ret.emplace_back(idx);
         j++;
     }
-//    std::cout << "SquareList_size : " << ret.size() << std::endl;
+    std::cout << "square_index : " << s_idx << ", SquareList_size : " << ret.size() << std::endl;
 
     return ret;
 }
