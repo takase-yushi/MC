@@ -914,7 +914,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         sp1.x--; sp1.y++;                                              //
         sp2.x--;                                                       //   ---------------     ---------------
         sp3.x++; sp3.y--;                                              //   |           　|     | p1       p2 |
-        sp4.x++;                                                       //   |             |     |             |
+        sp4.y--;                                                       //   |             |     |             |
         sp5.x--; sp5.y--;                                              //   |             |     |             |
         //頂点インデックスを取得                                       //   |        sp2●|     | p3          |
         int sp1_idx = getCornerIndex(sp1);                             //   ---------------     ---------------
@@ -923,31 +923,81 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         int sp4_idx = getCornerIndex(sp4);                             //   |             |
         int sp5_idx = getCornerIndex(sp5);                             //   |             |
                                                                        //   |             |
-        if(sp1_idx != -1 && sp2_idx != -1) {                           //   ---------------
-            // 1,2の頂点を入れる
+        if(sp1_idx != -1) {                                            //   ---------------
+            // 1の頂点を入れる
             reference_block_list[square_indexes[j]].emplace_back(sp1_idx);
-            reference_block_list[square_indexes[j]].emplace_back(sp2_idx);
+//            std::cout << "add_sp1, ";
         }
         else {
-            //隣が同じstep以上分割されていない場合は1回のみ追加
+            //隣が同じstep以上分割されていない場合も候補ブロックを5個にするために2回追加
+            cv::Point2f sp1_2 = sp1;
+            sp1_2.y--;
+            sp1.x++;
             for(int i = 0 ; i < 7 ; i++) {
-                sp2.y += 8;
-                if((sp2_idx = getCornerIndex(sp2)) != -1) {
-                    reference_block_list[square_indexes[j]].emplace_back(sp2_idx);
+                sp1.x -= 8;
+                if((sp1_idx = getCornerIndex(sp1)) != -1) {
+                    reference_block_list[square_indexes[j]].emplace_back(sp1_idx);
+//                    std::cout << "add_sp1, ";
+                    break;
+                }
+                sp1_2.y += 8;
+                if((sp1_idx = getCornerIndex(sp1_2)) != -1) {
+                    reference_block_list[square_indexes[j]].emplace_back(sp1_idx);
+//                    std::cout << "add_sp1, ";
                     break;
                 }
             }
         }
-        if(sp3_idx != -1 && sp4_idx != -1) {
-            // 3,4の頂点を入れる
+        if(sp2_idx != -1) {
+            // 2の頂点を入れる
+            reference_block_list[square_indexes[j]].emplace_back(sp2_idx);
+//            std::cout << "add_sp2, ";
+        }
+        else {
+            for(int i = 0 ; i < 7 ; i++) {
+                sp2.y += 8;
+                if((sp2_idx = getCornerIndex(sp2)) != -1) {
+                    reference_block_list[square_indexes[j]].emplace_back(sp2_idx);
+//                    std::cout << "add_sp2, ";
+                    break;
+                }
+            }
+        }
+        if(sp3_idx != -1) {
+            // 3の頂点を入れる
             reference_block_list[square_indexes[j]].emplace_back(sp3_idx);
+//            std::cout << "add_sp3, ";
+        }
+        else {
+            cv::Point2f sp3_2 = sp3;
+            sp3_2.y++;
+            sp3.x--;
+            for(int i = 0 ; i < 7 ; i++) {
+                sp3.x += 8;
+                if((sp3_idx = getCornerIndex(sp3)) != -1) {
+                    reference_block_list[square_indexes[j]].emplace_back(sp3_idx);
+//                    std::cout << "add_sp3, ";
+                    break;
+                }
+                sp3_2.y -= 8;
+                if((sp3_idx = getCornerIndex(sp3_2)) != -1) {
+                    reference_block_list[square_indexes[j]].emplace_back(sp3_idx);
+//                    std::cout << "add_sp3, ";
+                    break;
+                }
+            }
+        }
+        if(sp4_idx != -1) {
+            // 4の頂点を入れる
             reference_block_list[square_indexes[j]].emplace_back(sp4_idx);
+//            std::cout << "add_sp4, ";
         }
         else {
             for(int i = 0 ; i < 7 ; i++) {
                 sp4.x += 8;
                 if((sp4_idx = getCornerIndex(sp4)) != -1) {
                     reference_block_list[square_indexes[j]].emplace_back(sp4_idx);
+//                    std::cout << "add_sp4, ";
                     break;
                 }
             }
@@ -955,6 +1005,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         if(sp5_idx != -1) {
             // 5の頂点を入れる
             reference_block_list[square_indexes[j]].emplace_back(sp5_idx);
+//            std::cout << "add_sp5";
         }
         else {
             cv::Point2f sp5_2 = sp5;
@@ -964,17 +1015,20 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 sp5.y -= 8;
                 if((sp5_idx = getCornerIndex(sp5)) != -1) {
                     reference_block_list[square_indexes[j]].emplace_back(sp5_idx);
+//                    std::cout << "add_sp5";
                     break;
                 }
                 sp5_2.x -= 8;
                 if((sp5_idx = getCornerIndex(sp5_2)) != -1) {
                     reference_block_list[square_indexes[j]].emplace_back(sp5_idx);
+//                    std::cout << "add_sp5";
                     break;
                 }
             }
         }
-
-//    std::cout << "square_index : " << square_indexes[j] << std::endl << "reference_block : ";
+//        std::cout << std::endl;
+//
+//    std::cout << "square_index : " << square_indexes[j] << ", reference_block_list[" << square_indexes[j] << "].size : " << reference_block_list[square_indexes[j]].size() << std::endl << "reference_block : ";
 //    for(auto rbl : reference_block_list[square_indexes[j]]) {
 //        std::set<int> tmp_s;
 //        tmp_s = covered_square[rbl];
@@ -1389,49 +1443,46 @@ SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1
  * @param[in] t_idx 四角パッチのインデックス
  * @return 候補のパッチの番号を返す
  */
-std::vector<int> SquareDivision::getSpatialSquareList(int s_idx){
+std::vector<int> SquareDivision::getSquareList(int s_idx, MV_CODE_METHOD method) {
     //隣接するブロックを取得する
     std::vector<int> reference_vertexes = reference_block_list[s_idx];
 
     std::vector<int> reference_block;
     std::set<int> tmp_rb;
-    for(auto reference_vertex : reference_vertexes){
+    for (auto reference_vertex : reference_vertexes) {
         tmp_rb = covered_square[reference_vertex];
-        for(auto idx : tmp_rb) reference_block.emplace_back(idx);
+        for (auto idx : tmp_rb) reference_block.emplace_back(idx);
     }
+
+//    std::cout << "reference_block_size : " << reference_block.size() << ", ";
 
     std::vector<int> ret;
     //重複を判定する配列
     bool duplicate[5] = {true, true, true, true, true};
 
-    //重複する場合はfalseにする
-    for(int j = 0 ; j < reference_block.size() ; j ++){
-        for(int i = j + 1 ; i < reference_block.size() ; i++){
-            if(reference_block[j] == reference_block[i])
-                duplicate[i] = false;
+//    if (method == MV_CODE_METHOD::SPATIAL) {
+        for (int j = 0; j < reference_block.size(); j++) {
+            //重複していない場合
+            if(duplicate[j]) {
+                for (int i = j + 1; i < reference_block.size(); i++) {
+                    //同一動き情報をもっている場合は重複配列をon(false)にする
+                    if (square_gauss_results[reference_block[j]].mv_translation ==
+                        square_gauss_results[reference_block[i]].mv_translation)
+                        duplicate[i] = false;
+                }
+            }
         }
-    }
-
-#if MVD_DEBUG_LOG
-//    std::cout << "p1:" << squares[s_idx].p1_idx << std::endl;
-//    for(auto item : list1){
-//        std::cout << item << std::endl;
 //    }
-//    puts("");
-//
-//    std::cout << "s_idx:" << s_idx << std::endl;
-//    puts("");
-
-#endif
+//    else if (method == MV_CODE_METHOD::MERGE) {
+//        if(reference_block.size())
+//    }
 
     int j = 0;
-    for(auto idx : reference_block) {
-        if(isCodedSquare[idx] && idx != s_idx && duplicate[j]) ret.emplace_back(idx);
+    for (auto idx : reference_block) {
+        if (isCodedSquare[idx] && idx != s_idx && duplicate[j]) ret.emplace_back(idx);
         j++;
     }
-
-
-//    std::cout << "SpatialSquareList_size : " << ret.size() << std::endl;
+//    std::cout << "square_index : " << s_idx << ", SquareList_size : " << ret.size() << std::endl;
 
     return ret;
 }
@@ -1620,7 +1671,7 @@ bool SquareDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE
 std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, std::vector<int> spatial_squares){
     // 空間予測と時間予測の候補を取り出す
     if(spatial_squares.empty()) {
-        spatial_squares = getSpatialSquareList(square_idx);
+        spatial_squares = getSquareList(square_idx, SPATIAL);
     }
     int spatial_square_size = static_cast<int>(spatial_squares.size());
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors; // ベクトルとモードを表すフラグのペア
@@ -1930,6 +1981,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
         pixels_in_square = pixels;
     }
 
+    //マージ候補のリストを作成
+    std::vector<int> merge_squares;
+    merge_squares = getSquareList(square_idx, MERGE);
+
     double sx = coordinate.p1.x;
     double sy = coordinate.p1.y;
     double lx = coordinate.p4.x;
@@ -2025,7 +2080,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     ctu->mvds = mvds;
     ctu->ref_triangle_idx = selected_idx;
     ctu->flags_code_sum = flag_code_sum;
-    if(method != MERGE) {
+    if(method != MV_CODE_METHOD::MERGE) {
         (ctu->mvds_x).clear();
         (ctu->mvds_y).clear();
         (ctu->original_mvds_x).clear();
@@ -2617,7 +2672,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
     int spread_quarter = 4 * SERACH_RANGE;
     int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
     std::vector<cv::Point2f> pixels = getPixelsInSquare(square);
-    std::vector<int> spatial_squares = getSpatialSquareList(square_index);
+    std::vector<int> spatial_squares = getSquareList(square_index, SPATIAL);
 
     for(int j = -SY * 4 ; j <= SY * 4 ; j += s) {            //j : y方向のMV
         for(int i = -SX * 4 ; i <= SX * 4 ; i += s) {        //i : x方向のMV
