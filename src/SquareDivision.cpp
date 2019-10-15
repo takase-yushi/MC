@@ -2094,32 +2094,32 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
 
 #if MERGE_MODE
     if(translation_flag) {
-        for (int i = 0; i < spatial_square_size; i++) {
-            int spatial_square_index = spatial_squares[i];
-            GaussResult spatial_square = square_gauss_results[spatial_square_index];
+        for (int i = 0; i < merge_squares.size(); i++) {
+            int merge_square_index = merge_squares[i];
+            GaussResult merge_square = square_gauss_results[merge_square_index];
             std::vector<cv::Point2f> mvds;
             cv::Rect rect(-4 * SERACH_RANGE, -4 * SERACH_RANGE, 4 * (target_image.cols + 2 * SERACH_RANGE), 4 * (target_image.rows + 2 * SERACH_RANGE));
             std::vector<cv::Point2f> mvs;
 
-            if (spatial_square.translation_flag) {
-                if(spatial_square.mv_translation.x + sx < -SERACH_RANGE || spatial_square.mv_translation.y + sy < -SERACH_RANGE || spatial_square.mv_translation.x + lx >= target_image.cols + SERACH_RANGE || spatial_square.mv_translation.y + ly >= target_image.rows + SERACH_RANGE) continue;
-                if (!isMvExists(merge_vectors, spatial_square.mv_translation)) {
-                    merge_vectors.emplace_back(spatial_square.mv_translation, MERGE);
-                    mvs.emplace_back(spatial_square.mv_translation);
-                    mvs.emplace_back(spatial_square.mv_translation);
-                    mvs.emplace_back(spatial_square.mv_translation);
+            if (merge_square.translation_flag) {
+                if(merge_square.mv_translation.x + sx < -SERACH_RANGE || merge_square.mv_translation.y + sy < -SERACH_RANGE || merge_square.mv_translation.x + lx >= target_image.cols + SERACH_RANGE || merge_square.mv_translation.y + ly >= target_image.rows + SERACH_RANGE) continue;
+                if (!isMvExists(merge_vectors, merge_square.mv_translation)) {
+                    merge_vectors.emplace_back(merge_square.mv_translation, MERGE);
+                    mvs.emplace_back(merge_square.mv_translation);
+                    mvs.emplace_back(merge_square.mv_translation);
+                    mvs.emplace_back(merge_square.mv_translation);
                     double ret_residual = getSquareResidual_Pred(target_image, mvs, pixels_in_square, expansion_ref);
                     double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count));
                     results.emplace_back(rd, getUnaryCodeLength(merge_count), mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
                 }
             } else {
-                if(spatial_square.mv_warping[0].x + sx < -SERACH_RANGE || spatial_square.mv_warping[0].y + sy < -SERACH_RANGE || spatial_square.mv_warping[0].x + lx >= target_image.cols + SERACH_RANGE || spatial_square.mv_warping[0].y + ly >= target_image.rows + SERACH_RANGE) continue;
-                if (!isMvExists(merge_vectors, spatial_square.mv_warping[0])) {
-                    merge_vectors.emplace_back(spatial_square.mv_warping[0], MERGE);
-                    mvs.emplace_back(spatial_square.mv_warping[0]);
-                    mvs.emplace_back(spatial_square.mv_warping[0]);
-                    mvs.emplace_back(spatial_square.mv_warping[0]);
+                if(merge_square.mv_warping[0].x + sx < -SERACH_RANGE || merge_square.mv_warping[0].y + sy < -SERACH_RANGE || merge_square.mv_warping[0].x + lx >= target_image.cols + SERACH_RANGE || merge_square.mv_warping[0].y + ly >= target_image.rows + SERACH_RANGE) continue;
+                if (!isMvExists(merge_vectors, merge_square.mv_warping[0])) {
+                    merge_vectors.emplace_back(merge_square.mv_warping[0], MERGE);
+                    mvs.emplace_back(merge_square.mv_warping[0]);
+                    mvs.emplace_back(merge_square.mv_warping[0]);
+                    mvs.emplace_back(merge_square.mv_warping[0]);
                     double ret_residual = getSquareResidual_Pred(target_image, mvs, pixels_in_square, expansion_ref);
                     double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count));
                     results.emplace_back(rd, getUnaryCodeLength(merge_count), mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
