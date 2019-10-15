@@ -697,11 +697,11 @@ void SquareDivision::addCornerAndSquare(Square square, int square_index){
  * @oaran cmt 時間予測用のCollocatedMvTreeのノード(collocatedmvtree→cmt)
  * @param square 四角形の各点の座標
  * @param square_index 四角形のindex
- * @param type 分割方向
+ * @param square_number 4つに分割したときの四角形の番号　0:左上, 1:右上, 2:左下, 3:右下, 4:初期ブロック(ctu_width * ctu_height の四角形)
  * @param steps 分割回数
  * @return 分割した場合はtrue, そうでない場合falseを返す
  */
-bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point4Vec square, int square_index, int square_number, int type, int steps) {
+bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point4Vec square, int square_index, int square_number, int steps) {
 
 
     double RMSE_before_subdiv = 0.0;
@@ -871,7 +871,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         return false;
     }
 
-    SplitResult split_squares = getSplitSquare(p1, p2, p3, p4, type);
+    SplitResult split_squares = getSplitSquare(p1, p2, p3, p4, 1);
 
     SplitResult split_sub_squares1 = getSplitSquare(split_squares.s1.p1, split_squares.s1.p2, split_squares.s1.p3, split_squares.s1.p4, split_squares.s_type);
     SplitResult split_sub_squares2 = getSplitSquare(split_squares.s2.p1, split_squares.s2.p2, split_squares.s2.p3, split_squares.s2.p4, split_squares.s_type);
@@ -1232,12 +1232,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
     double alpha = 1.0;
     std::cout << "before   : " << cost_before_subdiv << "    after : " << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4) << std::endl;
-    std::cout << "D before : " << cost_before_subdiv - lambda * code_length<< "    D after : " << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4 - lambda * (code_length1 + code_length2 + code_length3 + code_length4)) << std::endl;
-    std::cout << "R before : " << code_length<< "         R after : " << alpha * (code_length1 + code_length2 + code_length3 + code_length4) << std::endl;
-    std::cout << "D after1 : " << alpha * (cost_after_subdiv1) << " R after1 : " << alpha * (code_length1) << ", ";
-    std::cout << "D after2 : " << alpha * (cost_after_subdiv2) << " R after2 : " << alpha * (code_length2) << ", ";
-    std::cout << "D after3 : " << alpha * (cost_after_subdiv3) << " R after3 : " << alpha * (code_length3) << ", ";
-    std::cout << "D after4 : " << alpha * (cost_after_subdiv4) << " R after4 : " << alpha * (code_length4) << std::endl;
+//    std::cout << "D before : " << cost_before_subdiv - lambda * code_length<< "    D after : " << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4 - lambda * (code_length1 + code_length2 + code_length3 + code_length4)) << std::endl;
+//    std::cout << "R before : " << code_length<< "         R after : " << alpha * (code_length1 + code_length2 + code_length3 + code_length4) << std::endl;
+//    std::cout << "D after1 : " << alpha * (cost_after_subdiv1) << " R after1 : " << alpha * (code_length1) << ", ";
+//    std::cout << "D after2 : " << alpha * (cost_after_subdiv2) << " R after2 : " << alpha * (code_length2) << ", ";
+//    std::cout << "D after3 : " << alpha * (cost_after_subdiv3) << " R after3 : " << alpha * (code_length3) << ", ";
+//    std::cout << "D after4 : " << alpha * (cost_after_subdiv4) << " R after4 : " << alpha * (code_length4) << std::endl;
     if(cost_before_subdiv >= alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4)) {
 
         for(int i = 0 ; i < 4 ; i++){
@@ -1276,7 +1276,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 ctu->node1->mv3 = square_gauss_results[square_indexes[0]].mv_warping[2];
             }
         }
-        bool result = split(expand_images, ctu->node1, cmt_left_left, split_sub_squares1.s1, s1_idx, 1, 1, steps - 2);
+        bool result = split(expand_images, ctu->node1, cmt_left_left, split_sub_squares1.s1, s1_idx, 0, steps - 2);
 
         // 2つ目の四角形
         ctu->node2->square_index = s2_idx;
@@ -1305,7 +1305,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 ctu->node2->mv3 = square_gauss_results[square_indexes[1]].mv_warping[2];
             }
         }
-        result = split(expand_images, ctu->node2, cmt_left_right, split_sub_squares1.s2, s2_idx, 2, 1, steps - 2);
+        result = split(expand_images, ctu->node2, cmt_left_right, split_sub_squares1.s2, s2_idx, 1, steps - 2);
 
         // 3つ目の四角形
         ctu->node3->square_index = s3_idx;
@@ -1333,7 +1333,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 ctu->node3->mv3 = square_gauss_results[square_indexes[2]].mv_warping[2];
             }
         }
-        result = split(expand_images, ctu->node3, cmt_right_left, split_sub_squares2.s1, s3_idx, 3, 1, steps - 2);
+        result = split(expand_images, ctu->node3, cmt_right_left, split_sub_squares2.s1, s3_idx, 2, steps - 2);
 
         // 4つ目の四角形
         ctu->node4->square_index = s4_idx;
@@ -1361,7 +1361,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 ctu->node4->mv3 = square_gauss_results[square_indexes[3]].mv_warping[2];
             }
         }
-        result = split(expand_images, ctu->node4, cmt_right_right, split_sub_squares2.s2, s4_idx, 4, 1, steps - 2);
+        result = split(expand_images, ctu->node4, cmt_right_right, split_sub_squares2.s2, s4_idx, 3, steps - 2);
 
         return true;
     }else{
