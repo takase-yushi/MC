@@ -481,7 +481,7 @@ void run_square(std::string config_name) {
             cv::Point2f p3 = square.p3;
             cv::Point2f p4 = square.p4;
             std::cout << "================== step:" << i << " ================== " << std::endl;
-            square_division.split(expand_images, foo[i], nullptr, Point4Vec(p1, p2, p3, p4), i, 1, division_steps);
+            square_division.split(expand_images, foo[i], nullptr, Point4Vec(p1, p2, p3, p4), i, 4, 1, division_steps);
         }
         std::cout << "split finished" << std::endl;
 
