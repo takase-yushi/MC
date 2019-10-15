@@ -767,11 +767,11 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             MV_CODE_METHOD method_warping, method_translation;
             std::tie(cost_translation, std::ignore, std::ignore, std::ignore, method_translation) = getMVD(
                     {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
-                    square_index, square_number, cmt->mv1, ctu, true, dummy);
+                    square_index, square_number, cmt->mv1, ctu, true, dummy, steps);
 #if !GAUSS_NEWTON_TRANSLATION_ONLY
             std::tie(cost_warping, std::ignore, std::ignore, std::ignore, method_warping) = getMVD(
                     square_gauss_results[square_index].mv_warping, error_warping,
-                    square_index, square_number, cmt->mv1, ctu, false, dummy);
+                    square_index, square_number, cmt->mv1, ctu, false, dummy, steps);
 #endif
             if(cost_translation < cost_warping || (steps <= warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
                 square_gauss_results[square_index].translation_flag = true;
@@ -818,11 +818,11 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     if(square_gauss_results[square_index].translation_flag) {
         std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
                 {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
-                square_index, square_number, cmt->mv1, ctu, true, dummy);
+                square_index, square_number, cmt->mv1, ctu, true, dummy, steps);
     }else{
         std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
                 square_gauss_results[square_index].mv_warping, error_warping,
-                square_index, square_number, cmt->mv1, ctu, false, dummy);
+                square_index, square_number, cmt->mv1, ctu, false, dummy, steps);
     }
 
     std::vector<cv::Point2i> ret_gauss2;
@@ -1088,12 +1088,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
             std::tie(cost_translation_tmp,std::ignore, std::ignore, std::ignore, method_translation_tmp) = getMVD(
                     {mv_translation_tmp, mv_translation_tmp, mv_translation_tmp}, error_translation_tmp,
-                    square_indexes[j], j, cmt->mv1, ctus[j], true, dummy);
+                    square_indexes[j], j, cmt->mv1, ctus[j], true, dummy, steps);
 #if !GAUSS_NEWTON_TRANSLATION_ONLY
 
             std::tie(cost_warping_tmp, std::ignore, std::ignore, std::ignore, method_warping_tmp) = getMVD(
                     mv_warping_tmp, error_warping_tmp,
-                    square_indexes[j], j, cmt->mv1, ctus[j], false, dummy);
+                    square_indexes[j], j, cmt->mv1, ctus[j], false, dummy, steps);
 #endif
             if(cost_translation_tmp < cost_warping_tmp || (steps <= warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY){
                 square_gauss_results[square_indexes[j]].translation_flag = true;
@@ -1143,7 +1143,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag1) = getMVD(
                 {split_mv_result[0].mv_translation, split_mv_result[0].mv_translation, split_mv_result[0].mv_translation},
                 split_mv_result[0].residual,
-                square_indexes[0], 0, cmt_left_left->mv1, ctu->node1, true, dummy);
+                square_indexes[0], 0, cmt_left_left->mv1, ctu->node1, true, dummy, steps);
 
         if(method_flag1 == MV_CODE_METHOD::MERGE) {
             if(split_mv_result[0].translation_flag) {
@@ -1156,7 +1156,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     }else{
         std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag1) = getMVD(
                 split_mv_result[0].mv_warping, split_mv_result[0].residual,
-                square_indexes[0], 0, cmt_left_left->mv1, ctu->node1, false, dummy);
+                square_indexes[0], 0, cmt_left_left->mv1, ctu->node1, false, dummy, steps);
     }
     isCodedSquare[square_indexes[0]] = true;
 
@@ -1165,7 +1165,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     if(split_mv_result[1].translation_flag){
         std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
                 {split_mv_result[1].mv_translation, split_mv_result[1].mv_translation, split_mv_result[1].mv_translation}, split_mv_result[1].residual,
-                square_indexes[1], 1, cmt_left_right->mv1, ctu->node2, true, dummy);
+                square_indexes[1], 1, cmt_left_right->mv1, ctu->node2, true, dummy, steps);
 
         if(method_flag2 == MV_CODE_METHOD::MERGE) {
             if(split_mv_result[1].translation_flag) {
@@ -1178,7 +1178,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     }else{
         std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
                 split_mv_result[1].mv_warping, split_mv_result[1].residual,
-                square_indexes[1], 1, cmt_left_right->mv1, ctu->node2, false, dummy);
+                square_indexes[1], 1, cmt_left_right->mv1, ctu->node2, false, dummy, steps);
     }
     isCodedSquare[square_indexes[1]] = true;
 
@@ -1188,7 +1188,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag3) = getMVD(
                 {split_mv_result[2].mv_translation, split_mv_result[2].mv_translation, split_mv_result[2].mv_translation},
                 split_mv_result[2].residual,
-                square_indexes[2], 2, cmt_right_left->mv1, ctu->node3, true, dummy);
+                square_indexes[2], 2, cmt_right_left->mv1, ctu->node3, true, dummy, steps);
 
         if(method_flag3 == MV_CODE_METHOD::MERGE) {
             if(split_mv_result[2].translation_flag) {
@@ -1201,7 +1201,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     }else{
         std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag3) = getMVD(
                 split_mv_result[2].mv_warping, split_mv_result[2].residual,
-                square_indexes[2], 2, cmt_right_left->mv1, ctu->node3, false, dummy);
+                square_indexes[2], 2, cmt_right_left->mv1, ctu->node3, false, dummy, steps);
     }
     isCodedSquare[square_indexes[2]] = true;
 
@@ -1210,7 +1210,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     if(split_mv_result[3].translation_flag){
         std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
                 {split_mv_result[3].mv_translation, split_mv_result[3].mv_translation, split_mv_result[3].mv_translation}, split_mv_result[3].residual,
-                square_indexes[3], 3, cmt_right_right->mv1, ctu->node4, true, dummy);
+                square_indexes[3], 3, cmt_right_right->mv1, ctu->node4, true, dummy, steps);
 
         if(method_flag4 == MV_CODE_METHOD::MERGE) {
             if(split_mv_result[3].translation_flag) {
@@ -1223,7 +1223,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     }else{
         std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
                 split_mv_result[3].mv_warping, split_mv_result[3].residual,
-                square_indexes[3], 3, cmt_right_right->mv1, ctu->node4, false, dummy);
+                square_indexes[3], 3, cmt_right_right->mv1, ctu->node4, false, dummy, steps);
     }
     isCodedSquare[square_indexes[3]] = true;
 
@@ -1494,7 +1494,7 @@ std::vector<int> SquareDivision::getSquareList(int s_idx, MV_CODE_METHOD method)
             merge_reference_block[1] = reference_block[0];
             //同一動き情報をもっている場合は重複配列をon(false)にする
             //③
-            if (square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[1]].mv_translation)
+            if (isCodedSquare[merge_reference_block[0]] && square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[1]].mv_translation)
                 duplicate[1] = true;
         }
         else if(reference_block.size() == 4) {
@@ -1504,14 +1504,14 @@ std::vector<int> SquareDivision::getSquareList(int s_idx, MV_CODE_METHOD method)
                 merge_reference_block[2] = reference_block[0];
                 merge_reference_block[3] = reference_block[3];
                 //①
-                if (square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[1]].mv_translation)
+                if (isCodedSquare[merge_reference_block[0]] && square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[1]].mv_translation)
                     duplicate[1] = true;
                 //③
-                if (square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[2]].mv_translation)
+                if (isCodedSquare[merge_reference_block[0]] && square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[2]].mv_translation)
                     duplicate[2] = true;
                 //④
-                if (square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[3]].mv_translation ||
-                    square_gauss_results[merge_reference_block[1]].mv_translation == square_gauss_results[merge_reference_block[3]].mv_translation)
+                if ((isCodedSquare[merge_reference_block[0]] && square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[3]].mv_translation) ||
+                    (isCodedSquare[merge_reference_block[1]] && square_gauss_results[merge_reference_block[1]].mv_translation == square_gauss_results[merge_reference_block[3]].mv_translation))
                     duplicate[3] = true;
             }
             else {
@@ -1520,14 +1520,14 @@ std::vector<int> SquareDivision::getSquareList(int s_idx, MV_CODE_METHOD method)
                 merge_reference_block[2] = reference_block[1];
                 merge_reference_block[3] = reference_block[3];
                 //①
-                if (square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[1]].mv_translation)
+                if (isCodedSquare[merge_reference_block[0]] && square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[1]].mv_translation)
                     duplicate[1] = true;
                 //②
-                if (square_gauss_results[merge_reference_block[1]].mv_translation == square_gauss_results[merge_reference_block[2]].mv_translation)
+                if (isCodedSquare[merge_reference_block[1]] && square_gauss_results[merge_reference_block[1]].mv_translation == square_gauss_results[merge_reference_block[2]].mv_translation)
                     duplicate[2] = true;
                 //④
-                if (square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[3]].mv_translation ||
-                    square_gauss_results[merge_reference_block[1]].mv_translation == square_gauss_results[merge_reference_block[3]].mv_translation)
+                if ((isCodedSquare[merge_reference_block[0]] && square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[3]].mv_translation) ||
+                    (isCodedSquare[merge_reference_block[1]] && square_gauss_results[merge_reference_block[1]].mv_translation == square_gauss_results[merge_reference_block[3]].mv_translation))
                     duplicate[3] = true;
             }
         }
@@ -1538,17 +1538,17 @@ std::vector<int> SquareDivision::getSquareList(int s_idx, MV_CODE_METHOD method)
             merge_reference_block[3] = reference_block[0];
             merge_reference_block[4] = reference_block[4];
             //①
-            if (square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[1]].mv_translation)
+            if (isCodedSquare[merge_reference_block[0]] && square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[1]].mv_translation)
                 duplicate[1] = true;
             //②
-            if (square_gauss_results[merge_reference_block[1]].mv_translation == square_gauss_results[merge_reference_block[2]].mv_translation)
+            if (isCodedSquare[merge_reference_block[1]] && square_gauss_results[merge_reference_block[1]].mv_translation == square_gauss_results[merge_reference_block[2]].mv_translation)
                 duplicate[2] = true;
             //③
-            if (square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[3]].mv_translation)
+            if (isCodedSquare[merge_reference_block[0]] && square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[3]].mv_translation)
                 duplicate[3] = true;
             //④
-            if (square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[4]].mv_translation ||
-                square_gauss_results[merge_reference_block[1]].mv_translation == square_gauss_results[merge_reference_block[4]].mv_translation)
+            if ((isCodedSquare[merge_reference_block[0]] && square_gauss_results[merge_reference_block[0]].mv_translation == square_gauss_results[merge_reference_block[4]].mv_translation) ||
+                (isCodedSquare[merge_reference_block[1]] && square_gauss_results[merge_reference_block[1]].mv_translation == square_gauss_results[merge_reference_block[4]].mv_translation))
                 duplicate[4] = true;
         }
         //重複がなく，符号化済みのブロックのみ入れる
@@ -1750,7 +1750,7 @@ bool SquareDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE
  * @param[in] ctu CodingTreeUnit 符号木
  * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
  */
-std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, int square_number, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, std::vector<int> spatial_squares){
+std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, int square_number, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, int steps, std::vector<int> spatial_squares){
     // 空間予測と時間予測の候補を取り出す
     if(spatial_squares.empty()) {
         spatial_squares = getSquareList(square_idx, SPATIAL);
@@ -2063,9 +2063,27 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
         pixels_in_square = pixels;
     }
 
+    if(steps == 2) {
+        //CU内部の四角形を参照できないように符号化済みフラグをfalseにする
+        if (square_number != 4) {
+            for (int i = 0; i < square_number; i++) {
+                isCodedSquare[square_idx - (i + 1)] = false;
+            }
+        }
+    }
+
     //マージ候補のリストを作成
     std::vector<int> merge_squares;
     merge_squares = getSquareList(square_idx, MERGE);
+
+    if(steps == 2) {
+        //マージ候補は作成できたので，符号化済みフラグをtrueにする
+        if (square_number != 4) {
+            for (int i = 0; i < square_number; i++) {
+                isCodedSquare[square_idx - (i + 1)] = true;
+            }
+        }
+    }
 
     double sx = coordinate.p1.x;
     double sy = coordinate.p1.y;
