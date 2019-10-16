@@ -2054,7 +2054,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     vectors.clear();
 
     std::vector<cv::Point2f> pixels_in_square;
-    std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> merge_vectors;
     if(pixels.empty()) {
         pixels_in_square = getPixelsInSquare(coordinate);
     }else{
@@ -2072,15 +2071,21 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
 
     //マージ候補のリストを作成
     std::vector<int> merge_squares;
+    std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> merge_vectors;
     merge_squares = getSquareList(square_idx, MERGE);
 
-    if(steps == 2) {
-        //マージ候補は作成できたので，符号化済みフラグをtrueにする
-        if (square_number != 4) {
-            for (int i = 0; i < square_number; i++) {
-                isCodedSquare[square_idx - (i + 1)] = true;
-            }
+    for (int i = 0; i < merge_squares.size(); i++) {
+        int merge_square_index = merge_squares[i];
+        GaussResult merge_square = square_gauss_results[merge_square_index];
+        //TODO ワーピング対応
+        if (merge_square.translation_flag) {
+            merge_vectors.emplace_back(merge_square.mv_translation, MERGE);
         }
+    }
+
+    //TODO MERGE_Collocatedの場合わけも必要かも？
+    if(merge_vectors.size() < 4) {
+        vectors.emplace_back(cv::Point2f(0.0, 0.0), MERGE_Collocated);
     }
 
 //    if(steps == 2) {
@@ -2100,56 +2105,45 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     int merge_count = 0;
 
 #if MERGE_MODE
-    if(translation_flag) {
-        for (int i = 0; i < merge_squares.size(); i++) {
-            int merge_square_index = merge_squares[i];
-            GaussResult merge_square = square_gauss_results[merge_square_index];
+    for (int i = 0; i < merge_vectors.size(); i++) {
+        if(translation_flag) {
+            std::pair<cv::Point2f, MV_CODE_METHOD> merge_vector = merge_vectors[i];
+            cv::Point2f current_mv = merge_vector.first;
             std::vector<cv::Point2f> mvds;
             cv::Rect rect(-4 * SERACH_RANGE, -4 * SERACH_RANGE, 4 * (target_image.cols + 2 * SERACH_RANGE), 4 * (target_image.rows + 2 * SERACH_RANGE));
             std::vector<cv::Point2f> mvs;
 
-            if (merge_square.translation_flag) {
-                if(merge_square.mv_translation.x + sx < -SERACH_RANGE || merge_square.mv_translation.y + sy < -SERACH_RANGE || merge_square.mv_translation.x + lx >= target_image.cols + SERACH_RANGE || merge_square.mv_translation.y + ly >= target_image.rows + SERACH_RANGE) continue;
-                mvs.emplace_back(merge_square.mv_translation);
-                mvs.emplace_back(merge_square.mv_translation);
-                mvs.emplace_back(merge_square.mv_translation);
-                double ret_residual = getSquareResidual_Pred(target_image, mvs, pixels_in_square, expansion_ref);
-                double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count));
-                results.emplace_back(rd, getUnaryCodeLength(merge_count), mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
-                merge_count++;
-            } else {
-                if(merge_square.mv_warping[0].x + sx < -SERACH_RANGE || merge_square.mv_warping[0].y + sy < -SERACH_RANGE || merge_square.mv_warping[0].x + lx >= target_image.cols + SERACH_RANGE || merge_square.mv_warping[0].y + ly >= target_image.rows + SERACH_RANGE) continue;
-                mvs.emplace_back(merge_square.mv_warping[0]);
-                mvs.emplace_back(merge_square.mv_warping[0]);
-                mvs.emplace_back(merge_square.mv_warping[0]);
-                double ret_residual = getSquareResidual_Pred(target_image, mvs, pixels_in_square, expansion_ref);
-                double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count));
-                results.emplace_back(rd, getUnaryCodeLength(merge_count), mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
-                merge_count++;
-            }
-        }
-    }else{
-        std::vector<Point3Vec> warping_vector_history;
-        for(int i = 0 ; i < warping_vectors.size() ; i++){
-            cv::Rect rect(-4 * SERACH_RANGE, -4 * SERACH_RANGE, 4 * (target_image.cols + 2 * SERACH_RANGE), 4 * (target_image.rows + 2 * SERACH_RANGE));
-            std::vector<cv::Point2f> mvs;
-            std::vector<cv::Point2f> mvds;
+            if(current_mv.x + sx < -SERACH_RANGE || current_mv.y + sy < -SERACH_RANGE || current_mv.x + lx >= target_image.cols + SERACH_RANGE || current_mv.y + ly >= target_image.rows + SERACH_RANGE) continue;
+            mvs.emplace_back(current_mv);
+            mvs.emplace_back(current_mv);
+            mvs.emplace_back(current_mv);
+            double ret_residual = getSquareResidual_Pred(target_image, mvs, pixels_in_square, expansion_ref);
+            double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count));
+            results.emplace_back(rd, getUnaryCodeLength(merge_count), mvs, merge_count, merge_vector.second, FlagsCodeSum(0, 0, 0, 0), Flags());
+            merge_count++;
+        }else {
+            std::vector<Point3Vec> warping_vector_history;
+            for (int i = 0; i < warping_vectors.size(); i++) {
+                cv::Rect rect(-4 * SERACH_RANGE, -4 * SERACH_RANGE, 4 * (target_image.cols + 2 * SERACH_RANGE), 4 * (target_image.rows + 2 * SERACH_RANGE));
+                std::vector<cv::Point2f> mvs;
+                std::vector<cv::Point2f> mvds;
 
-            if(!warping_vectors[i].empty()) {
-                mvs.emplace_back(warping_vectors[i][0]);
-                mvs.emplace_back(warping_vectors[i][1]);
-                mvs.emplace_back(warping_vectors[i][2]);
+                if (!warping_vectors[i].empty()) {
+                    mvs.emplace_back(warping_vectors[i][0]);
+                    mvs.emplace_back(warping_vectors[i][1]);
+                    mvs.emplace_back(warping_vectors[i][2]);
 
-                if(mvs[0].x + sx < -SERACH_RANGE || mvs[0].y + sy < -SERACH_RANGE || mvs[0].x + lx >= target_image.cols + SERACH_RANGE  || mvs[0].y + ly>=target_image.rows + SERACH_RANGE ) continue;
-                if(mvs[1].x + sx < -SERACH_RANGE || mvs[1].y + sy < -SERACH_RANGE || mvs[1].x + lx >= target_image.cols + SERACH_RANGE  || mvs[1].y + ly>=target_image.rows + SERACH_RANGE ) continue;
-                if(mvs[2].x + sx < -SERACH_RANGE || mvs[2].y + sy < -SERACH_RANGE || mvs[2].x + lx >= target_image.cols + SERACH_RANGE  || mvs[2].y + ly>=target_image.rows + SERACH_RANGE ) continue;
+                    if (mvs[0].x + sx < -SERACH_RANGE || mvs[0].y + sy < -SERACH_RANGE || mvs[0].x + lx >= target_image.cols + SERACH_RANGE || mvs[0].y + ly >= target_image.rows + SERACH_RANGE) continue;
+                    if (mvs[1].x + sx < -SERACH_RANGE || mvs[1].y + sy < -SERACH_RANGE || mvs[1].x + lx >= target_image.cols + SERACH_RANGE || mvs[1].y + ly >= target_image.rows + SERACH_RANGE) continue;
+                    if (mvs[2].x + sx < -SERACH_RANGE || mvs[2].y + sy < -SERACH_RANGE || mvs[2].x + lx >= target_image.cols + SERACH_RANGE || mvs[2].y + ly >= target_image.rows + SERACH_RANGE) continue;
 
-                if (!isMvExists(warping_vector_history, mvs)) {
-                    double ret_residual = getSquareResidual_Pred(target_image, mvs, pixels_in_square, expansion_ref);
-                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count));
-                    results.emplace_back(rd, getUnaryCodeLength(merge_count), mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
-                    merge_count++;
-                    warping_vector_history.emplace_back(mvs[0], mvs[1], mvs[2]);
+                    if (!isMvExists(warping_vector_history, mvs)) {
+                        double ret_residual = getSquareResidual_Pred(target_image, mvs, pixels_in_square, expansion_ref);
+                        double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count));
+                        results.emplace_back(rd, getUnaryCodeLength(merge_count), mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
+                        merge_count++;
+                        warping_vector_history.emplace_back(mvs[0], mvs[1], mvs[2]);
+                    }
                 }
             }
         }
@@ -2180,7 +2174,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     ctu->mvds = mvds;
     ctu->ref_triangle_idx = selected_idx;
     ctu->flags_code_sum = flag_code_sum;
-    if(method != MV_CODE_METHOD::MERGE) {
+    if(method != MV_CODE_METHOD::MERGE && method != MV_CODE_METHOD::MERGE_Collocated) {
         (ctu->mvds_x).clear();
         (ctu->mvds_y).clear();
         (ctu->original_mvds_x).clear();
@@ -2198,7 +2192,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     }
 
 #if SPLIT_USE_SSE
-    if(method == MERGE){
+    if(method == MV_CODE_METHOD::MERGE || MV_CODE_METHOD::MERGE_Collocated){
         int spatial_square_index = spatial_squares[selected_idx];
         GaussResult spatial_square = square_gauss_results[spatial_square_index];
         if(translation_flag) {

@@ -13,7 +13,8 @@
 enum MV_CODE_METHOD {
     SPATIAL,
     Collocated,
-    MERGE
+    MERGE,
+    MERGE_Collocated
 };
 
 
