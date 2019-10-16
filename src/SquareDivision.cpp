@@ -2174,7 +2174,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     ctu->mvds = mvds;
     ctu->ref_triangle_idx = selected_idx;
     ctu->flags_code_sum = flag_code_sum;
-    if(method != MV_CODE_METHOD::MERGE && method != MV_CODE_METHOD::MERGE_Collocated) {
+    if(method != MV_CODE_METHOD::MERGE) {
         (ctu->mvds_x).clear();
         (ctu->mvds_y).clear();
         (ctu->original_mvds_x).clear();
@@ -2192,18 +2192,17 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     }
 
 #if SPLIT_USE_SSE
-    if(method == MV_CODE_METHOD::MERGE || MV_CODE_METHOD::MERGE_Collocated){
-        int spatial_square_index = spatial_squares[selected_idx];
-        GaussResult spatial_square = square_gauss_results[spatial_square_index];
+    if(method == MV_CODE_METHOD::MERGE){
         if(translation_flag) {
-            if (spatial_square.translation_flag) {
-                double ret_residual = getSquareResidual_Mode(target_image, mvds, pixels_in_square, expansion_ref);
-                RDCost = ret_residual + lambda * code_length;
-            } else {
-                double ret_residual = getSquareResidual_Mode(target_image, mvds, pixels_in_square, expansion_ref);
-                RDCost = ret_residual + lambda * code_length;
-            }
+            double ret_residual = getSquareResidual_Mode(target_image, mvds, pixels_in_square, expansion_ref);
+            RDCost = ret_residual + lambda * code_length;
         }else{
+            double ret_residual = getSquareResidual_Mode(target_image, mvds, pixels_in_square, expansion_ref);
+            RDCost = ret_residual + lambda * code_length;
+        }
+    }
+    else if(MV_CODE_METHOD::MERGE_Collocated) {
+        if(translation_flag) {
             double ret_residual = getSquareResidual_Mode(target_image, mvds, pixels_in_square, expansion_ref);
             RDCost = ret_residual + lambda * code_length;
         }
