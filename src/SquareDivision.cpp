@@ -1767,10 +1767,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
         GaussResult spatial_square = square_gauss_results[spatial_square_index];
 
         if(spatial_square.translation_flag){
-            if(!isMvExists(vectors, spatial_square.mv_translation)) {
-                vectors.emplace_back(spatial_square.mv_translation, SPATIAL);
-                warping_vectors.emplace_back();
-            }
+            vectors.emplace_back(spatial_square.mv_translation, SPATIAL);
+            warping_vectors.emplace_back();
         }else{
             // 隣接パッチがワーピングで予想されている場合、そのパッチの0番の動きベクトルを候補とする
             cv::Point2f p1 = spatial_square.mv_warping[0];
@@ -2254,10 +2252,8 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
         GaussResult spatial_square = square_gauss_results[spatial_square_index];
 
         if(spatial_square.translation_flag){
-            if(!isMvExists(vectors, spatial_square.mv_translation)) {
-                vectors.emplace_back(spatial_square.mv_translation, SPATIAL);
-                warping_vectors.emplace_back();
-            }
+            vectors.emplace_back(spatial_square.mv_translation, SPATIAL);
+            warping_vectors.emplace_back();
         }else{
             // 隣接パッチがワーピングで予想されている場合、そのパッチの0番の動きベクトルを候補とする
             cv::Point2f p1 = spatial_square.mv_warping[0];
