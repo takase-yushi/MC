@@ -2061,14 +2061,14 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
         pixels_in_square = pixels;
     }
 
-    if(steps == 2) {
-        //CU内部の四角形を参照できないように符号化済みフラグをfalseにする
-        if (square_number != 4) {
-            for (int i = 0; i < square_number; i++) {
-                isCodedSquare[square_idx - (i + 1)] = false;
-            }
-        }
-    }
+//    if(steps == 2) {
+//        //CU内部の四角形を参照できないように符号化済みフラグをfalseにする
+//        if (square_number != 4) {
+//            for (int i = 0; i < square_number; i++) {
+//                isCodedSquare[square_idx - (i + 1)] = false;
+//            }
+//        }
+//    }
 
     //マージ候補のリストを作成
     std::vector<int> merge_squares;
@@ -2082,6 +2082,15 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
             }
         }
     }
+
+//    if(steps == 2) {
+//        //マージ候補は作成できたので，符号化済みフラグをtrueにする
+//        if (square_number != 4) {
+//            for (int i = 0; i < square_number; i++) {
+//                isCodedSquare[square_idx - (i + 1)] = true;
+//            }
+//        }
+//    }
 
     double sx = coordinate.p1.x;
     double sy = coordinate.p1.y;
