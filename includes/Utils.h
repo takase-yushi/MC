@@ -98,6 +98,7 @@ enum {
 #define SPLIT_USE_SSE false
 #define SERACH_RANGE 16
 #define BLOCKMATCHING_NEIGHBOR_PIXELS 1
+#define MERGE_ALPHA 1.0
 
 const std::string OS = "Ubuntu";
 
