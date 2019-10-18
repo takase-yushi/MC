@@ -1232,12 +1232,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
     double alpha = 1.0;
     std::cout << "before   : " << cost_before_subdiv << "    after : " << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4) << std::endl;
-//    std::cout << "D before : " << cost_before_subdiv - lambda * code_length<< "    D after : " << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4 - lambda * (code_length1 + code_length2 + code_length3 + code_length4)) << std::endl;
-//    std::cout << "R before : " << code_length<< "         R after : " << alpha * (code_length1 + code_length2 + code_length3 + code_length4) << std::endl;
-//    std::cout << "after1 D : " << alpha * (cost_after_subdiv1) << " R : " << alpha * (code_length1) << ", method : " << method_flag1 << std::endl;
-//    std::cout << "after2 D : " << alpha * (cost_after_subdiv2) << " R : " << alpha * (code_length2) << ", method : " << method_flag2 << std::endl;
-//    std::cout << "after3 D : " << alpha * (cost_after_subdiv3) << " R : " << alpha * (code_length3) << ", method : " << method_flag3 << std::endl;
-//    std::cout << "after4 D : " << alpha * (cost_after_subdiv4) << " R : " << alpha * (code_length4) << ", method : " << method_flag4 << std::endl <<std::endl;
+    std::cout << "D before : " << cost_before_subdiv - lambda * code_length<< "    D after : " << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4 - lambda * (code_length1 + code_length2 + code_length3 + code_length4)) << std::endl;
+    std::cout << "R before : " << code_length<< "         R after : " << alpha * (code_length1 + code_length2 + code_length3 + code_length4) << ", mv : " << square_gauss_results[square_index].mv_translation << std::endl;
+    std::cout << "after1 D : " << alpha * (cost_after_subdiv1 - lambda * code_length1) << ", R : " << alpha * (code_length1) << ", method : " << method_flag1 << ", mv : " << square_gauss_results[square_indexes[0]].mv_translation << std::endl;
+    std::cout << "after2 D : " << alpha * (cost_after_subdiv2 - lambda * code_length2) << ", R : " << alpha * (code_length2) << ", method : " << method_flag2 << ", mv : " << square_gauss_results[square_indexes[1]].mv_translation << std::endl;
+    std::cout << "after3 D : " << alpha * (cost_after_subdiv3 - lambda * code_length3) << ", R : " << alpha * (code_length3) << ", method : " << method_flag3 << ", mv : " << square_gauss_results[square_indexes[2]].mv_translation << std::endl;
+    std::cout << "after4 D : " << alpha * (cost_after_subdiv4 - lambda * code_length4) << ", R : " << alpha * (code_length4) << ", method : " << method_flag4 << ", mv : " << square_gauss_results[square_indexes[3]].mv_translation << std::endl <<std::endl;
     if(cost_before_subdiv >= alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4)) {
 
         for(int i = 0 ; i < 4 ; i++){
