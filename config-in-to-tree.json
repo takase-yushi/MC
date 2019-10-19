@@ -5,6 +5,18 @@
       "img_directory"  : "/img/in_to_tree",
       "log_directory"  : "/log/in_to_tree",
       "gauss_ref_image": "/in_to_tree_I_qp22.png",
+      "ref_image"      : "/in_to_tree_I_qp22.png",
+      "target_image"   : "/in_to_tree_353_crop.png",
+      "QP"             : 22,
+      "ctu_width"      : 128,
+      "ctu_height"     : 128,
+      "division_step"  : 8
+    },
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/in_to_tree",
+      "log_directory"  : "/log/in_to_tree",
+      "gauss_ref_image": "/in_to_tree_I_qp22.png",
       "ref_image"      : "/in_to_tree_I_qp27.png",
       "target_image"   : "/in_to_tree_353_crop.png",
       "QP"             : 27,
