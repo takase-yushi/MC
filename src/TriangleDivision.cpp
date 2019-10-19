@@ -2634,8 +2634,11 @@ int TriangleDivision::getCtuCodeLength(CodingTreeUnit *ctu){
 
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
         // この1bitは手法フラグ(translation/warping)，もう1bitはマージフラグ
-        if(INTRA_MODE) return 1 + 1 + ctu->code_length + 1; // イントラのフラグで1ビット更に増えた
-        else return 1 + 1 + ctu->code_length;
+        int flags_code = 1;
+        if (INTRA_MODE) flags_code++;
+        if (MERGE_MODE) flags_code++;
+
+        else return flags_code + ctu->code_length;
     }
 
     // ここで足している1はsplit_cu_flag分です
