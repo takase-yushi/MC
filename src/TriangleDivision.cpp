@@ -2294,9 +2294,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                     mvs.emplace_back(spatial_triangle.mv_translation);
                     mvs.emplace_back(spatial_triangle.mv_translation);
                     double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
-                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
-                    results.emplace_back(rd, getUnaryCodeLength(merge_count) + 1, mvs, merge_count, MERGE,
-                                         FlagsCodeSum(0, 0, 0, 0), Flags());
+                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count));
+                    results.emplace_back(rd, getUnaryCodeLength(merge_count), mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
                 }
             } else {
@@ -2308,9 +2307,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                     mvs.emplace_back(spatial_triangle.mv_warping[0]);
                     double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs,
                                                               pixels_in_triangle, rect);
-                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
-                    results.emplace_back(rd, getUnaryCodeLength(merge_count) + 1, mvs, merge_count, MERGE,
-                                         FlagsCodeSum(0, 0, 0, 0), Flags());
+                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count));
+                    results.emplace_back(rd, getUnaryCodeLength(merge_count), mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
                 }
             }
@@ -2334,7 +2332,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 
                 if (!isMvExists(warping_vector_history, mvs) && warping_vector_history.size() <= MV_LIST_MAX_NUM) {
                     double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
-                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1);
+                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count));
                     results.emplace_back(rd, getUnaryCodeLength(merge_count), mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
                     warping_vector_history.emplace_back(mvs[0], mvs[1], mvs[2]);
@@ -2635,8 +2633,9 @@ int TriangleDivision::getCtuCodeLength(std::vector<CodingTreeUnit*> ctus) {
 int TriangleDivision::getCtuCodeLength(CodingTreeUnit *ctu){
 
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
-        if(INTRA_MODE) return 1 + ctu->code_length + 1; // イントラのフラグで1ビット更に増えた
-        else return 1 + ctu->code_length;
+        // この1bitは手法フラグ(translation/warping)，もう1bitはマージフラグ
+        if(INTRA_MODE) return 1 + 1 + ctu->code_length + 1; // イントラのフラグで1ビット更に増えた
+        else return 1 + 1 + ctu->code_length;
     }
 
     // ここで足している1はsplit_cu_flag分です
