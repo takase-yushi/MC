@@ -62,6 +62,8 @@ private:
     int spatial_counter;
 
     int intra_counter;
+
+    int patch_num;
 };
 
 

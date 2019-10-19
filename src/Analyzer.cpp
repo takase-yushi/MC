@@ -20,6 +20,7 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     merge_counter = spatial_counter = 0;
     code_sum = 0;
     intra_counter = 0;
+    patch_num = 0;
 
     for(auto ctu : ctus){
         storeDistributionOfMv(ctu);
@@ -66,6 +67,7 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
 
     fp = std::fopen((log_path + "/mvd_result" + file_suffix + ".txt").c_str(), "w");
     fprintf(fp, "code_sum              :%d\n", code_sum);
+    fprintf(fp, "patch num             :%d\n", patch_num);
     fprintf(fp, "greater_0_flag        :%d\n", greater_0_flag_sum);
     fprintf(fp, "greater_0_flag entropy:%f\n", getEntropy({greater_0_flag_counter[0], greater_0_flag_counter[1]}));
     fprintf(fp, "greater_1_flag        :%d\n", greater_1_flag_sum);
@@ -74,8 +76,8 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     fprintf(fp, "mvd_code              :%d\n", mvd_code_sum);
     fprintf(fp, "warping_code          :%d\n", mvd_warping_code_sum);
     fprintf(fp, "warping_patch         :%d\n", warping_patch_num);
-    fprintf(fp, "translation_code         :%d\n", mvd_translation_code_sum);
-    fprintf(fp, "translation_patch        :%d\n", translation_patch_num);
+    fprintf(fp, "translation_code      :%d\n", mvd_translation_code_sum);
+    fprintf(fp, "translation_patch     :%d\n", translation_patch_num);
     fprintf(fp, "Spatial_patch         :%d\n", spatial_counter);
     fprintf(fp, "merge_patch           :%d\n", merge_counter);
     fprintf(fp, "merge_flag_entropy    :%f\n", getEntropy({merge_flag_counter[0], merge_flag_counter[1]}));
@@ -97,6 +99,7 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr){
         if(INTRA_MODE) code_sum += (1 + ctu->code_length + 1);
         else code_sum += (1 + ctu->code_length);
+        patch_num++;
 
         if(ctu->method != MV_CODE_METHOD::MERGE && ctu->method != MV_CODE_METHOD::INTRA){
             if(ctu->translation_flag){
