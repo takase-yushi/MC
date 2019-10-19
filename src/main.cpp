@@ -84,7 +84,7 @@ void run(std::string config_name) {
     std::vector<Config> tasks = readTasks(std::move(config_name));
 
     std::ofstream ofs;
-    ofs.open(getProjectDirectory(OS) + tasks[0].getLogDirectory() + "/" + getCurrentTimestamp() + ".csv");
+    ofs.open(getProjectDirectory(OS) + tasks[0].getLogDirectory() + "/" + getCurrentTimestamp() + out_file_suffix + ".csv");
 
     std::map<int, std::vector<std::vector<cv::Mat>>> ref_images_with_qp, target_images_with_qp;
     std::map<int, EXPAND_ARRAY_TYPE> expand_images_with_qp;
