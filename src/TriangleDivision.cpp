@@ -1140,6 +1140,8 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, diagonal_line_area_flag, triangle_index, ctu, block_size_x, block_size_y);
         for(const auto& p : pixels) intra_flag[p.x][p.y] = true;
 
+        ctu->node1 = ctu->node2 = ctu->node3 = ctu->node4 = nullptr;
+
         return false;
     }
 
@@ -2623,6 +2625,35 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
 
 //            getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, SEARCH_RANGE, area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
         }
+
+        Triangle t = triangles[ctu->triangle_index].first;
+        cv::Point2f p1 = corners[t.p1_idx];
+        cv::Point2f p2 = corners[t.p2_idx];
+        cv::Point2f p3 = corners[t.p3_idx];
+
+        if(ctu->translation_flag) {
+            cv::Point2f g = (p1 + p2 + p3) / 3.0;
+
+            cv::arrowedLine(out, g, g + 10 * ctu->mv1, RED, 1);
+
+            if(ctu->method == MV_CODE_METHOD::MERGE){
+                cv::arrowedLine(out, g, g + 10 * ctu->original_mv1, BLUE, 1);
+                cv::arrowedLine(out, g, g + ctu->merge_triangle_ref_vector, WHITE);
+            }
+        }else{
+            cv::Point2f g = (p1 + p2 + p3) / 3.0;
+            cv::arrowedLine(out, p1, p1 + 10 * ctu->mv1, RED, 1);
+            cv::arrowedLine(out, p2, p2 + 10 * ctu->mv2, RED, 1);
+            cv::arrowedLine(out, p3, p3 + 10 * ctu->mv3, RED, 1);
+
+            if(ctu->method == MV_CODE_METHOD::MERGE){
+                cv::arrowedLine(out, g, g + ctu->merge_triangle_ref_vector, WHITE);
+                cv::arrowedLine(out, p1, p1 + 10 * ctu->original_mv1, BLUE, 1);
+                cv::arrowedLine(out, p2, p2 + 10 * ctu->original_mv2, BLUE, 1);
+                cv::arrowedLine(out, p3, p3 + 10 * ctu->original_mv3, BLUE, 1);
+            }
+        }
+
         return;
     }
 
@@ -2648,7 +2679,7 @@ int TriangleDivision::getCtuCodeLength(CodingTreeUnit *ctu){
         if (INTRA_MODE) flags_code++;
         if (MERGE_MODE) flags_code++;
 
-        else return flags_code + ctu->code_length;
+        return flags_code + ctu->code_length;
     }
 
     // ここで足している1はsplit_cu_flag分です
@@ -2680,20 +2711,20 @@ void TriangleDivision::drawMvImage(cv::Mat &out, CodingTreeUnit *ctu){
         if(ctu->translation_flag) {
             cv::Point2f g = (p1 + p2 + p3) / 3.0;
 
-            cv::arrowedLine(out, g, g + ctu->mv1, GREEN);
+            cv::arrowedLine(out, g, g + 10 * ctu->mv1, GREEN);
 
             if(ctu->method == MV_CODE_METHOD::MERGE){
-                cv::arrowedLine(out, g, g + ctu->original_mv1, WHITE);
+                cv::arrowedLine(out, g, g + 10 * ctu->original_mv1, BLUE);
             }
         }else{
-            cv::arrowedLine(out, p1, p1 + ctu->mv1, GREEN);
-            cv::arrowedLine(out, p2, p2 + ctu->mv2, GREEN);
-            cv::arrowedLine(out, p3, p3 + ctu->mv3, GREEN);
+            cv::arrowedLine(out, p1, p1 + 10 * ctu->mv1, GREEN);
+            cv::arrowedLine(out, p2, p2 + 10 * ctu->mv2, GREEN);
+            cv::arrowedLine(out, p3, p3 + 10 * ctu->mv3, GREEN);
 
             if(ctu->method == MV_CODE_METHOD::MERGE){
-                cv::arrowedLine(out, p1, p1 + ctu->original_mv1, WHITE);
-                cv::arrowedLine(out, p2, p2 + ctu->original_mv2, WHITE);
-                cv::arrowedLine(out, p3, p3 + ctu->original_mv3, WHITE);
+                cv::arrowedLine(out, p1, p1 + 10 * ctu->original_mv1, BLUE);
+                cv::arrowedLine(out, p2, p2 + 10 * ctu->original_mv2, BLUE);
+                cv::arrowedLine(out, p3, p3 + 10 * ctu->original_mv3, BLUE);
             }
         }
     }
