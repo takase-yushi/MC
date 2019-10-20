@@ -1076,6 +1076,15 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         triangle_gauss_results[triangle_index].mv_warping = mvd;
         gauss_result_translation = mvd[0];
         gauss_result_warping = mvd;
+        if(triangle_gauss_results[triangle_index].translation_flag) {
+            ctu->original_mv1 = triangle_gauss_results[triangle_index].mv_translation;
+            ctu->original_mv2 = triangle_gauss_results[triangle_index].mv_translation;
+            ctu->original_mv3 = triangle_gauss_results[triangle_index].mv_translation;
+        }else{
+            ctu->original_mv1 = triangle_gauss_results[triangle_index].mv_warping[0];
+            ctu->original_mv2 = triangle_gauss_results[triangle_index].mv_warping[1];
+            ctu->original_mv3 = triangle_gauss_results[triangle_index].mv_warping[2];
+        }
     }
 
     std::vector<cv::Point2f> mv;

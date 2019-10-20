@@ -43,6 +43,7 @@ public:
     std::vector<bool> x_sign_flag, y_sign_flag;
 
     cv::Point2f merge_triangle_ref_vector;
+    cv::Point2f original_mv1, original_mv2, original_mv3;
 };
 
 
