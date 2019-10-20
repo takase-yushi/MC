@@ -1072,10 +1072,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     std::vector<cv::Point2i> ret_gauss2;
 
     if(method_flag == MV_CODE_METHOD::MERGE) {
-        triangle_gauss_results[triangle_index].mv_translation = mvd[0];
-        triangle_gauss_results[triangle_index].mv_warping = mvd;
-        gauss_result_translation = mvd[0];
-        gauss_result_warping = mvd;
         if(triangle_gauss_results[triangle_index].translation_flag) {
             ctu->original_mv1 = triangle_gauss_results[triangle_index].mv_translation;
             ctu->original_mv2 = triangle_gauss_results[triangle_index].mv_translation;
@@ -1085,6 +1081,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             ctu->original_mv2 = triangle_gauss_results[triangle_index].mv_warping[1];
             ctu->original_mv3 = triangle_gauss_results[triangle_index].mv_warping[2];
         }
+
+        triangle_gauss_results[triangle_index].mv_translation = mvd[0];
+        triangle_gauss_results[triangle_index].mv_warping = mvd;
+        gauss_result_translation = mvd[0];
+        gauss_result_warping = mvd;
     }
 
     std::vector<cv::Point2f> mv;

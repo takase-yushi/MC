@@ -9,6 +9,7 @@
 #include <iostream>
 #include <sys/stat.h>
 #include <fstream>
+#include <algorithm>
 
 /**
  *
@@ -21,6 +22,8 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     code_sum = 0;
     intra_counter = 0;
     patch_num = 0;
+    max_merge_mv_diff_x = 0;
+    max_merge_mv_diff_y = 0;
 
     for(auto ctu : ctus){
         storeDistributionOfMv(ctu);
@@ -220,5 +223,53 @@ void Analyzer::storeCsvFileWithStream(std::ofstream &ofs, double psnr) {
     if(INTRA_MODE) tmp_code_sum = tmp_code_sum - (int)ceil(intra_counter * getEntropy({intra_flag_counter[0], intra_flag_counter[1]}));
 #endif
 
-    ofs << qp << "," << getLambdaPred(qp, 1.0) << "," << code_sum << "," << tmp_code_sum << "," << psnr << std::endl;
+    ofs << qp << "," << getLambdaPred(qp, 1.0) << "," << code_sum << "," << tmp_code_sum << "," << psnr << "," << patch_num << "," << spatial_counter << "," << merge_counter << "," << intra_counter << std::endl;
+}
+
+void Analyzer::storeMergeMvLog(std::vector<CodingTreeUnit*> ctus, std::string log_path) {
+    std::ofstream ofs;
+    ofs.open(log_path);
+
+    for(const auto ctu : ctus) {
+        storeMergeMvLog(ctu, ofs);
+    }
+
+    ofs << std::endl;
+    ofs << "max_diff(x):" << max_merge_mv_diff_x << " max_diff(y):" << max_merge_mv_diff_y << std::endl;
+
+    ofs.close();
+}
+
+void Analyzer::storeMergeMvLog(CodingTreeUnit *ctu, std::ofstream &ofs) {
+    if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
+        if(ctu->method != MV_CODE_METHOD::MERGE) return;
+
+        if(ctu->translation_flag) {
+            ofs << "merge(transaltion)" << std::endl;
+            ofs << "original:" << ctu->original_mv1 << " merged_mv:" << ctu->mv1 << std::endl;
+            ofs << std::endl;
+
+            max_merge_mv_diff_x = std::max(max_merge_mv_diff_x, std::fabs(ctu->original_mv1.x - ctu->mv1.x));
+            max_merge_mv_diff_y = std::max(max_merge_mv_diff_y, std::fabs(ctu->original_mv1.y - ctu->mv1.y));
+        } else {
+            ofs << "merge(warping)" << std::endl;
+            ofs << "original(1):" << ctu->original_mv1 << " merged_mv(1):" << ctu->mv1 << std::endl;
+            ofs << "original(2):" << ctu->original_mv2 << " merged_mv(2):" << ctu->mv2 << std::endl;
+            ofs << "original(3):" << ctu->original_mv3 << " merged_mv(3):" << ctu->mv3 << std::endl;
+            ofs << std::endl;
+
+            max_merge_mv_diff_x = std::max(max_merge_mv_diff_x, std::fabs(ctu->original_mv1.x - ctu->mv1.x));
+            max_merge_mv_diff_x = std::max(max_merge_mv_diff_x, std::fabs(ctu->original_mv2.x - ctu->mv2.x));
+            max_merge_mv_diff_x = std::max(max_merge_mv_diff_x, std::fabs(ctu->original_mv3.x - ctu->mv3.x));
+            max_merge_mv_diff_y = std::max(max_merge_mv_diff_y, std::fabs(ctu->original_mv1.y - ctu->mv1.y));
+            max_merge_mv_diff_y = std::max(max_merge_mv_diff_y, std::fabs(ctu->original_mv2.y - ctu->mv2.y));
+            max_merge_mv_diff_y = std::max(max_merge_mv_diff_y, std::fabs(ctu->original_mv3.y - ctu->mv3.y));
+        }
+        return;
+    }
+
+    storeMergeMvLog(ctu->node1, ofs);
+    storeMergeMvLog(ctu->node2, ofs);
+    storeMergeMvLog(ctu->node3, ofs);
+    storeMergeMvLog(ctu->node4, ofs);
 }
