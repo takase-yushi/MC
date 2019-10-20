@@ -2680,10 +2680,20 @@ void TriangleDivision::drawMvImage(cv::Mat &out, CodingTreeUnit *ctu){
             cv::Point2f g = (p1 + p2 + p3) / 3.0;
 
             cv::arrowedLine(out, g, g + ctu->mv1, GREEN);
+
+            if(ctu->method == MV_CODE_METHOD::MERGE){
+                cv::arrowedLine(out, g, g + ctu->original_mv1, WHITE);
+            }
         }else{
             cv::arrowedLine(out, p1, p1 + ctu->mv1, GREEN);
             cv::arrowedLine(out, p2, p2 + ctu->mv2, GREEN);
             cv::arrowedLine(out, p3, p3 + ctu->mv3, GREEN);
+
+            if(ctu->method == MV_CODE_METHOD::MERGE){
+                cv::arrowedLine(out, p1, p1 + ctu->original_mv1, WHITE);
+                cv::arrowedLine(out, p2, p2 + ctu->original_mv2, WHITE);
+                cv::arrowedLine(out, p3, p3 + ctu->original_mv3, WHITE);
+            }
         }
     }
 
