@@ -18,9 +18,12 @@ public:
     void storeMarkdownFile(double psnr, std::string log_path);
     Analyzer(const std::string &fileSuffix);
     void storeCsvFileWithStream(std::ofstream &ofs, double psnr);
+    void storeMergeMvLog(std::vector<CodingTreeUnit*> ctus, std::string log_path);
+
 
 private:
     void storeDistributionOfMv(CodingTreeUnit *ctu);
+    void storeMergeMvLog(CodingTreeUnit* ctu, std::ofstream &ofs);
 
     // mvdのカウンター
     std::map<int, int> mvd_counter;
@@ -64,6 +67,9 @@ private:
     int intra_counter;
 
     int patch_num;
+
+    float max_merge_mv_diff_x;
+    float max_merge_mv_diff_y;
 };
 
 

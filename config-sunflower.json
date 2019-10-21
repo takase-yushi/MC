@@ -5,7 +5,7 @@
       "img_directory"  : "/img/sunflower",
       "log_directory"  : "/log/sunflower",
       "gauss_ref_image": "/sunflower_I_qp22.png",
-      "ref_image"      : "/sunflower_I_qp27.png",
+      "ref_image"      : "/sunflower_I_qp22.png",
       "target_image"   : "/sunflower_71_crop.png",
       "QP"             : 22,
       "ctu_width"      : 128,
