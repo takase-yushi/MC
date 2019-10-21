@@ -2637,7 +2637,7 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
             cv::arrowedLine(out, g, g + 10 * ctu->mv1, RED, 1);
 
             if(ctu->method == MV_CODE_METHOD::MERGE){
-                cv::arrowedLine(out, g, g + 10 * ctu->original_mv1, BLUE, 1);
+                cv::arrowedLine(out, g, g + 10 * ctu->original_mv1, GREEN, 1);
                 cv::arrowedLine(out, g, g + ctu->merge_triangle_ref_vector, WHITE);
             }
         }else{
@@ -2648,9 +2648,9 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
 
             if(ctu->method == MV_CODE_METHOD::MERGE){
                 cv::arrowedLine(out, g, g + ctu->merge_triangle_ref_vector, WHITE);
-                cv::arrowedLine(out, p1, p1 + 10 * ctu->original_mv1, BLUE, 1);
-                cv::arrowedLine(out, p2, p2 + 10 * ctu->original_mv2, BLUE, 1);
-                cv::arrowedLine(out, p3, p3 + 10 * ctu->original_mv3, BLUE, 1);
+                cv::arrowedLine(out, p1, p1 + 10 * ctu->original_mv1, GREEN, 1);
+                cv::arrowedLine(out, p2, p2 + 10 * ctu->original_mv2, GREEN, 1);
+                cv::arrowedLine(out, p3, p3 + 10 * ctu->original_mv3, GREEN, 1);
             }
         }
 
