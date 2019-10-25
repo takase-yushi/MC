@@ -9,6 +9,6 @@
 #include "../includes/Config.h"
 
 std::vector<Config> readTasks(std::string config_name = "config.json");
-void appendConfigItem(std::string input_file_path, std::string output_file_path);
+void generateConfigItem(std::string input_file_path, std::string output_file_path);
 
 #endif //ENCODER_CONFIGUTIL_H

@@ -68,7 +68,7 @@ std::vector<Config> readTasks(std::string config_name) {
 }
 
 
-void appendConfigItem(std::string input_file_path, std::string output_file_path){
+void generateConfigItem(std::string input_file_path, std::string output_file_path){
     std::ifstream fs;
 
     fs.open(input_file_path, std::ios::binary);
