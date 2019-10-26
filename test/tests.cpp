@@ -374,6 +374,45 @@ void getDiff_vector(){
     }
 }
 
+void draw_HEVC_MergeMode(std::string p_image_name, std::string result_txt_name, int block_num) {
+
+    const std::string img_directory = getProjectDirectory(OS) + "\\img\\minato\\";
+
+    std::string p_image_path = img_directory + p_image_name;
+    std::string result_path  = img_directory + result_txt_name;
+
+    //x,   y,   x,   y,  merge
+    int block_info[block_num][5];
+    std::ifstream result;
+    cv::Mat p_image;
+
+    result.open(result_path, std::ios::in);
+    p_image = cv::imread(p_image_path);
+
+    if(result.fail()){
+        std::cerr << "Failed to open result.txt" <<std::endl;
+        exit(1);
+    }
+
+    char del = ' ';
+    int n;
+    std::string info;
+
+    for(int i = 0 ; i < block_num ; i++) {
+        std::getline(result, info);
+
+        n = 0;
+        for (const auto subinfo : split(info, del)) {
+            block_info[i][n] = stoi(subinfo);
+            n++;
+        }
+        std::cout << "x : " << block_info[i][0] << ", y : " << block_info[i][1] <<
+                   ", x : " << block_info[i][2] << ", y : " << block_info[i][3] << ", merge : " << block_info[i][4] << std::endl;
+    }
+
+
+}
+
 void draw_mv(){
 
     const std::string img_directory = getProjectDirectory(OS) + "\\img\\minato\\";
