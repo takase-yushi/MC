@@ -63,9 +63,10 @@ int main(int argc, char *argv[]){
     }
 
 //    run(config_name);
-    run_square(config_name);
+//    run_square(config_name);
 
 //getDiff_image();
+    draw_HEVC_MergeMode("minato_p_image_22_divide_6_lambda_2.413685_.png", "result.txt", 5);
 #endif
 
 }
