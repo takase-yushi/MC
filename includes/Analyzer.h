@@ -59,6 +59,7 @@ private:
     std::string file_suffix;
 
     int warping_patch_num;
+    int merge2_counter;
     int translation_patch_num;
 
     int merge_counter;

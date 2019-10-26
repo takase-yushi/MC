@@ -46,10 +46,18 @@ int division_steps;
 double injected_lambda;
 bool lambda_inject_flag;
 
-std::string out_file_suffix = "_parallel_only";
+std::string out_file_suffix = "_enable_merge";
 
 int main(int argc, char *argv[]){
     // Write test codes below
+//    std::string basePath = getProjectDirectory(OS);
+//
+//    appendConfigItem(basePath + "/config-minato.json", basePath + "/config-minato-tmp.json");
+//    appendConfigItem(basePath + "/config-fungus.json", basePath + "/config-fungus-tmp.json");
+//    appendConfigItem(basePath + "/config-sunflower.json", basePath + "/config-sunflower-tmp.json");
+//    appendConfigItem(basePath + "/config-in-to-tree.json", basePath + "/config-in-to-tree-tmp.json");
+//    exit(0);
+
 #if TEST_MODE
     tests();
 #else

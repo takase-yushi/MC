@@ -96,7 +96,7 @@ enum {
 #define STORE_IMG_LOG true
 #define INTRA_MODE false
 #define INTRA_LIMIT_MODE false // イントラが選択されたらそれ以降は割らないモード
-
+#define MERGE2_ENABLE true
 #define SEARCH_RANGE 16
 
 const std::string OS = "Ubuntu";

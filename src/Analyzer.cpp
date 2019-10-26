@@ -24,6 +24,7 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     patch_num = 0;
     max_merge_mv_diff_x = 0;
     max_merge_mv_diff_y = 0;
+    merge2_counter = 0;
 
     for(auto ctu : ctus){
         storeDistributionOfMv(ctu);
@@ -100,11 +101,14 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
  */
 void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr){
-        if(INTRA_MODE) code_sum += (1 + ctu->code_length + 1);
-        else code_sum += (1 + ctu->code_length);
+        int flags_code = 1;
+        if (INTRA_MODE) flags_code++;
+        if (MERGE_MODE) flags_code++;
+
+        code_sum += flags_code + ctu->code_length;
         patch_num++;
 
-        if(ctu->method != MV_CODE_METHOD::MERGE && ctu->method != MV_CODE_METHOD::INTRA){
+        if(ctu->method != MV_CODE_METHOD::MERGE && ctu->method != MV_CODE_METHOD::INTRA && ctu->method != MV_CODE_METHOD::MERGE2){
             if(ctu->translation_flag){
                 int x_ = (int)abs(((ctu->mv1).x * 4));
                 int y_ = (int)abs(((ctu->mv1).y * 4));
@@ -159,6 +163,31 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
 
             merge_flag_counter[0]++;
             intra_flag_counter[0]++;
+        }else if(ctu->method == MV_CODE_METHOD::MERGE2) {
+            for(int i = 0 ; i < 3 ; i++) {
+                int x = (ctu->mvds_x)[i];
+                mvd_counter_x[x]++;
+                int y = (ctu->mvds_y)[i];
+                mvd_counter_y[y]++;
+                mvd_counter[x]++;
+                mvd_counter[y]++;
+
+                if(ctu->flags_code_sum.getXGreater0Flag()[i]) {
+                    greater_1_flag_counter[(int)(ctu->flags_code_sum.getXGreater1Flag()[i])]++;
+                }
+                if(ctu->flags_code_sum.getYGreater0Flag()[i]) {
+                    greater_1_flag_counter[(int)(ctu->flags_code_sum.getYGreater1Flag()[i])]++;
+                }
+
+                greater_0_flag_counter[(int)(ctu->flags_code_sum.getXGreater0Flag()[i])]++;
+                greater_0_flag_counter[(int)(ctu->flags_code_sum.getYGreater0Flag()[i])]++;
+            }
+            merge2_counter++;
+            greater_0_flag_sum += ctu->flags_code_sum.getGreater0FlagCodeLength();
+            greater_1_flag_sum += ctu->flags_code_sum.getGreaterThanOneCodeLength();
+            sign_flag_sum += ctu->flags_code_sum.getSignFlagCodeLength();
+            mvd_code_sum += ctu->flags_code_sum.getMvdCodeLength();
+
         }else if(ctu->method == MV_CODE_METHOD::MERGE){
             merge_counter++;
             merge_flag_counter[1]++;
@@ -208,12 +237,12 @@ void Analyzer::storeMarkdownFile(double psnr, std::string log_path) {
 void Analyzer::storeCsvFileWithStream(std::ofstream &ofs, double psnr) {
     extern int qp;
     int tmp_code_sum = code_sum - (int)ceil(greater_0_flag_sum * (1.0-getEntropy({greater_0_flag_counter[0], greater_0_flag_counter[1]})));
-    std::cout << (int)ceil(greater_0_flag_sum * getEntropy({greater_0_flag_counter[0], greater_0_flag_counter[1]}))<< std::endl;
+    std::cout << (int)ceil(greater_0_flag_sum * (1.0 - getEntropy({greater_0_flag_counter[0], greater_0_flag_counter[1]})))<< std::endl;
     std::cout << "tmp_code_sum:" << tmp_code_sum << std::endl;
     tmp_code_sum = tmp_code_sum - (int)ceil(greater_1_flag_sum * (1.0 - getEntropy({greater_1_flag_counter[0], greater_1_flag_counter[1]})));
 
 #if MERGE_MODE
-    std::cout << (int)ceil(patch_num * getEntropy({merge_flag_counter[0], merge_flag_counter[1]})) << std::endl;
+    std::cout << (int)ceil(patch_num * (1.0 - getEntropy({merge_flag_counter[0], merge_flag_counter[1]}))) << std::endl;
     std::cout << "tmp_code_sum:" << tmp_code_sum << std::endl;
     tmp_code_sum = tmp_code_sum - (int)ceil(patch_num * (1.0 - getEntropy({merge_flag_counter[0], merge_flag_counter[1]})));
 #endif
@@ -223,7 +252,7 @@ void Analyzer::storeCsvFileWithStream(std::ofstream &ofs, double psnr) {
     if(INTRA_MODE) tmp_code_sum = tmp_code_sum - (int)ceil(intra_counter * getEntropy({intra_flag_counter[0], intra_flag_counter[1]}));
 #endif
 
-    ofs << qp << "," << getLambdaPred(qp, 1.0) << "," << code_sum << "," << tmp_code_sum << "," << psnr << "," << patch_num << "," << spatial_counter << "," << merge_counter << "," << intra_counter << std::endl;
+    ofs << qp << "," << getLambdaPred(qp, 1.0) << "," << code_sum << "," << tmp_code_sum << "," << psnr << "," << patch_num << "," << spatial_counter << "," << merge_counter << "," << merge2_counter << "," << intra_counter << std::endl;
 }
 
 void Analyzer::storeMergeMvLog(std::vector<CodingTreeUnit*> ctus, std::string log_path) {
