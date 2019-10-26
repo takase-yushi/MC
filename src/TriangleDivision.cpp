@@ -2398,7 +2398,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                         int mvd_code_length = 6;
                         FlagsCodeSum flag_code_sum(0, 0, 0, 0);
                         Flags flags;
-                        for (int j = 0; j < mvds.size(); j++) {
+                        for (int j = 0; j < warping2_mvds.size(); j++) {
 
     #if MVD_DEBUG_LOG
                             std::cout << "target_vector_idx       :" << j << std::endl;
@@ -2406,7 +2406,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                     std::cout << "encode_mv(warping)      :" << mv[j] << std::endl;
     #endif
 
-                            cv::Point2f mvd = getQuantizedMv(mvds[j], 4);
+                            cv::Point2f mvd = getQuantizedMv(warping2_mvds[j], 4);
 
                             // 正負の判定
                             bool is_x_minus = mvd.x < 0;
@@ -2420,7 +2420,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                             std::cout << "mvd(warping)            :" << mvd << std::endl;
     #endif
                             mvd *= 4;
-                            mvds[j] = mvd;
+                            warping2_mvds[j] = mvd;
 
     #if MVD_DEBUG_LOG
                             std::cout << "4 * mvd(warping)        :" << mvd << std::endl;
@@ -2475,13 +2475,13 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                                 flag_code_sum.setYGreater1Flag(is_y_greater_than_one);
                                 flag_code_sum.countSignFlagCode();
                             }
-                            mvds[j].x = mvd.x;
-                            mvds[j].y = mvd.y;
+                            warping2_mvds[j].x = mvd.x;
+                            warping2_mvds[j].y = mvd.y;
                         }
 
                         double rd = ret_residual + lambda * (getUnaryCodeLength(merge2_count) + mvd_code_length);
                         results.emplace_back(rd, getUnaryCodeLength(merge2_count) + mvd_code_length, mvs, merge2_count,
-                                             MERGE2, flag_code_sum, Flags());
+                                             MERGE2, flag_code_sum, flags);
                         merge2_count++;
                         warping2_vector_history.emplace_back(mvs[0], mvs[1], mvs[2]);
                     }
