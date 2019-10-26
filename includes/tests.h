@@ -33,6 +33,7 @@ void testHevcPSNR();
 
 std::vector<std::string> split(std::string str, char del);
 void getDiff_vector();
+void draw_HEVC_MergeMode(cv::Mat p_image, std::string result, int block_num);
 void draw_mv();
 void getDiff_image();
 void filterTest();
