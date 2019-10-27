@@ -181,7 +181,7 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
     if(HEVC_REF_IMAGE) expansion_ref = getExpansionMatHEVCImage(ref_image, 4, expansion_size);
     else expansion_ref = getExpansionMatImage(ref_image, 4, scaled_expansion_size);
 
-    ref_hevc = getExpansionHEVCImage(ref_image, 4, SERACH_RANGE);
+    ref_hevc = getExpansionHEVCImage(ref_image, 4, expansion_size);
 
     cv::Mat tmp_mat = getExpansionMatImage(ref_image, 1, scaled_expansion_size);
 
@@ -2848,14 +2848,14 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
         }
     }
 
-    if(820 <= square_index && square_index <= 823) {
-        std::cout << "mv : " <<  mv_min << std::endl << std::endl;
-        for(const auto& pixel : pixels) {
-            std::cout << "p : " <<  (int)(R(expansion_ref_image, (int)(mv_min.x) + (int)(4 * pixel.x) + spread_quarter, (int)(mv_min.y) + (int)(4 * pixel.y) + spread_quarter))<<
-            ", target : " << (int)(R(target_image, (int)(pixel.x), (int)(pixel.y))) << std::endl;
-        }
-        std::cout << std::endl;
-    }
+//    if(824 <= square_index && square_index <= 827) {
+//        std::cout << "mv : " <<  mv_min << std::endl << std::endl;
+//        for(const auto& pixel : pixels) {
+//            std::cout << "p : " <<  (int)(R(expansion_ref_image, (int)(mv_min.x) + (int)(4 * pixel.x) + spread_quarter, (int)(mv_min.y) + (int)(4 * pixel.y) + spread_quarter))<<
+//            ", target : " << (int)(R(target_image, (int)(pixel.x), (int)(pixel.y))) << std::endl;
+//        }
+//        std::cout << std::endl;
+//    }
 
     errors.emplace_back(sad_min);
     mvs.emplace_back(mv_min.x, mv_min.y);
