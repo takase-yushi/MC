@@ -381,36 +381,53 @@ void draw_HEVC_MergeMode(std::string p_image_name, std::string result_txt_name) 
     std::string p_image_path = img_directory + p_image_name;
     std::string result_path  = img_directory + result_txt_name;
 
-    //x,   y,   x,   y,  merge
-    int block_info[block_num][5];
-    std::ifstream result;
+    int x, y, x_size, y_size, merge_flag;
+    FILE *result;
     cv::Mat p_image;
+    cv::Mat out_image;
 
-    result.open(result_path, std::ios::in);
+    if((result = fopen((result_path).c_str(), "r")) == NULL) {
+        std::cerr << "Error : Cannot open file" << std::endl;
+        exit(1);
+    }
     p_image = cv::imread(p_image_path);
+    out_image = cv::Mat::zeros(p_image.rows, p_image.cols, CV_8UC3);
 
     if(result.fail()){
         std::cerr << "Failed to open result.txt" <<std::endl;
         exit(1);
     }
 
-    char del = ' ';
-    int n;
-    std::string info;
+    char buf[30];
+    int n = 0;
 
-    for(int i = 0 ; i < block_num ; i++) {
-        std::getline(result, info);
+    while(fgets(buf, sizeof(buf), result) != nullptr) {
+        sscanf(buf, "%d %d %d %d %d", &x, &y, &x_size, &y_size, &merge_flag);
+//        std::cout << "x : " << x << ", y : " << y << ", PU_x_size : " << x_size << ", PU_y_size : " << y_size << ", merge : " << merge_flag << std::endl;
+        n++;
 
-        n = 0;
-        for (const auto subinfo : split(info, del)) {
-            block_info[i][n] = stoi(subinfo);
-            n++;
+        //マージのところを赤くする
+        for(int j = y ; j < y + y_size ; j++) {
+            for(int i = x ; i < x + x_size ; i++) {
+                if(merge_flag) {
+                    R(out_image, i, j) = R(p_image, i, j);
+                    G(out_image, i, j) = 0;
+                    B(out_image, i, j) = 0;
+                }
+                else {
+                    R(out_image, i, j) = 0;
+                    G(out_image, i, j) = G(p_image, i, j);
+                    B(out_image, i, j) = 0;
+                }
+            }
         }
-        std::cout << "x : " << block_info[i][0] << ", y : " << block_info[i][1] <<
-                   ", x : " << block_info[i][2] << ", y : " << block_info[i][3] << ", merge : " << block_info[i][4] << std::endl;
+        //四角形の描画
+        drawSquare(out_image, cv::Point2f(x, y), cv::Point2f(x + x_size - 1, y), cv::Point2f(x, y + y_size - 1), cv::Point2f(x + x_size - 1, y + y_size - 1), cv::Scalar(255, 255, 255), 0);
     }
 
+    cv::imwrite(getProjectDirectory(OS) + "\\img\\HM_MergeMode.png", out_image);
 
+    std::cout << "block_num : " << n << std::endl;
 }
 
 void draw_mv(){
