@@ -509,8 +509,8 @@ void getDiff_image(){
     std::cout << "img_directory:" << img_directory << std::endl;
 
     //path
-    std::string image1_path = img_directory + "minato_000413_limit.bmp";
-    std::string image2_path = img_directory + "minato_37_fullsearch16_Hadamard_FEN_OFF_nointra_limit.png";
+    std::string image1_path = img_directory + "minato_mirai_000413.png";
+    std::string image2_path = img_directory + "HM_minato_mirai_nointra_27.png";
 
     cv::Mat image1;
     cv::Mat image2;
