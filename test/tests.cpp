@@ -374,7 +374,7 @@ void getDiff_vector(){
     }
 }
 
-void draw_HEVC_MergeMode(std::string p_image_name, std::string result_txt_name, int block_num) {
+void draw_HEVC_MergeMode(std::string p_image_name, std::string result_txt_name) {
 
     const std::string img_directory = getProjectDirectory(OS) + "\\img\\minato\\";
 
