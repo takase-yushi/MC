@@ -393,9 +393,13 @@ void draw_HEVC_MergeMode(std::string p_image_name, std::string result_txt_name) 
     p_image = cv::imread(p_image_path);
     out_image = cv::Mat::zeros(p_image.rows, p_image.cols, CV_8UC3);
 
-    if(result.fail()){
-        std::cerr << "Failed to open result.txt" <<std::endl;
-        exit(1);
+    //スキップモードのところは塗られないので予測画像をコピー
+    for(int j = 0 ; j < p_image.rows ; j++) {
+        for (int i = 0; i < p_image.cols; i++) {
+            R(out_image, i, j) = R(p_image, i, j);
+            G(out_image, i, j) = G(p_image, i, j);
+            B(out_image, i, j) = B(p_image, i, j);
+        }
     }
 
     char buf[30];
