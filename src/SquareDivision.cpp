@@ -261,8 +261,7 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
 //        std::cout << std::endl;
 //    }
 //
-//    std::cout << "reference_block_list.size = " << reference_block_list.size() << std::endl;
-//    exit(10);
+    std::cout << "reference_block_list.size = " << reference_block_list.size() << std::endl;
 }
 
 /**
