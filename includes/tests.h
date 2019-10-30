@@ -34,6 +34,7 @@ void testHevcPSNR();
 std::vector<std::string> split(std::string str, char del);
 void getDiff_vector();
 void draw_HEVC_MergeMode(std::string p_image_name, std::string result_txt_name);
+void draw_parallelogram(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv3);
 void draw_mv();
 void getDiff_image();
 void filterTest();

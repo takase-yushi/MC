@@ -404,11 +404,15 @@ void draw_HEVC_MergeMode(std::string p_image_name, std::string result_txt_name) 
 
     char buf[30];
     int n = 0;
+    int merge_num = 0;
 
     while(fgets(buf, sizeof(buf), result) != nullptr) {
         sscanf(buf, "%d %d %d %d %d", &x, &y, &x_size, &y_size, &merge_flag);
 //        std::cout << "x : " << x << ", y : " << y << ", PU_x_size : " << x_size << ", PU_y_size : " << y_size << ", merge : " << merge_flag << std::endl;
         n++;
+        if(merge_flag) {
+            merge_num++;
+        }
 
         //マージのところを赤くする
         for(int j = y ; j < y + y_size ; j++) {
@@ -431,7 +435,46 @@ void draw_HEVC_MergeMode(std::string p_image_name, std::string result_txt_name) 
 
     cv::imwrite(getProjectDirectory(OS) + "\\img\\HM_MergeMode.png", out_image);
 
-    std::cout << "block_num : " << n << std::endl;
+    std::cout << "block_num : " << n + 28 << ", merge_num : " << merge_num + 28 << ", spatial_num : " << n - merge_num - 28 << std::endl;
+}
+
+void draw_parallelogram(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv3) {
+    const std::string img_directory = getProjectDirectory(OS) + "\\img\\minato\\";
+
+    cv::Mat out_image(160, 300, CV_8UC3, cv::Scalar(255, 255, 255));
+
+    int block_size = 64;
+    block_size--;
+
+    cv::Point2f p1 = cv::Point2f(               32,                48);
+    cv::Point2f p2 = cv::Point2f(p1.x + block_size,              p1.y);
+    cv::Point2f p3 = cv::Point2f(p1.x             , p1.y + block_size);
+    cv::Point2f p4 = cv::Point2f(p1.x + block_size, p1.y + block_size);
+    cv::Point2f mv4;
+
+    cv::Point2f offset = cv::Point2f(144, 0);
+    cv::Point2f pp1, pp2, pp3, pp4, p12;
+
+    pp1 = p1 + mv1;
+    pp2 = p2 + mv2;
+    pp3 = p3 + mv3;
+    p12 = pp2 - pp1;   mv4 = pp3 + p12 - p4;
+    pp4 = pp3 + p12;
+
+    //変形後の四角形を変形前に被せて描く
+    drawSquare(out_image, pp1, pp2, pp3, pp4, cv::Scalar(11, 0, 199), 0);
+    //動きベクトルを描く
+    cv::line(out_image, p1, p1 + mv1, GREEN);
+    cv::line(out_image, p2, p2 + mv2, GREEN);
+    cv::line(out_image, p3, p3 + mv3, GREEN);
+    //変形前の四角形描く
+    drawSquare(out_image, p1, p2, p3, p4, cv::Scalar(0, 0, 0), 0);
+    //変形前の四角形に被らないように右に移動
+    pp1 += offset; pp2 += offset; pp3 += offset; pp4 += offset;
+    //変形後の四角形を描く
+    drawSquare(out_image, pp1, pp2, pp3, pp4, cv::Scalar(0, 0, 0), 0);
+
+    cv::imwrite(getProjectDirectory(OS) + "\\img\\parallelogram.png", out_image);
 }
 
 void draw_mv(){
