@@ -462,17 +462,52 @@ void draw_parallelogram(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv3) {
     pp4 = pp3 + p12;
 
     //変形後の四角形を変形前に被せて描く
-    drawSquare(out_image, pp1, pp2, pp3, pp4, cv::Scalar(11, 0, 199), 0);
+//    drawSquare(out_image, pp1, pp2, pp3, pp4, cv::Scalar(11, 0, 199), 0);
     //動きベクトルを描く
-    cv::line(out_image, p1, p1 + mv1, GREEN);
-    cv::line(out_image, p2, p2 + mv2, GREEN);
-    cv::line(out_image, p3, p3 + mv3, GREEN);
+//    cv::line(out_image, p1, p1 + mv1, GREEN);
+//    cv::line(out_image, p2, p2 + mv2, GREEN);
+//    cv::line(out_image, p3, p3 + mv3, GREEN);
     //変形前の四角形描く
     drawSquare(out_image, p1, p2, p3, p4, cv::Scalar(0, 0, 0), 0);
     //変形前の四角形に被らないように右に移動
     pp1 += offset; pp2 += offset; pp3 += offset; pp4 += offset;
     //変形後の四角形を描く
     drawSquare(out_image, pp1, pp2, pp3, pp4, cv::Scalar(0, 0, 0), 0);
+
+    //画素を描く
+    std::vector<cv::Point2f> pixels_in_square = getPixelsInSquare({p1, p2, p3, p4});
+    cv::Point2f a, b, X, a_later, b_later, X_later;
+    int n = 0, m = 0, l = 0;
+    double alpha, beta, det;
+
+    pp1 -= offset; pp2 -= offset; pp3 -= offset; pp4 -= offset;
+    a = p3 - p1;
+    b = p2 - p1;
+    det = a.x * b.y - a.y * b.x;
+
+    for(const auto& pixel : pixels_in_square ) {
+        if(n % 4 == 0) {
+            if (m % 16 == 0) {
+                l++;
+            }
+            if (l % 4 == 0) {
+                cv::line(out_image, pixel, pixel, BLUE);
+                X.x = pixel.x - p1.x;
+                X.y = pixel.y - p1.y;
+                alpha = (X.x * b.y - X.y * b.x) / det;
+                beta = (a.x * X.y - a.y * X.x) / det;
+                X.x += p1.x;
+                X.y += p1.y;
+
+                a_later = pp3 - pp1;
+                b_later = pp2 - pp1;
+                X_later = alpha * a_later + beta * b_later + pp1 + offset;
+                cv::line(out_image, X_later, X_later, GREEN);
+            }
+            m++;
+        }
+        n++;
+    }
 
     cv::imwrite(getProjectDirectory(OS) + "\\img\\parallelogram.png", out_image);
 }
