@@ -2584,7 +2584,7 @@ void SquareDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out)
             mvs.emplace_back(ctu->mv3);
         }
 
-        getPredictedImage(expansion_ref_uchar, target_image, out, square, mv, ref_hevc);
+        getPredictedImage(expansion_ref_uchar, target_image, out, square, mvs, ref_hevc);
         return;
     }
 
@@ -2665,7 +2665,7 @@ void SquareDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat 
                     B(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                 }
             }
-//            getPredictedImage(expansion_ref_uchar, target_image, out, square, mv, ref_hevc);
+//            getPredictedImage(expansion_ref_uchar, target_image, out, square, mvs, ref_hevc);
         }
         return;
     }

@@ -536,27 +536,38 @@ double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::
  * @param[in] parallel_flag
  * @return 2乗誤差
  */
-double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::Mat& output_image, Point4Vec& square, cv::Point2f& mv, unsigned char **ref_hevc) {
-//    cv::Point2f pp0, pp1, pp2, pp3;
-//
-//    pp0.x = square.p1.x + mv.x;
-//    pp0.y = square.p1.y + mv.y;
-//    pp1.x = square.p2.x + mv.x;
-//    pp1.y = square.p2.y + mv.y;
-//    pp2.x = square.p3.x + mv.x;
-//    pp2.y = square.p3.y + mv.y;
-//    pp3.x = square.p4.x + mv.x;
-//    pp3.y = square.p4.y + mv.y;
+double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::Mat& output_image, Point4Vec& square, std::vector<cv::Point2f>& mv, unsigned char **ref_hevc) {
+    cv::Point2f pp0, pp1, pp2;
 
+    pp0 = square.p1 + mv[0];
+    pp1 = square.p2 + mv[1];
+    pp2 = square.p3 + mv[2];
 
     std::vector<cv::Point2f> in_square_pixels = getPixelsInSquare(square);
 
-    cv::Point2f X_later;
+    cv::Point2f X, a, b, X_later, a_later, b_later;
+    double alpha, beta, det;
+
+    double sse = 0.0;
+
+    a = square.p3 - square.p1;
+    b = square.p2 - square.p1;
+    //変形前の四角形の面積を求める
+    det = a.x * b.y - a.y * b.x;
 
     double squared_error = 0.0;
 
     for(const auto& pixel : in_square_pixels) {
-        X_later = pixel + mv;
+        //ある画素までのベクトル
+        X = pixel - square.p1;
+        //変形前のα,βを求める
+        alpha = (X.x * b.y - X.y * b.x) / det;
+        beta = (a.x * X.y - a.y * X.x) / det;
+        //変形後のa,bを求める
+        a_later = pp2 - pp0;
+        b_later = pp1 - pp0;
+        //変形後の画素の座標を求める
+        X_later = alpha * a_later + beta * b_later + pp0;
 
         int y;
         if(ref_hevc != nullptr){
