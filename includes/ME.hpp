@@ -20,6 +20,7 @@ double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::
 double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::Mat& output_image, Point4Vec& square, std::vector<cv::Point2f>& mv, unsigned char **ref_hevc);
 
 std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewton(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char **>>> expand_image, Point3Vec target_corners, const std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, int block_size_x, int block_size_y, cv::Point2f init_vector, unsigned char **ref_hevc = nullptr);
+std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_GaussNewton(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char **>>> expand_image, Point4Vec target_corners, int square_index, CodingTreeUnit *ctu, cv::Point2f init_vector, unsigned char **ref_hevc);
 
 double bicubic_weight(double x);
 int bicubic_interpolation(unsigned char **img, double x, double y);
