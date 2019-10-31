@@ -2116,7 +2116,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
             mvs.emplace_back(current_mv);
             mvs.emplace_back(current_mv);
             mvs.emplace_back(current_mv);
-            double ret_residual = getSquareResidual_Pred(target_image, mvs, pixels_in_square, expansion_ref);
+            double ret_residual = getSquareResidual_Pred(target_image, coordinate, mvs, pixels_in_square, ref_hevc);
             double rd = (ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1)) * MERGE_ALPHA;
             results.emplace_back(rd, getUnaryCodeLength(merge_count) + 1, mvs, merge_count, merge_vector.second, FlagsCodeSum(0, 0, 0, 0), Flags());
             merge_count++;
@@ -2137,7 +2137,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
                     if (mvs[2].x + sx < -SERACH_RANGE || mvs[2].y + sy < -SERACH_RANGE || mvs[2].x + lx >= target_image.cols + SERACH_RANGE || mvs[2].y + ly >= target_image.rows + SERACH_RANGE) continue;
 
                     if (!isMvExists(warping_vector_history, mvs)) {
-                        double ret_residual = getSquareResidual_Pred(target_image, mvs, pixels_in_square, expansion_ref);
+                        double ret_residual = getSquareResidual_Pred(target_image, coordinate, mvs, pixels_in_square, ref_hevc);
                         double rd = (ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1)) * MERGE_ALPHA;
                         results.emplace_back(rd, getUnaryCodeLength(merge_count) + 1, mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
                         merge_count++;

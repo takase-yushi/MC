@@ -105,7 +105,7 @@ double getTriangleResidual(const cv::Mat ref_image, const cv::Mat &target_image,
 
     return squared_error;
 }
-//TODO ワーピング対応
+
 /***
  * @fn double getTriangleResidual(const cv::Mat &target_image, const cv::Mat ref_image, Point3Vec vec)
  * @brief ある四角形を平行移動した際の残差を返す
@@ -133,19 +133,37 @@ double getSquareResidual(const cv::Mat &target_image, cv::Point2f mv, const std:
     return squared_error;
 }
 
-double getSquareResidual_Mode(const cv::Mat &target_image, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_square_pixels, unsigned char **ref_hevc){
-    cv::Point2f X_later;
+double getSquareResidual_Mode(const cv::Mat &target_image, Point4Vec square, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_square_pixels, unsigned char **ref_hevc){
+    cv::Point2f pp0, pp1, pp2;
 
-    int spread_quarter = 4 * SERACH_RANGE;
+    pp0 = square.p1 + mv[0];
+    pp1 = square.p2 + mv[1];
+    pp2 = square.p3 + mv[2];
+
+    cv::Point2f X, a, b, X_later, a_later, b_later;
+    double alpha, beta, det;
+
     double sse = 0.0;
 
+    a = square.p3 - square.p1;
+    b = square.p2 - square.p1;
+    //変形前の四角形の面積を求める
+    det = a.x * b.y - a.y * b.x;
+
     for(const auto& pixel : in_square_pixels) {
-        X_later = pixel + mv[0];
+        //ある画素までのベクトル
+        X = pixel - square.p1;
+        //変形前のα,βを求める
+        alpha = (X.x * b.y - X.y * b.x) / det;
+        beta = (a.x * X.y - a.y * X.x) / det;
+        //変形後のa,bを求める
+        a_later = pp2 - pp0;
+        b_later = pp1 - pp0;
+        //変形後の画素の座標を求める
+        X_later = alpha * a_later + beta * b_later + pp0;
 
-        int y;
-
-        y = img_ip(ref_hevc  , cv::Rect(-4 * SERACH_RANGE, -4 * SERACH_RANGE, 4 * (target_image.cols + 2 * SERACH_RANGE), 4 * (target_image.rows + 2 * SERACH_RANGE)), 4 * X_later.x, 4 * X_later.y, 1);
-//    y = R(expansion_ref_image, (int)(4 * X_later.x + spread_quarter), (int)(4 * X_later.y + spread_quarter));
+        int y = img_ip(ref_hevc  , cv::Rect(-4 * SERACH_RANGE, -4 * SERACH_RANGE, 4 * (target_image.cols + 2 * SERACH_RANGE), 4 * (target_image.rows + 2 * SERACH_RANGE)), 4 * X_later.x, 4 * X_later.y, 1);
+//        y = R(expansion_ref_image, (int)(4 * X_later.x + spread_quarter), (int)(4 * X_later.y + spread_quarter));
 
         sse += (y - (R(target_image, (int)pixel.x, (int)pixel.y))) * (y - (R(target_image, (int)pixel.x, (int)pixel.y)));
     }
@@ -153,18 +171,36 @@ double getSquareResidual_Mode(const cv::Mat &target_image, std::vector<cv::Point
     return sse;
 }
 
-double getSquareResidual_Pred(const cv::Mat &target_image, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_square_pixels, unsigned char **ref_hevc){
-    cv::Point2f X_later;
+double getSquareResidual_Pred(const cv::Mat &target_image, Point4Vec square, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_square_pixels, unsigned char **ref_hevc){
+    cv::Point2f pp0, pp1, pp2;
 
-    int spread_quarter = 4 * SERACH_RANGE;
+    pp0 = square.p1 + mv[0];
+    pp1 = square.p2 + mv[1];
+    pp2 = square.p3 + mv[2];
+
+    cv::Point2f X, a, b, X_later, a_later, b_later;
+    double alpha, beta, det;
+
     double sad = 0.0;
 
+    a = square.p3 - square.p1;
+    b = square.p2 - square.p1;
+    //変形前の四角形の面積を求める
+    det = a.x * b.y - a.y * b.x;
+
     for(const auto& pixel : in_square_pixels) {
-        X_later = pixel + mv[0];
+        //ある画素までのベクトル
+        X = pixel - square.p1;
+        //変形前のα,βを求める
+        alpha = (X.x * b.y - X.y * b.x) / det;
+        beta = (a.x * X.y - a.y * X.x) / det;
+        //変形後のa,bを求める
+        a_later = pp2 - pp0;
+        b_later = pp1 - pp0;
+        //変形後の画素の座標を求める
+        X_later = alpha * a_later + beta * b_later + pp0;
 
-        int y;
-
-        y = img_ip(ref_hevc  , cv::Rect(-4 * SERACH_RANGE, -4 * SERACH_RANGE, 4 * (target_image.cols + 2 * SERACH_RANGE), 4 * (target_image.rows + 2 * SERACH_RANGE)), 4 * X_later.x, 4 * X_later.y, 1);
+        int y = img_ip(ref_hevc  , cv::Rect(-4 * SERACH_RANGE, -4 * SERACH_RANGE, 4 * (target_image.cols + 2 * SERACH_RANGE), 4 * (target_image.rows + 2 * SERACH_RANGE)), 4 * X_later.x, 4 * X_later.y, 1);
 //        y = R(expansion_ref_image, (int)(4 * X_later.x + spread_quarter), (int)(4 * X_later.y + spread_quarter));
 
         sad += fabs(y - (R(target_image, (int)pixel.x, (int)pixel.y)));

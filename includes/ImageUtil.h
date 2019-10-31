@@ -18,8 +18,8 @@ enum IP_MODE {
 
 cv::Mat getResidualImage(const cv::Mat &target_image, const cv::Mat &predict_image, int k = 1);
 double getTriangleResidual(const cv::Mat ref_image, const cv::Mat &target_image, Point3Vec &triangle, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_triangle_pixels);
-double getSquareResidual_Mode(const cv::Mat &target_image, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_square_pixels, unsigned char **ref_hevc);
-double getSquareResidual_Pred(const cv::Mat &target_image, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_square_pixels, unsigned char **ref_hevc);
+double getSquareResidual_Mode(const cv::Mat &target_image, Point4Vec square, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_square_pixels, unsigned char **ref_hevc);
+double getSquareResidual_Pred(const cv::Mat &target_image, Point4Vec square, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_square_pixels, unsigned char **ref_hevc);
 double getSquareResidual(const cv::Mat &target_image, cv::Point2f mv, const std::vector<cv::Point2f> &in_square_pixels, unsigned char **ref_hevc);
 std::vector<std::vector<cv::Mat>> getRefImages(const cv::Mat& ref_image, const cv::Mat& gauss_ref_image);
 std::vector<std::vector<cv::Mat>> getTargetImages(const cv::Mat target_image);
