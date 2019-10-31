@@ -63,11 +63,11 @@ int main(int argc, char *argv[]){
     }
 
 //    run(config_name);
-//    run_square(config_name);
+    run_square(config_name);
 
 //getDiff_image();
 //    draw_HEVC_MergeMode("HM_minato_mirai_nointra_37.png", "result.txt");
-    draw_parallelogram(cv::Point2f(15, 15), cv::Point2f(15, 0), cv::Point2f(-15, 15));
+//    draw_parallelogram(cv::Point2f(-15, 15), cv::Point2f(-15, -15), cv::Point2f(15, 15));
 #endif
 
 }

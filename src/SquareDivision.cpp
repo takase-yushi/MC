@@ -710,6 +710,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     cv::Point2f p3 = square.p3;
     cv::Point2f p4 = square.p4;
 
+    Point4Vec targetSquare(p1, p2, p3, p4);
     int square_size = 0;
     bool translation_flag;
 
@@ -717,7 +718,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     std::vector<cv::Point2f> gauss_result_warping;
     cv::Point2f gauss_result_translation;
 
-    int warping_limit = 6;
+    int warping_limit = 0;
 
     if(cmt == nullptr) {
         cmt = previousMvList[0][square_index];
@@ -740,21 +741,18 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     }else {
         if(PRED_MODE == NEWTON) {
             if(GAUSS_NEWTON_INIT_VECTOR) {
-//                std::vector<cv::Point2f> tmp_bm_mv;
-//                std::vector<double> tmp_bm_errors;
-//                std::tie(tmp_bm_mv, tmp_bm_errors) = fullpellBlockMatching(triangle, target_image, expansion_ref,
-//                                                                   diagonal_line_area_flag, triangle_index, ctu);
-//                std::tie(gauss_result_warping, gauss_result_translation, error_warping, error_translation, triangle_size) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
-//                                                      diagonal_line_area_flag, triangle_index, ctu, block_size_x,
-//                                                      block_size_y, tmp_bm_mv[2], ref_hevc);
-//#if USE_BM_translation_MV
-//                gauss_result_translation = tmp_bm_mv[2];
-//                error_translation = tmp_bm_errors[2];
-//#endif
+                std::vector<cv::Point2f> tmp_bm_mv;
+                std::vector<double> tmp_bm_errors;
+//                std::tie(tmp_bm_mv, tmp_bm_errors) = fullpellBlockMatching(square, target_image, expansion_ref, square_index, ctu);
+                std::tie(gauss_result_warping, gauss_result_translation, error_warping, error_translation, square_size) = Square_GaussNewton(
+                        ref_images, target_images, expand_images, targetSquare, square_index, ctu, tmp_bm_mv[2], ref_hevc);
+#if USE_BM_translation_MV
+                gauss_result_translation = tmp_bm_mv[2];
+                error_translation = tmp_bm_errors[2];
+#endif
             }else{
-//                std::tie(gauss_result_warping, gauss_result_translation, error_warping, error_translation, triangle_size) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
-//                                                      diagonal_line_area_flag, triangle_index, ctu, block_size_x,
-//                                                      block_size_y, cv::Point2f(-1000, -1000), ref_hevc);
+                std::tie(gauss_result_warping, gauss_result_translation, error_warping, error_translation, square_size) = Square_GaussNewton(
+                        ref_images, target_images, expand_images, targetSquare, square_index, ctu, cv::Point2f(-1000, -1000), ref_hevc);
             }
 
             square_gauss_results[square_index].mv_warping = gauss_result_warping;
@@ -772,6 +770,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                     square_gauss_results[square_index].mv_warping, error_warping,
                     square_index, square_number, cmt->mv1, ctu, false, dummy, steps);
 #endif
+            std::cout << "cost_translation : " << cost_translation << ", cost_warping : " << cost_warping << std::endl;
             if(cost_translation < cost_warping || (steps <= warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
                 square_gauss_results[square_index].translation_flag = true;
                 square_gauss_results[square_index].residual = error_translation;
@@ -1067,22 +1066,16 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         MV_CODE_METHOD method_warping_tmp, method_translation_tmp;
         if(PRED_MODE == NEWTON){
             if(GAUSS_NEWTON_INIT_VECTOR) {
-//                std::tie(tmp_bm_mv, tmp_bm_errors) = fullpellBlockMatching(subdiv_target_triangles[j], target_image,
-//                                                                   expansion_ref, diagonal_line_area_flag,
-//                                                                   triangle_indexes[j], ctus[j]);
-//                std::tie(mv_warping_tmp, mv_translation_tmp, error_warping_tmp, error_translation_tmp,triangle_size_tmp) = GaussNewton(
-//                        ref_images, target_images, expand_images, subdiv_target_triangles[j], diagonal_line_area_flag,
-//                        triangle_indexes[j], ctus[j], block_size_x, block_size_y,
-//                        tmp_bm_mv[2], ref_hevc);
+//                std::tie(tmp_bm_mv, tmp_bm_errors) = fullpellBlockMatching(subdiv_target_squares[j], target_image, expansion_ref, square_indexes[j], ctus[j]);
+                std::tie(mv_warping_tmp, mv_translation_tmp, error_warping_tmp, error_translation_tmp,square_size_tmp) = Square_GaussNewton(
+                        ref_images, target_images, expand_images, subdiv_target_squares[j], square_indexes[j], ctus[j], tmp_bm_mv[2], ref_hevc);
 #if USE_BM_TRANSLATION_MV
                 error_translation_tmp = tmp_bm_errors[2];
                 mv_translation_tmp = tmp_bm_mv[2];
 #endif
             }else{
-//                std::tie(mv_warping_tmp, mv_translation_tmp, error_warping_tmp, error_translation_tmp, triangle_size_tmp) = GaussNewton(
-//                        ref_images, target_images, expand_images, subdiv_target_triangles[j], diagonal_line_area_flag,
-//                        triangle_indexes[j], ctus[j], block_size_x, block_size_y,
-//                        cv::Point2f(-1000, -1000), ref_hevc);
+                std::tie(mv_warping_tmp, mv_translation_tmp, error_warping_tmp, error_translation_tmp, square_size_tmp) = Square_GaussNewton(
+                        ref_images, target_images, expand_images, subdiv_target_squares[j], square_indexes[j], ctus[j], cv::Point2f(-1000, -1000), ref_hevc);
             }
 
             std::tie(cost_translation_tmp,std::ignore, std::ignore, std::ignore, method_translation_tmp) = getMVD(
@@ -1094,6 +1087,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                     mv_warping_tmp, error_warping_tmp,
                     square_indexes[j], j, cmt->mv1, ctus[j], false, dummy, steps);
 #endif
+            std::cout << "cost_translation_tmp : " << cost_translation_tmp << ", cost_warping_tmp : " << cost_warping_tmp << std::endl;
             if(cost_translation_tmp < cost_warping_tmp || (steps <= warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY){
                 square_gauss_results[square_indexes[j]].translation_flag = true;
                 square_gauss_results[square_indexes[j]].mv_translation = mv_translation_tmp;
@@ -1231,12 +1225,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
     double alpha = 1.0;
     std::cout << "before   : " << cost_before_subdiv << "    after : " << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4) << std::endl;
-    std::cout << "D before : " << cost_before_subdiv - lambda * code_length<< "    D after : " << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4 - lambda * (code_length1 + code_length2 + code_length3 + code_length4)) << std::endl;
-    std::cout << "R before : " << code_length<< "         R after : " << alpha * (code_length1 + code_length2 + code_length3 + code_length4) << ", mv : " << square_gauss_results[square_index].mv_translation << std::endl;
-    std::cout << "after1 D : " << alpha * (cost_after_subdiv1 - lambda * code_length1) << ", R : " << alpha * (code_length1) << ", method : " << method_flag1 << ", mv : " << square_gauss_results[square_indexes[0]].mv_translation << ", square_index : " << square_indexes[0] << std::endl;
-    std::cout << "after2 D : " << alpha * (cost_after_subdiv2 - lambda * code_length2) << ", R : " << alpha * (code_length2) << ", method : " << method_flag2 << ", mv : " << square_gauss_results[square_indexes[1]].mv_translation << ", square_index : " << square_indexes[1] << std::endl;
-    std::cout << "after3 D : " << alpha * (cost_after_subdiv3 - lambda * code_length3) << ", R : " << alpha * (code_length3) << ", method : " << method_flag3 << ", mv : " << square_gauss_results[square_indexes[2]].mv_translation << ", square_index : " << square_indexes[2] << std::endl;
-    std::cout << "after4 D : " << alpha * (cost_after_subdiv4 - lambda * code_length4) << ", R : " << alpha * (code_length4) << ", method : " << method_flag4 << ", mv : " << square_gauss_results[square_indexes[3]].mv_translation << ", square_index : " << square_indexes[3] << std::endl <<std::endl;
+//    std::cout << "D before : " << cost_before_subdiv - lambda * code_length<< "    D after : " << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4 - lambda * (code_length1 + code_length2 + code_length3 + code_length4)) << std::endl;
+//    std::cout << "R before : " << code_length<< "         R after : " << alpha * (code_length1 + code_length2 + code_length3 + code_length4) << ", mv : " << square_gauss_results[square_index].mv_translation << std::endl;
+//    std::cout << "after1 D : " << alpha * (cost_after_subdiv1 - lambda * code_length1) << ", R : " << alpha * (code_length1) << ", method : " << method_flag1 << ", mv : " << square_gauss_results[square_indexes[0]].mv_translation << ", square_index : " << square_indexes[0] << std::endl;
+//    std::cout << "after2 D : " << alpha * (cost_after_subdiv2 - lambda * code_length2) << ", R : " << alpha * (code_length2) << ", method : " << method_flag2 << ", mv : " << square_gauss_results[square_indexes[1]].mv_translation << ", square_index : " << square_indexes[1] << std::endl;
+//    std::cout << "after3 D : " << alpha * (cost_after_subdiv3 - lambda * code_length3) << ", R : " << alpha * (code_length3) << ", method : " << method_flag3 << ", mv : " << square_gauss_results[square_indexes[2]].mv_translation << ", square_index : " << square_indexes[2] << std::endl;
+//    std::cout << "after4 D : " << alpha * (cost_after_subdiv4 - lambda * code_length4) << ", R : " << alpha * (code_length4) << ", method : " << method_flag4 << ", mv : " << square_gauss_results[square_indexes[3]].mv_translation << ", square_index : " << square_indexes[3] << std::endl <<std::endl;
     if(cost_before_subdiv >= alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4)) {
 
         for(int i = 0 ; i < 4 ; i++){
