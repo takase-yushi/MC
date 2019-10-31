@@ -133,7 +133,7 @@ double getSquareResidual(const cv::Mat &target_image, cv::Point2f mv, const std:
     return squared_error;
 }
 
-double getSquareResidual_Mode(const cv::Mat &target_image, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_square_pixels, cv::Mat expansion_ref_image){
+double getSquareResidual_Mode(const cv::Mat &target_image, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_square_pixels, unsigned char **ref_hevc){
     cv::Point2f X_later;
 
     int spread_quarter = 4 * SERACH_RANGE;
@@ -144,8 +144,8 @@ double getSquareResidual_Mode(const cv::Mat &target_image, std::vector<cv::Point
 
         int y;
 
-//        y = img_ip(ref_hevc  , cv::Rect(-4 * SERACH_RANGE, -4 * SERACH_RANGE, 4 * (target_image.cols + 2 * SERACH_RANGE), 4 * (target_image.rows + 2 * SERACH_RANGE)), 4 * X_later.x, 4 * X_later.y, 1);
-    y = R(expansion_ref_image, (int)(4 * X_later.x + spread_quarter), (int)(4 * X_later.y + spread_quarter));
+        y = img_ip(ref_hevc  , cv::Rect(-4 * SERACH_RANGE, -4 * SERACH_RANGE, 4 * (target_image.cols + 2 * SERACH_RANGE), 4 * (target_image.rows + 2 * SERACH_RANGE)), 4 * X_later.x, 4 * X_later.y, 1);
+//    y = R(expansion_ref_image, (int)(4 * X_later.x + spread_quarter), (int)(4 * X_later.y + spread_quarter));
 
         sse += (y - (R(target_image, (int)pixel.x, (int)pixel.y))) * (y - (R(target_image, (int)pixel.x, (int)pixel.y)));
     }
@@ -153,7 +153,7 @@ double getSquareResidual_Mode(const cv::Mat &target_image, std::vector<cv::Point
     return sse;
 }
 
-double getSquareResidual_Pred(const cv::Mat &target_image, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_square_pixels, cv::Mat expansion_ref_image){
+double getSquareResidual_Pred(const cv::Mat &target_image, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_square_pixels, unsigned char **ref_hevc){
     cv::Point2f X_later;
 
     int spread_quarter = 4 * SERACH_RANGE;
@@ -164,7 +164,8 @@ double getSquareResidual_Pred(const cv::Mat &target_image, std::vector<cv::Point
 
         int y;
 
-        y = R(expansion_ref_image, (int)(4 * X_later.x + spread_quarter), (int)(4 * X_later.y + spread_quarter));
+        y = img_ip(ref_hevc  , cv::Rect(-4 * SERACH_RANGE, -4 * SERACH_RANGE, 4 * (target_image.cols + 2 * SERACH_RANGE), 4 * (target_image.rows + 2 * SERACH_RANGE)), 4 * X_later.x, 4 * X_later.y, 1);
+//        y = R(expansion_ref_image, (int)(4 * X_later.x + spread_quarter), (int)(4 * X_later.y + spread_quarter));
 
         sad += fabs(y - (R(target_image, (int)pixel.x, (int)pixel.y)));
     }
