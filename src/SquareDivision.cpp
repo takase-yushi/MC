@@ -826,7 +826,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
     std::vector<cv::Point2i> ret_gauss2;
 
-    if(method_flag == MV_CODE_METHOD::MERGE) {
+    if(method_flag == MV_CODE_METHOD::MERGE || method_flag == MV_CODE_METHOD::MERGE_Collocated) {
         square_gauss_results[square_index].mv_translation = mvd[0];
         square_gauss_results[square_index].mv_warping = mvd;
         gauss_result_translation = mvd[0];
@@ -1144,7 +1144,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 split_mv_result[0].residual,
                 square_indexes[0], 0, cmt_left_left->mv1, ctu->node1, true, dummy, steps);
 
-        if(method_flag1 == MV_CODE_METHOD::MERGE) {
+        if(method_flag1 == MV_CODE_METHOD::MERGE || method_flag1 == MV_CODE_METHOD::MERGE_Collocated) {
             if(split_mv_result[0].translation_flag) {
                 gauss_result_translation = mvd[0];
                 square_gauss_results[square_indexes[0]].mv_translation = gauss_result_translation;
@@ -1166,7 +1166,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 {split_mv_result[1].mv_translation, split_mv_result[1].mv_translation, split_mv_result[1].mv_translation}, split_mv_result[1].residual,
                 square_indexes[1], 1, cmt_left_right->mv1, ctu->node2, true, dummy, steps);
 
-        if(method_flag2 == MV_CODE_METHOD::MERGE) {
+        if(method_flag2 == MV_CODE_METHOD::MERGE || method_flag2 == MV_CODE_METHOD::MERGE_Collocated) {
             if(split_mv_result[1].translation_flag) {
                 gauss_result_translation = mvd[0];
                 square_gauss_results[square_indexes[1]].mv_translation = gauss_result_translation;
@@ -1189,7 +1189,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 split_mv_result[2].residual,
                 square_indexes[2], 2, cmt_right_left->mv1, ctu->node3, true, dummy, steps);
 
-        if(method_flag3 == MV_CODE_METHOD::MERGE) {
+        if(method_flag3 == MV_CODE_METHOD::MERGE || method_flag3 == MV_CODE_METHOD::MERGE_Collocated) {
             if(split_mv_result[2].translation_flag) {
                 gauss_result_translation = mvd[0];
                 square_gauss_results[square_indexes[2]].mv_translation = gauss_result_translation;
@@ -1211,7 +1211,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 {split_mv_result[3].mv_translation, split_mv_result[3].mv_translation, split_mv_result[3].mv_translation}, split_mv_result[3].residual,
                 square_indexes[3], 3, cmt_right_right->mv1, ctu->node4, true, dummy, steps);
 
-        if(method_flag4 == MV_CODE_METHOD::MERGE) {
+        if(method_flag4 == MV_CODE_METHOD::MERGE || method_flag4 == MV_CODE_METHOD::MERGE_Collocated) {
             if(split_mv_result[3].translation_flag) {
                 gauss_result_translation = mvd[0];
                 square_gauss_results[square_indexes[3]].mv_translation = gauss_result_translation;
@@ -1264,7 +1264,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         ctu->node1->translation_flag = split_mv_result[0].translation_flag;
         ctu->node1->method = method_flag1;
         square_gauss_results[s1_idx] = split_mv_result[0];
-        if(method_flag1 == MV_CODE_METHOD::MERGE) {
+        if(method_flag1 == MV_CODE_METHOD::MERGE || method_flag1 == MV_CODE_METHOD::MERGE_Collocated) {
             if(ctu->node1->translation_flag){
                 ctu->node1->mv1 = square_gauss_results[square_indexes[0]].mv_translation;
                 ctu->node1->mv2 = square_gauss_results[square_indexes[0]].mv_translation;
@@ -1293,7 +1293,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         ctu->node2->method = method_flag2;
 
         square_gauss_results[s2_idx] = split_mv_result[1];
-        if(method_flag2 == MV_CODE_METHOD::MERGE) {
+        if(method_flag2 == MV_CODE_METHOD::MERGE || method_flag2 == MV_CODE_METHOD::MERGE_Collocated) {
             if(ctu->node2->translation_flag){
                 ctu->node2->mv1 = square_gauss_results[square_indexes[1]].mv_translation;
                 ctu->node2->mv2 = square_gauss_results[square_indexes[1]].mv_translation;
@@ -1321,7 +1321,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         ctu->node3->translation_flag = split_mv_result[2].translation_flag;
         ctu->node3->method = method_flag3;
         square_gauss_results[s3_idx] = split_mv_result[2];
-        if(method_flag3 == MV_CODE_METHOD::MERGE) {
+        if(method_flag3 == MV_CODE_METHOD::MERGE || method_flag3 == MV_CODE_METHOD::MERGE_Collocated) {
             if(ctu->node3->translation_flag){
                 ctu->node3->mv1 = square_gauss_results[square_indexes[2]].mv_translation;
                 ctu->node3->mv2 = square_gauss_results[square_indexes[2]].mv_translation;
@@ -1349,7 +1349,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         ctu->node4->translation_flag = split_mv_result[3].translation_flag;
         ctu->node4->method = method_flag4;
         square_gauss_results[s4_idx] = split_mv_result[3];
-        if(method_flag4 == MV_CODE_METHOD::MERGE) {
+        if(method_flag4 == MV_CODE_METHOD::MERGE || method_flag4 == MV_CODE_METHOD::MERGE_Collocated) {
             if(ctu->node4->translation_flag){
                 ctu->node4->mv1 = square_gauss_results[square_indexes[3]].mv_translation;
                 ctu->node4->mv2 = square_gauss_results[square_indexes[3]].mv_translation;
@@ -2173,7 +2173,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     ctu->mvds = mvds;
     ctu->ref_triangle_idx = selected_idx;
     ctu->flags_code_sum = flag_code_sum;
-    if(method != MV_CODE_METHOD::MERGE) {
+    if(method != MV_CODE_METHOD::MERGE && method != MV_CODE_METHOD::MERGE_Collocated) {
         (ctu->mvds_x).clear();
         (ctu->mvds_y).clear();
         (ctu->original_mvds_x).clear();
@@ -2636,7 +2636,14 @@ void SquareDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat 
                     G(out, (int)pixel.x, (int)pixel.y) = 0;
                     B(out, (int)pixel.x, (int)pixel.y) = 0;
                 }
-            }else{
+            }else if(ctu->method == MV_CODE_METHOD::MERGE_Collocated) {
+                for(auto pixel : pixels) {
+                    R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
+                    G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
+                    B(out, (int)pixel.x, (int)pixel.y) = 0;
+                }
+            }
+            else{
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = 0;
                     G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
