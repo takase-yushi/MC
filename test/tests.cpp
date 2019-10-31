@@ -483,6 +483,7 @@ void draw_parallelogram(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv3) {
     pp1 -= offset; pp2 -= offset; pp3 -= offset; pp4 -= offset;
     a = p3 - p1;
     b = p2 - p1;
+    //変形前の四角形の面積を求める
     det = a.x * b.y - a.y * b.x;
 
     for(const auto& pixel : pixels_in_square ) {
@@ -491,16 +492,20 @@ void draw_parallelogram(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv3) {
                 l++;
             }
             if (l % 4 == 0) {
+                //変形前の画素をプロット
                 cv::line(out_image, pixel, pixel, BLUE);
+                //変形後の画素をプロット
                 X.x = pixel.x - p1.x;
                 X.y = pixel.y - p1.y;
+                //変形前のα,βを求める
                 alpha = (X.x * b.y - X.y * b.x) / det;
                 beta = (a.x * X.y - a.y * X.x) / det;
                 X.x += p1.x;
                 X.y += p1.y;
-
+                //変形後のa,bを求める
                 a_later = pp3 - pp1;
                 b_later = pp2 - pp1;
+                //変形後の座標を求める
                 X_later = alpha * a_later + beta * b_later + pp1 + offset;
                 cv::line(out_image, X_later, X_later, GREEN);
             }
