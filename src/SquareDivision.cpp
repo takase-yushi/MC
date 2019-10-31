@@ -2036,6 +2036,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
         }
     }
 
+#if MERGE_MODE
     // マージ符号化
     // マージで参照する動きベクトルを使って残差を求め直す
     Square current_square_coordinate = squares[square_idx];
@@ -2097,7 +2098,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
 
     int merge_count = 0;
 
-#if MERGE_MODE
     for (int i = 0; i < merge_vectors.size(); i++) {
         if(translation_flag) {
             std::pair<cv::Point2f, MV_CODE_METHOD> merge_vector = merge_vectors[i];
