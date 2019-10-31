@@ -494,7 +494,7 @@ void draw_parallelogram(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv3) {
             if (l % 4 == 0) {
                 //変形前の画素をプロット
                 cv::line(out_image, pixel, pixel, BLUE);
-                //変形後の画素をプロット
+                //ある画素までのベクトル
                 X.x = pixel.x - p1.x;
                 X.y = pixel.y - p1.y;
                 //変形前のα,βを求める
@@ -507,6 +507,7 @@ void draw_parallelogram(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv3) {
                 b_later = pp2 - pp1;
                 //変形後の座標を求める
                 X_later = alpha * a_later + beta * b_later + pp1 + offset;
+                //変形後の画素をプロット
                 cv::line(out_image, X_later, X_later, GREEN);
             }
             m++;
