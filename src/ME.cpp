@@ -997,23 +997,19 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
                 B_translation.at<double>(1, 0) -= 2 * mu2 * tmp_mv_translation.y * (tmp_mv_translation.x * tmp_mv_translation.x + tmp_mv_translation.y * tmp_mv_translation.y);
                 cv::solve(gg_warping, B_warping, delta_uv_warping); //6x6の連立方程式を解いてdelta_uvに格納
                 v_stack_warping.emplace_back(tmp_mv_warping, Error_warping);
-
+//TODO 右下の頂点についても画像の外に出ないようにしないといけない
+//TODO 右下の動きベクトルを求めて、それが画像外に出る場合は更新しないようにする。
                 for (int k = 0; k < 6; k++) {
 
                     if (k % 2 == 0) {
-                        if ((-scaled_spread <= scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x +delta_uv_warping.at<double>(k, 0)) &&
-                            (target_images[0][step].cols - 1 + scaled_spread >=scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0))) {
+                        if ((-scaled_spread <= scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0)) &&
+                            (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0))) {
                             tmp_mv_warping[(int) (k / 2)].x = tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0);//動きベクトルを更新(画像の外に出ないように)
                         }
                     } else {
-                        if ((-scaled_spread <=
-                             scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y +
-                             delta_uv_warping.at<double>(k, 0)) &&
-                            (target_images[0][step].rows - 1 + scaled_spread >=
-                             scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y +
-                             delta_uv_warping.at<double>(k, 0))) {
-                            tmp_mv_warping[(int) (k / 2)].y =
-                                    tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0);
+                        if ((-scaled_spread <= scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0)) &&
+                            (target_images[0][step].rows - 1 + scaled_spread >= scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0))) {
+                            tmp_mv_warping[(int) (k / 2)].y = tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0);
                         }
                     }
                 }
@@ -1023,33 +1019,21 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
 
                 for (int k = 0; k < 2; k++) {
                     if (k % 2 == 0) {
-                        if ((-scaled_spread <=
-                             scaled_coordinates[0].x + tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0)) &&
-                            (target_images[0][step].cols - 1 + scaled_spread >=
-                             scaled_coordinates[0].x + tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0)) &&
-                            (-scaled_spread <=
-                             scaled_coordinates[1].x + tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0)) &&
-                            (target_images[0][step].cols - 1 + scaled_spread >=
-                             scaled_coordinates[1].x + tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0)) &&
-                            (-scaled_spread <=
-                             scaled_coordinates[2].x + tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0)) &&
-                            (target_images[0][step].cols - 1 + scaled_spread >=
-                             scaled_coordinates[2].x + tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0))) {
+                        if ((-scaled_spread <= scaled_coordinates[0].x + tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0)) &&
+                            (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[0].x + tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0)) &&
+                            (-scaled_spread <= scaled_coordinates[1].x + tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0)) &&
+                            (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[1].x + tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0)) &&
+                            (-scaled_spread <= scaled_coordinates[2].x + tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0)) &&
+                            (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[2].x + tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0))) {
                             tmp_mv_translation.x = tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0);
                         }
                     } else {
-                        if ((-scaled_spread <=
-                             scaled_coordinates[0].y + tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0)) &&
-                            (target_images[0][step].rows - 1 + scaled_spread >=
-                             scaled_coordinates[0].y + tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0)) &&
-                            (-scaled_spread <=
-                             scaled_coordinates[1].y + tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0)) &&
-                            (target_images[0][step].rows - 1 + scaled_spread >=
-                             scaled_coordinates[1].y + tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0)) &&
-                            (-scaled_spread <=
-                             scaled_coordinates[2].y + tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0)) &&
-                            (target_images[0][step].rows - 1 + scaled_spread >=
-                             scaled_coordinates[2].y + tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0))) {
+                        if ((-scaled_spread <= scaled_coordinates[0].y + tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0)) &&
+                            (target_images[0][step].rows - 1 + scaled_spread >= scaled_coordinates[0].y + tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0)) &&
+                            (-scaled_spread <= scaled_coordinates[1].y + tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0)) &&
+                            (target_images[0][step].rows - 1 + scaled_spread >= scaled_coordinates[1].y + tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0)) &&
+                            (-scaled_spread <= scaled_coordinates[2].y + tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0)) &&
+                            (target_images[0][step].rows - 1 + scaled_spread >= scaled_coordinates[2].y + tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0))) {
                             tmp_mv_translation.y = tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0);
                         }
                     }
