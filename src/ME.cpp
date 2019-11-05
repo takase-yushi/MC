@@ -631,9 +631,9 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
     p2 = target_corners.p3;
     p3 = target_corners.p4;
 
-    Point4Vec current_triangle_coordinates(p0, p1, p2, p3);
+    Point4Vec current_square_coordinates(p0, p1, p2, p3);
 
-    pixels_in_square = getPixelsInSquare(current_triangle_coordinates);
+    pixels_in_square = getPixelsInSquare(current_square_coordinates);
 
     double sx = p0.x;
     double sy = p0.y;
@@ -707,12 +707,12 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
 
             if(fabs((p2 - p0).x * (p1 - p0).y - (p2 - p0).y * (p1 - p0).x) <= 0) break;
 
-            current_triangle_coordinates.p1 = p0;
-            current_triangle_coordinates.p2 = p1;
-            current_triangle_coordinates.p3 = p2;
-            current_triangle_coordinates.p4 = p3;
-            pixels_in_square = getPixelsInSquare(current_triangle_coordinates);
-//TODO なにこれ
+            current_square_coordinates.p1 = p0;
+            current_square_coordinates.p2 = p1;
+            current_square_coordinates.p3 = p2;
+            current_square_coordinates.p4 = p3;
+            pixels_in_square = getPixelsInSquare(current_square_coordinates);
+
             std::vector<cv::Point2f> scaled_coordinates{p0, p1, p2, p3};
 
             if(step != 0) {
@@ -997,17 +997,22 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
                 B_translation.at<double>(1, 0) -= 2 * mu2 * tmp_mv_translation.y * (tmp_mv_translation.x * tmp_mv_translation.x + tmp_mv_translation.y * tmp_mv_translation.y);
                 cv::solve(gg_warping, B_warping, delta_uv_warping); //6x6の連立方程式を解いてdelta_uvに格納
                 v_stack_warping.emplace_back(tmp_mv_warping, Error_warping);
-//TODO 右下の頂点についても画像の外に出ないようにしないといけない
-//TODO 右下の動きベクトルを求めて、それが画像外に出る場合は更新しないようにする。
+                //ワーピング後の右下の頂点の座標を求める
+                cv::Point2f tmp_pp4 = (scaled_coordinates[2] + tmp_mv_warping[2] + cv::Point2f(delta_uv_warping.at<double>(4, 0), delta_uv_warping.at<double>(5, 0)))   //左下の頂点のワーピング後の座標
+                        + (scaled_coordinates[1] + tmp_mv_warping[1] + cv::Point2f(delta_uv_warping.at<double>(2, 0), delta_uv_warping.at<double>(3, 0)))               //右上の頂点のワーピング後の座標
+                        - (scaled_coordinates[0] + tmp_mv_warping[0] + cv::Point2f(delta_uv_warping.at<double>(0, 0), delta_uv_warping.at<double>(1, 0)));              //左上の頂点のワーピング後の座標
+
                 for (int k = 0; k < 6; k++) {
 
                     if (k % 2 == 0) {
-                        if ((-scaled_spread <= scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0)) &&
+                        if ((-scaled_spread <= tmp_pp4.x) && (tmp_pp4.x <= target_images[0][step].cols - 1 + scaled_spread) &&
+                            (-scaled_spread <= scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0)) &&
                             (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0))) {
                             tmp_mv_warping[(int) (k / 2)].x = tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0);//動きベクトルを更新(画像の外に出ないように)
                         }
                     } else {
-                        if ((-scaled_spread <= scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0)) &&
+                        if ((-scaled_spread <= tmp_pp4.y) && (tmp_pp4.y <= target_images[0][step].rows - 1 + scaled_spread) &&
+                            (-scaled_spread <= scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0)) &&
                             (target_images[0][step].rows - 1 + scaled_spread >= scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0))) {
                             tmp_mv_warping[(int) (k / 2)].y = tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0);
                         }
