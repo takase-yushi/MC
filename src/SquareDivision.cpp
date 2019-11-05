@@ -2681,8 +2681,12 @@ int SquareDivision::getCtuCodeLength(std::vector<CodingTreeUnit*> ctus) {
 int SquareDivision::getCtuCodeLength(CodingTreeUnit *ctu){
 
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
-        // ここで足している1はマージフラグ分です
+        // この1bitは手法フラグ(warpingかtranslation),もう1bitはマージフラグ分です
+#if MERGE_MODE
+        return 1 + 1 + ctu->code_length;
+#else
         return 1 + ctu->code_length;
+#endif
     }
 
     // ここで足している1はsplit_cu_flag分です
