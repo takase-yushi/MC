@@ -718,7 +718,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     std::vector<cv::Point2f> gauss_result_warping;
     cv::Point2f gauss_result_translation;
 
-    int warping_limit = 0;
+    int warping_limit = 6; // 6: 64×64まで  4:32×32まで  2:16×16まで  0:8×8まで
 
     if(cmt == nullptr) {
         cmt = previousMvList[0][square_index];
@@ -771,7 +771,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                     square_index, square_number, cmt->mv1, ctu, false, dummy, steps);
 #endif
 //            std::cout << "cost_translation : " << cost_translation << ", cost_warping : " << cost_warping << std::endl;
-            if(cost_translation < cost_warping || (steps <= warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
+            if(cost_translation < cost_warping || (steps < warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
                 square_gauss_results[square_index].translation_flag = true;
                 square_gauss_results[square_index].residual = error_translation;
                 square_gauss_results[square_index].method = method_translation;
@@ -1088,7 +1088,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                     square_indexes[j], j, cmt->mv1, ctus[j], false, dummy, steps);
 #endif
 //            std::cout << "cost_translation_tmp : " << cost_translation_tmp << ", cost_warping_tmp : " << cost_warping_tmp << std::endl;
-            if(cost_translation_tmp < cost_warping_tmp || (steps <= warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY){
+            if(cost_translation_tmp < cost_warping_tmp || (steps - 2 < warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY){
                 square_gauss_results[square_indexes[j]].translation_flag = true;
                 square_gauss_results[square_indexes[j]].mv_translation = mv_translation_tmp;
                 split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_translation_tmp, square_size_tmp, true, error_translation_tmp, error_warping_tmp);
