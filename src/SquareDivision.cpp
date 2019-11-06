@@ -1433,43 +1433,131 @@ SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1
 
 /**
  * @fn std::vector<int> SquareDivision::getSpatialSquareList(int s_idx)
- * @brief t_idx番目の四角形の空間予測動きベクトル候補を返す
- * @param[in] t_idx 四角パッチのインデックス
+ * @brief square_idx番目の四角形の参照候補ブロックの動きベクトルを返す
+ * @param[in] square_idx 符号化対照ブロックのインデックス
+ * @param[in] translation_flag 符号化対照ブロックのflag
+ * @param[in] method 空間予測かマージか
  * @return 候補のパッチの番号を返す
  */
-std::vector<int> SquareDivision::getSquareList(int s_idx, MV_CODE_METHOD method) {
+std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> > SquareDivision::getSquareList(int square_idx, bool translation_flag, MV_CODE_METHOD method) {
     //隣接するブロックを取得する
-    std::vector<int> reference_vertexes = reference_block_list[s_idx];
+    std::vector<int> reference_vertexes = reference_block_list[square_idx];
 
-    std::vector<int> reference_block;
+    std::vector<int> tmp_reference_block;
     std::set<int> tmp_rb;
     for (auto reference_vertex : reference_vertexes) {
         tmp_rb = covered_square[reference_vertex];
-        for (auto idx : tmp_rb) reference_block.emplace_back(idx);
+        for (auto idx : tmp_rb) tmp_reference_block.emplace_back(idx);
     }
 
 //    std::cout << "reference_block_size : " << reference_block.size() << ", ";
 
-    std::vector<int> ret;
-    //重複を判定する配列
-    bool duplicate[5] = {false, false, false, false, false};
+    std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors;
+    std::vector<cv::Point2f> tmp_vectors;
+    std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> warping_vectors;
+    std::vector<std::vector<cv::Point2f>> tmp_warping_vectors;
+    //参照可能候補に入れるかどうかを判定する配列
+    bool is_in_flag[5] = {true, true, true, true, true};
+
+    std::vector<int> reference_block_list;
+
+    //平行移動とワーピングの動きベクトル
+    for(int i = 0 ; i < tmp_reference_block.size() ; i++) {
+//        int reference_block_index = tmp_reference_block[i];
+        if(!isCodedSquare[tmp_reference_block[i]]) {  //符号化済みでないブロックも参照候補リストに入れているのでその場合は空のものを入れておく
+            tmp_vectors.emplace_back();
+            tmp_warping_vectors.emplace_back();
+            is_in_flag[i] = false;                    //符号化済みでないものは入れないのでfalseにする
+            continue;
+        }
+        if(square_gauss_results[tmp_reference_block[i]].translation_flag) { //参照候補ブロックが平行移動の場合
+            cv::Point2f current_mv = square_gauss_results[tmp_reference_block[i]].mv_translation;
+            if(translation_flag) {
+                tmp_vectors.emplace_back(current_mv);
+            } else {
+                std::vector<cv::Point2f> v{current_mv, current_mv, current_mv};
+                tmp_warping_vectors.emplace_back(v);
+            }
+        } else {  //参照候補ブロックがワーピングの場合
+            cv::Point2f current_mv1 = square_gauss_results[tmp_reference_block[i]].mv_warping[0];
+            cv::Point2f current_mv2 = square_gauss_results[tmp_reference_block[i]].mv_warping[1];
+            cv::Point2f current_mv3 = square_gauss_results[tmp_reference_block[i]].mv_warping[2];
+#if MVD_DEBUG_LOG
+            std::cout << "target_square_coordinate:";
+            std::cout << corners[squares[square_idx].p1_idx] << " ";
+            std::cout << corners[squares[square_idx].p2_idx] << " ";
+            std::cout << corners[squares[square_idx].p3_idx] << " ";
+            std::cout << corners[squares[square_idx].p4_idx] << std::endl;
+            std::cout << "ref_square_coordinate:";
+            std::cout << corners[squares[tmp_reference_block[i]].p1_idx] << " ";
+            std::cout << corners[squares[tmp_reference_block[i]].p2_idx] << " ";
+            std::cout << corners[squares[tmp_reference_block[i]].p3_idx] << " ";
+            std::cout << corners[squares[tmp_reference_block[i]].p4_idx] <<std::endl;
+            std::cout << "ref_square_mvs:";
+            std::cout << current_mv1 << " " << current_mv2 << " " << current_mv3 << std::endl;
+#endif
+            std::vector<cv::Point2f> ref_mvs{current_mv1, current_mv2, current_mv3};
+            Square target_square = squares[square_idx];
+            cv::Point2f pp1 = corners[target_square.p1_idx], pp2 = corners[target_square.p2_idx], pp3 = corners[target_square.p3_idx], pp4 = corners[target_square.p4_idx];
+            Square ref_square = squares[tmp_reference_block[i]];
+            std::vector<cv::Point2f> ref_square_coordinates{corners[ref_square.p1_idx], corners[ref_square.p2_idx], corners[ref_square.p3_idx], corners[ref_square.p4_idx]};
+            if(translation_flag) {
+                std::vector<cv::Point2f> target_square_coordinates{cv::Point2f((pp1.x + pp2.x + pp3.x + pp4.x) / 4.0, (pp1.y + pp2.y + pp3.y + pp4.y) / 4.0)};
+                std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_square_coordinates, ref_mvs, target_square_coordinates);
+                tmp_vectors.emplace_back(mvs[0]);
+            } else {
+                std::vector<cv::Point2f> target_square_coordinates;
+                target_square_coordinates.emplace_back(pp1);
+                target_square_coordinates.emplace_back(pp2);
+                target_square_coordinates.emplace_back(pp3);
+                std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_square_coordinates, ref_mvs, target_square_coordinates);
+                std::vector<cv::Point2f> v{mvs[0], mvs[1], mvs[2]};
+                tmp_warping_vectors.emplace_back(v);
+            }
+        }
+    }
 
     if (method == MV_CODE_METHOD::SPATIAL) {
-        for (int j = 0; j < reference_block.size(); j++) {
-            //重複していない場合
-            if(!duplicate[j]) {
-                for (int i = j + 1; i < reference_block.size(); i++) {
-                    //同一動き情報をもっている場合は重複配列をon(false)にする
-                    if (square_gauss_results[reference_block[j]].mv_translation == square_gauss_results[reference_block[i]].mv_translation)
-                        duplicate[i] = true;
+        if(translation_flag) {
+            for (int j = 0; j < tmp_vectors.size(); j++) {
+                //重複していない場合
+                if (is_in_flag[j]) {
+                    for (int i = j + 1; i < tmp_vectors.size(); i++) {
+                        //同一動き情報をもっている場合は配列をoff(false)にする
+                        if (is_in_flag[i] && tmp_vectors[j] == tmp_vectors[i])
+                            is_in_flag[i] = false;
+                    }
+                }
+            }
+        } else {
+            for (int j = 0; j < tmp_warping_vectors.size(); j++) {
+                if (is_in_flag[j]) {
+                    for (int i = j + 1; i < tmp_warping_vectors.size(); i++) {
+                        //同一動き情報をもっている場合は配列をoff(false)にする
+                        if (is_in_flag[i] && tmp_warping_vectors[j][0] == tmp_warping_vectors[i][0] && tmp_warping_vectors[j][1] == tmp_warping_vectors[i][1] && tmp_warping_vectors[j][2] == tmp_warping_vectors[i][2])
+                            is_in_flag[i] = false;
+                    }
                 }
             }
         }
         //重複がなく，符号化済みのブロックのみ入れる
         int j = 0;
-        for (auto idx : reference_block) {
-            if (isCodedSquare[idx] && idx != s_idx && !duplicate[j]) ret.emplace_back(idx);
-            j++;
+        if(translation_flag) {
+            for (auto idx : tmp_reference_block) {
+                if (idx != square_idx && is_in_flag[j]) vectors.emplace_back(tmp_vectors[j], SPATIAL);
+                j++;
+            }
+        } else {
+            for (auto idx : tmp_reference_block) {
+                if (idx != square_idx && is_in_flag[j]) {
+                    std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> v;
+                    v.emplace_back(tmp_warping_vectors[j][0], SPATIAL);
+                    v.emplace_back(tmp_warping_vectors[j][1], SPATIAL);
+                    v.emplace_back(tmp_warping_vectors[j][2], SPATIAL);
+                    warping_vectors.emplace_back(v);
+                }
+                j++;
+            }
         }
     }
     else if (method == MV_CODE_METHOD::MERGE) {
@@ -1559,7 +1647,7 @@ std::vector<int> SquareDivision::getSquareList(int s_idx, MV_CODE_METHOD method)
 //        std::cout << "MERGE";
 //    std::cout << ", SquareList_size : " << ret.size() << std::endl;
 
-    return ret;
+    return {warping_vectors, vectors};
 }
 
 /**
