@@ -755,8 +755,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                         ref_images, target_images, expand_images, targetSquare, square_index, ctu, cv::Point2f(-1000, -1000), ref_hevc);
             }
 
-            square_gauss_results[square_index].mv_warping = gauss_result_warping;
-            square_gauss_results[square_index].mv_translation = gauss_result_translation;
             square_gauss_results[square_index].square_size = square_size;
             square_gauss_results[square_index].residual = RMSE_before_subdiv;
 
@@ -767,16 +765,18 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                     square_index, square_number, cmt->mv1, ctu, true, dummy, steps);
 #if !GAUSS_NEWTON_TRANSLATION_ONLY
             std::tie(cost_warping, std::ignore, std::ignore, std::ignore, method_warping) = getMVD(
-                    square_gauss_results[square_index].mv_warping, error_warping,
+                    gauss_result_warping, error_warping,
                     square_index, square_number, cmt->mv1, ctu, false, dummy, steps);
 #endif
 //            std::cout << "cost_translation : " << cost_translation << ", cost_warping : " << cost_warping << std::endl;
             if(cost_translation < cost_warping || (steps < warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
+                square_gauss_results[square_index].mv_translation = gauss_result_translation;
                 square_gauss_results[square_index].translation_flag = true;
                 square_gauss_results[square_index].residual = error_translation;
                 square_gauss_results[square_index].method = method_translation;
                 translation_flag = true;
             }else{
+                square_gauss_results[square_index].mv_warping = gauss_result_warping;
                 square_gauss_results[square_index].translation_flag = false;
                 square_gauss_results[square_index].residual = error_warping;
                 square_gauss_results[square_index].method = method_warping;
