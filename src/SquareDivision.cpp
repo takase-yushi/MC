@@ -1852,14 +1852,14 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
 
     if(translation_flag) {
         if(!isMvExists(vectors, collocated_mv)) {
-            vectors.emplace_back(collocated_mv, SPATIAL);
+            vectors.emplace_back(collocated_mv, Collocated);
         }
     }
     else {
         std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> v;
-        v.emplace_back(collocated_mv, SPATIAL);
-        v.emplace_back(collocated_mv, SPATIAL);
-        v.emplace_back(collocated_mv, SPATIAL);
+        v.emplace_back(collocated_mv, Collocated);
+        v.emplace_back(collocated_mv, Collocated);
+        v.emplace_back(collocated_mv, Collocated);
         warping_vectors.emplace_back(v);
     }
 
