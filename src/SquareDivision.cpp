@@ -1864,13 +1864,13 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     }
 
     if(vectors.size() < 2) {
-        vectors.emplace_back(cv::Point2f(0.0, 0.0), Collocated);
+        vectors.emplace_back(cv::Point2f(0.0, 0.0), SPATIAL);
     }
     if(warping_vectors.size() < 2) {
         std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> v;
-        v.emplace_back(cv::Point2f(0.0, 0.0), Collocated);
-        v.emplace_back(cv::Point2f(0.0, 0.0), Collocated);
-        v.emplace_back(cv::Point2f(0.0, 0.0), Collocated);
+        v.emplace_back(cv::Point2f(0.0, 0.0), SPATIAL);
+        v.emplace_back(cv::Point2f(0.0, 0.0), SPATIAL);
+        v.emplace_back(cv::Point2f(0.0, 0.0), SPATIAL);
         warping_vectors.emplace_back(v);
     }
 
