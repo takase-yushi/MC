@@ -11,6 +11,16 @@
 #include <fstream>
 #include <iostream>
 
+std::vector<double> lambdas{
+        1.0, 2.0, 3.0, 4.0, 5.0,
+        6.0, 7.0, 8.0, 9.0, 10.0,
+        12.0, 14.0, 16.0, 18.0, 20.0,
+        25.0, 30.0, 40.0, 50.0, 60.0,
+        70, 80, 90, 100, 110, 120, 130,
+        140, 150, 160, 170, 180, 190,
+        200, 250, 300
+};
+
 /**
  * @fn std::vector<int> readTasks()
  * @brief config.jsonを読む
@@ -101,14 +111,6 @@ void generateConfigItem(std::string input_file_path, std::string output_file_pat
     // iterate each-tasks
     int count = 0;
     int array_size = ary.size() - 1;
-    std::vector<double> lambdas{
-            5.0, 6.0, 7.0, 8.0, 9.0, 10.0,
-            12.0, 14.0, 16.0, 18.0, 20.0,
-            25.0, 30.0, 40.0, 50.0, 60.0,
-            70, 80, 90, 100, 110, 120, 130,
-            140, 150, 160, 170, 180, 190,
-            200, 250, 300
-    };
 
     array_size = lambdas.size() * ary.size();
     for(auto& item : ary){
@@ -183,14 +185,7 @@ void generateChunkedConfigItem(std::string input_file_path, std::string output_f
     // iterate each-tasks
     int count = 0;
     int array_size = ary.size() - 1;
-    std::vector<double> lambdas{
-            5.0, 6.0, 7.0, 8.0, 9.0, 10.0,
-            12.0, 14.0, 16.0, 18.0, 20.0,
-            25.0, 30.0, 40.0, 50.0, 60.0,
-            70, 80, 90, 100, 110, 120, 130,
-            140, 150, 160, 170, 180, 190,
-            200, 250, 300
-    };
+
 
     array_size = lambdas.size() * ary.size();
     for(auto& item : ary){
@@ -247,7 +242,7 @@ void generateChunkedConfigItem(std::string input_file_path, std::string output_f
     obj = val2.get<picojson::object>();
     ary = obj["tasks"].get<picojson::array>();
 
-
+    std::cout << ary.size() << std::endl;
     int chunked_array_size = ceil((double)ary.size() / chunk_size);
 
     count = 0;
@@ -262,8 +257,9 @@ void generateChunkedConfigItem(std::string input_file_path, std::string output_f
         ofs << "{" << std::endl;
         ofs << "  \"tasks\":[" << std::endl;
 
-        array_size = (chunked_array_index == (chunked_array_size - 1) ? lambdas.size() % chunk_size : chunk_size);
+        array_size = (chunked_array_index == (chunked_array_size - 1) && (ary.size() % chunk_size) != 0 ? (ary.size() % chunk_size) : chunk_size);
 
+        std::cout << array_size << std::endl;
         for(int i = 0 ; i < array_size && count < (int)ary.size(); i++){
             picojson::object& task      = ary[count].get<picojson::object>();
 
