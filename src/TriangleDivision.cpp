@@ -2052,7 +2052,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
     }
 
     if(vectors.size() < 2) {
-        vectors.emplace_back(cv::Point2f(0.0, 0.0), Collocated);
+        vectors.emplace_back(cv::Point2f(0.0, 0.0), SPATIAL);
         warping_vectors.emplace_back();
     }
 
