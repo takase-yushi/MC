@@ -1463,15 +1463,15 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
 
     //平行移動とワーピングの動きベクトル
     for(int i = 0 ; i < tmp_reference_block.size() ; i++) {
-//        int reference_block_index = tmp_reference_block[i];
-        if(!isCodedSquare[tmp_reference_block[i]]) {  //符号化済みでないブロックも参照候補リストに入れているのでその場合は空のものを入れておく
+        int reference_block_index = tmp_reference_block[i];
+        if(!isCodedSquare[reference_block_index]) {  //符号化済みでないブロックも参照候補リストに入れているのでその場合は空のものを入れておく
             tmp_vectors.emplace_back();
             tmp_warping_vectors.emplace_back();
             is_in_flag[i] = false;                    //符号化済みでないものは入れないのでfalseにする
             continue;
         }
-        if(square_gauss_results[tmp_reference_block[i]].translation_flag) { //参照候補ブロックが平行移動の場合
-            cv::Point2f current_mv = square_gauss_results[tmp_reference_block[i]].mv_translation;
+        if(square_gauss_results[reference_block_index].translation_flag) { //参照候補ブロックが平行移動の場合
+            cv::Point2f current_mv = square_gauss_results[reference_block_index].mv_translation;
             if(translation_flag) {
                 tmp_vectors.emplace_back(current_mv);
             } else {
@@ -1479,9 +1479,9 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
                 tmp_warping_vectors.emplace_back(v);
             }
         } else {  //参照候補ブロックがワーピングの場合
-            cv::Point2f current_mv1 = square_gauss_results[tmp_reference_block[i]].mv_warping[0];
-            cv::Point2f current_mv2 = square_gauss_results[tmp_reference_block[i]].mv_warping[1];
-            cv::Point2f current_mv3 = square_gauss_results[tmp_reference_block[i]].mv_warping[2];
+            cv::Point2f current_mv1 = square_gauss_results[reference_block_index].mv_warping[0];
+            cv::Point2f current_mv2 = square_gauss_results[reference_block_index].mv_warping[1];
+            cv::Point2f current_mv3 = square_gauss_results[reference_block_index].mv_warping[2];
 #if MVD_DEBUG_LOG
             std::cout << "target_square_coordinate:";
             std::cout << corners[squares[square_idx].p1_idx] << " ";
@@ -1499,7 +1499,7 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
             std::vector<cv::Point2f> ref_mvs{current_mv1, current_mv2, current_mv3};
             Square target_square = squares[square_idx];
             cv::Point2f pp1 = corners[target_square.p1_idx], pp2 = corners[target_square.p2_idx], pp3 = corners[target_square.p3_idx], pp4 = corners[target_square.p4_idx];
-            Square ref_square = squares[tmp_reference_block[i]];
+            Square ref_square = squares[reference_block_index];
             std::vector<cv::Point2f> ref_square_coordinates{corners[ref_square.p1_idx], corners[ref_square.p2_idx], corners[ref_square.p3_idx], corners[ref_square.p4_idx]};
             if(translation_flag) {
                 std::vector<cv::Point2f> target_square_coordinates{cv::Point2f((pp1.x + pp2.x + pp3.x + pp4.x) / 4.0, (pp1.y + pp2.y + pp3.y + pp4.y) / 4.0)};
