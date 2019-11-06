@@ -966,7 +966,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     std::vector<cv::Point2f> gauss_result_warping;
     cv::Point2f gauss_result_translation;
 
-    int warping_limit = 6;
+    int warping_limit = 4;
 
     if(cmt == nullptr) {
         cmt = previousMvList[0][triangle_index];
@@ -1274,7 +1274,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                     mv_warping_tmp, error_warping_tmp,
                     triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], false, dummy);
 #endif
-            if(cost_translation_tmp < cost_warping_tmp || (steps <= warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY){
+            if(cost_translation_tmp < cost_warping_tmp || (steps - 2 <= warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY){
                 triangle_gauss_results[triangle_indexes[j]].translation_flag = true;
                 triangle_gauss_results[triangle_indexes[j]].mv_translation = mv_translation_tmp;
                 split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_translation_tmp, triangle_size_tmp, true, error_translation_tmp, error_warping_tmp);
