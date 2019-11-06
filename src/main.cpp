@@ -272,7 +272,6 @@ void run(std::string config_name) {
         cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo, diagonal_line_area_flag);
         cv::Mat color = triangle_division.getPredictedColorImageFromCtu(foo, diagonal_line_area_flag, getPSNR(target_image, p_image));
 
-        cv::imwrite(img_directory + "/p_recon_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", recon);
 
         int code_length = triangle_division.getCtuCodeLength(foo);
         std::string log_file_suffix = out_file_suffix + std::to_string(qp) + "_" + getCurrentTimestamp();
