@@ -1541,22 +1541,20 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
             }
         }
         //重複がなく，符号化済みのブロックのみ入れる
-        int j = 0;
         if(translation_flag) {
-            for (auto idx : tmp_reference_block) {
-                if (idx != square_idx && is_in_flag[j]) vectors.emplace_back(tmp_vectors[j], SPATIAL);
-                j++;
+            for (int j = 0 ; j < tmp_vectors.size() ; j++) {
+                if (is_in_flag[j])
+                    vectors.emplace_back(tmp_vectors[j], SPATIAL);
             }
         } else {
-            for (auto idx : tmp_reference_block) {
-                if (idx != square_idx && is_in_flag[j]) {
+            for (int j = 0 ; j < tmp_warping_vectors.size() ; j++) {
+                if (is_in_flag[j]) {
                     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> v;
                     v.emplace_back(tmp_warping_vectors[j][0], SPATIAL);
                     v.emplace_back(tmp_warping_vectors[j][1], SPATIAL);
                     v.emplace_back(tmp_warping_vectors[j][2], SPATIAL);
                     warping_vectors.emplace_back(v);
                 }
-                j++;
             }
         }
     }
