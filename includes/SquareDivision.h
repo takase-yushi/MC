@@ -100,7 +100,7 @@ public:
 
     static SplitResult getSplitSquare(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, const cv::Point2f& p4, int type);
     bool split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point4Vec square, int square_index, int square_number, int steps);
-    std::vector<int> getSquareList(int s_idx, MV_CODE_METHOD method);
+    std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> > getSquareList(int s_idx, bool translation_flag, MV_CODE_METHOD method);
 //    cv::Point2f getCollocatedSquareList(CodingTreeUnit* unit);
     int getCtuCodeLength(std::vector<CodingTreeUnit*> ctus);
 
@@ -114,9 +114,9 @@ public:
 
     cv::Mat getPredictedDiagonalImageFromCtu(std::vector<CodingTreeUnit*> ctus);
     cv::Mat getPredictedColorImageFromCtu(std::vector<CodingTreeUnit*> ctus, double original_psnr, int select);
-    std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, int square_number, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, int steps, std::vector<int> spatial_squares = std::vector<int>());
+    std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, int square_number, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, int steps);
     std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> getMVD(cv::Point2f mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, std::vector<cv::Point2f> &pixels, std::vector<int> spatial_squares = std::vector<int>());
-    double  getRDCost(std::vector<cv::Point2f> mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, std::vector<int> spatial_squares);
+    double  getRDCost(std::vector<cv::Point2f> mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, std::vector<cv::Point2f> &pixels, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors);
 
     virtual ~SquareDivision();
 
