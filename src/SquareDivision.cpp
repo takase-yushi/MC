@@ -1080,12 +1080,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
             std::tie(cost_translation_tmp,std::ignore, std::ignore, std::ignore, method_translation_tmp) = getMVD(
                     {mv_translation_tmp, mv_translation_tmp, mv_translation_tmp}, error_translation_tmp,
-                    square_indexes[j], j, cmt->mv1, ctus[j], true, dummy, steps);
+                    square_indexes[j], j, cmt->mv1, ctus[j], true, dummy, steps - 2);
 #if !GAUSS_NEWTON_TRANSLATION_ONLY
 
             std::tie(cost_warping_tmp, std::ignore, std::ignore, std::ignore, method_warping_tmp) = getMVD(
                     mv_warping_tmp, error_warping_tmp,
-                    square_indexes[j], j, cmt->mv1, ctus[j], false, dummy, steps);
+                    square_indexes[j], j, cmt->mv1, ctus[j], false, dummy, steps - 2);
 #endif
 //            std::cout << "cost_translation_tmp : " << cost_translation_tmp << ", cost_warping_tmp : " << cost_warping_tmp << std::endl;
             if(cost_translation_tmp < cost_warping_tmp || (steps - 2 < warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY){
