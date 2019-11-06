@@ -2047,7 +2047,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
     #endif
 
     if(!isMvExists(vectors, collocated_mv)) {
-        vectors.emplace_back(collocated_mv, SPATIAL);
+        vectors.emplace_back(collocated_mv, Collocated);
         warping_vectors.emplace_back();
     }
 
