@@ -1966,6 +1966,11 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
 
     double lambda = getLambdaPred(qp, (translation_flag ? 1.0 : 1.0));
 
+    // この1bitは手法フラグ(warpingかtranslation),もう1bitはマージフラグ分です
+    int flags_code = 0;
+    if(PRED_MODE == NEWTON && !GAUSS_NEWTON_TRANSLATION_ONLY) flags_code++;
+    if (MERGE_MODE) flags_code++;
+
     //                      コスト, 差分ベクトル, 番号, タイプ
     std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> > results;
     if(translation_flag) { // 平行移動成分に関してはこれまで通りにやる
@@ -2061,11 +2066,11 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
             int reference_index_code_length = getUnaryCodeLength(reference_index);
 
             // 各種フラグ分を(3*2)bit足してます
-            double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
+            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code);
 
             std::vector<cv::Point2f> mvds{mvd};
             // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum, flags);
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length + flags_code, mvds, i, vector.second, flag_code_sum, flags);
         }
     }else{
         for (int i = 0; i < warping_vectors.size(); i++) {
@@ -2162,10 +2167,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
             int reference_index_code_length = getUnaryCodeLength(reference_index);
 
             // 各種フラグ分を(3*2)bit足してます
-            double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
+            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code);
 
             // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, warping_vectors[i][0].second, flag_code_sum, flags);
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length + flags_code, mvds, i, warping_vectors[i][0].second, flag_code_sum, flags);
         }
     }
 
@@ -2241,8 +2246,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
             mvs.emplace_back(current_mv);
             mvs.emplace_back(current_mv);
             double ret_residual = getSquareResidual_Pred(target_image, coordinate, mvs, pixels_in_square, ref_hevc);
-            double rd = (ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1)) * MERGE_ALPHA;
-            results.emplace_back(rd, getUnaryCodeLength(merge_count) + 1, mvs, merge_count, merge_vector.second, FlagsCodeSum(0, 0, 0, 0), Flags());
+            double rd = (ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code)) * MERGE_ALPHA;
+            results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code, mvs, merge_count, merge_vector.second, FlagsCodeSum(0, 0, 0, 0), Flags());
             merge_count++;
         }
     }else {
@@ -2259,8 +2264,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
             if (mvs[2].x + sx < -SERACH_RANGE || mvs[2].y + sy < -SERACH_RANGE || mvs[2].x + lx >= target_image.cols + SERACH_RANGE || mvs[2].y + ly >= target_image.rows + SERACH_RANGE) continue;
 
             double ret_residual = getSquareResidual_Pred(target_image, coordinate, mvs, pixels_in_square, ref_hevc);
-            double rd = (ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1)) * MERGE_ALPHA;
-            results.emplace_back(rd, getUnaryCodeLength(merge_count) + 1, mvs, merge_count, warping_vectors[i][0].second, FlagsCodeSum(0, 0, 0, 0), Flags());
+            double rd = (ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code)) * MERGE_ALPHA;
+            results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code, mvs, merge_count, warping_vectors[i][0].second, FlagsCodeSum(0, 0, 0, 0), Flags());
             merge_count++;
         }
     }
@@ -2358,6 +2363,11 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
 
     double lambda = getLambdaPred(qp, 1.0);
 
+    // この1bitは手法フラグ(warpingかtranslation),もう1bitはマージフラグ分です
+    int flags_code = 0;
+    if(PRED_MODE == NEWTON && !GAUSS_NEWTON_TRANSLATION_ONLY) flags_code++;
+    if (MERGE_MODE) flags_code++;
+
     //                      コスト, 差分ベクトル, 番号, タイプ
     std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> > results;
     for (int i = 0; i < vectors.size(); i++) {
@@ -2438,7 +2448,7 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
         int reference_index_code_length = getUnaryCodeLength(reference_index);
 
         // 各種フラグ分を(3*2)bit足してます
-        double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
+        double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code);
 
         std::vector<cv::Point2f> mvds{mvd};
         // 結果に入れる
@@ -2659,12 +2669,7 @@ int SquareDivision::getCtuCodeLength(std::vector<CodingTreeUnit*> ctus) {
 int SquareDivision::getCtuCodeLength(CodingTreeUnit *ctu){
 
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
-        // この1bitは手法フラグ(warpingかtranslation),もう1bitはマージフラグ分です
-        int flags_code = 0;
-        if(PRED_MODE == NEWTON && !GAUSS_NEWTON_TRANSLATION_ONLY) flags_code++;
-        if (MERGE_MODE) flags_code++;
-
-        return flags_code + ctu->code_length;
+        return ctu->code_length;
     }
 
     // ここで足している1はsplit_cu_flag分です
