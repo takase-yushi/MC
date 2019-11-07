@@ -1586,6 +1586,31 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
                     merge_is_in_flag[1] = false;
             }
         }
+        else if(tmp_reference_block.size() == 3) {
+            if(translation_flag) {
+                tmp_merge_vectors[0] = tmp_vectors[0];  merge_is_in_flag[0] = is_in_flag[0];
+                tmp_merge_vectors[1] = tmp_vectors[1];  merge_is_in_flag[1] = is_in_flag[1];
+                tmp_merge_vectors[2] = tmp_vectors[2];  merge_is_in_flag[2] = is_in_flag[2];
+                //①
+                if(merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_merge_vectors[0] == tmp_merge_vectors[1])
+                   merge_is_in_flag[1] = false;
+                //④
+                if((merge_is_in_flag[0] && merge_is_in_flag[2] && tmp_merge_vectors[0] == tmp_merge_vectors[2]) ||
+                   (merge_is_in_flag[1] && merge_is_in_flag[2] && tmp_merge_vectors[1] == tmp_merge_vectors[2]))
+                    merge_is_in_flag[2] = false;
+            } else {
+                tmp_warping_merge_vectors[0] = tmp_warping_vectors[0];  merge_is_in_flag[0] = is_in_flag[0];
+                tmp_warping_merge_vectors[1] = tmp_warping_vectors[1];  merge_is_in_flag[1] = is_in_flag[1];
+                tmp_warping_merge_vectors[2] = tmp_warping_vectors[2];  merge_is_in_flag[2] = is_in_flag[2];
+                //①
+                if(merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[1])
+                    merge_is_in_flag[1] = false;
+                //④
+                if((merge_is_in_flag[0] && merge_is_in_flag[2] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[2]) ||
+                   (merge_is_in_flag[1] && merge_is_in_flag[2] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[2]))
+                    merge_is_in_flag[2] = false;
+            }
+        }
         else if(tmp_reference_block.size() == 4) {
             if(flag){  //sp4がない場合
                 if(translation_flag) {
@@ -1714,12 +1739,12 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
         }
     }
 
-//    std::cout << "square_index : " << s_idx << ", method : " ;
+//    std::cout << "square_index : " << square_idx << ", method : " ;
 //    if(method == MV_CODE_METHOD::SPATIAL)
 //        std::cout << "SPATIAL";
 //    if(method == MV_CODE_METHOD::MERGE)
 //        std::cout << "MERGE";
-//    std::cout << ", SquareList_size : " << ret.size() << std::endl;
+//    std::cout << ", SquareList_size : " << (translation_flag ? vectors.size() : warping_vectors.size()) << std::endl;
 
     return {warping_vectors, vectors};
 }
