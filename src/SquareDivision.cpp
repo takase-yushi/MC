@@ -1534,7 +1534,7 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
                 if (is_in_flag[j]) {
                     for (int i = j + 1; i < tmp_warping_vectors.size(); i++) {
                         //同一動き情報をもっている場合は配列をoff(false)にする
-                        if (is_in_flag[i] && tmp_warping_vectors[j][0] == tmp_warping_vectors[i][0] && tmp_warping_vectors[j][1] == tmp_warping_vectors[i][1] && tmp_warping_vectors[j][2] == tmp_warping_vectors[i][2])
+                        if (is_in_flag[i] && tmp_warping_vectors[j] == tmp_warping_vectors[i])
                             is_in_flag[i] = false;
                     }
                 }
@@ -1578,6 +1578,12 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
                 //③
                 if (merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_merge_vectors[0] == tmp_merge_vectors[1])
                     merge_is_in_flag[1] = false;
+            } else {
+                tmp_warping_merge_vectors[0] = tmp_warping_vectors[1]; merge_is_in_flag[0] = is_in_flag[1];
+                tmp_warping_merge_vectors[1] = tmp_warping_vectors[0]; merge_is_in_flag[1] = is_in_flag[0];
+                //③
+                if (merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[1])
+                    merge_is_in_flag[1] = false;
             }
         }
         else if(tmp_reference_block.size() == 4) {
@@ -1597,6 +1603,21 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
                     if ((merge_is_in_flag[0] && merge_is_in_flag[3] && tmp_merge_vectors[0] == tmp_merge_vectors[3]) ||
                         (merge_is_in_flag[1] && merge_is_in_flag[3] && tmp_merge_vectors[1] == tmp_merge_vectors[3]))
                         merge_is_in_flag[3] = false;
+                } else {
+                    tmp_warping_merge_vectors[0] = tmp_warping_vectors[1]; merge_is_in_flag[0] = is_in_flag[1];
+                    tmp_warping_merge_vectors[1] = tmp_warping_vectors[2]; merge_is_in_flag[1] = is_in_flag[2];
+                    tmp_warping_merge_vectors[2] = tmp_warping_vectors[0]; merge_is_in_flag[2] = is_in_flag[0];
+                    tmp_warping_merge_vectors[3] = tmp_warping_vectors[3]; merge_is_in_flag[3] = is_in_flag[3];
+                    //①
+                    if (merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[1])
+                        merge_is_in_flag[1] = false;
+                    //③
+                    if (merge_is_in_flag[0] && merge_is_in_flag[2] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[2])
+                        merge_is_in_flag[2] = false;
+                    //④
+                    if ((merge_is_in_flag[0] && merge_is_in_flag[3] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[3]) ||
+                        (merge_is_in_flag[1] && merge_is_in_flag[3] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[3]))
+                        merge_is_in_flag[3] = false;
                 }
             }
             else {
@@ -1614,6 +1635,21 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
                     //④
                     if ((merge_is_in_flag[0] && merge_is_in_flag[3] && tmp_merge_vectors[0] == tmp_merge_vectors[3]) ||
                         (merge_is_in_flag[1] && merge_is_in_flag[3] && tmp_merge_vectors[1] == tmp_merge_vectors[3]))
+                        merge_is_in_flag[3] = false;
+                } else {
+                    tmp_warping_merge_vectors[0] = tmp_warping_vectors[0]; merge_is_in_flag[0] = is_in_flag[0];
+                    tmp_warping_merge_vectors[1] = tmp_warping_vectors[2]; merge_is_in_flag[1] = is_in_flag[2];
+                    tmp_warping_merge_vectors[2] = tmp_warping_vectors[1]; merge_is_in_flag[2] = is_in_flag[1];
+                    tmp_warping_merge_vectors[3] = tmp_warping_vectors[3]; merge_is_in_flag[3] = is_in_flag[3];
+                    //①
+                    if (merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[1])
+                        merge_is_in_flag[1] = false;
+                    //②
+                    if (merge_is_in_flag[1] && merge_is_in_flag[2] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[2])
+                        merge_is_in_flag[2] = false;
+                    //④
+                    if ((merge_is_in_flag[0] && merge_is_in_flag[3] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[3]) ||
+                        (merge_is_in_flag[1] && merge_is_in_flag[3] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[3]))
                         merge_is_in_flag[3] = false;
                 }
             }
@@ -1638,6 +1674,25 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
                 if ((merge_is_in_flag[0] && merge_is_in_flag[4] && tmp_merge_vectors[0] == tmp_merge_vectors[4]) ||
                     (merge_is_in_flag[1] && merge_is_in_flag[4] && tmp_merge_vectors[1] == tmp_merge_vectors[4]))
                     merge_is_in_flag[4] = false;
+            } else {
+                tmp_warping_merge_vectors[0] = tmp_warping_vectors[1]; merge_is_in_flag[0] = is_in_flag[1];
+                tmp_warping_merge_vectors[1] = tmp_warping_vectors[3]; merge_is_in_flag[1] = is_in_flag[3];
+                tmp_warping_merge_vectors[2] = tmp_warping_vectors[2]; merge_is_in_flag[2] = is_in_flag[2];
+                tmp_warping_merge_vectors[3] = tmp_warping_vectors[0]; merge_is_in_flag[3] = is_in_flag[0];
+                tmp_warping_merge_vectors[4] = tmp_warping_vectors[4]; merge_is_in_flag[4] = is_in_flag[4];
+                //①
+                if (merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[1])
+                    merge_is_in_flag[1] = false;
+                //②
+                if (merge_is_in_flag[1] && merge_is_in_flag[2] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[2])
+                    merge_is_in_flag[2] = false;
+                //③
+                if (merge_is_in_flag[0] && merge_is_in_flag[3] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[3])
+                    merge_is_in_flag[3] = false;
+                //④
+                if ((merge_is_in_flag[0] && merge_is_in_flag[4] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[4]) ||
+                    (merge_is_in_flag[1] && merge_is_in_flag[4] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[4]))
+                    merge_is_in_flag[4] = false;
             }
         }
         //重複がなく，符号化済みのブロックのみ入れる
@@ -1645,6 +1700,16 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
             for (int j = 0; j < tmp_merge_vectors.size(); j++) {
                 if (merge_is_in_flag[j])
                     vectors.emplace_back(tmp_merge_vectors[j], MERGE);
+            }
+        } else {
+            for (int j = 0; j < tmp_warping_merge_vectors.size(); j++) {
+                if (merge_is_in_flag[j]) {
+                    std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> v;
+                    v.emplace_back(tmp_warping_merge_vectors[j][0], MERGE);
+                    v.emplace_back(tmp_warping_merge_vectors[j][1], MERGE);
+                    v.emplace_back(tmp_warping_merge_vectors[j][2], MERGE);
+                    warping_vectors.emplace_back(v);
+                }
             }
         }
     }
@@ -2146,17 +2211,13 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
                           4 * (target_image.rows + 2 * SERACH_RANGE));
             std::vector<cv::Point2f> mvs;
 
-            if (current_mv.x + sx < -SERACH_RANGE || current_mv.y + sy < -SERACH_RANGE ||
-                current_mv.x + lx >= target_image.cols + SERACH_RANGE ||
-                current_mv.y + ly >= target_image.rows + SERACH_RANGE)
-                continue;
+            if (current_mv.x + sx < -SERACH_RANGE || current_mv.y + sy < -SERACH_RANGE || current_mv.x + lx >= target_image.cols + SERACH_RANGE || current_mv.y + ly >= target_image.rows + SERACH_RANGE) continue;
             mvs.emplace_back(current_mv);
             mvs.emplace_back(current_mv);
             mvs.emplace_back(current_mv);
             double ret_residual = getSquareResidual_Pred(target_image, coordinate, mvs, pixels_in_square, ref_hevc);
             double rd = (ret_residual + lambda * (getUnaryCodeLength(merge_count) + 1)) * MERGE_ALPHA;
-            results.emplace_back(rd, getUnaryCodeLength(merge_count) + 1, mvs, merge_count, merge_vector.second,
-                                 FlagsCodeSum(0, 0, 0, 0), Flags());
+            results.emplace_back(rd, getUnaryCodeLength(merge_count) + 1, mvs, merge_count, merge_vector.second, FlagsCodeSum(0, 0, 0, 0), Flags());
             merge_count++;
         }
     }else {
@@ -2574,11 +2635,11 @@ int SquareDivision::getCtuCodeLength(CodingTreeUnit *ctu){
 
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
         // この1bitは手法フラグ(warpingかtranslation),もう1bitはマージフラグ分です
-#if MERGE_MODE
-        return 1 + 1 + ctu->code_length;
-#else
-        return 1 + ctu->code_length;
-#endif
+        int flags_code = 0;
+        if(PRED_MODE == NEWTON && !GAUSS_NEWTON_TRANSLATION_ONLY) flags_code++;
+        if (MERGE_MODE) flags_code++;
+
+        return flags_code + ctu->code_length;
     }
 
     // ここで足している1はsplit_cu_flag分です
