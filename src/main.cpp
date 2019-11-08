@@ -97,6 +97,8 @@ void run(std::string config_name) {
     std::map<int, std::vector<std::vector<cv::Mat>>> ref_images_with_qp, target_images_with_qp;
     std::map<int, EXPAND_ARRAY_TYPE> expand_images_with_qp;
 
+    int previous_qp = -1;
+
     // 全画像分ループ
     for(const auto& task : tasks){
 
@@ -137,6 +139,8 @@ void run(std::string config_name) {
         std::cout << "CTU_HEIGHT             : " << block_size_y << std::endl;
         std::cout << "lambda_inject_flag     : " << lambda_inject_flag << std::endl;
         std::cout << "injected lambda        : " << injected_lambda << std::endl;
+
+        if(previous_qp == -1) previous_qp = qp;
 
         // オフセットを足して計測する
         qp = qp + qp_offset;
@@ -241,6 +245,13 @@ void run(std::string config_name) {
         }else{
             expand_images = expand_images_with_qp[qp];
         }
+
+        if(qp != previous_qp){
+            freeHEVCExpandImage(expand_images_with_qp[previous_qp], 20, 3, 3, 1920, 1024);
+        }
+
+        continue;
+
         triangle_division.constructPreviousCodingTree(foo, 0);
 
         std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_triangles.size(), std::vector< std::vector<int> >(block_size_x, std::vector<int>(block_size_y, -1)) );
