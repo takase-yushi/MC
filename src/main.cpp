@@ -253,8 +253,6 @@ void run(std::string config_name) {
             ref_images_with_qp.erase(previous_qp);
         }
 
-        continue;
-
         triangle_division.constructPreviousCodingTree(foo, 0);
 
         std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_triangles.size(), std::vector< std::vector<int> >(block_size_x, std::vector<int>(block_size_y, -1)) );
