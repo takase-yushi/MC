@@ -330,6 +330,7 @@ void run(std::string config_name) {
         }
         std::vector<CodingTreeUnit *>().swap(foo);
 
+        previous_qp = qp;
     }
     ofs.close();
 }
