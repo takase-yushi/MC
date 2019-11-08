@@ -248,6 +248,7 @@ void run(std::string config_name) {
 
         if(qp != previous_qp){
             freeHEVCExpandImage(expand_images_with_qp[previous_qp], 20, 3, 3, 1920, 1024);
+            expand_images_with_qp.erase(previous_qp);
         }
 
         continue;
