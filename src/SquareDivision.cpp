@@ -2258,10 +2258,13 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
             mvs.emplace_back(warping_vectors[i][0].first);
             mvs.emplace_back(warping_vectors[i][1].first);
             mvs.emplace_back(warping_vectors[i][2].first);
+            //右下の頂点の変形後の座標
+            cv::Point2f p4 = coordinate.p3 + mvs[2] + coordinate.p2 + mvs[1] - coordinate.p1 - mvs[0];
 
-            if (mvs[0].x + sx < -SERACH_RANGE || mvs[0].y + sy < -SERACH_RANGE || mvs[0].x + lx >= target_image.cols + SERACH_RANGE || mvs[0].y + ly >= target_image.rows + SERACH_RANGE) continue;
-            if (mvs[1].x + sx < -SERACH_RANGE || mvs[1].y + sy < -SERACH_RANGE || mvs[1].x + lx >= target_image.cols + SERACH_RANGE || mvs[1].y + ly >= target_image.rows + SERACH_RANGE) continue;
-            if (mvs[2].x + sx < -SERACH_RANGE || mvs[2].y + sy < -SERACH_RANGE || mvs[2].x + lx >= target_image.cols + SERACH_RANGE || mvs[2].y + ly >= target_image.rows + SERACH_RANGE) continue;
+            if (mvs[0].x + coordinate.p1.x < -SERACH_RANGE || mvs[0].y + coordinate.p1.y < -SERACH_RANGE || mvs[0].x + coordinate.p1.x >= target_image.cols + SERACH_RANGE || mvs[0].y + coordinate.p1.y >= target_image.rows + SERACH_RANGE) continue;
+            if (mvs[1].x + coordinate.p2.x < -SERACH_RANGE || mvs[1].y + coordinate.p2.y < -SERACH_RANGE || mvs[1].x + coordinate.p2.x >= target_image.cols + SERACH_RANGE || mvs[1].y + coordinate.p2.y >= target_image.rows + SERACH_RANGE) continue;
+            if (mvs[2].x + coordinate.p3.x < -SERACH_RANGE || mvs[2].y + coordinate.p3.y < -SERACH_RANGE || mvs[2].x + coordinate.p3.x >= target_image.cols + SERACH_RANGE || mvs[2].y + coordinate.p3.y >= target_image.rows + SERACH_RANGE) continue;
+            if (p4.x < -SERACH_RANGE || p4.y < -SERACH_RANGE || p4.x >= target_image.cols + SERACH_RANGE || p4.y >= target_image.rows + SERACH_RANGE) continue;
 
             double ret_residual = getSquareResidual_Pred(target_image, coordinate, mvs, pixels_in_square, ref_hevc);
             double rd = (ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code)) * MERGE_ALPHA;
