@@ -234,7 +234,7 @@ void Analyzer::storeMarkdownFile(double psnr, std::string log_path) {
  * @param ofs OutputStream
  * @param psnr PSNR値
  */
-void Analyzer::storeCsvFileWithStream(std::ofstream &ofs, double psnr) {
+void Analyzer::storeCsvFileWithStream(std::ofstream &ofs, double psnr, double time) {
     extern int qp;
     int tmp_code_sum = code_sum - (int)ceil(greater_0_flag_sum * (1.0-getEntropy({greater_0_flag_counter[0], greater_0_flag_counter[1]})));
     std::cout << (int)ceil(greater_0_flag_sum * (1.0 - getEntropy({greater_0_flag_counter[0], greater_0_flag_counter[1]})))<< std::endl;
@@ -252,7 +252,7 @@ void Analyzer::storeCsvFileWithStream(std::ofstream &ofs, double psnr) {
     if(INTRA_MODE) tmp_code_sum = tmp_code_sum - (int)ceil(intra_counter * getEntropy({intra_flag_counter[0], intra_flag_counter[1]}));
 #endif
 
-    ofs << qp << "," << getLambdaPred(qp, 1.0) << "," << code_sum << "," << tmp_code_sum << "," << psnr << "," << patch_num << "," << spatial_counter << "," << merge_counter << "," << merge2_counter << "," << intra_counter << std::endl;
+    ofs << qp << "," << getLambdaPred(qp, 1.0) << "," << code_sum << "," << tmp_code_sum << "," << psnr << "," << patch_num << "," << spatial_counter << "," << merge_counter << "," << merge2_counter << "," << intra_counter << "," << time << std::endl;
 }
 
 void Analyzer::storeMergeMvLog(std::vector<CodingTreeUnit*> ctus, std::string log_path) {

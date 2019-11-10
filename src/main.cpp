@@ -291,6 +291,10 @@ void run(std::string config_name) {
         std::cout << "PSNR:" << getPSNR(target_image, p_image) << " code_length:" << code_length << std::endl;
         std::cout << log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png" << std::endl;
 
+        time_t end = clock();
+
+        const double time = static_cast<double>(end - start) / CLOCKS_PER_SEC * 1000.0;
+        printf("time %lf[ms]\n", time);
 //        Decoder decoder(ref_image, target_image);
 //        decoder.initTriangle(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);
 //        decoder.reconstructionTriangle(foo);
@@ -311,7 +315,7 @@ void run(std::string config_name) {
         Analyzer analayzer(log_file_suffix);
         analayzer.storeDistributionOfMv(foo, log_directory);
         analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
-        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image));
+        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time);
         analayzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
 #endif
 #endif
