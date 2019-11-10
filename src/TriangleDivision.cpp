@@ -2893,33 +2893,33 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
 //            getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, SEARCH_RANGE, area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
         }
 
-        Triangle t = triangles[ctu->triangle_index].first;
-        cv::Point2f p1 = corners[t.p1_idx];
-        cv::Point2f p2 = corners[t.p2_idx];
-        cv::Point2f p3 = corners[t.p3_idx];
-
-        if(ctu->translation_flag) {
-            cv::Point2f g = (p1 + p2 + p3) / 3.0;
-
-            cv::arrowedLine(out, g, g + 10 * ctu->mv1, RED, 1);
-
-            if(ctu->method == MV_CODE_METHOD::MERGE || ctu->method == MV_CODE_METHOD::MERGE2){
-                cv::arrowedLine(out, g, g + 10 * ctu->original_mv1, GREEN, 1);
-                cv::arrowedLine(out, g, g + ctu->merge_triangle_ref_vector, WHITE);
-            }
-        }else{
-            cv::Point2f g = (p1 + p2 + p3) / 3.0;
-            cv::arrowedLine(out, p1, p1 + 10 * ctu->mv1, RED, 1);
-            cv::arrowedLine(out, p2, p2 + 10 * ctu->mv2, RED, 1);
-            cv::arrowedLine(out, p3, p3 + 10 * ctu->mv3, RED, 1);
-
-            if(ctu->method == MV_CODE_METHOD::MERGE || ctu->method == MV_CODE_METHOD::MERGE2){
-                cv::arrowedLine(out, g, g + ctu->merge_triangle_ref_vector, WHITE);
-                cv::arrowedLine(out, p1, p1 + 10 * ctu->original_mv1, GREEN, 1);
-                cv::arrowedLine(out, p2, p2 + 10 * ctu->original_mv2, GREEN, 1);
-                cv::arrowedLine(out, p3, p3 + 10 * ctu->original_mv3, GREEN, 1);
-            }
-        }
+//        Triangle t = triangles[ctu->triangle_index].first;
+//        cv::Point2f p1 = corners[t.p1_idx];
+//        cv::Point2f p2 = corners[t.p2_idx];
+//        cv::Point2f p3 = corners[t.p3_idx];
+//
+//        if(ctu->translation_flag) {
+//            cv::Point2f g = (p1 + p2 + p3) / 3.0;
+//
+//            cv::arrowedLine(out, g, g + 10 * ctu->mv1, RED, 1);
+//
+//            if(ctu->method == MV_CODE_METHOD::MERGE || ctu->method == MV_CODE_METHOD::MERGE2){
+//                cv::arrowedLine(out, g, g + 10 * ctu->original_mv1, GREEN, 1);
+//                cv::arrowedLine(out, g, g + ctu->merge_triangle_ref_vector, WHITE);
+//            }
+//        }else{
+//            cv::Point2f g = (p1 + p2 + p3) / 3.0;
+//            cv::arrowedLine(out, p1, p1 + 10 * ctu->mv1, RED, 1);
+//            cv::arrowedLine(out, p2, p2 + 10 * ctu->mv2, RED, 1);
+//            cv::arrowedLine(out, p3, p3 + 10 * ctu->mv3, RED, 1);
+//
+//            if(ctu->method == MV_CODE_METHOD::MERGE || ctu->method == MV_CODE_METHOD::MERGE2){
+//                cv::arrowedLine(out, g, g + ctu->merge_triangle_ref_vector, WHITE);
+//                cv::arrowedLine(out, p1, p1 + 10 * ctu->original_mv1, GREEN, 1);
+//                cv::arrowedLine(out, p2, p2 + 10 * ctu->original_mv2, GREEN, 1);
+//                cv::arrowedLine(out, p3, p3 + 10 * ctu->original_mv3, GREEN, 1);
+//            }
+//        }
 
         return;
     }
