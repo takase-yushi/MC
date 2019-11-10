@@ -1138,7 +1138,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 split_mv_result[0].residual,
                 square_indexes[0], 0, cmt_left_left->mv1, ctu->node1, true, dummy, steps);
 
-        if(method_flag1 == MV_CODE_METHOD::MERGE || method_flag1 == MV_CODE_METHOD::MERGE_Collocated) {
+        if(method_flag1 == MV_CODE_METHOD::MERGE) {
             if(split_mv_result[0].translation_flag) {
                 gauss_result_translation = mvd[0];
                 square_gauss_results[square_indexes[0]].mv_translation = gauss_result_translation;
@@ -1160,7 +1160,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 {split_mv_result[1].mv_translation, split_mv_result[1].mv_translation, split_mv_result[1].mv_translation}, split_mv_result[1].residual,
                 square_indexes[1], 1, cmt_left_right->mv1, ctu->node2, true, dummy, steps);
 
-        if(method_flag2 == MV_CODE_METHOD::MERGE || method_flag2 == MV_CODE_METHOD::MERGE_Collocated) {
+        if(method_flag2 == MV_CODE_METHOD::MERGE) {
             if(split_mv_result[1].translation_flag) {
                 gauss_result_translation = mvd[0];
                 square_gauss_results[square_indexes[1]].mv_translation = gauss_result_translation;
@@ -1183,7 +1183,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 split_mv_result[2].residual,
                 square_indexes[2], 2, cmt_right_left->mv1, ctu->node3, true, dummy, steps);
 
-        if(method_flag3 == MV_CODE_METHOD::MERGE || method_flag3 == MV_CODE_METHOD::MERGE_Collocated) {
+        if(method_flag3 == MV_CODE_METHOD::MERGE) {
             if(split_mv_result[2].translation_flag) {
                 gauss_result_translation = mvd[0];
                 square_gauss_results[square_indexes[2]].mv_translation = gauss_result_translation;
@@ -1205,7 +1205,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 {split_mv_result[3].mv_translation, split_mv_result[3].mv_translation, split_mv_result[3].mv_translation}, split_mv_result[3].residual,
                 square_indexes[3], 3, cmt_right_right->mv1, ctu->node4, true, dummy, steps);
 
-        if(method_flag4 == MV_CODE_METHOD::MERGE || method_flag4 == MV_CODE_METHOD::MERGE_Collocated) {
+        if(method_flag4 == MV_CODE_METHOD::MERGE) {
             if(split_mv_result[3].translation_flag) {
                 gauss_result_translation = mvd[0];
                 square_gauss_results[square_indexes[3]].mv_translation = gauss_result_translation;
@@ -1258,7 +1258,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         ctu->node1->translation_flag = split_mv_result[0].translation_flag;
         ctu->node1->method = method_flag1;
         square_gauss_results[s1_idx] = split_mv_result[0];
-        if(method_flag1 == MV_CODE_METHOD::MERGE || method_flag1 == MV_CODE_METHOD::MERGE_Collocated) {
+        if(method_flag1 == MV_CODE_METHOD::MERGE) {
             if(ctu->node1->translation_flag){
                 ctu->node1->mv1 = square_gauss_results[square_indexes[0]].mv_translation;
                 ctu->node1->mv2 = square_gauss_results[square_indexes[0]].mv_translation;
@@ -1287,7 +1287,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         ctu->node2->method = method_flag2;
 
         square_gauss_results[s2_idx] = split_mv_result[1];
-        if(method_flag2 == MV_CODE_METHOD::MERGE || method_flag2 == MV_CODE_METHOD::MERGE_Collocated) {
+        if(method_flag2 == MV_CODE_METHOD::MERGE) {
             if(ctu->node2->translation_flag){
                 ctu->node2->mv1 = square_gauss_results[square_indexes[1]].mv_translation;
                 ctu->node2->mv2 = square_gauss_results[square_indexes[1]].mv_translation;
@@ -1315,7 +1315,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         ctu->node3->translation_flag = split_mv_result[2].translation_flag;
         ctu->node3->method = method_flag3;
         square_gauss_results[s3_idx] = split_mv_result[2];
-        if(method_flag3 == MV_CODE_METHOD::MERGE || method_flag3 == MV_CODE_METHOD::MERGE_Collocated) {
+        if(method_flag3 == MV_CODE_METHOD::MERGE) {
             if(ctu->node3->translation_flag){
                 ctu->node3->mv1 = square_gauss_results[square_indexes[2]].mv_translation;
                 ctu->node3->mv2 = square_gauss_results[square_indexes[2]].mv_translation;
@@ -1343,7 +1343,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         ctu->node4->translation_flag = split_mv_result[3].translation_flag;
         ctu->node4->method = method_flag4;
         square_gauss_results[s4_idx] = split_mv_result[3];
-        if(method_flag4 == MV_CODE_METHOD::MERGE || method_flag4 == MV_CODE_METHOD::MERGE_Collocated) {
+        if(method_flag4 == MV_CODE_METHOD::MERGE) {
             if(ctu->node4->translation_flag){
                 ctu->node4->mv1 = square_gauss_results[square_indexes[3]].mv_translation;
                 ctu->node4->mv2 = square_gauss_results[square_indexes[3]].mv_translation;
@@ -1437,7 +1437,7 @@ SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1
  * @param[in] square_idx 符号化対照ブロックのインデックス
  * @param[in] translation_flag 符号化対照ブロックのflag
  * @param[in] method 空間予測かマージか
- * @return 候補のパッチの番号を返す
+ * @return 候補ブロックの動きベクトルを返す
  */
 std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> > SquareDivision::getSquareList(int square_idx, bool translation_flag, MV_CODE_METHOD method) {
     //隣接するブロックを取得する
@@ -2298,7 +2298,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     ctu->mvds = mvds;
     ctu->ref_triangle_idx = selected_idx;
     ctu->flags_code_sum = flag_code_sum;
-    if(method != MV_CODE_METHOD::MERGE && method != MV_CODE_METHOD::MERGE_Collocated) {
+    if(method != MV_CODE_METHOD::MERGE) {
         (ctu->mvds_x).clear();
         (ctu->mvds_y).clear();
         (ctu->original_mvds_x).clear();
