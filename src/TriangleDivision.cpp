@@ -3104,10 +3104,21 @@ TriangleDivision::~TriangleDivision() {
     std::vector<bool>().swap(delete_flag);
     std::vector<bool>().swap(isCodedTriangle);
     std::vector<std::vector<CollocatedMvTree*>>().swap(previousMvList);
-    std::vector<cv::Mat>().swap(predicted_buf);
+//    std::vector<cv::Mat>().swap(predicted_buf);
+    for(auto i : predicted_buf) i.release();
     std::vector<GaussResult>().swap(triangle_gauss_results);
-    std::vector<std::vector<cv::Mat>>().swap(ref_images);
-    std::vector<std::vector<cv::Mat>>().swap(target_images);
+//    std::vector<std::vector<cv::Mat>>().swap(ref_images);
+    for(int i = 0 ; i < ref_images.size() ; i++){
+        for(int j = 0 ; j < ref_images[i].size(); j++){
+            ref_images[i][j].release();
+        }
+    }
+//    std::vector<std::vector<cv::Mat>>().swap(target_images);
+    for(int i = 0 ; i < target_images.size() ; i++){
+        for(int j = 0 ; j < target_images[i].size(); j++){
+            target_images[i][j].release();
+        }
+    }
 
     int scaled_expansion_size = SEARCH_RANGE + 2;
     for(int i = -scaled_expansion_size ; i < target_image.cols + scaled_expansion_size ; i++){
@@ -3124,6 +3135,7 @@ TriangleDivision::~TriangleDivision() {
     ref_hevc -= 4 * (SEARCH_RANGE + 4);
     free(ref_hevc);
 
+    expansion_ref.release();
 }
 
 /**
