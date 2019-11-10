@@ -647,44 +647,60 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     double g_y_translation;
                     cv::Point2f X_later_translation, X_later_warping;
 
+                    // 移動後の頂点を計算し格納
+                    ref_coordinates_warping[0] = p0 + tmp_mv_warping[0];
+                    ref_coordinates_warping[1] = p1 + tmp_mv_warping[1];
+                    ref_coordinates_warping[2] = p2 + tmp_mv_warping[2];
+                    ref_coordinates_translation[0] = p0 + tmp_mv_translation;
+                    ref_coordinates_translation[1] = p1 + tmp_mv_translation;
+                    ref_coordinates_translation[2] = p2 + tmp_mv_translation;
+
+                    std::vector<cv::Point2f> triangle_later_warping;
+                    std::vector<cv::Point2f> triangle_later_translation;
+                    triangle_later_warping.emplace_back(ref_coordinates_warping[0]);
+                    triangle_later_warping.emplace_back(ref_coordinates_warping[1]);
+                    triangle_later_warping.emplace_back(ref_coordinates_warping[2]);
+                    triangle_later_translation.emplace_back(ref_coordinates_translation[0]);
+                    triangle_later_translation.emplace_back(ref_coordinates_translation[1]);
+                    triangle_later_translation.emplace_back(ref_coordinates_translation[2]);
+
+                    cv::Point2f a_later_warping, a_later_translation;
+                    cv::Point2f b_later_warping, b_later_translation;
+
+                    a_later_warping  =  triangle_later_warping[2] -  triangle_later_warping[0];
+                    a_later_translation = triangle_later_translation[2] - triangle_later_translation[0];
+                    b_later_warping  =  triangle_later_warping[1] -  triangle_later_warping[0];
+                    b_later_translation = triangle_later_translation[1] - triangle_later_translation[0];
+                    X_later_warping  = alpha *  a_later_warping + beta *  b_later_warping +  triangle_later_warping[0];
+                    X_later_translation = alpha * a_later_translation + beta * b_later_translation + triangle_later_translation[0];
+
+                    if(X_later_warping.x >= current_ref_image.cols - 1 + scaled_spread) X_later_warping.x = current_ref_image.cols - 1.00 + scaled_spread;
+                    if(X_later_warping.y >= current_ref_image.rows - 1 + scaled_spread) X_later_warping.y = current_ref_image.rows - 1.00 + scaled_spread;
+                    if(X_later_warping.x < -scaled_spread) X_later_warping.x = -scaled_spread;
+                    if(X_later_warping.y < -scaled_spread) X_later_warping.y = -scaled_spread;
+
+                    if(X_later_translation.x >= (current_ref_image.cols - 1 + scaled_spread)) X_later_translation.x = current_ref_image.cols - 1 + scaled_spread;
+                    if(X_later_translation.y >= (current_ref_image.rows - 1 + scaled_spread)) X_later_translation.y = current_ref_image.rows - 1 + scaled_spread;
+                    if(X_later_translation.x < -scaled_spread) X_later_translation.x = -scaled_spread;
+                    if(X_later_translation.y < -scaled_spread) X_later_translation.y = -scaled_spread;
+
+                    // 参照フレームの中心差分
+                    spread+=1;
+                    double g_x, g_y;
+                    #if GAUSS_NEWTON_HEVC_IMAGE
+                        g_x          = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_warping.x  + 1), 4 * (X_later_warping.y     ), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_warping.x  - 1), 4 * (X_later_warping.y     ), 1)) / 2.0;  // (current_ref_expand[x_warping_tmp + 4 ][y_warping_tmp     ] - current_ref_expand[x_warping_tmp - 4 ][y_warping_tmp     ]) / 2.0;
+                        g_y          = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_warping.x     ), 4 * (X_later_warping.y  + 1), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_warping.x     ), 4 * (X_later_warping.y  - 1), 1)) / 2.0;  // (current_ref_expand[x_warping_tmp     ][y_warping_tmp + 4 ] - current_ref_expand[x_warping_tmp     ][y_warping_tmp - 4 ]) / 2.0;
+                        g_x_translation = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x + 1), 4 * (X_later_translation.y    ), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x - 1), 4 * (X_later_translation.y    ), 1)) / 2.0;  // (current_ref_expand[x_translation_tmp + 4][y_translation_tmp    ] - current_ref_expand[x_translation_tmp - 4][y_translation_tmp    ]) / 2.0;
+                        g_y_translation = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x    ), 4 * (X_later_translation.y + 1), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x    ), 4 * (X_later_translation.y - 1), 1)) / 2.0;  // (current_ref_expand[x_translation_tmp    ][y_translation_tmp + 4] - current_ref_expand[x_translation_tmp    ][y_translation_tmp - 4]) / 2.0;
+                    #else
+                        g_x   = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x  + 1 , X_later_warping.y    , 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x  - 1, X_later_warping.y     , 1)) / 2.0;  // (current_ref_expand[x_warping_tmp + 4 ][y_warping_tmp     ] - current_ref_expand[x_warping_tmp - 4 ][y_warping_tmp     ]) / 2.0;
+                            g_y   = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x     , X_later_warping.y  + 1, 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x     , X_later_warping.y  - 1, 1)) / 2.0;  // (current_ref_expand[x_warping_tmp     ][y_warping_tmp + 4 ] - current_ref_expand[x_warping_tmp     ][y_warping_tmp - 4 ]) / 2.0;
+                            g_x_translation = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x + 1, X_later_translation.y    , 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x - 1, X_later_translation.y    , 1)) / 2.0;  // (current_ref_expand[x_translation_tmp + 4][y_translation_tmp    ] - current_ref_expand[x_translation_tmp - 4][y_translation_tmp    ]) / 2.0;
+                            g_y_translation = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x    , X_later_translation.y + 1, 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x    , X_later_translation.y - 1, 1)) / 2.0;  // (current_ref_expand[x_translation_tmp    ][y_translation_tmp + 4] - current_ref_expand[x_translation_tmp    ][y_translation_tmp - 4]) / 2.0;
+                    #endif
+                    spread-=1;
+
                     for(int i = 0 ; i < 6 ; i++) {
-                        // 移動後の頂点を計算し格納
-                        ref_coordinates_warping[0] = p0 + tmp_mv_warping[0];
-                        ref_coordinates_warping[1] = p1 + tmp_mv_warping[1];
-                        ref_coordinates_warping[2] = p2 + tmp_mv_warping[2];
-                        ref_coordinates_translation[0] = p0 + tmp_mv_translation;
-                        ref_coordinates_translation[1] = p1 + tmp_mv_translation;
-                        ref_coordinates_translation[2] = p2 + tmp_mv_translation;
-
-                        std::vector<cv::Point2f> triangle_later_warping;
-                        std::vector<cv::Point2f> triangle_later_translation;
-                        triangle_later_warping.emplace_back(ref_coordinates_warping[0]);
-                        triangle_later_warping.emplace_back(ref_coordinates_warping[1]);
-                        triangle_later_warping.emplace_back(ref_coordinates_warping[2]);
-                        triangle_later_translation.emplace_back(ref_coordinates_translation[0]);
-                        triangle_later_translation.emplace_back(ref_coordinates_translation[1]);
-                        triangle_later_translation.emplace_back(ref_coordinates_translation[2]);
-
-                        cv::Point2f a_later_warping, a_later_translation;
-                        cv::Point2f b_later_warping, b_later_translation;
-
-                        a_later_warping  =  triangle_later_warping[2] -  triangle_later_warping[0];
-                        a_later_translation = triangle_later_translation[2] - triangle_later_translation[0];
-                        b_later_warping  =  triangle_later_warping[1] -  triangle_later_warping[0];
-                        b_later_translation = triangle_later_translation[1] - triangle_later_translation[0];
-                        X_later_warping  = alpha *  a_later_warping + beta *  b_later_warping +  triangle_later_warping[0];
-                        X_later_translation = alpha * a_later_translation + beta * b_later_translation + triangle_later_translation[0];
-
-                        if(X_later_warping.x >= current_ref_image.cols - 1 + scaled_spread) X_later_warping.x = current_ref_image.cols - 1.00 + scaled_spread;
-                        if(X_later_warping.y >= current_ref_image.rows - 1 + scaled_spread) X_later_warping.y = current_ref_image.rows - 1.00 + scaled_spread;
-                        if(X_later_warping.x < -scaled_spread) X_later_warping.x = -scaled_spread;
-                        if(X_later_warping.y < -scaled_spread) X_later_warping.y = -scaled_spread;
-
-                        if(X_later_translation.x >= (current_ref_image.cols - 1 + scaled_spread)) X_later_translation.x = current_ref_image.cols - 1 + scaled_spread;
-                        if(X_later_translation.y >= (current_ref_image.rows - 1 + scaled_spread)) X_later_translation.y = current_ref_image.rows - 1 + scaled_spread;
-                        if(X_later_translation.x < -scaled_spread) X_later_translation.x = -scaled_spread;
-                        if(X_later_translation.y < -scaled_spread) X_later_translation.y = -scaled_spread;
-
                         // 頂点を動かしたときのパッチ内の変動量x軸y軸独立に計算(delta_gを求めるために必要)
                         double delta_x, delta_y;
                         switch (i) {//頂点ごとにxy軸独立に偏微分
@@ -715,22 +731,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                             default:
                                 break;
                         }
-
-                        // 参照フレームの中心差分
-                        spread+=1;
-                        double g_x, g_y;
-#if GAUSS_NEWTON_HEVC_IMAGE
-                        g_x          = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_warping.x  + 1), 4 * (X_later_warping.y     ), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_warping.x  - 1), 4 * (X_later_warping.y     ), 1)) / 2.0;  // (current_ref_expand[x_warping_tmp + 4 ][y_warping_tmp     ] - current_ref_expand[x_warping_tmp - 4 ][y_warping_tmp     ]) / 2.0;
-                        g_y          = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_warping.x     ), 4 * (X_later_warping.y  + 1), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_warping.x     ), 4 * (X_later_warping.y  - 1), 1)) / 2.0;  // (current_ref_expand[x_warping_tmp     ][y_warping_tmp + 4 ] - current_ref_expand[x_warping_tmp     ][y_warping_tmp - 4 ]) / 2.0;
-                        g_x_translation = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x + 1), 4 * (X_later_translation.y    ), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x - 1), 4 * (X_later_translation.y    ), 1)) / 2.0;  // (current_ref_expand[x_translation_tmp + 4][y_translation_tmp    ] - current_ref_expand[x_translation_tmp - 4][y_translation_tmp    ]) / 2.0;
-                        g_y_translation = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x    ), 4 * (X_later_translation.y + 1), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x    ), 4 * (X_later_translation.y - 1), 1)) / 2.0;  // (current_ref_expand[x_translation_tmp    ][y_translation_tmp + 4] - current_ref_expand[x_translation_tmp    ][y_translation_tmp - 4]) / 2.0;
-#else
-                        g_x   = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x  + 1 , X_later_warping.y    , 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x  - 1, X_later_warping.y     , 1)) / 2.0;  // (current_ref_expand[x_warping_tmp + 4 ][y_warping_tmp     ] - current_ref_expand[x_warping_tmp - 4 ][y_warping_tmp     ]) / 2.0;
-                            g_y   = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x     , X_later_warping.y  + 1, 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x     , X_later_warping.y  - 1, 1)) / 2.0;  // (current_ref_expand[x_warping_tmp     ][y_warping_tmp + 4 ] - current_ref_expand[x_warping_tmp     ][y_warping_tmp - 4 ]) / 2.0;
-                            g_x_translation = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x + 1, X_later_translation.y    , 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x - 1, X_later_translation.y    , 1)) / 2.0;  // (current_ref_expand[x_translation_tmp + 4][y_translation_tmp    ] - current_ref_expand[x_translation_tmp - 4][y_translation_tmp    ]) / 2.0;
-                            g_y_translation = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x    , X_later_translation.y + 1, 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x    , X_later_translation.y - 1, 1)) / 2.0;  // (current_ref_expand[x_translation_tmp    ][y_translation_tmp + 4] - current_ref_expand[x_translation_tmp    ][y_translation_tmp - 4]) / 2.0;
-#endif
-                        spread-=1;
 
                         // 式(28)～(33)
                         delta_g_warping[i] = g_x * delta_x + g_y * delta_y;
