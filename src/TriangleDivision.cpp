@@ -1403,7 +1403,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     isCodedTriangle[triangle_indexes[3]] = true;
 
     double alpha = 1;
+
+#if DISPLAY_RD_COST
     std::cout << "before:" << cost_before_subdiv << " after:" << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4) << std::endl;
+#endif
+
     if(cost_before_subdiv >= alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4)) {
 
         for(int i = 0 ; i < 4 ; i++){

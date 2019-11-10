@@ -98,6 +98,7 @@ enum {
 #define INTRA_LIMIT_MODE false // イントラが選択されたらそれ以降は割らないモード
 #define MERGE2_ENABLE true
 #define SEARCH_RANGE 16
+#define DISPLAY_RD_COST false
 
 const std::string OS = "Ubuntu";
 
