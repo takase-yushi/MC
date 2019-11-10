@@ -105,7 +105,7 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
         if (INTRA_MODE) flags_code++;
         if (MERGE_MODE) flags_code++;
 
-        code_sum += flags_code + ctu->code_length;
+        code_sum += ctu->code_length;
         patch_num++;
 
         if(ctu->method != MV_CODE_METHOD::MERGE && ctu->method != MV_CODE_METHOD::INTRA && ctu->method != MV_CODE_METHOD::MERGE2){
