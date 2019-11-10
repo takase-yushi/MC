@@ -2576,6 +2576,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 (ctu->mvds_y).emplace_back(mvds[i].y);
             }
         }
+        ctu->share_flag[0] = share_flags[selected_idx][0];
+        ctu->share_flag[1] = share_flags[selected_idx][1];
+        ctu->share_flag[2] = share_flags[selected_idx][2];
     }
 
     return {cost, code_length, mvds, selected_idx, method};
@@ -2806,11 +2809,26 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
                     B(out, (int)pixel.x, (int)pixel.y) = 0;
                 }
             }else if(ctu->method == MV_CODE_METHOD::MERGE2){
-                for(auto pixel : pixels) {
-                    R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
-                    G(out, (int)pixel.x, (int)pixel.y) = 0;
-                    B(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
+
+                int share_count = 0;
+                for(auto f : ctu->share_flag) {
+                    if(f) share_count++;
                 }
+
+                if(share_count == 1){
+                    for(auto pixel : pixels) {
+                        R(out, (int)pixel.x, (int)pixel.y) = 54;
+                        G(out, (int)pixel.x, (int)pixel.y) = 115;
+                        B(out, (int)pixel.x, (int)pixel.y) = 255;
+                    }
+                }else if(share_count == 2){
+                    for(auto pixel : pixels) {
+                        R(out, (int)pixel.x, (int)pixel.y) = 212;
+                        G(out, (int)pixel.x, (int)pixel.y) = 61;
+                        B(out, (int)pixel.x, (int)pixel.y) = 0;
+                    }
+                }
+
                 std::cout << "------------------- MERGE2 -------------------" << std::endl;
             }else if(ctu->method == MV_CODE_METHOD::SPATIAL){
                 for(auto pixel : pixels) {
@@ -2834,10 +2852,24 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
                     B(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                 }
             }else if(ctu->method == MV_CODE_METHOD::MERGE2){
-                for(auto pixel : pixels) {
-                    R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
-                    G(out, (int)pixel.x, (int)pixel.y) = 0;
-                    B(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
+
+                int share_count = 0;
+                for(auto f : ctu->share_flag) {
+                    if(f) share_count++;
+                }
+
+                if(share_count == 1){
+                    for(auto pixel : pixels) {
+                        R(out, (int)pixel.x, (int)pixel.y) = 54;
+                        G(out, (int)pixel.x, (int)pixel.y) = 115;
+                        B(out, (int)pixel.x, (int)pixel.y) = 255;
+                    }
+                }else if(share_count == 2){
+                    for(auto pixel : pixels) {
+                        R(out, (int)pixel.x, (int)pixel.y) = 212;
+                        G(out, (int)pixel.x, (int)pixel.y) = 61;
+                        B(out, (int)pixel.x, (int)pixel.y) = 0;
+                    }
                 }
                 std::cout << "------------------- MERGE2 -------------------" << std::endl;
             }else if(ctu->method == MV_CODE_METHOD::SPATIAL){
