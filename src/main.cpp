@@ -247,10 +247,23 @@ void run(std::string config_name) {
         }
 
         if(qp != previous_qp){
-            freeHEVCExpandImage(expand_images_with_qp[previous_qp], 20, 3, 3, 1920, 1024);
+            std::cout << "--------------------- free ---------------------" << std::endl;
+
+            freeHEVCExpandImage(expand_images_with_qp[previous_qp], 22, 2, 4, 1920, 1024);
             expand_images_with_qp.erase(previous_qp);
+            for(int i = 0 ; i < target_images_with_qp[previous_qp].size() ; i++){
+                for(int j = 0 ; j < target_images_with_qp[previous_qp][i].size() ; j++){
+                    target_images_with_qp[previous_qp][i][j].release();
+                }
+            }
             target_images_with_qp.erase(previous_qp);
+            for(int i = 0 ; i < ref_images_with_qp[previous_qp].size() ; i++){
+                for(int j = 0 ; j < ref_images_with_qp[previous_qp][i].size() ; j++){
+                    ref_images_with_qp[previous_qp][i][j].release();
+                }
+            }
             ref_images_with_qp.erase(previous_qp);
+
         }
 
         triangle_division.constructPreviousCodingTree(foo, 0);
