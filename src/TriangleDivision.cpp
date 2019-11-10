@@ -2701,6 +2701,68 @@ void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &ou
     if(ctu->node4 != nullptr) getPredictedImageFromCtu(ctu->node4, out, area_flag);
 }
 
+
+cv::Mat TriangleDivision::getMergeModeColorImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag){
+    cv::Mat out = cv::Mat::zeros(ref_image.size(), CV_8UC3);
+
+    for(int i = 0 ; i < ctus.size() ; i++) {
+        getMergeModeColorImageFromCtu(ctus[i], out, area_flag[i/2]);
+    }
+
+    std::vector<Point3Vec> ts = getTriangleCoordinateList();
+    for(const auto &t : ts) {
+        drawTriangle(out, t.p1, t.p2, t.p3, WHITE);
+    }
+
+    return out;
+}
+
+void TriangleDivision::getMergeModeColorImageFromCtu(CodingTreeUnit* ctu, cv::Mat &out, std::vector<std::vector<int>> &area_flag){
+    if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
+        int triangle_index = ctu->triangle_index;
+        cv::Point2f mv = ctu->mv1;
+        Triangle triangle_corner_idx = triangles[triangle_index].first;
+        Point3Vec triangle(corners[triangle_corner_idx.p1_idx], corners[triangle_corner_idx.p2_idx], corners[triangle_corner_idx.p3_idx]);
+
+        std::vector<cv::Point2f> mvs{mv, mv, mv};
+        std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, block_size_x, block_size_y);
+
+        if(ctu->method == MERGE || ctu->method == MERGE2){
+            int r, g, b;
+            switch(ctu->ref_triangle_idx){
+                case 0:
+                    r = 255; g = 0; b = 0;
+                    break;
+                case 1:
+                    r = 0;   g = 255; b = 0;
+                    break;
+                case 2:
+                    r = 0;   g = 0; b = 255;
+                    break;
+                case 3:
+                    r = 255; g = 255; b = 0;
+                    break;
+                case 4:
+                    r = 255; g = 0; b = 255;
+                    break;
+            }
+
+            for(auto pixel : pixels) {
+                R(out, (int)pixel.x, (int)pixel.y) = r;
+                G(out, (int)pixel.x, (int)pixel.y) = g;
+                B(out, (int)pixel.x, (int)pixel.y) = b;
+            }
+        }
+
+        return;
+    }
+
+    if(ctu->node1 != nullptr) getMergeModeColorImageFromCtu(ctu->node1, out, area_flag);
+    if(ctu->node2 != nullptr) getMergeModeColorImageFromCtu(ctu->node2, out, area_flag);
+    if(ctu->node3 != nullptr) getMergeModeColorImageFromCtu(ctu->node3, out, area_flag);
+    if(ctu->node4 != nullptr) getMergeModeColorImageFromCtu(ctu->node4, out, area_flag);
+}
+
 cv::Mat TriangleDivision::getPredictedColorImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag, double original_psnr){
     cv::Mat out = cv::Mat::zeros(ref_image.size(), CV_8UC3);
 
