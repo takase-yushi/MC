@@ -1610,10 +1610,24 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
         if(square_gauss_results[reference_block_index].translation_flag) { //参照候補ブロックが平行移動の場合
             cv::Point2f current_mv = square_gauss_results[reference_block_index].mv_translation;
             if(translation_flag) {
-                tmp_vectors.emplace_back(current_mv);
+                //画像の外に出てしまう場合は候補に入れない
+                if(current_mv.x + coordinate.p1.x < -SERACH_RANGE || current_mv.y + coordinate.p1.y < -SERACH_RANGE || current_mv.x + coordinate.p4.x >= target_image.cols + SERACH_RANGE || current_mv.y + coordinate.p4.y >= target_image.rows + SERACH_RANGE) {
+                    tmp_vectors.emplace_back();
+                    is_in_flag[i] = false;
+                }
+                else tmp_vectors.emplace_back(current_mv);
             } else {
-                std::vector<cv::Point2f> v{current_mv, current_mv, current_mv};
-                tmp_warping_vectors.emplace_back(v);
+                if ((current_mv.x + coordinate.p1.x < -SERACH_RANGE || current_mv.y + coordinate.p1.y < -SERACH_RANGE || current_mv.x + coordinate.p1.x >= target_image.cols + SERACH_RANGE || current_mv.y + coordinate.p1.y >= target_image.rows + SERACH_RANGE) ||
+                    (current_mv.x + coordinate.p2.x < -SERACH_RANGE || current_mv.y + coordinate.p2.y < -SERACH_RANGE || current_mv.x + coordinate.p2.x >= target_image.cols + SERACH_RANGE || current_mv.y + coordinate.p2.y >= target_image.rows + SERACH_RANGE) ||
+                    (current_mv.x + coordinate.p3.x < -SERACH_RANGE || current_mv.y + coordinate.p3.y < -SERACH_RANGE || current_mv.x + coordinate.p3.x >= target_image.cols + SERACH_RANGE || current_mv.y + coordinate.p3.y >= target_image.rows + SERACH_RANGE) ||
+                    (current_mv.x + coordinate.p4.x < -SERACH_RANGE || current_mv.y + coordinate.p4.y < -SERACH_RANGE || current_mv.x + coordinate.p4.x >= target_image.cols + SERACH_RANGE || current_mv.y + coordinate.p4.y >= target_image.rows + SERACH_RANGE)) {
+                    tmp_warping_vectors.emplace_back();
+                    is_in_flag[i] = false;
+                }
+                else {
+                    std::vector<cv::Point2f> v{current_mv, current_mv, current_mv};
+                    tmp_warping_vectors.emplace_back(v);
+                }
             }
         } else {  //参照候補ブロックがワーピングの場合
             cv::Point2f current_mv1 = square_gauss_results[reference_block_index].mv_warping[0];
@@ -1635,21 +1649,35 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
 #endif
             std::vector<cv::Point2f> ref_mvs{current_mv1, current_mv2, current_mv3};
             Square target_square = squares[square_idx];
-            cv::Point2f pp1 = corners[target_square.p1_idx], pp2 = corners[target_square.p2_idx], pp3 = corners[target_square.p3_idx], pp4 = corners[target_square.p4_idx];
+            cv::Point2f pp1 = coordinate.p1, pp2 = coordinate.p2, pp3 = coordinate.p3, pp4 = coordinate.p4;
             Square ref_square = squares[reference_block_index];
             std::vector<cv::Point2f> ref_square_coordinates{corners[ref_square.p1_idx], corners[ref_square.p2_idx], corners[ref_square.p3_idx], corners[ref_square.p4_idx]};
             if(translation_flag) {
                 std::vector<cv::Point2f> target_square_coordinates{cv::Point2f((pp1.x + pp2.x + pp3.x + pp4.x) / 4.0, (pp1.y + pp2.y + pp3.y + pp4.y) / 4.0)};
                 std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_square_coordinates, ref_mvs, target_square_coordinates);
-                tmp_vectors.emplace_back(mvs[0]);
+                if(mvs[0].x + coordinate.p1.x < -SERACH_RANGE || mvs[0].y + coordinate.p1.y < -SERACH_RANGE || mvs[0].x + coordinate.p4.x >= target_image.cols + SERACH_RANGE || mvs[0].y + coordinate.p4.y >= target_image.rows + SERACH_RANGE) {
+                    tmp_vectors.emplace_back();
+                    is_in_flag[i] = false;
+                }
+                else tmp_vectors.emplace_back(mvs[0]);
             } else {
                 std::vector<cv::Point2f> target_square_coordinates;
                 target_square_coordinates.emplace_back(pp1);
                 target_square_coordinates.emplace_back(pp2);
                 target_square_coordinates.emplace_back(pp3);
                 std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_square_coordinates, ref_mvs, target_square_coordinates);
-                std::vector<cv::Point2f> v{mvs[0], mvs[1], mvs[2]};
-                tmp_warping_vectors.emplace_back(v);
+                cv::Point2f p4 = pp3 + mvs[2] + pp2 + mvs[1] - pp1 - mvs[0]; //右下の頂点の変形後の座標
+                if ((mvs[0].x + coordinate.p1.x < -SERACH_RANGE || mvs[0].y + coordinate.p1.y < -SERACH_RANGE || mvs[0].x + coordinate.p1.x >= target_image.cols + SERACH_RANGE || mvs[0].y + coordinate.p1.y >= target_image.rows + SERACH_RANGE) ||
+                    (mvs[1].x + coordinate.p2.x < -SERACH_RANGE || mvs[1].y + coordinate.p2.y < -SERACH_RANGE || mvs[1].x + coordinate.p2.x >= target_image.cols + SERACH_RANGE || mvs[1].y + coordinate.p2.y >= target_image.rows + SERACH_RANGE) ||
+                    (mvs[2].x + coordinate.p3.x < -SERACH_RANGE || mvs[2].y + coordinate.p3.y < -SERACH_RANGE || mvs[2].x + coordinate.p3.x >= target_image.cols + SERACH_RANGE || mvs[2].y + coordinate.p3.y >= target_image.rows + SERACH_RANGE) ||
+                    (p4.x < -SERACH_RANGE || p4.y < -SERACH_RANGE || p4.x >= target_image.cols + SERACH_RANGE || p4.y >= target_image.rows + SERACH_RANGE)) {
+                    tmp_warping_vectors.emplace_back();
+                    is_in_flag[i] = false;
+                }
+                else {
+                    std::vector<cv::Point2f> v{mvs[0], mvs[1], mvs[2]};
+                    tmp_warping_vectors.emplace_back(v);
+                }
             }
         }
     }
@@ -2332,10 +2360,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
             std::vector<cv::Point2f> mvds;
             std::vector<cv::Point2f> mvs;
 
-            if (current_mv.x + sx < -SERACH_RANGE || current_mv.y + sy < -SERACH_RANGE || current_mv.x + lx >= target_image.cols + SERACH_RANGE || current_mv.y + ly >= target_image.rows + SERACH_RANGE) continue;
             mvs.emplace_back(current_mv);
             mvs.emplace_back(current_mv);
             mvs.emplace_back(current_mv);
+
             double ret_residual = getSquareResidual_Pred(target_image, coordinate, mvs, pixels_in_square, ref_hevc);
             double rd = (ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code)) * MERGE_ALPHA;
             results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code, mvs, merge_count, merge_vector.second, FlagsCodeSum(0, 0, 0, 0), Flags());
@@ -2349,13 +2377,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
             mvs.emplace_back(warping_vectors[i][0].first);
             mvs.emplace_back(warping_vectors[i][1].first);
             mvs.emplace_back(warping_vectors[i][2].first);
-            //右下の頂点の変形後の座標
-            cv::Point2f p4 = coordinate.p3 + mvs[2] + coordinate.p2 + mvs[1] - coordinate.p1 - mvs[0];
-
-            if (mvs[0].x + coordinate.p1.x < -SERACH_RANGE || mvs[0].y + coordinate.p1.y < -SERACH_RANGE || mvs[0].x + coordinate.p1.x >= target_image.cols + SERACH_RANGE || mvs[0].y + coordinate.p1.y >= target_image.rows + SERACH_RANGE) continue;
-            if (mvs[1].x + coordinate.p2.x < -SERACH_RANGE || mvs[1].y + coordinate.p2.y < -SERACH_RANGE || mvs[1].x + coordinate.p2.x >= target_image.cols + SERACH_RANGE || mvs[1].y + coordinate.p2.y >= target_image.rows + SERACH_RANGE) continue;
-            if (mvs[2].x + coordinate.p3.x < -SERACH_RANGE || mvs[2].y + coordinate.p3.y < -SERACH_RANGE || mvs[2].x + coordinate.p3.x >= target_image.cols + SERACH_RANGE || mvs[2].y + coordinate.p3.y >= target_image.rows + SERACH_RANGE) continue;
-            if (p4.x < -SERACH_RANGE || p4.y < -SERACH_RANGE || p4.x >= target_image.cols + SERACH_RANGE || p4.y >= target_image.rows + SERACH_RANGE) continue;
 
             double ret_residual = getSquareResidual_Pred(target_image, coordinate, mvs, pixels_in_square, ref_hevc);
             double rd = (ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code)) * MERGE_ALPHA;
