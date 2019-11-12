@@ -1432,14 +1432,13 @@ SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1
 
 
 /**
- * @fn std::vector<int> SquareDivision::getSpatialSquareList(int s_idx)
+ * @fn std::vector<int> SquareDivision::getSpatialSquareList(int square_idx, bool translation_flag)
  * @brief square_idx番目の四角形の参照候補ブロックの動きベクトルを返す
  * @param[in] square_idx 符号化対照ブロックのインデックス
  * @param[in] translation_flag 符号化対照ブロックのflag
- * @param[in] method 空間予測かマージか
  * @return 候補ブロックの動きベクトルを返す
  */
-std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> > SquareDivision::getSquareList(int square_idx, bool translation_flag, MV_CODE_METHOD method) {
+std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> > SquareDivision::getSpatialSquareList(int square_idx, bool translation_flag) {
     //隣接するブロックを取得する
     std::vector<int> reference_vertexes = reference_block_list[square_idx];
 
@@ -1517,224 +1516,42 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
         }
     }
 
-    if (method == MV_CODE_METHOD::SPATIAL) {
-        if(translation_flag) {
-            for (int j = 0; j < tmp_vectors.size(); j++) {
-                //重複していない場合
-                if (is_in_flag[j]) {
-                    for (int i = j + 1; i < tmp_vectors.size(); i++) {
-                        //同一動き情報をもっている場合は配列をoff(false)にする
-                        if (is_in_flag[i] && tmp_vectors[j] == tmp_vectors[i])
-                            is_in_flag[i] = false;
-                    }
-                }
-            }
-        } else {
-            for (int j = 0; j < tmp_warping_vectors.size(); j++) {
-                if (is_in_flag[j]) {
-                    for (int i = j + 1; i < tmp_warping_vectors.size(); i++) {
-                        //同一動き情報をもっている場合は配列をoff(false)にする
-                        if (is_in_flag[i] && tmp_warping_vectors[j] == tmp_warping_vectors[i])
-                            is_in_flag[i] = false;
-                    }
+    if(translation_flag) {
+        for (int j = 0; j < tmp_vectors.size(); j++) {
+            //重複していない場合
+            if (is_in_flag[j]) {
+                for (int i = j + 1; i < tmp_vectors.size(); i++) {
+                    //同一動き情報をもっている場合は配列をoff(false)にする
+                    if (is_in_flag[i] && tmp_vectors[j] == tmp_vectors[i])
+                        is_in_flag[i] = false;
                 }
             }
         }
-        //重複がなく，符号化済みのブロックのみ入れる
-        if(translation_flag) {
-            for (int j = 0 ; j < tmp_vectors.size() ; j++) {
-                if (is_in_flag[j])
-                    vectors.emplace_back(tmp_vectors[j], SPATIAL);
-            }
-        } else {
-            for (int j = 0 ; j < tmp_warping_vectors.size() ; j++) {
-                if (is_in_flag[j]) {
-                    std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> v;
-                    v.emplace_back(tmp_warping_vectors[j][0], SPATIAL);
-                    v.emplace_back(tmp_warping_vectors[j][1], SPATIAL);
-                    v.emplace_back(tmp_warping_vectors[j][2], SPATIAL);
-                    warping_vectors.emplace_back(v);
+    } else {
+        for (int j = 0; j < tmp_warping_vectors.size(); j++) {
+            if (is_in_flag[j]) {
+                for (int i = j + 1; i < tmp_warping_vectors.size(); i++) {
+                    //同一動き情報をもっている場合は配列をoff(false)にする
+                    if (is_in_flag[i] && tmp_warping_vectors[j] == tmp_warping_vectors[i])
+                        is_in_flag[i] = false;
                 }
             }
         }
     }
-    else if (method == MV_CODE_METHOD::MERGE) {
-        std::vector<cv::Point2f> tmp_merge_vectors(tmp_vectors.size());
-        std::vector<std::vector<cv::Point2f>> tmp_warping_merge_vectors(tmp_warping_vectors.size());
-        bool merge_is_in_flag[5];
-        //参照候補ブロックが4つの場合だけ参照ブロックの入り方が2種類あるので場合わけ
-        bool flag = false;
-        if(tmp_reference_block.size() == 4) {
-            if (corners[squares[tmp_reference_block[0]].p4_idx].x == corners[squares[tmp_reference_block[1]].p4_idx].x)
-                flag = !flag;
+    //重複がなく，符号化済みのブロックのみ入れる
+    if(translation_flag) {
+        for (int j = 0 ; j < tmp_vectors.size() ; j++) {
+            if (is_in_flag[j])
+                vectors.emplace_back(tmp_vectors[j], SPATIAL);
         }
-
-        if(tmp_reference_block.size() == 2) {
-            if(translation_flag) {
-                //空間予測候補と優先度を変更する
-                tmp_merge_vectors[0] = tmp_vectors[1]; merge_is_in_flag[0] = is_in_flag[1];
-                tmp_merge_vectors[1] = tmp_vectors[0]; merge_is_in_flag[1] = is_in_flag[0];
-                //同一動き情報をもっている場合は配列をoff(false)にする
-                //③
-                if (merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_merge_vectors[0] == tmp_merge_vectors[1])
-                    merge_is_in_flag[1] = false;
-            } else {
-                tmp_warping_merge_vectors[0] = tmp_warping_vectors[1]; merge_is_in_flag[0] = is_in_flag[1];
-                tmp_warping_merge_vectors[1] = tmp_warping_vectors[0]; merge_is_in_flag[1] = is_in_flag[0];
-                //③
-                if (merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[1])
-                    merge_is_in_flag[1] = false;
-            }
-        }
-        else if(tmp_reference_block.size() == 3) {
-            if(translation_flag) {
-                tmp_merge_vectors[0] = tmp_vectors[0];  merge_is_in_flag[0] = is_in_flag[0];
-                tmp_merge_vectors[1] = tmp_vectors[1];  merge_is_in_flag[1] = is_in_flag[1];
-                tmp_merge_vectors[2] = tmp_vectors[2];  merge_is_in_flag[2] = is_in_flag[2];
-                //①
-                if(merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_merge_vectors[0] == tmp_merge_vectors[1])
-                   merge_is_in_flag[1] = false;
-                //④
-                if((merge_is_in_flag[0] && merge_is_in_flag[2] && tmp_merge_vectors[0] == tmp_merge_vectors[2]) ||
-                   (merge_is_in_flag[1] && merge_is_in_flag[2] && tmp_merge_vectors[1] == tmp_merge_vectors[2]))
-                    merge_is_in_flag[2] = false;
-            } else {
-                tmp_warping_merge_vectors[0] = tmp_warping_vectors[0];  merge_is_in_flag[0] = is_in_flag[0];
-                tmp_warping_merge_vectors[1] = tmp_warping_vectors[1];  merge_is_in_flag[1] = is_in_flag[1];
-                tmp_warping_merge_vectors[2] = tmp_warping_vectors[2];  merge_is_in_flag[2] = is_in_flag[2];
-                //①
-                if(merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[1])
-                    merge_is_in_flag[1] = false;
-                //④
-                if((merge_is_in_flag[0] && merge_is_in_flag[2] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[2]) ||
-                   (merge_is_in_flag[1] && merge_is_in_flag[2] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[2]))
-                    merge_is_in_flag[2] = false;
-            }
-        }
-        else if(tmp_reference_block.size() == 4) {
-            if(flag){  //sp4がない場合
-                if(translation_flag) {
-                    tmp_merge_vectors[0] = tmp_vectors[1]; merge_is_in_flag[0] = is_in_flag[1];
-                    tmp_merge_vectors[1] = tmp_vectors[2]; merge_is_in_flag[1] = is_in_flag[2];
-                    tmp_merge_vectors[2] = tmp_vectors[0]; merge_is_in_flag[2] = is_in_flag[0];
-                    tmp_merge_vectors[3] = tmp_vectors[3]; merge_is_in_flag[3] = is_in_flag[3];
-                    //①
-                    if (merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_merge_vectors[0] == tmp_merge_vectors[1])
-                        merge_is_in_flag[1] = false;
-                    //③
-                    if (merge_is_in_flag[0] && merge_is_in_flag[2] && tmp_merge_vectors[0] == tmp_merge_vectors[2])
-                        merge_is_in_flag[2] = false;
-                    //④
-                    if ((merge_is_in_flag[0] && merge_is_in_flag[3] && tmp_merge_vectors[0] == tmp_merge_vectors[3]) ||
-                        (merge_is_in_flag[1] && merge_is_in_flag[3] && tmp_merge_vectors[1] == tmp_merge_vectors[3]))
-                        merge_is_in_flag[3] = false;
-                } else {
-                    tmp_warping_merge_vectors[0] = tmp_warping_vectors[1]; merge_is_in_flag[0] = is_in_flag[1];
-                    tmp_warping_merge_vectors[1] = tmp_warping_vectors[2]; merge_is_in_flag[1] = is_in_flag[2];
-                    tmp_warping_merge_vectors[2] = tmp_warping_vectors[0]; merge_is_in_flag[2] = is_in_flag[0];
-                    tmp_warping_merge_vectors[3] = tmp_warping_vectors[3]; merge_is_in_flag[3] = is_in_flag[3];
-                    //①
-                    if (merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[1])
-                        merge_is_in_flag[1] = false;
-                    //③
-                    if (merge_is_in_flag[0] && merge_is_in_flag[2] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[2])
-                        merge_is_in_flag[2] = false;
-                    //④
-                    if ((merge_is_in_flag[0] && merge_is_in_flag[3] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[3]) ||
-                        (merge_is_in_flag[1] && merge_is_in_flag[3] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[3]))
-                        merge_is_in_flag[3] = false;
-                }
-            }
-            else {
-                if(translation_flag) {
-                    tmp_merge_vectors[0] = tmp_vectors[0]; merge_is_in_flag[0] = is_in_flag[0];
-                    tmp_merge_vectors[1] = tmp_vectors[2]; merge_is_in_flag[1] = is_in_flag[2];
-                    tmp_merge_vectors[2] = tmp_vectors[1]; merge_is_in_flag[2] = is_in_flag[1];
-                    tmp_merge_vectors[3] = tmp_vectors[3]; merge_is_in_flag[3] = is_in_flag[3];
-                    //①
-                    if (merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_merge_vectors[0] == tmp_merge_vectors[1])
-                        merge_is_in_flag[1] = false;
-                    //②
-                    if (merge_is_in_flag[1] && merge_is_in_flag[2] && tmp_merge_vectors[1] == tmp_merge_vectors[2])
-                        merge_is_in_flag[2] = false;
-                    //④
-                    if ((merge_is_in_flag[0] && merge_is_in_flag[3] && tmp_merge_vectors[0] == tmp_merge_vectors[3]) ||
-                        (merge_is_in_flag[1] && merge_is_in_flag[3] && tmp_merge_vectors[1] == tmp_merge_vectors[3]))
-                        merge_is_in_flag[3] = false;
-                } else {
-                    tmp_warping_merge_vectors[0] = tmp_warping_vectors[0]; merge_is_in_flag[0] = is_in_flag[0];
-                    tmp_warping_merge_vectors[1] = tmp_warping_vectors[2]; merge_is_in_flag[1] = is_in_flag[2];
-                    tmp_warping_merge_vectors[2] = tmp_warping_vectors[1]; merge_is_in_flag[2] = is_in_flag[1];
-                    tmp_warping_merge_vectors[3] = tmp_warping_vectors[3]; merge_is_in_flag[3] = is_in_flag[3];
-                    //①
-                    if (merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[1])
-                        merge_is_in_flag[1] = false;
-                    //②
-                    if (merge_is_in_flag[1] && merge_is_in_flag[2] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[2])
-                        merge_is_in_flag[2] = false;
-                    //④
-                    if ((merge_is_in_flag[0] && merge_is_in_flag[3] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[3]) ||
-                        (merge_is_in_flag[1] && merge_is_in_flag[3] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[3]))
-                        merge_is_in_flag[3] = false;
-                }
-            }
-        }
-        else if(tmp_reference_block.size() == 5) {
-            if(translation_flag) {
-                tmp_merge_vectors[0] = tmp_vectors[1]; merge_is_in_flag[0] = is_in_flag[1];
-                tmp_merge_vectors[1] = tmp_vectors[3]; merge_is_in_flag[1] = is_in_flag[3];
-                tmp_merge_vectors[2] = tmp_vectors[2]; merge_is_in_flag[2] = is_in_flag[2];
-                tmp_merge_vectors[3] = tmp_vectors[0]; merge_is_in_flag[3] = is_in_flag[0];
-                tmp_merge_vectors[4] = tmp_vectors[4]; merge_is_in_flag[4] = is_in_flag[4];
-                //①
-                if (merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_merge_vectors[0] == tmp_merge_vectors[1])
-                    merge_is_in_flag[1] = false;
-                //②
-                if (merge_is_in_flag[1] && merge_is_in_flag[2] && tmp_merge_vectors[1] == tmp_merge_vectors[2])
-                    merge_is_in_flag[2] = false;
-                //③
-                if (merge_is_in_flag[0] && merge_is_in_flag[3] && tmp_merge_vectors[0] == tmp_merge_vectors[3])
-                    merge_is_in_flag[3] = false;
-                //④
-                if ((merge_is_in_flag[0] && merge_is_in_flag[4] && tmp_merge_vectors[0] == tmp_merge_vectors[4]) ||
-                    (merge_is_in_flag[1] && merge_is_in_flag[4] && tmp_merge_vectors[1] == tmp_merge_vectors[4]))
-                    merge_is_in_flag[4] = false;
-            } else {
-                tmp_warping_merge_vectors[0] = tmp_warping_vectors[1]; merge_is_in_flag[0] = is_in_flag[1];
-                tmp_warping_merge_vectors[1] = tmp_warping_vectors[3]; merge_is_in_flag[1] = is_in_flag[3];
-                tmp_warping_merge_vectors[2] = tmp_warping_vectors[2]; merge_is_in_flag[2] = is_in_flag[2];
-                tmp_warping_merge_vectors[3] = tmp_warping_vectors[0]; merge_is_in_flag[3] = is_in_flag[0];
-                tmp_warping_merge_vectors[4] = tmp_warping_vectors[4]; merge_is_in_flag[4] = is_in_flag[4];
-                //①
-                if (merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[1])
-                    merge_is_in_flag[1] = false;
-                //②
-                if (merge_is_in_flag[1] && merge_is_in_flag[2] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[2])
-                    merge_is_in_flag[2] = false;
-                //③
-                if (merge_is_in_flag[0] && merge_is_in_flag[3] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[3])
-                    merge_is_in_flag[3] = false;
-                //④
-                if ((merge_is_in_flag[0] && merge_is_in_flag[4] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[4]) ||
-                    (merge_is_in_flag[1] && merge_is_in_flag[4] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[4]))
-                    merge_is_in_flag[4] = false;
-            }
-        }
-        //重複がなく，符号化済みのブロックのみ入れる
-        if(translation_flag) {
-            for (int j = 0; j < tmp_merge_vectors.size(); j++) {
-                if (merge_is_in_flag[j])
-                    vectors.emplace_back(tmp_merge_vectors[j], MERGE);
-            }
-        } else {
-            for (int j = 0; j < tmp_warping_merge_vectors.size(); j++) {
-                if (merge_is_in_flag[j]) {
-                    std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> v;
-                    v.emplace_back(tmp_warping_merge_vectors[j][0], MERGE);
-                    v.emplace_back(tmp_warping_merge_vectors[j][1], MERGE);
-                    v.emplace_back(tmp_warping_merge_vectors[j][2], MERGE);
-                    warping_vectors.emplace_back(v);
-                }
+    } else {
+        for (int j = 0 ; j < tmp_warping_vectors.size() ; j++) {
+            if (is_in_flag[j]) {
+                std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> v;
+                v.emplace_back(tmp_warping_vectors[j][0], SPATIAL);
+                v.emplace_back(tmp_warping_vectors[j][1], SPATIAL);
+                v.emplace_back(tmp_warping_vectors[j][2], SPATIAL);
+                warping_vectors.emplace_back(v);
             }
         }
     }
@@ -1748,6 +1565,284 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
 
     return {warping_vectors, vectors};
 }
+
+
+/**
+ * @fn std::vector<int> SquareDivision::getMergeSquareList(int square_idx, bool translation_flag, Point4Vec coordinate, cv::Point2f image_size)
+ * @brief square_idx番目の四角形の参照候補ブロックの動きベクトルを返す
+ * @param[in] square_idx 符号化対照ブロックのインデックス
+ * @param[in] translation_flag 符号化対照ブロックのflag
+ * @param[in] coordinate 符号化対照ブロックの頂点の座標
+ * @param[in] image_size 画像のサイズ
+ * @return 候補ブロックの動きベクトルを返す
+ */
+std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> > SquareDivision::getMergeSquareList(int square_idx, bool translation_flag, Point4Vec coordinate) {
+    //隣接するブロックを取得する
+    std::vector<int> reference_vertexes = reference_block_list[square_idx];
+
+    std::vector<int> tmp_reference_block;
+    std::set<int> tmp_rb;
+    for (auto reference_vertex : reference_vertexes) {
+        tmp_rb = covered_square[reference_vertex];
+        for (auto idx : tmp_rb) tmp_reference_block.emplace_back(idx);
+    }
+
+//    std::cout << "reference_block_size : " << reference_block.size() << ", ";
+
+    std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors;
+    std::vector<cv::Point2f> tmp_vectors;
+    std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> warping_vectors;
+    std::vector<std::vector<cv::Point2f>> tmp_warping_vectors;
+    //参照可能候補に入れるかどうかを判定する配列
+    bool is_in_flag[5] = {true, true, true, true, true};
+
+    std::vector<int> reference_block_list;
+
+    //平行移動とワーピングの動きベクトル
+    for(int i = 0 ; i < tmp_reference_block.size() ; i++) {
+        int reference_block_index = tmp_reference_block[i];
+        if(!isCodedSquare[reference_block_index]) {  //符号化済みでないブロックも参照候補リストに入れているのでその場合は空のものを入れておく
+            tmp_vectors.emplace_back();
+            tmp_warping_vectors.emplace_back();
+            is_in_flag[i] = false;                    //符号化済みでないものは入れないのでfalseにする
+            continue;
+        }
+        if(square_gauss_results[reference_block_index].translation_flag) { //参照候補ブロックが平行移動の場合
+            cv::Point2f current_mv = square_gauss_results[reference_block_index].mv_translation;
+            if(translation_flag) {
+                tmp_vectors.emplace_back(current_mv);
+            } else {
+                std::vector<cv::Point2f> v{current_mv, current_mv, current_mv};
+                tmp_warping_vectors.emplace_back(v);
+            }
+        } else {  //参照候補ブロックがワーピングの場合
+            cv::Point2f current_mv1 = square_gauss_results[reference_block_index].mv_warping[0];
+            cv::Point2f current_mv2 = square_gauss_results[reference_block_index].mv_warping[1];
+            cv::Point2f current_mv3 = square_gauss_results[reference_block_index].mv_warping[2];
+#if MVD_DEBUG_LOG
+            std::cout << "target_square_coordinate:";
+            std::cout << corners[squares[square_idx].p1_idx] << " ";
+            std::cout << corners[squares[square_idx].p2_idx] << " ";
+            std::cout << corners[squares[square_idx].p3_idx] << " ";
+            std::cout << corners[squares[square_idx].p4_idx] << std::endl;
+            std::cout << "ref_square_coordinate:";
+            std::cout << corners[squares[tmp_reference_block[i]].p1_idx] << " ";
+            std::cout << corners[squares[tmp_reference_block[i]].p2_idx] << " ";
+            std::cout << corners[squares[tmp_reference_block[i]].p3_idx] << " ";
+            std::cout << corners[squares[tmp_reference_block[i]].p4_idx] <<std::endl;
+            std::cout << "ref_square_mvs:";
+            std::cout << current_mv1 << " " << current_mv2 << " " << current_mv3 << std::endl;
+#endif
+            std::vector<cv::Point2f> ref_mvs{current_mv1, current_mv2, current_mv3};
+            Square target_square = squares[square_idx];
+            cv::Point2f pp1 = corners[target_square.p1_idx], pp2 = corners[target_square.p2_idx], pp3 = corners[target_square.p3_idx], pp4 = corners[target_square.p4_idx];
+            Square ref_square = squares[reference_block_index];
+            std::vector<cv::Point2f> ref_square_coordinates{corners[ref_square.p1_idx], corners[ref_square.p2_idx], corners[ref_square.p3_idx], corners[ref_square.p4_idx]};
+            if(translation_flag) {
+                std::vector<cv::Point2f> target_square_coordinates{cv::Point2f((pp1.x + pp2.x + pp3.x + pp4.x) / 4.0, (pp1.y + pp2.y + pp3.y + pp4.y) / 4.0)};
+                std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_square_coordinates, ref_mvs, target_square_coordinates);
+                tmp_vectors.emplace_back(mvs[0]);
+            } else {
+                std::vector<cv::Point2f> target_square_coordinates;
+                target_square_coordinates.emplace_back(pp1);
+                target_square_coordinates.emplace_back(pp2);
+                target_square_coordinates.emplace_back(pp3);
+                std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_square_coordinates, ref_mvs, target_square_coordinates);
+                std::vector<cv::Point2f> v{mvs[0], mvs[1], mvs[2]};
+                tmp_warping_vectors.emplace_back(v);
+            }
+        }
+    }
+
+    std::vector<cv::Point2f> tmp_merge_vectors(tmp_vectors.size());
+    std::vector<std::vector<cv::Point2f>> tmp_warping_merge_vectors(tmp_warping_vectors.size());
+    bool merge_is_in_flag[5];
+    //参照候補ブロックが4つの場合だけ参照ブロックの入り方が2種類あるので場合わけ
+    bool flag = false;
+    if(tmp_reference_block.size() == 4) {
+        if (corners[squares[tmp_reference_block[0]].p4_idx].x == corners[squares[tmp_reference_block[1]].p4_idx].x)
+            flag = !flag;
+    }
+
+    if(tmp_reference_block.size() == 2) {
+        if(translation_flag) {
+            //空間予測候補と優先度を変更する
+            tmp_merge_vectors[0] = tmp_vectors[1]; merge_is_in_flag[0] = is_in_flag[1];
+            tmp_merge_vectors[1] = tmp_vectors[0]; merge_is_in_flag[1] = is_in_flag[0];
+            //同一動き情報をもっている場合は配列をoff(false)にする
+            //③
+            if (merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_merge_vectors[0] == tmp_merge_vectors[1])
+                merge_is_in_flag[1] = false;
+        } else {
+            tmp_warping_merge_vectors[0] = tmp_warping_vectors[1]; merge_is_in_flag[0] = is_in_flag[1];
+            tmp_warping_merge_vectors[1] = tmp_warping_vectors[0]; merge_is_in_flag[1] = is_in_flag[0];
+            //③
+            if (merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[1])
+                merge_is_in_flag[1] = false;
+        }
+    }
+    else if(tmp_reference_block.size() == 3) {
+        if(translation_flag) {
+            tmp_merge_vectors[0] = tmp_vectors[0];  merge_is_in_flag[0] = is_in_flag[0];
+            tmp_merge_vectors[1] = tmp_vectors[1];  merge_is_in_flag[1] = is_in_flag[1];
+            tmp_merge_vectors[2] = tmp_vectors[2];  merge_is_in_flag[2] = is_in_flag[2];
+            //①
+            if(merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_merge_vectors[0] == tmp_merge_vectors[1])
+                merge_is_in_flag[1] = false;
+            //④
+            if((merge_is_in_flag[0] && merge_is_in_flag[2] && tmp_merge_vectors[0] == tmp_merge_vectors[2]) ||
+                (merge_is_in_flag[1] && merge_is_in_flag[2] && tmp_merge_vectors[1] == tmp_merge_vectors[2]))
+                merge_is_in_flag[2] = false;
+        } else {
+            tmp_warping_merge_vectors[0] = tmp_warping_vectors[0];  merge_is_in_flag[0] = is_in_flag[0];
+            tmp_warping_merge_vectors[1] = tmp_warping_vectors[1];  merge_is_in_flag[1] = is_in_flag[1];
+            tmp_warping_merge_vectors[2] = tmp_warping_vectors[2];  merge_is_in_flag[2] = is_in_flag[2];
+            //①
+            if(merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[1])
+                merge_is_in_flag[1] = false;
+            //④
+            if((merge_is_in_flag[0] && merge_is_in_flag[2] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[2]) ||
+                (merge_is_in_flag[1] && merge_is_in_flag[2] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[2]))
+                merge_is_in_flag[2] = false;
+        }
+    }
+    else if(tmp_reference_block.size() == 4) {
+        if(flag){  //sp4がない場合
+            if(translation_flag) {
+                tmp_merge_vectors[0] = tmp_vectors[1]; merge_is_in_flag[0] = is_in_flag[1];
+                tmp_merge_vectors[1] = tmp_vectors[2]; merge_is_in_flag[1] = is_in_flag[2];
+                tmp_merge_vectors[2] = tmp_vectors[0]; merge_is_in_flag[2] = is_in_flag[0];
+                tmp_merge_vectors[3] = tmp_vectors[3]; merge_is_in_flag[3] = is_in_flag[3];
+                //①
+                if (merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_merge_vectors[0] == tmp_merge_vectors[1])
+                    merge_is_in_flag[1] = false;
+                //③
+                if (merge_is_in_flag[0] && merge_is_in_flag[2] && tmp_merge_vectors[0] == tmp_merge_vectors[2])
+                    merge_is_in_flag[2] = false;
+                //④
+                if ((merge_is_in_flag[0] && merge_is_in_flag[3] && tmp_merge_vectors[0] == tmp_merge_vectors[3]) ||
+                    (merge_is_in_flag[1] && merge_is_in_flag[3] && tmp_merge_vectors[1] == tmp_merge_vectors[3]))
+                    merge_is_in_flag[3] = false;
+            } else {
+                tmp_warping_merge_vectors[0] = tmp_warping_vectors[1]; merge_is_in_flag[0] = is_in_flag[1];
+                tmp_warping_merge_vectors[1] = tmp_warping_vectors[2]; merge_is_in_flag[1] = is_in_flag[2];
+                tmp_warping_merge_vectors[2] = tmp_warping_vectors[0]; merge_is_in_flag[2] = is_in_flag[0];
+                tmp_warping_merge_vectors[3] = tmp_warping_vectors[3]; merge_is_in_flag[3] = is_in_flag[3];
+                //①
+                if (merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[1])
+                    merge_is_in_flag[1] = false;
+                //③
+                if (merge_is_in_flag[0] && merge_is_in_flag[2] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[2])
+                    merge_is_in_flag[2] = false;
+                //④
+                if ((merge_is_in_flag[0] && merge_is_in_flag[3] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[3]) ||
+                    (merge_is_in_flag[1] && merge_is_in_flag[3] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[3]))
+                    merge_is_in_flag[3] = false;
+            }
+        }
+        else {
+            if(translation_flag) {
+                tmp_merge_vectors[0] = tmp_vectors[0]; merge_is_in_flag[0] = is_in_flag[0];
+                tmp_merge_vectors[1] = tmp_vectors[2]; merge_is_in_flag[1] = is_in_flag[2];
+                tmp_merge_vectors[2] = tmp_vectors[1]; merge_is_in_flag[2] = is_in_flag[1];
+                tmp_merge_vectors[3] = tmp_vectors[3]; merge_is_in_flag[3] = is_in_flag[3];
+                //①
+                if (merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_merge_vectors[0] == tmp_merge_vectors[1])
+                    merge_is_in_flag[1] = false;
+                //②
+                if (merge_is_in_flag[1] && merge_is_in_flag[2] && tmp_merge_vectors[1] == tmp_merge_vectors[2])
+                    merge_is_in_flag[2] = false;
+                //④
+                if ((merge_is_in_flag[0] && merge_is_in_flag[3] && tmp_merge_vectors[0] == tmp_merge_vectors[3]) ||
+                    (merge_is_in_flag[1] && merge_is_in_flag[3] && tmp_merge_vectors[1] == tmp_merge_vectors[3]))
+                    merge_is_in_flag[3] = false;
+            } else {
+                tmp_warping_merge_vectors[0] = tmp_warping_vectors[0]; merge_is_in_flag[0] = is_in_flag[0];
+                tmp_warping_merge_vectors[1] = tmp_warping_vectors[2]; merge_is_in_flag[1] = is_in_flag[2];
+                tmp_warping_merge_vectors[2] = tmp_warping_vectors[1]; merge_is_in_flag[2] = is_in_flag[1];
+                tmp_warping_merge_vectors[3] = tmp_warping_vectors[3]; merge_is_in_flag[3] = is_in_flag[3];
+                //①
+                if (merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[1])
+                    merge_is_in_flag[1] = false;
+                //②
+                if (merge_is_in_flag[1] && merge_is_in_flag[2] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[2])
+                    merge_is_in_flag[2] = false;
+                //④
+                if ((merge_is_in_flag[0] && merge_is_in_flag[3] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[3]) ||
+                    (merge_is_in_flag[1] && merge_is_in_flag[3] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[3]))
+                    merge_is_in_flag[3] = false;
+            }
+        }
+    }
+    else if(tmp_reference_block.size() == 5) {
+        if(translation_flag) {
+            tmp_merge_vectors[0] = tmp_vectors[1]; merge_is_in_flag[0] = is_in_flag[1];
+            tmp_merge_vectors[1] = tmp_vectors[3]; merge_is_in_flag[1] = is_in_flag[3];
+            tmp_merge_vectors[2] = tmp_vectors[2]; merge_is_in_flag[2] = is_in_flag[2];
+            tmp_merge_vectors[3] = tmp_vectors[0]; merge_is_in_flag[3] = is_in_flag[0];
+            tmp_merge_vectors[4] = tmp_vectors[4]; merge_is_in_flag[4] = is_in_flag[4];
+            //①
+            if (merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_merge_vectors[0] == tmp_merge_vectors[1])
+                merge_is_in_flag[1] = false;
+            //②
+            if (merge_is_in_flag[1] && merge_is_in_flag[2] && tmp_merge_vectors[1] == tmp_merge_vectors[2])
+                merge_is_in_flag[2] = false;
+            //③
+            if (merge_is_in_flag[0] && merge_is_in_flag[3] && tmp_merge_vectors[0] == tmp_merge_vectors[3])
+                merge_is_in_flag[3] = false;
+            //④
+            if ((merge_is_in_flag[0] && merge_is_in_flag[4] && tmp_merge_vectors[0] == tmp_merge_vectors[4]) ||
+                (merge_is_in_flag[1] && merge_is_in_flag[4] && tmp_merge_vectors[1] == tmp_merge_vectors[4]))
+                merge_is_in_flag[4] = false;
+        } else {
+            tmp_warping_merge_vectors[0] = tmp_warping_vectors[1]; merge_is_in_flag[0] = is_in_flag[1];
+            tmp_warping_merge_vectors[1] = tmp_warping_vectors[3]; merge_is_in_flag[1] = is_in_flag[3];
+            tmp_warping_merge_vectors[2] = tmp_warping_vectors[2]; merge_is_in_flag[2] = is_in_flag[2];
+            tmp_warping_merge_vectors[3] = tmp_warping_vectors[0]; merge_is_in_flag[3] = is_in_flag[0];
+            tmp_warping_merge_vectors[4] = tmp_warping_vectors[4]; merge_is_in_flag[4] = is_in_flag[4];
+            //①
+            if (merge_is_in_flag[0] && merge_is_in_flag[1] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[1])
+                merge_is_in_flag[1] = false;
+            //②
+            if (merge_is_in_flag[1] && merge_is_in_flag[2] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[2])
+                merge_is_in_flag[2] = false;
+            //③
+            if (merge_is_in_flag[0] && merge_is_in_flag[3] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[3])
+                merge_is_in_flag[3] = false;
+            //④
+            if ((merge_is_in_flag[0] && merge_is_in_flag[4] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[4]) ||
+                (merge_is_in_flag[1] && merge_is_in_flag[4] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[4]))
+                merge_is_in_flag[4] = false;
+        }
+    }
+    //重複がなく，符号化済みのブロックのみ入れる
+    if(translation_flag) {
+        for (int j = 0; j < tmp_merge_vectors.size(); j++) {
+            if (merge_is_in_flag[j])
+                vectors.emplace_back(tmp_merge_vectors[j], MERGE);
+        }
+    } else {
+        for (int j = 0; j < tmp_warping_merge_vectors.size(); j++) {
+            if (merge_is_in_flag[j]) {
+                std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> v;
+                v.emplace_back(tmp_warping_merge_vectors[j][0], MERGE);
+                v.emplace_back(tmp_warping_merge_vectors[j][1], MERGE);
+                v.emplace_back(tmp_warping_merge_vectors[j][2], MERGE);
+                warping_vectors.emplace_back(v);
+            }
+        }
+    }
+
+//    std::cout << "square_index : " << square_idx << ", method : " ;
+//    if(method == MV_CODE_METHOD::SPATIAL)
+//        std::cout << "SPATIAL";
+//    if(method == MV_CODE_METHOD::MERGE)
+//        std::cout << "MERGE";
+//    std::cout << ", SquareList_size : " << (translation_flag ? vectors.size() : warping_vectors.size()) << std::endl;
+
+    return {warping_vectors, vectors};
+}
+
 
 /**
  * @fn void SquareDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num)
@@ -1934,7 +2029,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors;
     std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> warping_vectors;   // ベクトルとモードを表すフラグのペア
     // 空間予測と時間予測の候補を取り出す
-    std::tie(warping_vectors, vectors) = getSquareList(square_idx, translation_flag, SPATIAL);
+    std::tie(warping_vectors, vectors) = getSpatialSquareList(square_idx, translation_flag);
 
 #if MVD_DEBUG_LOG
     std::cout << corners[squares[square_idx].p1_idx] << " " << corners[squares[square_idx].p2_idx] << " " << corners[squares[square_idx].p3_idx] << " " << corners[squares[square_idx].p4_idx] << std::endl;
@@ -2183,8 +2278,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     cv::Point2f p3 = corners[current_square_coordinate.p3_idx];
     cv::Point2f p4 = corners[current_square_coordinate.p4_idx];
     Point4Vec coordinate = Point4Vec(p1, p2, p3, p4);
-    vectors.clear();
-
     std::vector<cv::Point2f> pixels_in_square;
     if(pixels.empty()) {
         pixels_in_square = getPixelsInSquare(coordinate);
@@ -2203,7 +2296,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
 
     //マージ候補のリストを作成
     warping_vectors.clear(); vectors.clear();
-    std::tie(warping_vectors, vectors) = getSquareList(square_idx, translation_flag, MERGE);
+    std::tie(warping_vectors, vectors) = getMergeSquareList(square_idx, translation_flag, coordinate);
 
     if(vectors.size() < 4) {
         vectors.emplace_back(cv::Point2f(0.0, 0.0), MERGE);
@@ -2237,8 +2330,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
             std::pair<cv::Point2f, MV_CODE_METHOD> merge_vector = vectors[i];
             cv::Point2f current_mv = merge_vector.first;
             std::vector<cv::Point2f> mvds;
-            cv::Rect rect(-4 * SERACH_RANGE, -4 * SERACH_RANGE, 4 * (target_image.cols + 2 * SERACH_RANGE),
-                          4 * (target_image.rows + 2 * SERACH_RANGE));
             std::vector<cv::Point2f> mvs;
 
             if (current_mv.x + sx < -SERACH_RANGE || current_mv.y + sy < -SERACH_RANGE || current_mv.x + lx >= target_image.cols + SERACH_RANGE || current_mv.y + ly >= target_image.rows + SERACH_RANGE) continue;
@@ -2754,7 +2845,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
     int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
     std::vector<cv::Point2f> pixels = getPixelsInSquare(square);
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors;
-    std::tie(std::ignore, vectors) = getSquareList(square_index, true, SPATIAL);
+    std::tie(std::ignore, vectors) = getSpatialSquareList(square_index, true);
 
     for(int j = -SY * 4 ; j <= SY * 4 ; j += s) {            //j : y方向のMV
         for(int i = -SX * 4 ; i <= SX * 4 ; i += s) {        //i : x方向のMV
