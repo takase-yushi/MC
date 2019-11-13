@@ -768,14 +768,16 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                     gauss_result_warping, error_warping,
                     square_index, square_number, cmt->mv1, ctu, false, dummy, steps);
 #endif
-//            std::cout << "cost_translation : " << cost_translation << ", cost_warping : " << cost_warping << std::endl;
+//            std::cout << "cost_translation : " << cost_translation << ", cost_warping : " << cost_warping;
             if(cost_translation < cost_warping || (steps < warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
+//                std::cout << ", translation, " << (method_translation ? "MERGE" : "SPATIAL") << std::endl;
                 square_gauss_results[square_index].mv_translation = gauss_result_translation;
                 square_gauss_results[square_index].translation_flag = true;
                 square_gauss_results[square_index].residual = error_translation;
                 square_gauss_results[square_index].method = method_translation;
                 translation_flag = true;
             }else{
+//                std::cout << ", warping    , " << (method_warping ? "MERGE" : "SPATIAL") << std::endl;
                 square_gauss_results[square_index].mv_warping = gauss_result_warping;
                 square_gauss_results[square_index].translation_flag = false;
                 square_gauss_results[square_index].residual = error_warping;
@@ -817,10 +819,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
                 {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
                 square_index, square_number, cmt->mv1, ctu, true, dummy, steps);
+//        std::cout << "cost_translation : " << cost_before_subdiv << (method_flag ? "MERGE" : "SPATIAL") << std::endl;
     }else{
         std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
                 square_gauss_results[square_index].mv_warping, error_warping,
                 square_index, square_number, cmt->mv1, ctu, false, dummy, steps);
+//        std::cout << "cost_warping     : " << cost_before_subdiv << (method_flag ? "MERGE" : "SPATIAL") << std::endl;
     }
 
     std::vector<cv::Point2i> ret_gauss2;
