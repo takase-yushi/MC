@@ -1136,19 +1136,18 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 {split_mv_result[0].mv_translation, split_mv_result[0].mv_translation, split_mv_result[0].mv_translation},
                 split_mv_result[0].residual,
                 square_indexes[0], 0, cmts[0]->mv1, ctu->node1, true, dummy, steps - 2);
-
-        if(method_flag1 == MV_CODE_METHOD::MERGE) {
-            if(split_mv_result[0].translation_flag) {
-                gauss_result_translation = mvd[0];
-                square_gauss_results[square_indexes[0]].mv_translation = gauss_result_translation;
-            }else{
-                square_gauss_results[square_indexes[0]].mv_warping = mvd;
-            }
-        }
     }else{
         std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag1) = getMVD(
                 split_mv_result[0].mv_warping, split_mv_result[0].residual,
                 square_indexes[0], 0, cmts[0]->mv1, ctu->node1, false, dummy, steps - 2);
+    }
+    if(method_flag1 == MV_CODE_METHOD::MERGE) {
+        if(split_mv_result[0].translation_flag) {
+            gauss_result_translation = mvd[0];
+            square_gauss_results[square_indexes[0]].mv_translation = gauss_result_translation;
+        }else{
+            square_gauss_results[square_indexes[0]].mv_warping = mvd;
+        }
     }
     isCodedSquare[square_indexes[0]] = true;
 
@@ -1158,19 +1157,18 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
                 {split_mv_result[1].mv_translation, split_mv_result[1].mv_translation, split_mv_result[1].mv_translation}, split_mv_result[1].residual,
                 square_indexes[1], 1, cmts[1]->mv1, ctu->node2, true, dummy, steps - 2);
-
-        if(method_flag2 == MV_CODE_METHOD::MERGE) {
-            if(split_mv_result[1].translation_flag) {
-                gauss_result_translation = mvd[0];
-                square_gauss_results[square_indexes[1]].mv_translation = gauss_result_translation;
-            }else{
-                square_gauss_results[square_indexes[1]].mv_warping = mvd;
-            }
-        }
     }else{
         std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
                 split_mv_result[1].mv_warping, split_mv_result[1].residual,
                 square_indexes[1], 1, cmts[1]->mv1, ctu->node2, false, dummy, steps - 2);
+    }
+    if(method_flag2 == MV_CODE_METHOD::MERGE) {
+        if(split_mv_result[1].translation_flag) {
+            gauss_result_translation = mvd[0];
+            square_gauss_results[square_indexes[1]].mv_translation = gauss_result_translation;
+        }else{
+            square_gauss_results[square_indexes[1]].mv_warping = mvd;
+        }
     }
     isCodedSquare[square_indexes[1]] = true;
 
@@ -1181,19 +1179,18 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 {split_mv_result[2].mv_translation, split_mv_result[2].mv_translation, split_mv_result[2].mv_translation},
                 split_mv_result[2].residual,
                 square_indexes[2], 2, cmts[2]->mv1, ctu->node3, true, dummy, steps - 2);
-
-        if(method_flag3 == MV_CODE_METHOD::MERGE) {
-            if(split_mv_result[2].translation_flag) {
-                gauss_result_translation = mvd[0];
-                square_gauss_results[square_indexes[2]].mv_translation = gauss_result_translation;
-            }else{
-                square_gauss_results[square_indexes[2]].mv_warping = mvd;
-            }
-        }
     }else{
         std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag3) = getMVD(
                 split_mv_result[2].mv_warping, split_mv_result[2].residual,
                 square_indexes[2], 2, cmts[2]->mv1, ctu->node3, false, dummy, steps - 2);
+    }
+    if(method_flag3 == MV_CODE_METHOD::MERGE) {
+        if(split_mv_result[2].translation_flag) {
+            gauss_result_translation = mvd[0];
+            square_gauss_results[square_indexes[2]].mv_translation = gauss_result_translation;
+        }else{
+            square_gauss_results[square_indexes[2]].mv_warping = mvd;
+        }
     }
     isCodedSquare[square_indexes[2]] = true;
 
@@ -1203,19 +1200,18 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
                 {split_mv_result[3].mv_translation, split_mv_result[3].mv_translation, split_mv_result[3].mv_translation}, split_mv_result[3].residual,
                 square_indexes[3], 3, cmts[3]->mv1, ctu->node4, true, dummy, steps - 2);
-
-        if(method_flag4 == MV_CODE_METHOD::MERGE) {
-            if(split_mv_result[3].translation_flag) {
-                gauss_result_translation = mvd[0];
-                square_gauss_results[square_indexes[3]].mv_translation = gauss_result_translation;
-            }else{
-                square_gauss_results[square_indexes[3]].mv_warping = mvd;
-            }
-        }
     }else{
         std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
                 split_mv_result[3].mv_warping, split_mv_result[3].residual,
                 square_indexes[3], 3, cmts[3]->mv1, ctu->node4, false, dummy, steps - 2);
+    }
+    if(method_flag4 == MV_CODE_METHOD::MERGE) {
+        if(split_mv_result[3].translation_flag) {
+            gauss_result_translation = mvd[0];
+            square_gauss_results[square_indexes[3]].mv_translation = gauss_result_translation;
+        }else{
+            square_gauss_results[square_indexes[3]].mv_warping = mvd;
+        }
     }
     isCodedSquare[square_indexes[3]] = true;
 
