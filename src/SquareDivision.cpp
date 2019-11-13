@@ -826,6 +826,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     std::vector<cv::Point2i> ret_gauss2;
 
     if(method_flag == MV_CODE_METHOD::MERGE || method_flag == MV_CODE_METHOD::MERGE_Collocated) {
+        //参照ブロックを作るときのためにマージのベクトルを入れる
         square_gauss_results[square_index].mv_translation = mvd[0];
         square_gauss_results[square_index].mv_warping = mvd;
         gauss_result_translation = mvd[0];
@@ -1054,6 +1055,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 #if !MVD_DEBUG_LOG
 //    #pragma omp parallel for
 #endif
+    cv::Point2f original_mv_translation[4];
+    std::vector<cv::Point2f> original_mv_warping[4];
     CollocatedMvTree *cmts[4];
 
     cmts[0]  = (cmt->node1 == nullptr ? cmt : cmt->node1);
@@ -1141,11 +1144,14 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 split_mv_result[0].mv_warping, split_mv_result[0].residual,
                 square_indexes[0], 0, cmts[0]->mv1, ctu->node1, false, dummy, steps - 2);
     }
+    //分割後の参照ブロックを作るときのために一旦マージのベクトルを入れる
     if(method_flag1 == MV_CODE_METHOD::MERGE) {
         if(split_mv_result[0].translation_flag) {
             gauss_result_translation = mvd[0];
+            original_mv_translation[0] = square_gauss_results[square_indexes[0]].mv_translation;
             square_gauss_results[square_indexes[0]].mv_translation = gauss_result_translation;
         }else{
+            original_mv_warping[0] = square_gauss_results[square_indexes[0]].mv_warping;
             square_gauss_results[square_indexes[0]].mv_warping = mvd;
         }
     }
@@ -1165,8 +1171,10 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     if(method_flag2 == MV_CODE_METHOD::MERGE) {
         if(split_mv_result[1].translation_flag) {
             gauss_result_translation = mvd[0];
+            original_mv_translation[1] = square_gauss_results[square_indexes[1]].mv_translation;
             square_gauss_results[square_indexes[1]].mv_translation = gauss_result_translation;
         }else{
+            original_mv_warping[1] = square_gauss_results[square_indexes[1]].mv_warping;
             square_gauss_results[square_indexes[1]].mv_warping = mvd;
         }
     }
@@ -1187,8 +1195,10 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     if(method_flag3 == MV_CODE_METHOD::MERGE) {
         if(split_mv_result[2].translation_flag) {
             gauss_result_translation = mvd[0];
+            original_mv_translation[2] = square_gauss_results[square_indexes[2]].mv_translation;
             square_gauss_results[square_indexes[2]].mv_translation = gauss_result_translation;
         }else{
+            original_mv_warping[2] = square_gauss_results[square_indexes[2]].mv_warping;
             square_gauss_results[square_indexes[2]].mv_warping = mvd;
         }
     }
@@ -1208,8 +1218,10 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     if(method_flag4 == MV_CODE_METHOD::MERGE) {
         if(split_mv_result[3].translation_flag) {
             gauss_result_translation = mvd[0];
+            original_mv_translation[3] = square_gauss_results[square_indexes[3]].mv_translation;
             square_gauss_results[square_indexes[3]].mv_translation = gauss_result_translation;
         }else{
+            original_mv_warping[3] = square_gauss_results[square_indexes[3]].mv_warping;
             square_gauss_results[square_indexes[3]].mv_warping = mvd;
         }
     }
@@ -1253,15 +1265,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         ctu->node1->translation_flag = split_mv_result[0].translation_flag;
         ctu->node1->method = method_flag1;
         square_gauss_results[s1_idx] = split_mv_result[0];
+        //RDコストを再計算するために、元の動きベクトルに戻す
         if(method_flag1 == MV_CODE_METHOD::MERGE) {
             if(ctu->node1->translation_flag){
-                ctu->node1->mv1 = square_gauss_results[square_indexes[0]].mv_translation;
-                ctu->node1->mv2 = square_gauss_results[square_indexes[0]].mv_translation;
-                ctu->node1->mv3 = square_gauss_results[square_indexes[0]].mv_translation;
+                square_gauss_results[square_indexes[0]].mv_translation = original_mv_translation[0];
             }else{
-                ctu->node1->mv1 = square_gauss_results[square_indexes[0]].mv_warping[0];
-                ctu->node1->mv2 = square_gauss_results[square_indexes[0]].mv_warping[1];
-                ctu->node1->mv3 = square_gauss_results[square_indexes[0]].mv_warping[2];
+                square_gauss_results[square_indexes[0]].mv_warping = original_mv_warping[0];
             }
         }
         bool result = split(expand_images, ctu->node1, cmts[0], split_sub_squares1.s1, s1_idx, 0, steps - 2);
@@ -1284,13 +1293,9 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         square_gauss_results[s2_idx] = split_mv_result[1];
         if(method_flag2 == MV_CODE_METHOD::MERGE) {
             if(ctu->node2->translation_flag){
-                ctu->node2->mv1 = square_gauss_results[square_indexes[1]].mv_translation;
-                ctu->node2->mv2 = square_gauss_results[square_indexes[1]].mv_translation;
-                ctu->node2->mv3 = square_gauss_results[square_indexes[1]].mv_translation;
+                square_gauss_results[square_indexes[1]].mv_translation = original_mv_translation[1];
             }else{
-                ctu->node2->mv1 = square_gauss_results[square_indexes[1]].mv_warping[0];
-                ctu->node2->mv2 = square_gauss_results[square_indexes[1]].mv_warping[1];
-                ctu->node2->mv3 = square_gauss_results[square_indexes[1]].mv_warping[2];
+                square_gauss_results[square_indexes[1]].mv_warping = original_mv_warping[1];
             }
         }
         result = split(expand_images, ctu->node2, cmts[1], split_sub_squares1.s2, s2_idx, 1, steps - 2);
@@ -1312,13 +1317,9 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         square_gauss_results[s3_idx] = split_mv_result[2];
         if(method_flag3 == MV_CODE_METHOD::MERGE) {
             if(ctu->node3->translation_flag){
-                ctu->node3->mv1 = square_gauss_results[square_indexes[2]].mv_translation;
-                ctu->node3->mv2 = square_gauss_results[square_indexes[2]].mv_translation;
-                ctu->node3->mv3 = square_gauss_results[square_indexes[2]].mv_translation;
+                square_gauss_results[square_indexes[2]].mv_translation = original_mv_translation[2];
             }else{
-                ctu->node3->mv1 = square_gauss_results[square_indexes[2]].mv_warping[0];
-                ctu->node3->mv2 = square_gauss_results[square_indexes[2]].mv_warping[1];
-                ctu->node3->mv3 = square_gauss_results[square_indexes[2]].mv_warping[2];
+                square_gauss_results[square_indexes[2]].mv_warping = original_mv_warping[2];
             }
         }
         result = split(expand_images, ctu->node3, cmts[2], split_sub_squares2.s1, s3_idx, 2, steps - 2);
@@ -1340,13 +1341,9 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         square_gauss_results[s4_idx] = split_mv_result[3];
         if(method_flag4 == MV_CODE_METHOD::MERGE) {
             if(ctu->node4->translation_flag){
-                ctu->node4->mv1 = square_gauss_results[square_indexes[3]].mv_translation;
-                ctu->node4->mv2 = square_gauss_results[square_indexes[3]].mv_translation;
-                ctu->node4->mv3 = square_gauss_results[square_indexes[3]].mv_translation;
+                square_gauss_results[square_indexes[3]].mv_translation = original_mv_translation[3];
             }else{
-                ctu->node4->mv1 = square_gauss_results[square_indexes[3]].mv_warping[0];
-                ctu->node4->mv2 = square_gauss_results[square_indexes[3]].mv_warping[1];
-                ctu->node4->mv3 = square_gauss_results[square_indexes[3]].mv_warping[2];
+                square_gauss_results[square_indexes[3]].mv_warping = original_mv_warping[3];
             }
         }
         result = split(expand_images, ctu->node4, cmts[3], split_sub_squares2.s2, s4_idx, 3, steps - 2);
