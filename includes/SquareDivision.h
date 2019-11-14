@@ -125,7 +125,7 @@ private:
     std::vector<Square> squares;
     cv::Mat target_image, ref_image, ref_gauss_image;
     std::vector<std::set<int> > neighbor_vtx;
-    std::vector<std::set<int> > covered_square;  //ある頂点が含まれる四角形のインデックス　　　　添え字 : インデックス(頂点)番号　setは集合なので同じ要素は入らない
+    std::vector<int> covered_square;  //ある頂点が含まれる四角形のインデックス　　　　添え字 : インデックス(頂点)番号
     std::vector<std::vector<int> > corner_flag;
     std::vector<std::vector<int> > reference_block_list;
     std::vector<bool> delete_flag;
@@ -147,7 +147,6 @@ private:
     void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int p4_idx);
     void addCoveredSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx, int square_no);
     void removeSquareNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int p4_idx);
-    void removeSquareCoveredSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx, int square_idx);
     int getOrAddCornerIndex(cv::Point2f p);
     int getCornerIndex(cv::Point2f p);
     void addCornerAndSquare(Square square, int square_index);

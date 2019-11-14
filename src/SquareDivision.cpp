@@ -394,7 +394,6 @@ int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx)
 void SquareDivision::eraseSquare(int s_idx){
     Square square = squares[s_idx];
     removeSquareNeighborVertex(square.p1_idx, square.p2_idx, square.p3_idx, square.p4_idx);
-    removeSquareCoveredSquare(square.p1_idx, square.p2_idx, square.p3_idx, square.p4_idx, s_idx);
     isCodedSquare.erase(isCodedSquare.begin() + s_idx);
     squares.erase(squares.begin() + s_idx);
     square_gauss_results.erase(square_gauss_results.begin() + s_idx);
@@ -435,10 +434,10 @@ void SquareDivision::addNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int p
  * @param[in] square_no 四角形のインデックス
  */
 void SquareDivision::addCoveredSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx, int square_no) {
-    covered_square[p1_idx].emplace(square_no);
-    covered_square[p2_idx].emplace(square_no);
-    covered_square[p3_idx].emplace(square_no);
-    covered_square[p4_idx].emplace(square_no);
+    covered_square[p1_idx] = square_no;
+    covered_square[p2_idx] = square_no;
+    covered_square[p3_idx] = square_no;
+    covered_square[p4_idx] = square_no;
 }
 
 /**
@@ -559,22 +558,6 @@ void SquareDivision::removeSquareNeighborVertex(int p1_idx, int p2_idx, int p3_i
 }
 
 /**
- * @fn void SquareDivision::removeSquareCoveredSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx, int square_idx)
- * @brief p1, p2, p3, p4を含む四角形の集合から, square_idx番目の四角形を消す
- * @param p1_idx 頂点1のインデックス
- * @param p2_idx 頂点2のインデックス
- * @param p3_idx 頂点3のインデックス
- * @param p4_idx 頂点4のインデックス
- * @param square_idx 削除対象の四角形のインデックス
- */
-void SquareDivision::removeSquareCoveredSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx, int square_idx) {
-    covered_square[p1_idx].erase(square_idx);
-    covered_square[p2_idx].erase(square_idx);
-    covered_square[p3_idx].erase(square_idx);
-    covered_square[p4_idx].erase(square_idx);
-}
-
-/**
  * @fn int SquareDivision::getOrAddCornerIndex(cv::Point2f p)
  * @brief 頂点が格納されているインデックスを返す。頂点が存在しない場合、その頂点を頂点集合に追加した後インデックスを返す
  * @param[in] p 追加する頂点の座標
@@ -675,7 +658,6 @@ void SquareDivision::addCornerAndSquare(Square square, int square_index){
     int s2_idx = insertSquare(g_idx, b_idx, h_idx, d_idx);
 
     removeSquareNeighborVertex(square.p1_idx, square.p2_idx, square.p3_idx, square.p4_idx);
-    removeSquareCoveredSquare( square.p1_idx, square.p2_idx, square.p3_idx, square.p4_idx, square_index);
 
     addNeighborVertex(a_idx, e_idx, c_idx, f_idx);
     addNeighborVertex(g_idx, b_idx, h_idx, d_idx);
@@ -1033,10 +1015,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 //
 //    std::cout << "square_index : " << square_indexes[j] << ", reference_block_list[" << square_indexes[j] << "].size : " << reference_block_list[square_indexes[j]].size() << std::endl << "reference_block : ";
 //    for(auto rbl : reference_block_list[square_indexes[j]]) {
-//        std::set<int> tmp_s;
-//        tmp_s = covered_square[rbl];
-//        for(auto idx : tmp_s)
-//            std::cout << idx << ", ";
+//        std::cout << covered_square[rbl] << ", ";
 //    }
 //    std::cout << std::endl;
 
@@ -1374,15 +1353,17 @@ SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1
 std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> > SquareDivision::getSpatialSquareList(int square_idx, bool translation_flag) {
     //隣接するブロックを取得する
     std::vector<int> reference_vertexes = reference_block_list[square_idx];
-
+    int i, j;
     std::vector<int> tmp_reference_block;
-    std::set<int> tmp_rb;
-    for (auto reference_vertex : reference_vertexes) {
-        tmp_rb = covered_square[reference_vertex];
-        for (auto idx : tmp_rb) tmp_reference_block.emplace_back(idx);
+    for (i = 0 ; i < reference_vertexes.size() ; i++) {
+        tmp_reference_block.emplace_back(covered_square[reference_vertexes[i]]);
     }
 
-//    std::cout << "reference_block_size : " << reference_block.size() << ", ";
+//    std::cout << "square_index : " << square_idx << ", tmp_reference_block_size : " << tmp_reference_block.size() << std::endl << "tmp_reference_block : ";
+//    for(int i = 0 ; i < tmp_reference_block.size() ; i++) {
+//        std::cout << tmp_reference_block[i] << ", ";
+//    }
+//    std::cout << std::endl;
 
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors;
     std::vector<cv::Point2f> tmp_vectors;
@@ -1394,7 +1375,7 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
     std::vector<int> reference_block_list;
 
     //平行移動とワーピングの動きベクトル
-    for(int i = 0 ; i < tmp_reference_block.size() ; i++) {
+    for(i = 0 ; i < tmp_reference_block.size() ; i++) {
         int reference_block_index = tmp_reference_block[i];
         if(!isCodedSquare[reference_block_index]) {  //符号化済みでないブロックも参照候補リストに入れているのでその場合は空のものを入れておく
             tmp_vectors.emplace_back();
@@ -1450,10 +1431,10 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
     }
 
     if(translation_flag) {
-        for (int j = 0; j < tmp_vectors.size(); j++) {
+        for (j = 0; j < tmp_vectors.size(); j++) {
             //重複していない場合
             if (is_in_flag[j]) {
-                for (int i = j + 1; i < tmp_vectors.size(); i++) {
+                for ( i = j + 1; i < tmp_vectors.size(); i++) {
                     //同一動き情報をもっている場合は配列をoff(false)にする
                     if (is_in_flag[i] && tmp_vectors[j] == tmp_vectors[i])
                         is_in_flag[i] = false;
@@ -1461,9 +1442,9 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
             }
         }
     } else {
-        for (int j = 0; j < tmp_warping_vectors.size(); j++) {
+        for (j = 0; j < tmp_warping_vectors.size(); j++) {
             if (is_in_flag[j]) {
-                for (int i = j + 1; i < tmp_warping_vectors.size(); i++) {
+                for (i = j + 1; i < tmp_warping_vectors.size(); i++) {
                     //同一動き情報をもっている場合は配列をoff(false)にする
                     if (is_in_flag[i] && tmp_warping_vectors[j] == tmp_warping_vectors[i])
                         is_in_flag[i] = false;
@@ -1473,12 +1454,12 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
     }
     //重複がなく，符号化済みのブロックのみ入れる
     if(translation_flag) {
-        for (int j = 0 ; j < tmp_vectors.size() ; j++) {
+        for (j = 0 ; j < tmp_vectors.size() ; j++) {
             if (is_in_flag[j])
                 vectors.emplace_back(tmp_vectors[j], SPATIAL);
         }
     } else {
-        for (int j = 0 ; j < tmp_warping_vectors.size() ; j++) {
+        for (j = 0 ; j < tmp_warping_vectors.size() ; j++) {
             if (is_in_flag[j]) {
                 std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> v;
                 v.emplace_back(tmp_warping_vectors[j][0], SPATIAL);
@@ -1512,12 +1493,10 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
 std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> > SquareDivision::getMergeSquareList(int square_idx, bool translation_flag, Point4Vec coordinate) {
     //隣接するブロックを取得する
     std::vector<int> reference_vertexes = reference_block_list[square_idx];
-
+    int i, j;
     std::vector<int> tmp_reference_block;
-    std::set<int> tmp_rb;
-    for (auto reference_vertex : reference_vertexes) {
-        tmp_rb = covered_square[reference_vertex];
-        for (auto idx : tmp_rb) tmp_reference_block.emplace_back(idx);
+    for (i = 0 ; i < reference_vertexes.size() ; i++) {
+        tmp_reference_block.emplace_back(covered_square[reference_vertexes[i]]);
     }
 
 //    std::cout << "reference_block_size : " << reference_block.size() << ", ";
@@ -1532,7 +1511,7 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
     std::vector<int> reference_block_list;
 
     //平行移動とワーピングの動きベクトル
-    for(int i = 0 ; i < tmp_reference_block.size() ; i++) {
+    for(i = 0 ; i < tmp_reference_block.size() ; i++) {
         int reference_block_index = tmp_reference_block[i];
         if(!isCodedSquare[reference_block_index]) {  //符号化済みでないブロックも参照候補リストに入れているのでその場合は空のものを入れておく
             tmp_vectors.emplace_back();
@@ -1778,12 +1757,12 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
     }
     //重複がなく，符号化済みのブロックのみ入れる
     if(translation_flag) {
-        for (int j = 0; j < tmp_merge_vectors.size(); j++) {
+        for (j = 0; j < tmp_merge_vectors.size(); j++) {
             if (merge_is_in_flag[j])
                 vectors.emplace_back(tmp_merge_vectors[j], MERGE);
         }
     } else {
-        for (int j = 0; j < tmp_warping_merge_vectors.size(); j++) {
+        for (j = 0; j < tmp_warping_merge_vectors.size(); j++) {
             if (merge_is_in_flag[j]) {
                 std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> v;
                 v.emplace_back(tmp_warping_merge_vectors[j][0], MERGE);
@@ -2910,7 +2889,7 @@ bool SquareDivision::isMvExists(const std::vector<Point3Vec> &vectors, const std
 SquareDivision::~SquareDivision() {
     std::vector<cv::Point2f>().swap(corners);
     std::vector<std::set<int> >().swap(neighbor_vtx);
-    std::vector<std::set<int> >().swap(covered_square);
+    std::vector<int>().swap(covered_square);
     std::vector<std::vector<int> >().swap(reference_block_list);
     std::vector<std::vector<int> >().swap(corner_flag);
     std::vector<bool>().swap(delete_flag);
