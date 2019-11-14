@@ -1415,7 +1415,7 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
             Square ref_square = squares[reference_block_index];
             std::vector<cv::Point2f> ref_square_coordinates{corners[ref_square.p1_idx], corners[ref_square.p2_idx], corners[ref_square.p3_idx], corners[ref_square.p4_idx]};
             if(translation_flag) {
-                std::vector<cv::Point2f> target_square_coordinates{cv::Point2f((pp1.x + pp2.x + pp3.x + pp4.x) / 4.0, (pp1.y + pp2.y + pp3.y + pp4.y) / 4.0)};
+                std::vector<cv::Point2f> target_square_coordinates{cv::Point2f((pp1 + pp2 + pp3 + pp4) / 4.0)};
                 std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_square_coordinates, ref_mvs, target_square_coordinates);
                 tmp_vectors.emplace_back(mvs[0]);
             } else {
@@ -1565,7 +1565,7 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
             Square ref_square = squares[reference_block_index];
             std::vector<cv::Point2f> ref_square_coordinates{corners[ref_square.p1_idx], corners[ref_square.p2_idx], corners[ref_square.p3_idx], corners[ref_square.p4_idx]};
             if(translation_flag) {
-                std::vector<cv::Point2f> target_square_coordinates{cv::Point2f((pp1.x + pp2.x + pp3.x + pp4.x) / 4.0, (pp1.y + pp2.y + pp3.y + pp4.y) / 4.0)};
+                std::vector<cv::Point2f> target_square_coordinates{cv::Point2f((pp1 + pp2 + pp3 + pp4) / 4.0)};
                 std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_square_coordinates, ref_mvs, target_square_coordinates);
                 if(mvs[0].x + coordinate.p1.x < -SERACH_RANGE || mvs[0].y + coordinate.p1.y < -SERACH_RANGE || mvs[0].x + coordinate.p4.x >= target_image.cols + SERACH_RANGE || mvs[0].y + coordinate.p4.y >= target_image.rows + SERACH_RANGE) {
                     tmp_vectors.emplace_back();
