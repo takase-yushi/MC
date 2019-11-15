@@ -375,13 +375,7 @@ std::vector<cv::Point2f> SquareDivision::getCorners() {
  * @return 挿入した四角形が格納されているインデックス
  */
 int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx) {
-    std::vector<std::pair<cv::Point2f, int> > v;
-    v.emplace_back(corners[p1_idx], p1_idx);
-    v.emplace_back(corners[p2_idx], p2_idx);
-    v.emplace_back(corners[p3_idx], p3_idx);
-    v.emplace_back(corners[p4_idx], p4_idx);
-
-    Square square(v[0].second, v[1].second, v[2].second, v[3].second, static_cast<int>(squares.size()));
+    Square square(p1_idx, p2_idx, p3_idx, p4_idx, static_cast<int>(squares.size()));
 
     squares.emplace_back(square);
     isCodedSquare.emplace_back(false);
@@ -760,7 +754,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                     square_index, square_number, cmt->mv1, ctu, false, dummy, steps);
 #endif
 //            std::cout << "cost_translation : " << cost_translation << ", cost_warping : " << cost_warping;
-            if(cost_translation < cost_warping || (steps < warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
+            if((cost_translation < cost_warping || (steps < warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY) && false){
 //                std::cout << ", translation, " << (method_translation ? "MERGE" : "SPATIAL") << std::endl;
                 square_gauss_results[square_index].mv_translation = gauss_result_translation;
                 square_gauss_results[square_index].translation_flag = true;
@@ -1098,7 +1092,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 //            std::cout << "cost_translation_tmp : " << cost_translation_tmp << ", cost_warping_tmp : " << cost_warping_tmp << std::endl;
 
             mvd.clear();
-            if(cost_translation_tmp < cost_warping_tmp || (steps - 2 < warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY){
+            if((cost_translation_tmp < cost_warping_tmp || (steps - 2 < warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY) && false){
                 square_gauss_results[square_indexes[j]].translation_flag = true;
                 square_gauss_results[square_indexes[j]].mv_translation = mv_translation_tmp;
                 cost_after_subdivs[j] = cost_translation_tmp;
@@ -1959,7 +1953,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
 
     // この1bitは手法フラグ(warpingかtranslation),もう1bitはマージフラグ分です
     int flags_code = 0;
-    if(PRED_MODE == NEWTON && !GAUSS_NEWTON_TRANSLATION_ONLY) flags_code++;
+//    if(PRED_MODE == NEWTON && !GAUSS_NEWTON_TRANSLATION_ONLY) flags_code++;
     if (MERGE_MODE) flags_code++;
 
     //                      コスト, 差分ベクトル, 番号, タイプ
