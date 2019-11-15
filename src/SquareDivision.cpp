@@ -365,15 +365,6 @@ int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx)
     v.emplace_back(corners[p3_idx], p3_idx);
     v.emplace_back(corners[p4_idx], p4_idx);
 
-    // ラスタスキャン順でソート
-    sort(v.begin(), v.end(), [](const std::pair<cv::Point2f, int> &a1, const std::pair<cv::Point2f, int> &a2) {
-        if (a1.first.y != a2.first.y) {
-            return a1.first.y < a2.first.y;
-        } else {
-            return a1.first.x < a2.first.x;
-        }
-    });
-
     Square square(v[0].second, v[1].second, v[2].second, v[3].second, static_cast<int>(squares.size()));
 
     squares.emplace_back(square);
