@@ -1072,109 +1072,31 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             isCodedSquare[square_indexes[i]] = false;
         }
         ctu->split_cu_flag = true;
-
-        int s1_idx = squares.size() - 4;
-        int s2_idx = squares.size() - 3;
-        int s3_idx = squares.size() - 2;
-        int s4_idx = squares.size() - 1;
-
-        // 1つ目の頂点追加
-        ctu->node1->square_index = s1_idx;
-        if(split_mv_result[0].translation_flag) {
-            ctu->node1->mv1 = split_mv_result[0].mv_translation;
-            ctu->node1->mv2 = split_mv_result[0].mv_translation;
-            ctu->node1->mv3 = split_mv_result[0].mv_translation;
-        }else{
-            ctu->node1->mv1 = split_mv_result[0].mv_warping[0];
-            ctu->node1->mv2 = split_mv_result[0].mv_warping[1];
-            ctu->node1->mv3 = split_mv_result[0].mv_warping[2];
-        }
-        ctu->node1->code_length = code_lengthes[0];
-        ctu->node1->translation_flag = split_mv_result[0].translation_flag;
-        ctu->node1->method = method_flags[0];
-        square_gauss_results[s1_idx] = split_mv_result[0];
-        //RDコストを再計算するために、元の動きベクトルに戻す
-        if(method_flags[0] == MV_CODE_METHOD::MERGE) {
-            if(ctu->node1->translation_flag){
-                square_gauss_results[square_indexes[0]].mv_translation = original_mv_translation[0];
-            }else{
-                square_gauss_results[square_indexes[0]].mv_warping = original_mv_warping[0];
+        for (int j = 0; j < (int) subdiv_target_squares.size(); j++) {
+            // j個目の四角形
+            ctu->node4->square_index = square_indexes[j];
+            if (split_mv_result[j].translation_flag) {
+                ctu->node4->mv1 = split_mv_result[j].mv_translation;
+                ctu->node4->mv2 = split_mv_result[j].mv_translation;
+                ctu->node4->mv3 = split_mv_result[j].mv_translation;
+            } else {
+                ctu->node4->mv1 = split_mv_result[j].mv_warping[0];
+                ctu->node4->mv2 = split_mv_result[j].mv_warping[1];
+                ctu->node4->mv3 = split_mv_result[j].mv_warping[2];
             }
-        }
-        bool result = split(expand_images, ctu->node1, cmts[0], split_sub_squares1.s1, s1_idx, 0, steps - 2);
-
-        // 2つ目の四角形
-        ctu->node2->square_index = s2_idx;
-        if(split_mv_result[1].translation_flag){
-            ctu->node2->mv1 = split_mv_result[1].mv_translation;
-            ctu->node2->mv2 = split_mv_result[1].mv_translation;
-            ctu->node2->mv3 = split_mv_result[1].mv_translation;
-        }else{
-            ctu->node2->mv1 = split_mv_result[1].mv_warping[0];
-            ctu->node2->mv2 = split_mv_result[1].mv_warping[1];
-            ctu->node2->mv3 = split_mv_result[1].mv_warping[2];
-        }
-        ctu->node2->code_length = code_lengthes[1];
-        ctu->node2->translation_flag = split_mv_result[1].translation_flag;
-        ctu->node2->method = method_flags[1];
-
-        square_gauss_results[s2_idx] = split_mv_result[1];
-        if(method_flags[1] == MV_CODE_METHOD::MERGE) {
-            if(ctu->node2->translation_flag){
-                square_gauss_results[square_indexes[1]].mv_translation = original_mv_translation[1];
-            }else{
-                square_gauss_results[square_indexes[1]].mv_warping = original_mv_warping[1];
+            ctu->node4->code_length = code_lengthes[j];
+            ctu->node4->translation_flag = split_mv_result[j].translation_flag;
+            ctu->node4->method = method_flags[j];
+            square_gauss_results[square_indexes[j]] = split_mv_result[j];
+            if (method_flags[j] == MV_CODE_METHOD::MERGE) {
+                if (ctu->node4->translation_flag) {
+                    square_gauss_results[square_indexes[j]].mv_translation = original_mv_translation[j];
+                } else {
+                    square_gauss_results[square_indexes[j]].mv_warping = original_mv_warping[j];
+                }
             }
+            split(expand_images, ctus[j], cmts[j], subdiv_target_squares[j], square_indexes[j], j, steps - 2);
         }
-        result = split(expand_images, ctu->node2, cmts[1], split_sub_squares1.s2, s2_idx, 1, steps - 2);
-
-        // 3つ目の四角形
-        ctu->node3->square_index = s3_idx;
-        if(split_mv_result[2].translation_flag) {
-            ctu->node3->mv1 = split_mv_result[2].mv_translation;
-            ctu->node3->mv2 = split_mv_result[2].mv_translation;
-            ctu->node3->mv3 = split_mv_result[2].mv_translation;
-        }else{
-            ctu->node3->mv1 = split_mv_result[2].mv_warping[0];
-            ctu->node3->mv2 = split_mv_result[2].mv_warping[1];
-            ctu->node3->mv3 = split_mv_result[2].mv_warping[2];
-        }
-        ctu->node3->code_length = code_lengthes[2];
-        ctu->node3->translation_flag = split_mv_result[2].translation_flag;
-        ctu->node3->method = method_flags[2];
-        square_gauss_results[s3_idx] = split_mv_result[2];
-        if(method_flags[2] == MV_CODE_METHOD::MERGE) {
-            if(ctu->node3->translation_flag){
-                square_gauss_results[square_indexes[2]].mv_translation = original_mv_translation[2];
-            }else{
-                square_gauss_results[square_indexes[2]].mv_warping = original_mv_warping[2];
-            }
-        }
-        result = split(expand_images, ctu->node3, cmts[2], split_sub_squares2.s1, s3_idx, 2, steps - 2);
-
-        // 4つ目の四角形
-        ctu->node4->square_index = s4_idx;
-        if(split_mv_result[3].translation_flag) {
-            ctu->node4->mv1 = split_mv_result[3].mv_translation;
-            ctu->node4->mv2 = split_mv_result[3].mv_translation;
-            ctu->node4->mv3 = split_mv_result[3].mv_translation;
-        }else{
-            ctu->node4->mv1 = split_mv_result[3].mv_warping[0];
-            ctu->node4->mv2 = split_mv_result[3].mv_warping[1];
-            ctu->node4->mv3 = split_mv_result[3].mv_warping[2];
-        }
-        ctu->node4->code_length = code_lengthes[3];
-        ctu->node4->translation_flag = split_mv_result[3].translation_flag;
-        ctu->node4->method = method_flags[3];
-        square_gauss_results[s4_idx] = split_mv_result[3];
-        if(method_flags[3] == MV_CODE_METHOD::MERGE) {
-            if(ctu->node4->translation_flag){
-                square_gauss_results[square_indexes[3]].mv_translation = original_mv_translation[3];
-            }else{
-                square_gauss_results[square_indexes[3]].mv_warping = original_mv_warping[3];
-            }
-        }
-        result = split(expand_images, ctu->node4, cmts[3], split_sub_squares2.s2, s4_idx, 3, steps - 2);
 
         return true;
     }else{
