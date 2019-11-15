@@ -904,7 +904,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         if(sp1_idx != -1) {                                            //   ---------------
             // 1の頂点を入れる
             reference_block_list[square_indexes[j]].emplace_back(sp1_idx);
-//            std::cout << "add_sp1, ";
         }
         else {
             //隣が同じstep以上分割されていない場合も候補ブロックを5個にするために2回追加
@@ -915,13 +914,11 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 sp1.x -= 8;
                 if((sp1_idx = getCornerIndex(sp1)) != -1) {
                     reference_block_list[square_indexes[j]].emplace_back(sp1_idx);
-//                    std::cout << "add_sp1, ";
                     break;
                 }
                 sp1_2.y += 8;
                 if((sp1_idx = getCornerIndex(sp1_2)) != -1) {
                     reference_block_list[square_indexes[j]].emplace_back(sp1_idx);
-//                    std::cout << "add_sp1, ";
                     break;
                 }
             }
@@ -929,14 +926,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         if(sp2_idx != -1) {
             // 2の頂点を入れる
             reference_block_list[square_indexes[j]].emplace_back(sp2_idx);
-//            std::cout << "add_sp2, ";
         }
         else {
             for(int i = 0 ; i < 7 ; i++) {
                 sp2.y += 8;
                 if((sp2_idx = getCornerIndex(sp2)) != -1) {
                     reference_block_list[square_indexes[j]].emplace_back(sp2_idx);
-//                    std::cout << "add_sp2, ";
                     break;
                 }
             }
@@ -944,7 +939,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         if(sp3_idx != -1) {
             // 3の頂点を入れる
             reference_block_list[square_indexes[j]].emplace_back(sp3_idx);
-//            std::cout << "add_sp3, ";
         }
         else {
             cv::Point2f sp3_2 = sp3;
@@ -954,13 +948,11 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 sp3.x += 8;
                 if((sp3_idx = getCornerIndex(sp3)) != -1) {
                     reference_block_list[square_indexes[j]].emplace_back(sp3_idx);
-//                    std::cout << "add_sp3, ";
                     break;
                 }
                 sp3_2.y -= 8;
                 if((sp3_idx = getCornerIndex(sp3_2)) != -1) {
                     reference_block_list[square_indexes[j]].emplace_back(sp3_idx);
-//                    std::cout << "add_sp3, ";
                     break;
                 }
             }
@@ -968,14 +960,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         if(sp4_idx != -1) {
             // 4の頂点を入れる
             reference_block_list[square_indexes[j]].emplace_back(sp4_idx);
-//            std::cout << "add_sp4, ";
         }
         else {
             for(int i = 0 ; i < 7 ; i++) {
                 sp4.x += 8;
                 if((sp4_idx = getCornerIndex(sp4)) != -1) {
                     reference_block_list[square_indexes[j]].emplace_back(sp4_idx);
-//                    std::cout << "add_sp4, ";
                     break;
                 }
             }
@@ -983,7 +973,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         if(sp5_idx != -1) {
             // 5の頂点を入れる
             reference_block_list[square_indexes[j]].emplace_back(sp5_idx);
-//            std::cout << "add_sp5";
         }
         else {
             cv::Point2f sp5_2 = sp5;
@@ -993,13 +982,11 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 sp5.y -= 8;
                 if((sp5_idx = getCornerIndex(sp5)) != -1) {
                     reference_block_list[square_indexes[j]].emplace_back(sp5_idx);
-//                    std::cout << "add_sp5";
                     break;
                 }
                 sp5_2.x -= 8;
                 if((sp5_idx = getCornerIndex(sp5_2)) != -1) {
                     reference_block_list[square_indexes[j]].emplace_back(sp5_idx);
-//                    std::cout << "add_sp5";
                     break;
                 }
             }
