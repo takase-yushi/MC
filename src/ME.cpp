@@ -671,6 +671,11 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
     }
 
     initial_vector /= 2.0;
+    double delta_x, delta_y;
+    double f;
+    double f_org;
+    double g_warping;
+    double g_translation;
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
         std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(initial_vector.x, initial_vector.y));
         cv::Point2f tmp_mv_translation(initial_vector.x, initial_vector.y);
@@ -876,7 +881,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
 
                     for(int i = 0 ; i < 6 ; i++) {
                         // 頂点を動かしたときのパッチ内の変動量x軸y軸独立に計算(delta_gを求めるために必要)
-                        double delta_x, delta_y;
                         switch (i) {//頂点ごとにxy軸独立に偏微分
                             case 0: // u0
                                 delta_x = 1 - alpha - beta;
@@ -911,11 +915,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
                     }
                     delta_g_translation[0] = g_x_translation;
                     delta_g_translation[1] = g_y_translation;
-
-                    double f;
-                    double f_org;
-                    double g_warping;
-                    double g_translation;
 
 #if GAUSS_NEWTON_HEVC_IMAGE
                     f              = img_ip(current_target_expand    , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                X.x, 4 *                X.y, 1);
