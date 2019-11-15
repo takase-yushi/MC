@@ -1054,6 +1054,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         }
         isCodedSquare[square_indexes[j]] = true;
     }
+    for(int i = 0 ; i < 4 ; i++) isCodedSquare[square_indexes[i]] = false;
 
     double lambda = getLambdaPred(qp, (translation_flag ? 1.0 : 1.0));
 //    double lambda = getLambdaMode(qp);
@@ -1067,10 +1068,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 //    std::cout << "after3 D : " << alpha * (cost_after_subdivs[2] - lambda * code_lengthes[2]) << ", R : " << alpha * (code_lengthes[2]) << ", method : " << method_flags[2] << ", mv : " << square_gauss_results[square_indexes[2]].mv_translation << ", square_index : " << square_indexes[2] << std::endl;
 //    std::cout << "after4 D : " << alpha * (cost_after_subdivs[3] - lambda * code_lengthes[3]) << ", R : " << alpha * (code_lengthes[3]) << ", method : " << method_flags[3] << ", mv : " << square_gauss_results[square_indexes[3]].mv_translation << ", square_index : " << square_indexes[3] << std::endl <<std::endl;
     if(cost_before_subdiv >= alpha * (cost_after_subdivs[0] + cost_after_subdivs[1] + cost_after_subdivs[2] + cost_after_subdivs[3])) {
-
-        for(int i = 0 ; i < 4 ; i++){
-            isCodedSquare[square_indexes[i]] = false;
-        }
         ctu->split_cu_flag = true;
         for (int j = 0; j < (int) subdiv_target_squares.size(); j++) {
             // j個目の四角形
@@ -1104,7 +1101,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         corners.erase(corners.end() - 12, corners.end());
         eraseCornerFlag(split_sub_squares1.s1, split_sub_squares1.s2, split_sub_squares2.s1, split_sub_squares2.s2);
         isCodedSquare[square_index] = true;
-        for(int i = 0 ; i < 4 ; i++) isCodedSquare[square_indexes[i]] = false;
         ctu->node1 = ctu->node2 = ctu->node3 = ctu->node4 = nullptr;
         ctu->method = method_flag;
         eraseSquare(squares.size() - 1);
