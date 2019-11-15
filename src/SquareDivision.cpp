@@ -1160,7 +1160,7 @@ SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1
             return {Point4Vec(a, e, c, f), Point4Vec(g, b, h, d), 1};
         }
         default:
-            break;
+            return {Point4Vec(p1, p2, p3, p4), Point4Vec(p1, p2, p3, p4), 1};
     }
 
 }
