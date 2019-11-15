@@ -48,7 +48,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
     coded_picture_num = 0;
 
     corners.clear();
-    neighbor_vtx.clear();
     covered_square.clear();
     squares.clear();
 
@@ -86,7 +85,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
 
             corners.emplace_back(nx, ny);
             corner_flag[ny][nx] = static_cast<int>(corners.size() - 1);
-            neighbor_vtx.emplace_back();
 
             // 前の動きベクトルを保持しておくやつ
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
@@ -97,7 +95,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
 
             corners.emplace_back(nx, ny);
             corner_flag[ny][nx] = static_cast<int>(corners.size() - 1);
-            neighbor_vtx.emplace_back();
 
             // 前の動きベクトルを保持しておくやつ
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
@@ -111,7 +108,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
 
             corners.emplace_back(nx, ny);
             corner_flag[ny][nx] = static_cast<int>(corners.size() - 1);
-            neighbor_vtx.emplace_back();
 
             // 前の動きベクトルを保持しておくやつ
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
@@ -122,7 +118,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
 
             corners.emplace_back(nx, ny);
             corner_flag[ny][nx] = static_cast<int>(corners.size() - 1);
-            neighbor_vtx.emplace_back();
 
             // 前の動きベクトルを保持しておくやつ
             previousMvList[coded_picture_num].emplace_back(new CollocatedMvTree());
@@ -154,7 +149,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
             p4_idx = p3_idx + 1;
 
             int squareIndex = insertSquare(p1_idx, p2_idx, p3_idx, p4_idx);
-            addNeighborVertex(p1_idx, p2_idx, p3_idx, p4_idx);
             addCoveredSquare(p1_idx, p2_idx, p3_idx, p4_idx, squareIndex); // p1/p2/p3はsquareIndex番目の四角形に含まれている
         }
     }
@@ -395,7 +389,6 @@ int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx)
  */
 void SquareDivision::eraseSquare(int s_idx){
     Square square = squares[s_idx];
-    removeSquareNeighborVertex(square.p1_idx, square.p2_idx, square.p3_idx, square.p4_idx);
     isCodedSquare.erase(isCodedSquare.begin() + s_idx);
     squares.erase(squares.begin() + s_idx);
     square_gauss_results.erase(square_gauss_results.begin() + s_idx);
@@ -569,7 +562,6 @@ void SquareDivision::removeSquareNeighborVertex(int p1_idx, int p2_idx, int p3_i
 int SquareDivision::getOrAddCornerIndex(cv::Point2f p) {
     if(corner_flag[(int)(p.y)][(int)(p.x)] != -1) return corner_flag[(int)(p.y)][(int)(p.x)]; //すでに頂点がある場合
     corners.emplace_back(p);
-    neighbor_vtx.emplace_back();
     covered_square.emplace_back();
     corner_flag[(int)(p.y)][(int)(p.x)] = static_cast<int>(corners.size() - 1);
     return static_cast<int>(corners.size() - 1);
@@ -660,11 +652,6 @@ void SquareDivision::addCornerAndSquare(Square square, int square_index){
     int s1_idx = insertSquare(a_idx, e_idx, c_idx, f_idx);
     int s2_idx = insertSquare(g_idx, b_idx, h_idx, d_idx);
 
-    removeSquareNeighborVertex(square.p1_idx, square.p2_idx, square.p3_idx, square.p4_idx);
-
-    addNeighborVertex(a_idx, e_idx, c_idx, f_idx);
-    addNeighborVertex(g_idx, b_idx, h_idx, d_idx);
-
     addCoveredSquare(a_idx, e_idx, c_idx, f_idx, s1_idx);
     addCoveredSquare(g_idx, b_idx, h_idx, d_idx, s2_idx);
 
@@ -754,7 +741,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                     square_index, square_number, cmt->mv1, ctu, false, dummy, steps);
 #endif
 //            std::cout << "cost_translation : " << cost_translation << ", cost_warping : " << cost_warping;
-            if((cost_translation < cost_warping || (steps < warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY) && false){
+            if(cost_translation < cost_warping || (steps < warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
 //                std::cout << ", translation, " << (method_translation ? "MERGE" : "SPATIAL") << std::endl;
                 square_gauss_results[square_index].mv_translation = gauss_result_translation;
                 square_gauss_results[square_index].translation_flag = true;
@@ -1092,7 +1079,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 //            std::cout << "cost_translation_tmp : " << cost_translation_tmp << ", cost_warping_tmp : " << cost_warping_tmp << std::endl;
 
             mvd.clear();
-            if((cost_translation_tmp < cost_warping_tmp || (steps - 2 < warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY) && false){
+            if(cost_translation_tmp < cost_warping_tmp || (steps - 2 < warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY){
                 square_gauss_results[square_indexes[j]].translation_flag = true;
                 square_gauss_results[square_indexes[j]].mv_translation = mv_translation_tmp;
                 cost_after_subdivs[j] = cost_translation_tmp;
@@ -1288,7 +1275,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         eraseSquare(squares.size() - 1);
         eraseSquare(squares.size() - 1);
         covered_square.erase(covered_square.end() - 12, covered_square.end());
-        addNeighborVertex(squares[square_index].p1_idx,squares[square_index].p2_idx,squares[square_index].p3_idx,squares[square_index].p4_idx);
         addCoveredSquare(squares[square_index].p1_idx,squares[square_index].p2_idx,squares[square_index].p3_idx,squares[square_index].p4_idx, square_index);
 
 //        std::cout << (ctu->method == MERGE ? "MERGE" : "SPATIAL") << " " << (ctu->translation_flag ? "TRANSLATION" : "WARPING") << " "  << ctu->mv1 << " " << ctu->mv2 << " " << ctu->mv3 << std::endl;
@@ -1953,7 +1939,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
 
     // この1bitは手法フラグ(warpingかtranslation),もう1bitはマージフラグ分です
     int flags_code = 0;
-//    if(PRED_MODE == NEWTON && !GAUSS_NEWTON_TRANSLATION_ONLY) flags_code++;
+    if(PRED_MODE == NEWTON && !GAUSS_NEWTON_TRANSLATION_ONLY) flags_code++;
     if (MERGE_MODE) flags_code++;
 
     //                      コスト, 差分ベクトル, 番号, タイプ
