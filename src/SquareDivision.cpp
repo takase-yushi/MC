@@ -540,13 +540,12 @@ void SquareDivision::eraseCornerFlag(Point4Vec s1, Point4Vec s2, Point4Vec s3, P
 
 /**
  * @fn void SquareDivision::addCornerAndSquare(Square square, int square_index)
- * @brief
+ * @brief 長方形を正方形に分割する
  * @param square
- * @param square_index
  * @param type
  * @return
  */
-void SquareDivision::addCornerAndSquare(Square square, int square_index){
+void SquareDivision::addCornerAndSquare(Square square){
 
     cv::Point2f p1 = corners[square.p1_idx];
     cv::Point2f p2 = corners[square.p2_idx];
@@ -577,8 +576,6 @@ void SquareDivision::addCornerAndSquare(Square square, int square_index){
 
     addCoveredSquare(a_idx, e_idx, c_idx, f_idx, s1_idx);
     addCoveredSquare(g_idx, b_idx, h_idx, d_idx, s2_idx);
-
-    isCodedSquare[square_index] = false;
 }
 
 /**
@@ -785,13 +782,15 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     int s1_p2_idx = getOrAddCornerIndex(split_squares.s1.p2);
     int s1_p3_idx = getOrAddCornerIndex(split_squares.s1.p3);
     int s1_p4_idx = getOrAddCornerIndex(split_squares.s1.p4);
-    addCornerAndSquare(Square(s1_p1_idx, s1_p2_idx, s1_p3_idx, s1_p4_idx), square_index);
+    addCornerAndSquare(Square(s1_p1_idx, s1_p2_idx, s1_p3_idx, s1_p4_idx));
 
     int s2_p1_idx = getOrAddCornerIndex(split_squares.s2.p1);
     int s2_p2_idx = getOrAddCornerIndex(split_squares.s2.p2);
     int s2_p3_idx = getOrAddCornerIndex(split_squares.s2.p3);
     int s2_p4_idx = getOrAddCornerIndex(split_squares.s2.p4);
-    addCornerAndSquare(Square(s2_p1_idx, s2_p2_idx, s2_p3_idx, s2_p4_idx), square_index);
+    addCornerAndSquare(Square(s2_p1_idx, s2_p2_idx, s2_p3_idx, s2_p4_idx));
+
+    isCodedSquare[square_index] = false;
 
     int square_indexes[] = {(int)squares.size() - 4, (int)squares.size() - 3, (int)squares.size() - 2, (int)squares.size() - 1};
 
