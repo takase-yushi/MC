@@ -170,6 +170,10 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
     ref_images = getRefImages(ref_image, ref_gauss_image);
     target_images = getTargetImages(target_image);
 
+    // この1bitは手法フラグ(warpingかtranslation),もう1bitはマージフラグ分です
+    if(PRED_MODE == NEWTON && !GAUSS_NEWTON_TRANSLATION_ONLY) flags_code++;
+    if (MERGE_MODE) flags_code++;
+
     int expansion_size = SERACH_RANGE;
     int scaled_expansion_size = expansion_size + 2;
     if(HEVC_REF_IMAGE) expansion_ref = getExpansionMatHEVCImage(ref_image, 4, expansion_size);
@@ -1937,11 +1941,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
 
     double lambda = getLambdaPred(qp, (translation_flag ? 1.0 : 1.0));
 
-    // この1bitは手法フラグ(warpingかtranslation),もう1bitはマージフラグ分です
-    int flags_code = 0;
-    if(PRED_MODE == NEWTON && !GAUSS_NEWTON_TRANSLATION_ONLY) flags_code++;
-    if (MERGE_MODE) flags_code++;
-
     //                      コスト, 差分ベクトル, 番号, タイプ
     std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> > results;
     if(translation_flag) { // 平行移動成分に関してはこれまで通りにやる
@@ -2325,11 +2324,6 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
     }
 
     double lambda = getLambdaPred(qp, 1.0);
-
-    // この1bitは手法フラグ(warpingかtranslation),もう1bitはマージフラグ分です
-    int flags_code = 0;
-    if(PRED_MODE == NEWTON && !GAUSS_NEWTON_TRANSLATION_ONLY) flags_code++;
-    if (MERGE_MODE) flags_code++;
 
     //                      コスト, 差分ベクトル, 番号, タイプ
     std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> > results;
