@@ -128,7 +128,6 @@ private:
     std::vector<std::vector<int> > corner_flag;
     std::vector<std::vector<int> > reference_block_list;
     std::vector<std::vector<int> > merge_reference_block_list;
-    std::vector<bool> delete_flag;
     std::vector<bool> isCodedSquare;
     int block_size_x, block_size_y;
     std::vector<std::vector<CollocatedMvTree*>> previousMvList;

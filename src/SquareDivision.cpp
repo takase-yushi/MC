@@ -157,11 +157,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
         isCodedSquare[i] = false;
     }
 
-    delete_flag.resize(squares.size());
-    for(int i = 0 ; i < delete_flag.size() ; i++) {
-        delete_flag[i] = false;
-    }
-
     predicted_buf.emplace_back(cv::Mat::zeros(ref_image.size()/8, CV_8UC3));
     predicted_buf.emplace_back(cv::Mat::zeros(ref_image.size()/4, CV_8UC3));
     predicted_buf.emplace_back(cv::Mat::zeros(ref_image.size()/2, CV_8UC3));
@@ -287,7 +282,7 @@ std::vector<Point4Vec> SquareDivision::getSquareCoordinateList() {
     std::vector<Point4Vec> vec;
 
     for(int i = 0 ; i < squares.size() ; i++) {
-        if(delete_flag[i] || !isCodedSquare[i]) continue;
+        if(!isCodedSquare[i]) continue;
         Square square = squares[i];
         vec.emplace_back(corners[square.p1_idx], corners[square.p2_idx], corners[square.p3_idx], corners[square.p4_idx]);
     }
@@ -303,7 +298,7 @@ std::vector<Point4Vec> SquareDivision::getSquareCoordinateList() {
 std::vector<Square> SquareDivision::getSquareIndexList() {
     std::vector<Square> v;
     for(int i = 0 ; i < squares.size() ; i++) {
-        if(delete_flag[i]) continue;
+        if(!isCodedSquare[i]) continue;
         v.emplace_back(squares[i]);
     }
     return v;
@@ -379,7 +374,6 @@ int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx)
     isCodedSquare.emplace_back(false);
     square_gauss_results.emplace_back();
     square_gauss_results[square_gauss_results.size() - 1].residual = -1.0;
-    delete_flag.emplace_back(false);
     reference_block_list.emplace_back();
     merge_reference_block_list.emplace_back();
 
@@ -396,7 +390,6 @@ void SquareDivision::eraseSquare(int s_idx){
     isCodedSquare.erase(isCodedSquare.begin() + s_idx);
     squares.erase(squares.begin() + s_idx);
     square_gauss_results.erase(square_gauss_results.begin() + s_idx);
-    delete_flag.erase(delete_flag.begin() + s_idx);
     reference_block_list.erase(reference_block_list.begin() + s_idx);
     merge_reference_block_list.erase(merge_reference_block_list.begin() + s_idx);
 }
@@ -586,7 +579,6 @@ void SquareDivision::addCornerAndSquare(Square square, int square_index){
     addCoveredSquare(g_idx, b_idx, h_idx, d_idx, s2_idx);
 
     isCodedSquare[square_index] = false;
-    delete_flag[square_index] = true;
 }
 
 /**
@@ -1196,7 +1188,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         corners.erase(corners.end() - 12, corners.end());
         eraseCornerFlag(split_sub_squares1.s1, split_sub_squares1.s2, split_sub_squares2.s1, split_sub_squares2.s2);
         isCodedSquare[square_index] = true;
-        delete_flag[square_index] = false;
         for(int i = 0 ; i < 4 ; i++) isCodedSquare[square_indexes[i]] = false;
         ctu->node1 = ctu->node2 = ctu->node3 = ctu->node4 = nullptr;
         ctu->method = method_flag;
@@ -2748,7 +2739,6 @@ SquareDivision::~SquareDivision() {
     std::vector<std::vector<int> >().swap(reference_block_list);
     std::vector<std::vector<int> >().swap(merge_reference_block_list);
     std::vector<std::vector<int> >().swap(corner_flag);
-    std::vector<bool>().swap(delete_flag);
     std::vector<bool>().swap(isCodedSquare);
     std::vector<std::vector<CollocatedMvTree*>>().swap(previousMvList);
     std::vector<cv::Mat>().swap(predicted_buf);
