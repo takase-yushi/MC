@@ -757,9 +757,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             ctu->mvds.emplace_back(mvd[0]);
             ctu->mvds.emplace_back(mvd[0]);
         }else{
-            ctu->mvds.emplace_back(mvd[0]);
-            ctu->mvds.emplace_back(mvd[1]);
-            ctu->mvds.emplace_back(mvd[2]);
+            ctu->mvds = mvd;
         }
     }
 
@@ -1007,9 +1005,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 cost_after_subdivs[j] = cost_translation_tmp;
                 code_lengthes[j] = code_length_translation;
                 method_flags[j] = method_translation_tmp;
-                mvd.emplace_back(translation_mvd[0]);
-                mvd.emplace_back(translation_mvd[0]);
-                mvd.emplace_back(translation_mvd[0]);
+                mvd = translation_mvd;
                 split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_translation_tmp, square_size_tmp, true, error_translation_tmp, error_warping_tmp);
             }else{
                 square_gauss_results[square_indexes[j]].translation_flag = false;
@@ -1017,9 +1013,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 cost_after_subdivs[j] = cost_warping_tmp;
                 code_lengthes[j] = code_length_warping;
                 method_flags[j] = method_warping_tmp;
-                mvd.emplace_back(warping_mvd[0]);
-                mvd.emplace_back(warping_mvd[1]);
-                mvd.emplace_back(warping_mvd[2]);;
+                mvd = warping_mvd;
                 split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_warping_tmp, square_size_tmp, false, error_translation_tmp, error_warping_tmp);
             }
 
@@ -2136,7 +2130,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     }else {
         for (int i = 0; i < warping_vectors.size(); i++) {
             std::vector<cv::Point2f> mvs;
-            std::vector<cv::Point2f> mvds;
 
             mvs.emplace_back(warping_vectors[i][0].first);
             mvs.emplace_back(warping_vectors[i][1].first);
