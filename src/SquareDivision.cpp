@@ -401,28 +401,6 @@ void SquareDivision::eraseSquare(int s_idx){
     merge_reference_block_list.erase(merge_reference_block_list.begin() + s_idx);
 }
 
-/**
- * @fn void SquareDivision::addNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int p4_idx)
- * @brief p1, p2, p3, p4の隣接頂点情報を更新する
- * @param[in] p1_idx 頂点1の座標のインデックス
- * @param[in] p2_idx 頂点2の座標のインデックス
- * @param[in] p3_idx 頂点3の座標のインデックス
- * @param[in] p4_idx 頂点4の座標のインデックス
- */
-void SquareDivision::addNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int p4_idx) {
-    neighbor_vtx[p1_idx].emplace(p2_idx);
-    neighbor_vtx[p2_idx].emplace(p1_idx);
-
-    neighbor_vtx[p1_idx].emplace(p3_idx);
-    neighbor_vtx[p3_idx].emplace(p1_idx);
-
-    neighbor_vtx[p2_idx].emplace(p4_idx);
-    neighbor_vtx[p4_idx].emplace(p2_idx);
-
-    neighbor_vtx[p3_idx].emplace(p4_idx);
-    neighbor_vtx[p4_idx].emplace(p3_idx);
-
-}
 
 /***
  * @fn void SquareDivision::addCoveredSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx, int square_no)
@@ -452,39 +430,6 @@ double SquareDivision::getDistance(const cv::Point2f &a, const cv::Point2f &b){
     return std::sqrt(v.x * v.x + v.y * v.y);
 }
 
-/**
- * @fn std::vector<int> SquareDivision::getNeighborVertexIndexList(int idx)
- * @brief 指定された頂点に隣接する頂点（インデックス）の集合を返す
- * @param[in] idx 頂点のインデックス
- * @return 頂点の集合（インデックス）
- */
-std::vector<int> SquareDivision::getNeighborVertexIndexList(int idx) {
-    std::set<int> s = neighbor_vtx[idx];
-    std::vector<int> v(s.size());
-
-    for(const auto e : s) {
-        v.emplace_back(e);
-    }
-
-    return v;
-}
-
-/**
- * @fn std::vector<cv::Point2f> SquareDivision::getNeighborVertexCoordinateList(int idx)
- * @brief 指定された頂点に隣接する頂点の集合（座標）を返す
- * @param[in] idx 頂点のインデックス
- * @return 頂点の集合（座標）
- */
-std::vector<cv::Point2f> SquareDivision::getNeighborVertexCoordinateList(int idx) {
-    std::set<int> s = neighbor_vtx[idx];
-    std::vector<cv::Point2f> v(s.size());
-
-    for(const auto e : s) {
-        v.emplace_back(corners[e]);
-    }
-
-    return v;
-}
 
 /**
  * @fn std::vector<Point4Vec> SquareDivision::getIdxCoveredSquareCoordinateList(int idx)
@@ -537,25 +482,6 @@ std::vector<int> SquareDivision::getIdxCoveredSquareIndexList(int target_vertex_
     return v;
 }
 
-/**
- * @fn void SquareDivision::removeSquareNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int p4_idx)
- * @brief 指定された四角形に含まれる頂点隣接ノード集合から、自分以外のノードを消す
- * @details 日本語が難しいからコードで理解して
- * @param p1_idx
- * @param p2_idx
- * @param p3_idx
- * @param p4_idx
- */
-void SquareDivision::removeSquareNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int p4_idx) {
-    neighbor_vtx[p1_idx].erase(p2_idx);
-    neighbor_vtx[p1_idx].erase(p3_idx);
-    neighbor_vtx[p2_idx].erase(p1_idx);
-    neighbor_vtx[p2_idx].erase(p4_idx);
-    neighbor_vtx[p3_idx].erase(p1_idx);
-    neighbor_vtx[p3_idx].erase(p4_idx);
-    neighbor_vtx[p4_idx].erase(p2_idx);
-    neighbor_vtx[p4_idx].erase(p3_idx);
-}
 
 /**
  * @fn int SquareDivision::getOrAddCornerIndex(cv::Point2f p)
@@ -2818,7 +2744,6 @@ bool SquareDivision::isMvExists(const std::vector<Point3Vec> &vectors, const std
 
 SquareDivision::~SquareDivision() {
     std::vector<cv::Point2f>().swap(corners);
-    std::vector<std::set<int> >().swap(neighbor_vtx);
     std::vector<int>().swap(covered_square);
     std::vector<std::vector<int> >().swap(reference_block_list);
     std::vector<std::vector<int> >().swap(merge_reference_block_list);

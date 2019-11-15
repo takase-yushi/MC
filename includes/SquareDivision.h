@@ -124,7 +124,6 @@ private:
     std::vector<cv::Point2f> corners;
     std::vector<Square> squares;
     cv::Mat target_image, ref_image, ref_gauss_image;
-    std::vector<std::set<int> > neighbor_vtx;
     std::vector<int> covered_square;  //ある頂点が含まれる四角形のインデックス　　　　添え字 : インデックス(頂点)番号
     std::vector<std::vector<int> > corner_flag;
     std::vector<std::vector<int> > reference_block_list;
