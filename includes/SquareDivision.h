@@ -128,6 +128,7 @@ private:
     std::vector<int> covered_square;  //ある頂点が含まれる四角形のインデックス　　　　添え字 : インデックス(頂点)番号
     std::vector<std::vector<int> > corner_flag;
     std::vector<std::vector<int> > reference_block_list;
+    std::vector<std::vector<int> > merge_reference_block_list;
     std::vector<bool> delete_flag;
     std::vector<bool> isCodedSquare;
     int block_size_x, block_size_y;

@@ -373,6 +373,7 @@ int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx)
     square_gauss_results[square_gauss_results.size() - 1].residual = -1.0;
     delete_flag.emplace_back(false);
     reference_block_list.emplace_back();
+    merge_reference_block_list.emplace_back();
 
     return static_cast<int>(squares.size() - 1);
 }
@@ -390,6 +391,7 @@ void SquareDivision::eraseSquare(int s_idx){
     square_gauss_results.erase(square_gauss_results.begin() + s_idx);
     delete_flag.erase(delete_flag.begin() + s_idx);
     reference_block_list.erase(reference_block_list.begin() + s_idx);
+    merge_reference_block_list.erase(merge_reference_block_list.begin() + s_idx);
 }
 
 /**
@@ -2882,6 +2884,7 @@ SquareDivision::~SquareDivision() {
     std::vector<std::set<int> >().swap(neighbor_vtx);
     std::vector<int>().swap(covered_square);
     std::vector<std::vector<int> >().swap(reference_block_list);
+    std::vector<std::vector<int> >().swap(merge_reference_block_list);
     std::vector<std::vector<int> >().swap(corner_flag);
     std::vector<bool>().swap(delete_flag);
     std::vector<bool>().swap(isCodedSquare);
