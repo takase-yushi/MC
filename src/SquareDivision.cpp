@@ -950,6 +950,17 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 #if !MVD_DEBUG_LOG
 //    #pragma omp parallel for
 #endif
+    double error_warping_tmp, error_translation_tmp;
+    int square_size_tmp;
+    cv::Point2f mv_translation_tmp;
+    std::vector<cv::Point2f> mv_warping_tmp;
+    std::vector<cv::Point2f> tmp_bm_mv;
+    std::vector<double> tmp_bm_errors;
+    int code_length_warping, code_length_translation;
+    std::vector<cv::Point2f> warping_mvd, translation_mvd;
+    double cost_warping_tmp, cost_translation_tmp;
+    double tmp_error_newton;
+    MV_CODE_METHOD method_warping_tmp, method_translation_tmp;
     cv::Point2f original_mv_translation[4];
     std::vector<cv::Point2f> original_mv_warping[4];
     double cost_after_subdivs[4];
@@ -962,17 +973,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     cmts[2]  = (cmt->node3 == nullptr ? cmt : cmt->node3);
     cmts[3]  = (cmt->node4 == nullptr ? cmt : cmt->node4);
     for (int j = 0; j < (int) subdiv_target_squares.size(); j++) {
-        double error_warping_tmp, error_translation_tmp;
-        int square_size_tmp;
-        cv::Point2f mv_translation_tmp;
-        std::vector<cv::Point2f> mv_warping_tmp;
-        std::vector<cv::Point2f> tmp_bm_mv;
-        std::vector<double> tmp_bm_errors;
-        int code_length_warping, code_length_translation;
-        std::vector<cv::Point2f> warping_mvd, translation_mvd;
-        double cost_warping_tmp, cost_translation_tmp;
-        double tmp_error_newton;
-        MV_CODE_METHOD method_warping_tmp, method_translation_tmp;
         if(PRED_MODE == NEWTON){
             if(GAUSS_NEWTON_INIT_VECTOR) {
 //                std::tie(tmp_bm_mv, tmp_bm_errors) = fullpellBlockMatching(subdiv_target_squares[j], target_image, expansion_ref, square_indexes[j], ctus[j]);
