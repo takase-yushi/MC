@@ -17,7 +17,7 @@ public:
     void storeDistributionOfMv(std::vector<CodingTreeUnit*> ctus, std::string log_path);
     void storeMarkdownFile(double psnr, std::string log_path);
     Analyzer(const std::string &fileSuffix);
-    void storeCsvFileWithStream(std::ofstream &ofs, double psnr);
+    void storeCsvFileWithStream(std::ofstream &ofs, double psnr, double time);
     void storeMergeMvLog(std::vector<CodingTreeUnit*> ctus, std::string log_path);
 
 

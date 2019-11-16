@@ -1403,7 +1403,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     isCodedTriangle[triangle_indexes[3]] = true;
 
     double alpha = 1;
+
+#if DISPLAY_RD_COST
     std::cout << "before:" << cost_before_subdiv << " after:" << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4) << std::endl;
+#endif
+
     if(cost_before_subdiv >= alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4)) {
 
         for(int i = 0 ; i < 4 ; i++){
@@ -2058,6 +2062,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 
     double lambda = getLambdaPred(qp, (translation_flag ? 1.0 : 1.0));
 
+    int flags_code = 1;
+    if (INTRA_MODE) flags_code++;
+    if (MERGE_MODE) flags_code++;
+
     //                      コスト, 差分ベクトル, 番号, タイプ
     std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> > results;
     for(int i = 0 ; i < vectors.size() ; i++) {
@@ -2151,11 +2159,11 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             int reference_index_code_length = getUnaryCodeLength(reference_index);
 
             // 各種フラグ分を(3*2)bit足してます
-            double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
+            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code);
 
             std::vector<cv::Point2f> mvds{mvd};
             // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum, flags);
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length + flags_code, mvds, i, vector.second, flag_code_sum, flags);
         }else{
             std::vector<cv::Point2f> mvds;
             if(!warping_vectors[i].empty()){
@@ -2257,10 +2265,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             int reference_index_code_length = getUnaryCodeLength(reference_index);
 
             // 各種フラグ分を(3*2)bit足してます
-            double rd = residual + lambda * (mvd_code_length + reference_index_code_length);
+            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code);
 
             // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum, flags);
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length + flags_code, mvds, i, vector.second, flag_code_sum, flags);
         }
     }
 
@@ -2308,8 +2316,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                     mvs.emplace_back(spatial_triangle.mv_translation);
                     mvs.emplace_back(spatial_triangle.mv_translation);
                     double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
-                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count));
-                    results.emplace_back(rd, getUnaryCodeLength(merge_count), mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
+                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code);
+                    results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code, mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
                 }
             } else {
@@ -2321,8 +2329,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                     mvs.emplace_back(spatial_triangle.mv_warping[0]);
                     double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs,
                                                               pixels_in_triangle, rect);
-                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count));
-                    results.emplace_back(rd, getUnaryCodeLength(merge_count), mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
+                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code);
+                    results.emplace_back(rd, getUnaryCodeLength(merge_count)  + flags_code, mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
                 }
             }
@@ -2479,8 +2487,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                             warping2_mvds[j].y = mvd.y;
                         }
 
-                        double rd = ret_residual + lambda * (getUnaryCodeLength(merge2_count) + mvd_code_length);
-                        results.emplace_back(rd, getUnaryCodeLength(merge2_count) + mvd_code_length, mvs, merge2_count,
+                        double rd = ret_residual + lambda * (getUnaryCodeLength(merge2_count) + mvd_code_length + flags_code);
+                        results.emplace_back(rd, getUnaryCodeLength(merge2_count) + mvd_code_length + flags_code, mvs, merge2_count,
                                              MERGE2, flag_code_sum, flags);
                         merge2_count++;
                         warping2_vector_history.emplace_back(mvs[0], mvs[1], mvs[2]);
@@ -2503,7 +2511,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
         }
 
         std::vector<cv::Point2f> mvs;
-        results.emplace_back(sad, 0, mvs, 0, MV_CODE_METHOD::INTRA, FlagsCodeSum(0, 0, 0, 0), Flags());
+        results.emplace_back(sad, flags_code, mvs, 0, MV_CODE_METHOD::INTRA, FlagsCodeSum(0, 0, 0, 0), Flags());
     }
 
     // RDしたスコアが小さい順にソート
@@ -2572,6 +2580,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                 (ctu->mvds_y).emplace_back(mvds[i].y);
             }
         }
+        ctu->share_flag[0] = share_flags[selected_idx][0];
+        ctu->share_flag[1] = share_flags[selected_idx][1];
+        ctu->share_flag[2] = share_flags[selected_idx][2];
     }
 
     return {cost, code_length, mvds, selected_idx, method};
@@ -2697,6 +2708,68 @@ void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &ou
     if(ctu->node4 != nullptr) getPredictedImageFromCtu(ctu->node4, out, area_flag);
 }
 
+
+cv::Mat TriangleDivision::getMergeModeColorImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag){
+    cv::Mat out = cv::Mat::zeros(ref_image.size(), CV_8UC3);
+
+    for(int i = 0 ; i < ctus.size() ; i++) {
+        getMergeModeColorImageFromCtu(ctus[i], out, area_flag[i/2]);
+    }
+
+    std::vector<Point3Vec> ts = getTriangleCoordinateList();
+    for(const auto &t : ts) {
+        drawTriangle(out, t.p1, t.p2, t.p3, WHITE);
+    }
+
+    return out;
+}
+
+void TriangleDivision::getMergeModeColorImageFromCtu(CodingTreeUnit* ctu, cv::Mat &out, std::vector<std::vector<int>> &area_flag){
+    if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
+        int triangle_index = ctu->triangle_index;
+        cv::Point2f mv = ctu->mv1;
+        Triangle triangle_corner_idx = triangles[triangle_index].first;
+        Point3Vec triangle(corners[triangle_corner_idx.p1_idx], corners[triangle_corner_idx.p2_idx], corners[triangle_corner_idx.p3_idx]);
+
+        std::vector<cv::Point2f> mvs{mv, mv, mv};
+        std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, block_size_x, block_size_y);
+
+        if(ctu->method == MERGE || ctu->method == MERGE2){
+            int r, g, b;
+            switch(ctu->ref_triangle_idx){
+                case 0:
+                    r = 255; g = 0; b = 0;
+                    break;
+                case 1:
+                    r = 0;   g = 255; b = 0;
+                    break;
+                case 2:
+                    r = 0;   g = 0; b = 255;
+                    break;
+                case 3:
+                    r = 255; g = 255; b = 0;
+                    break;
+                case 4:
+                    r = 255; g = 0; b = 255;
+                    break;
+            }
+
+            for(auto pixel : pixels) {
+                R(out, (int)pixel.x, (int)pixel.y) = r;
+                G(out, (int)pixel.x, (int)pixel.y) = g;
+                B(out, (int)pixel.x, (int)pixel.y) = b;
+            }
+        }
+
+        return;
+    }
+
+    if(ctu->node1 != nullptr) getMergeModeColorImageFromCtu(ctu->node1, out, area_flag);
+    if(ctu->node2 != nullptr) getMergeModeColorImageFromCtu(ctu->node2, out, area_flag);
+    if(ctu->node3 != nullptr) getMergeModeColorImageFromCtu(ctu->node3, out, area_flag);
+    if(ctu->node4 != nullptr) getMergeModeColorImageFromCtu(ctu->node4, out, area_flag);
+}
+
 cv::Mat TriangleDivision::getPredictedColorImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag, double original_psnr){
     cv::Mat out = cv::Mat::zeros(ref_image.size(), CV_8UC3);
 
@@ -2740,11 +2813,26 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
                     B(out, (int)pixel.x, (int)pixel.y) = 0;
                 }
             }else if(ctu->method == MV_CODE_METHOD::MERGE2){
-                for(auto pixel : pixels) {
-                    R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
-                    G(out, (int)pixel.x, (int)pixel.y) = 0;
-                    B(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
+
+                int share_count = 0;
+                for(auto f : ctu->share_flag) {
+                    if(f) share_count++;
                 }
+
+                if(share_count == 1){
+                    for(auto pixel : pixels) {
+                        R(out, (int)pixel.x, (int)pixel.y) = 54;
+                        G(out, (int)pixel.x, (int)pixel.y) = 115;
+                        B(out, (int)pixel.x, (int)pixel.y) = 255;
+                    }
+                }else if(share_count == 2){
+                    for(auto pixel : pixels) {
+                        R(out, (int)pixel.x, (int)pixel.y) = 212;
+                        G(out, (int)pixel.x, (int)pixel.y) = 61;
+                        B(out, (int)pixel.x, (int)pixel.y) = 0;
+                    }
+                }
+
                 std::cout << "------------------- MERGE2 -------------------" << std::endl;
             }else if(ctu->method == MV_CODE_METHOD::SPATIAL){
                 for(auto pixel : pixels) {
@@ -2768,10 +2856,24 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
                     B(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                 }
             }else if(ctu->method == MV_CODE_METHOD::MERGE2){
-                for(auto pixel : pixels) {
-                    R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
-                    G(out, (int)pixel.x, (int)pixel.y) = 0;
-                    B(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
+
+                int share_count = 0;
+                for(auto f : ctu->share_flag) {
+                    if(f) share_count++;
+                }
+
+                if(share_count == 1){
+                    for(auto pixel : pixels) {
+                        R(out, (int)pixel.x, (int)pixel.y) = 54;
+                        G(out, (int)pixel.x, (int)pixel.y) = 115;
+                        B(out, (int)pixel.x, (int)pixel.y) = 255;
+                    }
+                }else if(share_count == 2){
+                    for(auto pixel : pixels) {
+                        R(out, (int)pixel.x, (int)pixel.y) = 212;
+                        G(out, (int)pixel.x, (int)pixel.y) = 61;
+                        B(out, (int)pixel.x, (int)pixel.y) = 0;
+                    }
                 }
                 std::cout << "------------------- MERGE2 -------------------" << std::endl;
             }else if(ctu->method == MV_CODE_METHOD::SPATIAL){
@@ -2791,33 +2893,33 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
 //            getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, SEARCH_RANGE, area_flag, ctu->triangle_index, ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
         }
 
-        Triangle t = triangles[ctu->triangle_index].first;
-        cv::Point2f p1 = corners[t.p1_idx];
-        cv::Point2f p2 = corners[t.p2_idx];
-        cv::Point2f p3 = corners[t.p3_idx];
-
-        if(ctu->translation_flag) {
-            cv::Point2f g = (p1 + p2 + p3) / 3.0;
-
-            cv::arrowedLine(out, g, g + 10 * ctu->mv1, RED, 1);
-
-            if(ctu->method == MV_CODE_METHOD::MERGE || ctu->method == MV_CODE_METHOD::MERGE2){
-                cv::arrowedLine(out, g, g + 10 * ctu->original_mv1, GREEN, 1);
-                cv::arrowedLine(out, g, g + ctu->merge_triangle_ref_vector, WHITE);
-            }
-        }else{
-            cv::Point2f g = (p1 + p2 + p3) / 3.0;
-            cv::arrowedLine(out, p1, p1 + 10 * ctu->mv1, RED, 1);
-            cv::arrowedLine(out, p2, p2 + 10 * ctu->mv2, RED, 1);
-            cv::arrowedLine(out, p3, p3 + 10 * ctu->mv3, RED, 1);
-
-            if(ctu->method == MV_CODE_METHOD::MERGE || ctu->method == MV_CODE_METHOD::MERGE2){
-                cv::arrowedLine(out, g, g + ctu->merge_triangle_ref_vector, WHITE);
-                cv::arrowedLine(out, p1, p1 + 10 * ctu->original_mv1, GREEN, 1);
-                cv::arrowedLine(out, p2, p2 + 10 * ctu->original_mv2, GREEN, 1);
-                cv::arrowedLine(out, p3, p3 + 10 * ctu->original_mv3, GREEN, 1);
-            }
-        }
+//        Triangle t = triangles[ctu->triangle_index].first;
+//        cv::Point2f p1 = corners[t.p1_idx];
+//        cv::Point2f p2 = corners[t.p2_idx];
+//        cv::Point2f p3 = corners[t.p3_idx];
+//
+//        if(ctu->translation_flag) {
+//            cv::Point2f g = (p1 + p2 + p3) / 3.0;
+//
+//            cv::arrowedLine(out, g, g + 10 * ctu->mv1, RED, 1);
+//
+//            if(ctu->method == MV_CODE_METHOD::MERGE || ctu->method == MV_CODE_METHOD::MERGE2){
+//                cv::arrowedLine(out, g, g + 10 * ctu->original_mv1, GREEN, 1);
+//                cv::arrowedLine(out, g, g + ctu->merge_triangle_ref_vector, WHITE);
+//            }
+//        }else{
+//            cv::Point2f g = (p1 + p2 + p3) / 3.0;
+//            cv::arrowedLine(out, p1, p1 + 10 * ctu->mv1, RED, 1);
+//            cv::arrowedLine(out, p2, p2 + 10 * ctu->mv2, RED, 1);
+//            cv::arrowedLine(out, p3, p3 + 10 * ctu->mv3, RED, 1);
+//
+//            if(ctu->method == MV_CODE_METHOD::MERGE || ctu->method == MV_CODE_METHOD::MERGE2){
+//                cv::arrowedLine(out, g, g + ctu->merge_triangle_ref_vector, WHITE);
+//                cv::arrowedLine(out, p1, p1 + 10 * ctu->original_mv1, GREEN, 1);
+//                cv::arrowedLine(out, p2, p2 + 10 * ctu->original_mv2, GREEN, 1);
+//                cv::arrowedLine(out, p3, p3 + 10 * ctu->original_mv3, GREEN, 1);
+//            }
+//        }
 
         return;
     }
@@ -2839,12 +2941,12 @@ int TriangleDivision::getCtuCodeLength(std::vector<CodingTreeUnit*> ctus) {
 int TriangleDivision::getCtuCodeLength(CodingTreeUnit *ctu){
 
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
-        // この1bitは手法フラグ(translation/warping)，もう1bitはマージフラグ
-        int flags_code = 1;
-        if (INTRA_MODE) flags_code++;
-        if (MERGE_MODE) flags_code++;
-
-        return flags_code + ctu->code_length;
+//        // この1bitは手法フラグ(translation/warping)，もう1bitはマージフラグ
+//        int flags_code = 1;
+//        if (INTRA_MODE) flags_code++;
+//        if (MERGE_MODE) flags_code++;
+//
+        return ctu->code_length;
     }
 
     // ここで足している1はsplit_cu_flag分です
@@ -3002,10 +3104,21 @@ TriangleDivision::~TriangleDivision() {
     std::vector<bool>().swap(delete_flag);
     std::vector<bool>().swap(isCodedTriangle);
     std::vector<std::vector<CollocatedMvTree*>>().swap(previousMvList);
-    std::vector<cv::Mat>().swap(predicted_buf);
+//    std::vector<cv::Mat>().swap(predicted_buf);
+    for(auto i : predicted_buf) i.release();
     std::vector<GaussResult>().swap(triangle_gauss_results);
-    std::vector<std::vector<cv::Mat>>().swap(ref_images);
-    std::vector<std::vector<cv::Mat>>().swap(target_images);
+//    std::vector<std::vector<cv::Mat>>().swap(ref_images);
+    for(int i = 0 ; i < ref_images.size() ; i++){
+        for(int j = 0 ; j < ref_images[i].size(); j++){
+            ref_images[i][j].release();
+        }
+    }
+//    std::vector<std::vector<cv::Mat>>().swap(target_images);
+    for(int i = 0 ; i < target_images.size() ; i++){
+        for(int j = 0 ; j < target_images[i].size(); j++){
+            target_images[i][j].release();
+        }
+    }
 
     int scaled_expansion_size = SEARCH_RANGE + 2;
     for(int i = -scaled_expansion_size ; i < target_image.cols + scaled_expansion_size ; i++){
@@ -3022,6 +3135,7 @@ TriangleDivision::~TriangleDivision() {
     ref_hevc -= 4 * (SEARCH_RANGE + 4);
     free(ref_hevc);
 
+    expansion_ref.release();
 }
 
 /**

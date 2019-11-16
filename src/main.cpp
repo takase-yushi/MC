@@ -97,6 +97,8 @@ void run(std::string config_name) {
     std::map<int, std::vector<std::vector<cv::Mat>>> ref_images_with_qp, target_images_with_qp;
     std::map<int, EXPAND_ARRAY_TYPE> expand_images_with_qp;
 
+    int previous_qp = -1;
+
     // 全画像分ループ
     for(const auto& task : tasks){
 
@@ -137,6 +139,8 @@ void run(std::string config_name) {
         std::cout << "CTU_HEIGHT             : " << block_size_y << std::endl;
         std::cout << "lambda_inject_flag     : " << lambda_inject_flag << std::endl;
         std::cout << "injected lambda        : " << injected_lambda << std::endl;
+
+        if(previous_qp == -1) previous_qp = qp;
 
         // オフセットを足して計測する
         qp = qp + qp_offset;
@@ -241,6 +245,27 @@ void run(std::string config_name) {
         }else{
             expand_images = expand_images_with_qp[qp];
         }
+
+        if(qp != previous_qp){
+            std::cout << "--------------------- free ---------------------" << std::endl;
+
+            freeHEVCExpandImage(expand_images_with_qp[previous_qp], 22, 2, 4, 1920, 1024);
+            expand_images_with_qp.erase(previous_qp);
+            for(int i = 0 ; i < target_images_with_qp[previous_qp].size() ; i++){
+                for(int j = 0 ; j < target_images_with_qp[previous_qp][i].size() ; j++){
+                    target_images_with_qp[previous_qp][i][j].release();
+                }
+            }
+            target_images_with_qp.erase(previous_qp);
+            for(int i = 0 ; i < ref_images_with_qp[previous_qp].size() ; i++){
+                for(int j = 0 ; j < ref_images_with_qp[previous_qp][i].size() ; j++){
+                    ref_images_with_qp[previous_qp][i][j].release();
+                }
+            }
+            ref_images_with_qp.erase(previous_qp);
+
+        }
+
         triangle_division.constructPreviousCodingTree(foo, 0);
 
         std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_triangles.size(), std::vector< std::vector<int> >(block_size_x, std::vector<int>(block_size_y, -1)) );
@@ -271,7 +296,7 @@ void run(std::string config_name) {
         cv::Mat recon = getReconstructionDivisionImage(gaussRefImage, foo, block_size_x, block_size_y);
         cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo, diagonal_line_area_flag);
         cv::Mat color = triangle_division.getPredictedColorImageFromCtu(foo, diagonal_line_area_flag, getPSNR(target_image, p_image));
-
+        cv::Mat merge_color = triangle_division.getMergeModeColorImageFromCtu(foo, diagonal_line_area_flag);
 
         int code_length = triangle_division.getCtuCodeLength(foo);
         std::string log_file_suffix = out_file_suffix + std::to_string(qp) + "_" + getCurrentTimestamp();
@@ -279,6 +304,10 @@ void run(std::string config_name) {
         std::cout << "PSNR:" << getPSNR(target_image, p_image) << " code_length:" << code_length << std::endl;
         std::cout << log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png" << std::endl;
 
+        time_t end = clock();
+
+        const double time = static_cast<double>(end - start) / CLOCKS_PER_SEC * 1000.0;
+        printf("time %lf[ms]\n", time);
 //        Decoder decoder(ref_image, target_image);
 //        decoder.initTriangle(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);
 //        decoder.reconstructionTriangle(foo);
@@ -299,7 +328,7 @@ void run(std::string config_name) {
         Analyzer analayzer(log_file_suffix);
         analayzer.storeDistributionOfMv(foo, log_directory);
         analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
-        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image));
+        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time);
         analayzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
 #endif
 #endif
@@ -312,6 +341,7 @@ void run(std::string config_name) {
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", triangle_division.getMvImage(foo));
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mode_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_patch_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", recon);
+            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_merge_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", merge_color);
         }
 
         for(int i = 0 ; i < foo.size() ; i++) {
@@ -319,6 +349,7 @@ void run(std::string config_name) {
         }
         std::vector<CodingTreeUnit *>().swap(foo);
 
+        previous_qp = qp;
     }
     ofs.close();
 }

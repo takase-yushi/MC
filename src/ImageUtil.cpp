@@ -403,6 +403,38 @@ void freeExpandImages(EXPAND_ARRAY_TYPE expand_images, int expand, int filter_nu
 
 }
 
+void freeHEVCExpandImage(EXPAND_ARRAY_TYPE expand_images, int expand, int filter_num, int step_num, int rows, int cols){
+    for(int filter = 0 ; filter < filter_num ; filter++){
+        for(int step = 3 ; step < step_num ; step++){
+            auto current_ref_expand = expand_images[filter][step][0];
+            auto current_ref_org_expand = expand_images[filter][step][1];
+            auto current_target_expand = expand_images[filter][step][2];
+            auto current_target_org_expand = expand_images[filter][step][3];
+
+            for (int d = -4 * expand; d < 4 * (cols + expand); d++) {
+                current_target_expand[d] -= 4 * expand;
+                current_ref_expand[d] -= 4 * expand;
+                free(current_ref_expand[d]);
+                free(current_target_expand[d]);
+
+                current_target_org_expand[d] -= 4 * expand;
+                current_ref_org_expand[d] -= 4 * expand;
+                free(current_ref_org_expand[d]);
+                free(current_target_org_expand[d]);
+            }
+
+            current_target_expand -= 4 * expand;
+            current_ref_expand -= 4 * expand;
+            free(current_target_expand);
+            free(current_ref_expand);
+
+            current_target_org_expand -= 4 * expand;
+            current_ref_org_expand -= 4 * expand;
+            free(current_target_org_expand);
+            free(current_ref_org_expand);
+        }
+    }
+}
 
 /**
  * @fn double w(double x)
@@ -501,12 +533,11 @@ cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit
     rec.reconstructionTriangle(ctu);
     std::vector<Point3Vec> hoge = rec.getTriangleCoordinateList();
 
-    cv::Mat reconstructedImage = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_000413_limit.bmp");
     for(const auto foo : hoge) {
-        drawTriangle(reconstructedImage, foo.p1, foo.p2, foo.p3, cv::Scalar(255, 255, 255));
+        drawTriangle(image, foo.p1, foo.p2, foo.p3, cv::Scalar(255, 255, 255));
     }
 
-    return reconstructedImage;
+    return image;
 }
 
 /**
