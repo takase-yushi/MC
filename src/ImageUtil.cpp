@@ -533,12 +533,11 @@ cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit
     rec.reconstructionTriangle(ctu);
     std::vector<Point3Vec> hoge = rec.getTriangleCoordinateList();
 
-    cv::Mat reconstructedImage = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_000413_limit.bmp");
     for(const auto foo : hoge) {
-        drawTriangle(reconstructedImage, foo.p1, foo.p2, foo.p3, cv::Scalar(255, 255, 255));
+        drawTriangle(image, foo.p1, foo.p2, foo.p3, cv::Scalar(255, 255, 255));
     }
 
-    return reconstructedImage;
+    return image;
 }
 
 /**
