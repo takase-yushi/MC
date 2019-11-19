@@ -781,16 +781,16 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
                 cv::Point2f c = tmp_mv_warping[2] - tmp_mv_warping[0];
                 cv::Point2f d = tmp_mv_warping[1] - tmp_mv_warping[0];
 
-                double area_before_move = 0.5 * fabs(det); // 移動前の面積
-                double area_after_move = 0.5 * fabs((b.x + d.x)*(a.y + c.y) - (a.x + c.x)*(b.y + d.y)); // 移動後の面積
+                double area_before_move = fabs(det); // 移動前の面積
+                double area_after_move = fabs((b.x + d.x)*(a.y + c.y) - (a.x + c.x)*(b.y + d.y)); // 移動後の面積
 
                 double S[6];
-                S[0] = -0.5*(a.y + c.y - b.y - d.y);
-                S[1] = -0.5*(b.x + d.x - a.x - c.x);
-                S[2] = 0.5*(a.y + c.y);
-                S[3] = -0.5*(a.x + c.x);
-                S[4] = -0.5*(b.y + d.y);
-                S[5] = 0.5*(b.x + d.x);
+                S[0] = -(a.y + c.y - b.y - d.y);
+                S[1] = -(b.x + d.x - a.x - c.x);
+                S[2] = (a.y + c.y);
+                S[3] = -(a.x + c.x);
+                S[4] = -(b.y + d.y);
+                S[5] = (b.x + d.x);
 
                 MSE_translation = MSE_warping = 0.0;
                 gg_warping = cv::Mat::zeros(warping_matrix_dim, warping_matrix_dim, CV_64F);
