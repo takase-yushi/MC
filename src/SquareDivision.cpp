@@ -609,7 +609,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     std::vector<cv::Point2f> gauss_result_warping;
     cv::Point2f gauss_result_translation;
 
-    int warping_limit = 0; // 6: 64×64まで  4:32×32まで  2:16×16まで  0:8×8まで
+    int warping_limit = 2; // 6: 64×64まで  4:32×32まで  2:16×16まで  0:8×8まで
 
     if(cmt == nullptr) {
         cmt = previousMvList[0][square_index];
