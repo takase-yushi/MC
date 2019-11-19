@@ -2003,10 +2003,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     warping_vectors.clear(); vectors.clear();
     std::tie(warping_vectors, vectors) = getMergeSquareList(square_idx, translation_flag, coordinate);
 
-    if(vectors.size() < 4) {
+    if(vectors.size() < 5) {
         vectors.emplace_back(cv::Point2f(0.0, 0.0), MERGE);
     }
-    if(warping_vectors.size() < 4) {
+    if(warping_vectors.size() < 5) {
         std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> v;
         v.emplace_back(cv::Point2f(0.0, 0.0), MERGE);
         v.emplace_back(cv::Point2f(0.0, 0.0), MERGE);
