@@ -1444,9 +1444,11 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
         }
     }
     else if(tmp_reference_block.size() == 4) {
-        cv::Point2f sp4 = corners[squares[square_idx].p2_idx];
-        sp4.x++; sp4.y--;
-        if(getCornerIndex(sp4) == -1){  //右上にブロックがない場合
+        bool flag = false;
+        cv::Point2f p2 = corners[squares[square_idx].p2_idx];
+        if(p2.x == target_image.cols - 1) flag = true;
+
+        if(flag) { //右上にブロックがない場合
             if(translation_flag) {
                 //①
                 if (is_in_flag[0] && is_in_flag[1] && tmp_merge_vectors[0] == tmp_merge_vectors[1])
