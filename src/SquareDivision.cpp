@@ -1065,14 +1065,14 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         ctu->split_cu_flag = true;
         for (int j = 0; j < (int) subdiv_target_squares.size(); j++) {
             // j個目の四角形
-            square_gauss_results[square_indexes[j]] = split_mv_result[j];
             if (method_flags[j] == MV_CODE_METHOD::MERGE) {
                 if (split_mv_result[j].translation_flag) {
-                    square_gauss_results[square_indexes[j]].mv_translation = original_mv_translation[j];
+                    split_mv_result[j].mv_translation = original_mv_translation[j];
                 } else {
-                    square_gauss_results[square_indexes[j]].mv_warping = original_mv_warping[j];
+                    split_mv_result[j].mv_warping = original_mv_warping[j];
                 }
             }
+            square_gauss_results[square_indexes[j]] = split_mv_result[j];
             split(expand_images, ctus[j], cmts[j], subdiv_target_squares[j], square_indexes[j], j, steps - 2);
         }
 
