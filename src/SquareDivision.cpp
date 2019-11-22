@@ -961,7 +961,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     cv::Point2f original_mv_translation[4];
     std::vector<cv::Point2f> original_mv_warping[4];
     double cost_after_subdivs[4];
-    int code_lengthes[4];
     MV_CODE_METHOD method_flags[4];
     CollocatedMvTree *cmts[4];
 
@@ -1002,14 +1001,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             if(cost_translation < cost_warping || (steps - 2 < warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY){
                 square_gauss_results[square_indexes[j]].translation_flag = true;
                 cost_after_subdivs[j] = cost_translation;
-                code_lengthes[j] = code_length_translation;
                 method_flags[j] = method_translation;
                 mvd = mvd_translation;
                 split_mv_result[j] = GaussResult(mv_warping, mv_translation, error_translation, square_size, true, error_translation, error_warping);
             }else{
                 square_gauss_results[square_indexes[j]].translation_flag = false;
                 cost_after_subdivs[j] = cost_warping;
-                code_lengthes[j] = code_length_warping;
                 method_flags[j] = method_warping;
                 mvd = mvd_warping;
                 split_mv_result[j] = GaussResult(mv_warping, mv_translation, error_warping, square_size, false, error_translation, error_warping);
@@ -1035,7 +1032,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                     {mv_translation, mv_translation, mv_translation}, error_translation,
                     square_indexes[j], j, cmts[j]->mv1, ctus[j], true, dummy, steps - 2);
             cost_after_subdivs[j] = cost_translation;
-            code_lengthes[j] = code_length_translation;
             method_flags[j] = method_translation;
         }
 
@@ -1079,7 +1075,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 ctu->node4->mv2 = split_mv_result[j].mv_warping[1];
                 ctu->node4->mv3 = split_mv_result[j].mv_warping[2];
             }
-            ctu->node4->code_length = code_lengthes[j];
             ctu->node4->translation_flag = split_mv_result[j].translation_flag;
             ctu->node4->method = method_flags[j];
             square_gauss_results[square_indexes[j]] = split_mv_result[j];
