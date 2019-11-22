@@ -60,15 +60,15 @@ public:
 public:
     GaussResult();
 
-    GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvTranslation, double residual,
-                int squareSize, bool translationFlag, double residual_bm, double residual_newton);
+    GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvTranslation, double residual_warping, double residual_translation,
+                int squareSize, bool translationFlag, double residual_bm);
     std::vector<cv::Point2f> mv_warping;
     cv::Point2f mv_translation;
-    double residual;
+    double residual_warping;
+    double residual_translation;
     int square_size;
     bool translation_flag;
     double residual_bm;
-    double residual_newton;
     MV_CODE_METHOD method;
 };
 

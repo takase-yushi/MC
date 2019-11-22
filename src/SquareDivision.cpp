@@ -373,7 +373,7 @@ int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx)
     squares.emplace_back(square);
     isCodedSquare.emplace_back(false);
     square_gauss_results.emplace_back();
-    square_gauss_results[square_gauss_results.size() - 1].residual = -1.0;
+    square_gauss_results[square_gauss_results.size() - 1].residual_translation = -1.0;
     reference_block_list.emplace_back();
     merge_reference_block_list.emplace_back();
 
@@ -620,20 +620,23 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         cmt = previousMvList[0][square_index];
     }
 
-    if(square_gauss_results[square_index].residual > 0) {
+    if(square_gauss_results[square_index].residual_translation > 0) {
         GaussResult result_before = square_gauss_results[square_index];
         gauss_result_warping = result_before.mv_warping;
         gauss_result_translation = result_before.mv_translation;
-        RMSE_before_subdiv = result_before.residual;
         square_size = result_before.square_size;
         translation_flag = result_before.translation_flag;
-        if(translation_flag){
-            error_translation = result_before.residual;
-        }else{
-            error_warping = result_before.residual;
-        }
+        error_translation = result_before.residual_translation;
+        error_warping = result_before.residual_warping;
         ctu->error_bm = result_before.residual_bm;
-        ctu->error_newton = result_before.residual_newton;
+        if(translation_flag) {
+            ctu->error_newton = result_before.residual_translation;
+            RMSE_before_subdiv = result_before.residual_translation;
+        }
+        else {
+            ctu->error_newton = result_before.residual_warping;
+            RMSE_before_subdiv = result_before.residual_warping;
+        }
 
         if(square_gauss_results[square_index].translation_flag) {
             std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
@@ -665,7 +668,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             square_gauss_results[square_index].mv_translation = gauss_result_translation;
             square_gauss_results[square_index].mv_warping = gauss_result_warping;
             square_gauss_results[square_index].square_size = square_size;
-            square_gauss_results[square_index].residual = RMSE_before_subdiv;
 
             std::tie(cost_translation, code_length_translation, mvd_translation, selected_index_translation, method_translation) = getMVD(
                     {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
@@ -684,7 +686,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 selected_index = selected_index_translation;
                 method_flag = method_translation;
                 square_gauss_results[square_index].translation_flag = true;
-                square_gauss_results[square_index].residual = error_translation;
                 square_gauss_results[square_index].method = method_translation;
                 translation_flag = true;
             }else{
@@ -695,7 +696,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 selected_index = selected_index_warping;
                 method_flag = method_warping;
                 square_gauss_results[square_index].translation_flag = false;
-                square_gauss_results[square_index].residual = error_warping;
                 square_gauss_results[square_index].method = method_warping;
                 translation_flag = false;
             }
@@ -717,7 +717,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             square_gauss_results[square_index].mv_warping = gauss_result_warping;
             square_gauss_results[square_index].mv_translation = gauss_result_translation;
             square_gauss_results[square_index].square_size = square_size;
-            square_gauss_results[square_index].residual = RMSE_before_subdiv;
+            square_gauss_results[square_index].residual_bm = RMSE_before_subdiv;
             square_gauss_results[square_index].translation_flag = true;
             translation_flag = true;
 
@@ -1003,13 +1003,13 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 cost_after_subdivs[j] = cost_translation;
                 method_flags[j] = method_translation;
                 mvd = mvd_translation;
-                split_mv_result[j] = GaussResult(mv_warping, mv_translation, error_translation, square_size, true, error_translation, error_warping);
+                split_mv_result[j] = GaussResult(mv_warping, mv_translation, error_warping, error_translation, square_size, true, error_translation);
             }else{
                 square_gauss_results[square_indexes[j]].translation_flag = false;
                 cost_after_subdivs[j] = cost_warping;
                 method_flags[j] = method_warping;
                 mvd = mvd_warping;
-                split_mv_result[j] = GaussResult(mv_warping, mv_translation, error_warping, square_size, false, error_translation, error_warping);
+                split_mv_result[j] = GaussResult(mv_warping, mv_translation, error_warping, error_translation, square_size, false, error_warping);
             }
 
         }else if(PRED_MODE == BM){
@@ -1021,9 +1021,10 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             mv_warping = tmp_bm_mv;
             mv_translation = tmp_bm_mv[2];
             error_translation = tmp_bm_errors[2];
+            error_warping = tmp_bm_errors[2];
             square_size = (double)1e6;
 
-            split_mv_result[j] = GaussResult(mv_warping, mv_translation, error_translation, square_size, true, tmp_bm_errors[2], tmp_error_newton);
+            split_mv_result[j] = GaussResult(mv_warping, mv_translation, error_warping, error_translation, square_size, true, tmp_bm_errors[2]);
 
             square_gauss_results[square_indexes[j]].translation_flag = true;
             square_gauss_results[square_indexes[j]].mv_translation = mv_translation;
@@ -2482,8 +2483,8 @@ SquareDivision::SquareDivision() {}
 SquareDivision::SplitResult::SplitResult(const Point4Vec &s1, const Point4Vec &s2, int type) : s1(s1), s2(s2), s_type(type) {}
 
 SquareDivision::GaussResult::GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvTranslation,
-                                         double residual, int squareSize, bool translationFlag, double residualBm, double residualNewton) : mv_warping(
-        mvWarping), mv_translation(mvTranslation), residual(residual), square_size(squareSize), translation_flag(translationFlag), residual_bm(residualBm), residual_newton(residualNewton) {}
+                                         double residual_warping, double residual_translation, int squareSize, bool translationFlag, double residualBm) : mv_warping(
+        mvWarping), mv_translation(mvTranslation), residual_warping(residual_warping), residual_translation(residual_translation), square_size(squareSize), translation_flag(translationFlag), residual_bm(residualBm) {}
 
 SquareDivision::GaussResult::GaussResult() {}
 
