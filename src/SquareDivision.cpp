@@ -649,7 +649,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             square_gauss_results[square_index].square_size = square_size;
             square_gauss_results[square_index].residual = RMSE_before_subdiv;
 
-            int cost_warping, cost_translation;
+            double cost_warping, cost_translation;
             MV_CODE_METHOD method_warping, method_translation;
             std::tie(cost_translation, std::ignore, std::ignore, std::ignore, method_translation) = getMVD(
                     {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
