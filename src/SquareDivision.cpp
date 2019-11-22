@@ -2065,8 +2065,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     ctu->y_greater_1_flag = result_flags.y_greater_1_flag;
     ctu->x_sign_flag = result_flags.x_sign_flag;
     ctu->y_sign_flag = result_flags.y_sign_flag;
-    ctu->mvds = mvds;
-    ctu->ref_triangle_idx = selected_idx;
     ctu->flags_code_sum = flag_code_sum;
     if(method != MV_CODE_METHOD::MERGE) {
         (ctu->mvds_x).clear();
