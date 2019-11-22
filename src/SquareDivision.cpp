@@ -2050,8 +2050,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     });
 
     //4分割の判定の為にRDコスト(mode)を計算し直す
-    double RDCost;
-    lambda = getLambdaMode(qp);
     double cost = std::get<0>(results[0]);
     int code_length = std::get<1>(results[0]);
     std::vector<cv::Point2f> mvds = std::get<2>(results[0]);
@@ -2084,6 +2082,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     }
 
 #if SPLIT_USE_SSE
+    double RDCost;
+    lambda = getLambdaMode(qp);
     if(method == MV_CODE_METHOD::MERGE){
         if(translation_flag) {
             double ret_residual = getSquareResidual_Mode(target_image, mvds, pixels_in_square, expansion_ref);
