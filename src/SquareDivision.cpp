@@ -638,15 +638,45 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             RMSE_before_subdiv = result_before.residual_warping;
         }
 
-        if(square_gauss_results[square_index].translation_flag) {
-            std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
-                    {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
-                    square_index, square_number, cmt->mv1, ctu, true, dummy, steps);
-        }else{
-            std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
-                    square_gauss_results[square_index].mv_warping, error_warping,
-                    square_index, square_number, cmt->mv1, ctu, false, dummy, steps);
-        }
+    std::tie(cost_translation, code_length_translation, mvd_translation, selected_index_translation, method_translation) = getMVD(
+            {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
+            square_index, square_number, cmt->mv1, ctu, true, dummy, steps);
+#if !GAUSS_NEWTON_TRANSLATION_ONLY
+    std::tie(cost_warping, code_length_warping, mvd_warping, selected_index_warping, method_warping) = getMVD(
+            gauss_result_warping, error_warping,
+            square_index, square_number, cmt->mv1, ctu, false, dummy, steps);
+#endif
+        square_gauss_results[square_index].residual_translation = error_translation;
+        square_gauss_results[square_index].residual_warping = error_warping;
+    if(cost_translation < cost_warping || (steps < warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
+        cost_before_subdiv = cost_translation;
+        code_length = code_length_translation;
+        mvd = mvd_translation;
+        selected_index = selected_index_translation;
+        method_flag = method_translation;
+        square_gauss_results[square_index].translation_flag = true;
+        square_gauss_results[square_index].method = method_translation;
+        translation_flag = true;
+    }else{
+        cost_before_subdiv = cost_warping;
+        code_length = code_length_warping;
+        mvd = mvd_warping;
+        selected_index = selected_index_warping;
+        method_flag = method_warping;
+        square_gauss_results[square_index].translation_flag = false;
+        square_gauss_results[square_index].method = method_warping;
+        translation_flag = false;
+    }
+
+//        if(square_gauss_results[square_index].translation_flag) {
+//            std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
+//                    {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
+//                    square_index, square_number, cmt->mv1, ctu, true, dummy, steps);
+//        }else{
+//            std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
+//                    square_gauss_results[square_index].mv_warping, error_warping,
+//                    square_index, square_number, cmt->mv1, ctu, false, dummy, steps);
+//        }
 
     }else {
         if(PRED_MODE == NEWTON) {
@@ -667,6 +697,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
             square_gauss_results[square_index].mv_translation = gauss_result_translation;
             square_gauss_results[square_index].mv_warping = gauss_result_warping;
+            square_gauss_results[square_index].residual_translation = error_translation;
+            square_gauss_results[square_index].residual_warping = error_warping;
             square_gauss_results[square_index].square_size = square_size;
 
             std::tie(cost_translation, code_length_translation, mvd_translation, selected_index_translation, method_translation) = getMVD(
