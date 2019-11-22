@@ -1065,21 +1065,21 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         ctu->split_cu_flag = true;
         for (int j = 0; j < (int) subdiv_target_squares.size(); j++) {
             // j個目の四角形
-            ctu->node4->square_index = square_indexes[j];
+            ctus[j]->square_index = square_indexes[j];
             if (split_mv_result[j].translation_flag) {
-                ctu->node4->mv1 = split_mv_result[j].mv_translation;
-                ctu->node4->mv2 = split_mv_result[j].mv_translation;
-                ctu->node4->mv3 = split_mv_result[j].mv_translation;
+                ctus[j]->mv1 = split_mv_result[j].mv_translation;
+                ctus[j]->mv2 = split_mv_result[j].mv_translation;
+                ctus[j]->mv3 = split_mv_result[j].mv_translation;
             } else {
-                ctu->node4->mv1 = split_mv_result[j].mv_warping[0];
-                ctu->node4->mv2 = split_mv_result[j].mv_warping[1];
-                ctu->node4->mv3 = split_mv_result[j].mv_warping[2];
+                ctus[j]->mv1 = split_mv_result[j].mv_warping[0];
+                ctus[j]->mv2 = split_mv_result[j].mv_warping[1];
+                ctus[j]->mv3 = split_mv_result[j].mv_warping[2];
             }
-            ctu->node4->translation_flag = split_mv_result[j].translation_flag;
-            ctu->node4->method = method_flags[j];
+            ctus[j]->translation_flag = split_mv_result[j].translation_flag;
+            ctus[j]->method = method_flags[j];
             square_gauss_results[square_indexes[j]] = split_mv_result[j];
             if (method_flags[j] == MV_CODE_METHOD::MERGE) {
-                if (ctu->node4->translation_flag) {
+                if (ctus[j]->translation_flag) {
                     square_gauss_results[square_indexes[j]].mv_translation = original_mv_translation[j];
                 } else {
                     square_gauss_results[square_indexes[j]].mv_warping = original_mv_warping[j];
