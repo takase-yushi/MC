@@ -646,8 +646,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             gauss_result_warping, error_warping,
             square_index, square_number, cmt->mv1, ctu, false, dummy, steps);
 #endif
-        square_gauss_results[square_index].residual_translation = error_translation;
-        square_gauss_results[square_index].residual_warping = error_warping;
     if(cost_translation < cost_warping || (steps < warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
         cost_before_subdiv = cost_translation;
         code_length = code_length_translation;
