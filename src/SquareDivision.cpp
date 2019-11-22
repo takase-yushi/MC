@@ -718,9 +718,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 //        std::cout << "cost_warping     : " << cost_before_subdiv << (method_flag ? "MERGE" : "SPATIAL") << std::endl;
     }
 
-    std::vector<cv::Point2i> ret_gauss2;
-
-    if(method_flag == MV_CODE_METHOD::MERGE || method_flag == MV_CODE_METHOD::MERGE_Collocated) {
+    if(method_flag == MV_CODE_METHOD::MERGE) {
         //参照ブロックを作るときのためにマージのベクトルを入れる
         square_gauss_results[square_index].mv_translation = mvd[0];
         square_gauss_results[square_index].mv_warping = mvd;
@@ -2004,11 +2002,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
 //            }
 //        }
 //    }
-
-    double sx = coordinate.p1.x;
-    double sy = coordinate.p1.y;
-    double lx = coordinate.p4.x;
-    double ly = coordinate.p4.y;
 
     int merge_count = 0;
 
