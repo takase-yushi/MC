@@ -864,7 +864,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     std::vector<cv::Point2f> mv_warping;
     std::vector<cv::Point2f> tmp_bm_mv;
     std::vector<double> tmp_bm_errors;
-    double tmp_error_newton;
     cv::Point2f original_mv_translation[4];
     std::vector<cv::Point2f> original_mv_warping[4];
     double cost_after_subdivs[4];
@@ -959,7 +958,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     for(int i = 0 ; i < 4 ; i++) isCodedSquare[square_indexes[i]] = false;
 
     double lambda = getLambdaPred(qp, (translation_flag ? 1.0 : 1.0));
-//    double lambda = getLambdaMode(qp);
 
     double alpha = 1.0;
     std::cout << "before   : " << cost_before_subdiv << "    after : " << alpha * (cost_after_subdivs[0] + cost_after_subdivs[1] + cost_after_subdivs[2] + cost_after_subdivs[3]) << std::endl;
@@ -1057,11 +1055,11 @@ SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1
 
 void SquareDivision::addReferenceBlock(Point4Vec subdiv_target_square, int square_index) {
     //追加する頂点を宣言                                           //
-    cv::Point2f sp1 = subdiv_target_square.p3;                 //   ---------------     ---------------     ---------------
-    cv::Point2f sp2 = subdiv_target_square.p3;                 //   |             |     |             |     |             |
-    cv::Point2f sp3 = subdiv_target_square.p2;                 //   |             |     |             |     |             |
-    cv::Point2f sp4 = subdiv_target_square.p2;                 //   |             |     |             |     |             |
-    cv::Point2f sp5 = subdiv_target_square.p1;                 //   |        sp5●|     |        sp4●|     |●sp3        |
+    cv::Point2f sp1 = subdiv_target_square.p3;                     //   ---------------     ---------------     ---------------
+    cv::Point2f sp2 = subdiv_target_square.p3;                     //   |             |     |             |     |             |
+    cv::Point2f sp3 = subdiv_target_square.p2;                     //   |             |     |             |     |             |
+    cv::Point2f sp4 = subdiv_target_square.p2;                     //   |             |     |             |     |             |
+    cv::Point2f sp5 = subdiv_target_square.p1;                     //   |        sp5●|     |        sp4●|     |●sp3        |
     //頂点の座標を調整                                             //   ---------------     ---------------     ---------------
     sp1.x--; sp1.y++;                                              //
     sp2.x--;                                                       //   ---------------     ---------------
@@ -1074,7 +1072,7 @@ void SquareDivision::addReferenceBlock(Point4Vec subdiv_target_square, int squar
     int sp3_idx = getCornerIndex(sp3);                             //   |        sp1●|
     int sp4_idx = getCornerIndex(sp4);                             //   |             |
     int sp5_idx = getCornerIndex(sp5);                             //   |             |
-    //   |             |
+                                                                   //   |             |
     if(sp1_idx != -1) {                                            //   ---------------
         // 1の頂点を入れる
         reference_block_list[square_index].emplace_back(sp1_idx);
