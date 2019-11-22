@@ -596,6 +596,11 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
     double RMSE_before_subdiv = 0.0;
     double error_warping, error_translation;
+    double cost_warping, cost_translation, cost_before_subdiv;
+    int code_length_warping, code_length_translation, code_length;
+    std::vector<cv::Point2f> mvd_warping, mvd_translation, mvd;
+    int selected_index_warping, selected_index_translation, selected_index;
+    MV_CODE_METHOD method_warping, method_translation, method_flag;
     cv::Point2f p1 = square.p1;
     cv::Point2f p2 = square.p2;
     cv::Point2f p3 = square.p3;
@@ -629,6 +634,17 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         }
         ctu->error_bm = result_before.residual_bm;
         ctu->error_newton = result_before.residual_newton;
+
+        if(square_gauss_results[square_index].translation_flag) {
+            std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
+                    {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
+                    square_index, square_number, cmt->mv1, ctu, true, dummy, steps);
+        }else{
+            std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
+                    square_gauss_results[square_index].mv_warping, error_warping,
+                    square_index, square_number, cmt->mv1, ctu, false, dummy, steps);
+        }
+
     }else {
         if(PRED_MODE == NEWTON) {
             if(GAUSS_NEWTON_INIT_VECTOR) {
@@ -646,30 +662,38 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                         ref_images, target_images, expand_images, targetSquare, square_index, ctu, cv::Point2f(-1000, -1000), ref_hevc);
             }
 
+            square_gauss_results[square_index].mv_translation = gauss_result_translation;
+            square_gauss_results[square_index].mv_warping = gauss_result_warping;
             square_gauss_results[square_index].square_size = square_size;
             square_gauss_results[square_index].residual = RMSE_before_subdiv;
 
-            double cost_warping, cost_translation;
-            MV_CODE_METHOD method_warping, method_translation;
-            std::tie(cost_translation, std::ignore, std::ignore, std::ignore, method_translation) = getMVD(
+            std::tie(cost_translation, code_length_translation, mvd_translation, selected_index_translation, method_translation) = getMVD(
                     {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
                     square_index, square_number, cmt->mv1, ctu, true, dummy, steps);
 #if !GAUSS_NEWTON_TRANSLATION_ONLY
-            std::tie(cost_warping, std::ignore, std::ignore, std::ignore, method_warping) = getMVD(
+            std::tie(cost_warping, code_length_warping, mvd_warping, selected_index_warping, method_warping)= getMVD(
                     gauss_result_warping, error_warping,
                     square_index, square_number, cmt->mv1, ctu, false, dummy, steps);
 #endif
 //            std::cout << "cost_translation : " << cost_translation << ", cost_warping : " << cost_warping;
             if(cost_translation < cost_warping || (steps < warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
 //                std::cout << ", translation, " << (method_translation ? "MERGE" : "SPATIAL") << std::endl;
-                square_gauss_results[square_index].mv_translation = gauss_result_translation;
+                cost_before_subdiv = cost_translation;
+                code_length = code_length_translation;
+                mvd = mvd_translation;
+                selected_index = selected_index_translation;
+                method_flag = method_translation;
                 square_gauss_results[square_index].translation_flag = true;
                 square_gauss_results[square_index].residual = error_translation;
                 square_gauss_results[square_index].method = method_translation;
                 translation_flag = true;
             }else{
 //                std::cout << ", warping    , " << (method_warping ? "MERGE" : "SPATIAL") << std::endl;
-                square_gauss_results[square_index].mv_warping = gauss_result_warping;
+                cost_before_subdiv = cost_warping;
+                code_length = code_length_warping;
+                mvd = mvd_warping;
+                selected_index = selected_index_warping;
+                method_flag = method_warping;
                 square_gauss_results[square_index].translation_flag = false;
                 square_gauss_results[square_index].residual = error_warping;
                 square_gauss_results[square_index].method = method_warping;
@@ -698,24 +722,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             translation_flag = true;
 
         }
-    }
-
-    std::vector<cv::Point2f> mvd;
-    int selected_index;
-    MV_CODE_METHOD method_flag;
-    double cost_before_subdiv;
-    int code_length;
-
-    if(square_gauss_results[square_index].translation_flag) {
-        std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
-                {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
-                square_index, square_number, cmt->mv1, ctu, true, dummy, steps);
-//        std::cout << "cost_translation : " << cost_before_subdiv << (method_flag ? "MERGE" : "SPATIAL") << std::endl;
-    }else{
-        std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
-                square_gauss_results[square_index].mv_warping, error_warping,
-                square_index, square_number, cmt->mv1, ctu, false, dummy, steps);
-//        std::cout << "cost_warping     : " << cost_before_subdiv << (method_flag ? "MERGE" : "SPATIAL") << std::endl;
     }
 
     if(method_flag == MV_CODE_METHOD::MERGE) {
@@ -951,11 +957,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     std::vector<cv::Point2f> mv_warping;
     std::vector<cv::Point2f> tmp_bm_mv;
     std::vector<double> tmp_bm_errors;
-    int code_length_warping, code_length_translation;
-    std::vector<cv::Point2f> mvd_warping, mvd_translation;
-    double cost_warping, cost_translation;
     double tmp_error_newton;
-    MV_CODE_METHOD method_warping, method_translation;
     cv::Point2f original_mv_translation[4];
     std::vector<cv::Point2f> original_mv_warping[4];
     double cost_after_subdivs[4];
