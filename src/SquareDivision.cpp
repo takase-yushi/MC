@@ -949,17 +949,15 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 #if !MVD_DEBUG_LOG
 //    #pragma omp parallel for
 #endif
-    double error_warping_tmp, error_translation_tmp;
-    int square_size_tmp;
-    cv::Point2f mv_translation_tmp;
-    std::vector<cv::Point2f> mv_warping_tmp;
+    cv::Point2f mv_translation;
+    std::vector<cv::Point2f> mv_warping;
     std::vector<cv::Point2f> tmp_bm_mv;
     std::vector<double> tmp_bm_errors;
     int code_length_warping, code_length_translation;
-    std::vector<cv::Point2f> warping_mvd, translation_mvd;
-    double cost_warping_tmp, cost_translation_tmp;
+    std::vector<cv::Point2f> mvd_warping, mvd_translation;
+    double cost_warping, cost_translation;
     double tmp_error_newton;
-    MV_CODE_METHOD method_warping_tmp, method_translation_tmp;
+    MV_CODE_METHOD method_warping, method_translation;
     cv::Point2f original_mv_translation[4];
     std::vector<cv::Point2f> original_mv_warping[4];
     double cost_after_subdivs[4];
@@ -975,45 +973,46 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         if(PRED_MODE == NEWTON){
             if(GAUSS_NEWTON_INIT_VECTOR) {
 //                std::tie(tmp_bm_mv, tmp_bm_errors) = fullpellBlockMatching(subdiv_target_squares[j], target_image, expansion_ref, square_indexes[j], ctus[j]);
-                std::tie(mv_warping_tmp, mv_translation_tmp, error_warping_tmp, error_translation_tmp,square_size_tmp) = Square_GaussNewton(
+                std::tie(mv_warping, mv_translation, error_warping, error_translation,square_size) = Square_GaussNewton(
                         ref_images, target_images, expand_images, subdiv_target_squares[j], square_indexes[j], ctus[j], tmp_bm_mv[2], ref_hevc);
 #if USE_BM_TRANSLATION_MV
                 error_translation_tmp = tmp_bm_errors[2];
                 mv_translation_tmp = tmp_bm_mv[2];
 #endif
             }else{
-                std::tie(mv_warping_tmp, mv_translation_tmp, error_warping_tmp, error_translation_tmp, square_size_tmp) = Square_GaussNewton(
+                std::tie(mv_warping, mv_translation, error_warping, error_translation, square_size) = Square_GaussNewton(
                         ref_images, target_images, expand_images, subdiv_target_squares[j], square_indexes[j], ctus[j], cv::Point2f(-1000, -1000), ref_hevc);
             }
 
-            std::tie(cost_translation_tmp, code_length_translation, translation_mvd, std::ignore, method_translation_tmp) = getMVD(
-                    {mv_translation_tmp, mv_translation_tmp, mv_translation_tmp}, error_translation_tmp,
+            square_gauss_results[square_indexes[j]].mv_translation = mv_translation;
+            square_gauss_results[square_indexes[j]].mv_warping = mv_warping;
+
+            std::tie(cost_translation, code_length_translation, mvd_translation, std::ignore, method_translation) = getMVD(
+                    {mv_translation, mv_translation, mv_translation}, error_translation,
                     square_indexes[j], j, cmts[j]->mv1, ctus[j], true, dummy, steps - 2);
 #if !GAUSS_NEWTON_TRANSLATION_ONLY
 
-            std::tie(cost_warping_tmp, code_length_warping, warping_mvd, std::ignore, method_warping_tmp) = getMVD(
-                    mv_warping_tmp, error_warping_tmp,
+            std::tie(cost_warping, code_length_warping, mvd_warping, std::ignore, method_warping) = getMVD(
+                    mv_warping, error_warping,
                     square_indexes[j], j, cmts[j]->mv1, ctus[j], false, dummy, steps - 2);
 #endif
 //            std::cout << "cost_translation_tmp : " << cost_translation_tmp << ", cost_warping_tmp : " << cost_warping_tmp << std::endl;
 
             mvd.clear();
-            if(cost_translation_tmp < cost_warping_tmp || (steps - 2 < warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY){
+            if(cost_translation < cost_warping || (steps - 2 < warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY){
                 square_gauss_results[square_indexes[j]].translation_flag = true;
-                square_gauss_results[square_indexes[j]].mv_translation = mv_translation_tmp;
-                cost_after_subdivs[j] = cost_translation_tmp;
+                cost_after_subdivs[j] = cost_translation;
                 code_lengthes[j] = code_length_translation;
-                method_flags[j] = method_translation_tmp;
-                mvd = translation_mvd;
-                split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_translation_tmp, square_size_tmp, true, error_translation_tmp, error_warping_tmp);
+                method_flags[j] = method_translation;
+                mvd = mvd_translation;
+                split_mv_result[j] = GaussResult(mv_warping, mv_translation, error_translation, square_size, true, error_translation, error_warping);
             }else{
                 square_gauss_results[square_indexes[j]].translation_flag = false;
-                square_gauss_results[square_indexes[j]].mv_warping = mv_warping_tmp;
-                cost_after_subdivs[j] = cost_warping_tmp;
+                cost_after_subdivs[j] = cost_warping;
                 code_lengthes[j] = code_length_warping;
-                method_flags[j] = method_warping_tmp;
-                mvd = warping_mvd;
-                split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_warping_tmp, square_size_tmp, false, error_translation_tmp, error_warping_tmp);
+                method_flags[j] = method_warping;
+                mvd = mvd_warping;
+                split_mv_result[j] = GaussResult(mv_warping, mv_translation, error_warping, square_size, false, error_translation, error_warping);
             }
 
         }else if(PRED_MODE == BM){
@@ -1022,22 +1021,22 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 #else
             std::tie(tmp_bm_mv, tmp_bm_errors) = ::blockMatching(subdiv_target_squares[j], target_image, expansion_ref);
 #endif
-            mv_warping_tmp = tmp_bm_mv;
-            mv_translation_tmp = tmp_bm_mv[2];
-            error_translation_tmp = tmp_bm_errors[2];
-            square_size_tmp = (double)1e6;
+            mv_warping = tmp_bm_mv;
+            mv_translation = tmp_bm_mv[2];
+            error_translation = tmp_bm_errors[2];
+            square_size = (double)1e6;
 
-            split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_translation_tmp, square_size_tmp, true, tmp_bm_errors[2], tmp_error_newton);
+            split_mv_result[j] = GaussResult(mv_warping, mv_translation, error_translation, square_size, true, tmp_bm_errors[2], tmp_error_newton);
 
             square_gauss_results[square_indexes[j]].translation_flag = true;
-            square_gauss_results[square_indexes[j]].mv_translation = mv_translation_tmp;
+            square_gauss_results[square_indexes[j]].mv_translation = mv_translation;
 
-            std::tie(cost_translation_tmp, code_length_translation, std::ignore, std::ignore, method_translation_tmp) = getMVD(
-                    {mv_translation_tmp, mv_translation_tmp, mv_translation_tmp}, error_translation_tmp,
+            std::tie(cost_translation, code_length_translation, std::ignore, std::ignore, method_translation) = getMVD(
+                    {mv_translation, mv_translation, mv_translation}, error_translation,
                     square_indexes[j], j, cmts[j]->mv1, ctus[j], true, dummy, steps - 2);
-            cost_after_subdivs[j] = cost_translation_tmp;
+            cost_after_subdivs[j] = cost_translation;
             code_lengthes[j] = code_length_translation;
-            method_flags[j] = method_translation_tmp;
+            method_flags[j] = method_translation;
         }
 
         //分割後の参照ブロックを作るときのために一旦マージのベクトルを入れる
