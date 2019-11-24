@@ -974,8 +974,8 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
     if(triangle_gauss_results[triangle_index].residual > 0) {
         GaussResult result_before = triangle_gauss_results[triangle_index];
-        gauss_result_warping = result_before.mv_warping;
-        gauss_result_translation = result_before.mv_translation;
+        gauss_result_warping = result_before.original_mv_warping;
+        gauss_result_translation = result_before.original_mv_translation;
         RMSE_before_subdiv = result_before.residual;
         triangle_size = result_before.triangle_size;
         translation_flag = result_before.translation_flag;
@@ -1075,13 +1075,13 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
     if(method_flag == MV_CODE_METHOD::MERGE || method_flag == MV_CODE_METHOD::MERGE2) {
         if(triangle_gauss_results[triangle_index].translation_flag) {
-            ctu->original_mv1 = triangle_gauss_results[triangle_index].mv_translation;
-            ctu->original_mv2 = triangle_gauss_results[triangle_index].mv_translation;
-            ctu->original_mv3 = triangle_gauss_results[triangle_index].mv_translation;
+            ctu->original_mv1 = triangle_gauss_results[triangle_index].original_mv_translation;
+            ctu->original_mv2 = triangle_gauss_results[triangle_index].original_mv_translation;
+            ctu->original_mv3 = triangle_gauss_results[triangle_index].original_mv_translation;
         }else{
-            ctu->original_mv1 = triangle_gauss_results[triangle_index].mv_warping[0];
-            ctu->original_mv2 = triangle_gauss_results[triangle_index].mv_warping[1];
-            ctu->original_mv3 = triangle_gauss_results[triangle_index].mv_warping[2];
+            ctu->original_mv1 = triangle_gauss_results[triangle_index].original_mv_warping[0];
+            ctu->original_mv2 = triangle_gauss_results[triangle_index].original_mv_warping[1];
+            ctu->original_mv3 = triangle_gauss_results[triangle_index].original_mv_warping[2];
         }
 
         triangle_gauss_results[triangle_index].mv_translation = mvd[0];
@@ -1279,10 +1279,12 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             if(cost_translation_tmp < cost_warping_tmp || (steps - 2 <= warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY){
                 triangle_gauss_results[triangle_indexes[j]].translation_flag = true;
                 triangle_gauss_results[triangle_indexes[j]].mv_translation = mv_translation_tmp;
+                triangle_gauss_results[triangle_indexes[j]].original_mv_translation = mv_translation_tmp;
                 split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_translation_tmp, triangle_size_tmp, true, error_translation_tmp, error_warping_tmp);
             }else{
                  triangle_gauss_results[triangle_indexes[j]].translation_flag = false;
-                 triangle_gauss_results[triangle_indexes[j]].mv_warping = mv_warping_tmp;
+                triangle_gauss_results[triangle_indexes[j]].mv_warping = mv_warping_tmp;
+                triangle_gauss_results[triangle_indexes[j]].original_mv_warping = mv_warping_tmp;
                 split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_warping_tmp, triangle_size_tmp, false, error_translation_tmp, error_warping_tmp);
             }
 
@@ -1296,7 +1298,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_translation_tmp, triangle_size_tmp, true, tmp_bm_errors[2], tmp_error_newton);
 
             triangle_gauss_results[triangle_indexes[j]].translation_flag = true;
-            triangle_gauss_results[triangle_indexes[j]].mv_translation = mv_translation_tmp;
+            triangle_gauss_results[triangle_indexes[j]].original_mv_translation = mv_translation_tmp;
         }
 
         isCodedTriangle[triangle_indexes[j]] = true;
