@@ -601,6 +601,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     std::vector<cv::Point2f> mvd_warping, mvd_translation, mvd;
     int selected_index_warping, selected_index_translation, selected_index;
     MV_CODE_METHOD method_warping, method_translation, method_flag;
+    FlagsCodeSum flag_code_sum_warping, flag_code_sum_translation, flag_code_sum;
+    Flags flag_result_warping, flag_result_translation, flag_result;
     cv::Point2f p1 = square.p1;
     cv::Point2f p2 = square.p2;
     cv::Point2f p3 = square.p3;
@@ -639,12 +641,11 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         }
 
         if(PRED_MODE == NEWTON) {
-            std::tie(cost_translation, code_length_translation, mvd_translation, selected_index_translation,
-                     method_translation) = getMVD(
+            std::tie(cost_translation, code_length_translation, mvd_translation, selected_index_translation,method_translation, flag_code_sum_translation, flag_result_translation) = getMVD(
                     {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
                     square_index, square_number, cmt->mv1, ctu, true, dummy, steps);
 #if !GAUSS_NEWTON_TRANSLATION_ONLY
-            std::tie(cost_warping, code_length_warping, mvd_warping, selected_index_warping, method_warping) = getMVD(
+            std::tie(cost_warping, code_length_warping, mvd_warping, selected_index_warping, method_warping, flag_code_sum_warping, flag_result_warping) = getMVD(
                     gauss_result_warping, error_warping,
                     square_index, square_number, cmt->mv1, ctu, false, dummy, steps);
 #endif
@@ -654,6 +655,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 mvd = mvd_translation;
                 selected_index = selected_index_translation;
                 method_flag = method_translation;
+                flag_code_sum = flag_code_sum_translation;
+                flag_result = flag_result_translation;
                 square_gauss_results[square_index].translation_flag = true;
                 square_gauss_results[square_index].method = method_translation;
                 translation_flag = true;
@@ -663,6 +666,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 mvd = mvd_warping;
                 selected_index = selected_index_warping;
                 method_flag = method_warping;
+                flag_code_sum = flag_code_sum_warping;
+                flag_result = flag_result_warping;
                 square_gauss_results[square_index].translation_flag = false;
                 square_gauss_results[square_index].method = method_warping;
                 translation_flag = false;
@@ -678,7 +683,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 //                    square_index, square_number, cmt->mv1, ctu, false, dummy, steps);
 //        }
         } else if(PRED_MODE == BM) {
-            std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
+            std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag, flag_code_sum, flag_result) = getMVD(
                     {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
                     square_index, square_number, cmt->mv1, ctu, true, dummy, steps);
         }
@@ -705,11 +710,11 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             square_gauss_results[square_index].residual_warping = error_warping;
             square_gauss_results[square_index].square_size = square_size;
 
-            std::tie(cost_translation, code_length_translation, mvd_translation, selected_index_translation, method_translation) = getMVD(
+            std::tie(cost_translation, code_length_translation, mvd_translation, selected_index_translation, method_translation, flag_code_sum_translation, flag_result_translation) = getMVD(
                     {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
                     square_index, square_number, cmt->mv1, ctu, true, dummy, steps);
 #if !GAUSS_NEWTON_TRANSLATION_ONLY
-            std::tie(cost_warping, code_length_warping, mvd_warping, selected_index_warping, method_warping)= getMVD(
+            std::tie(cost_warping, code_length_warping, mvd_warping, selected_index_warping, method_warping, flag_code_sum_warping, flag_result_warping)= getMVD(
                     gauss_result_warping, error_warping,
                     square_index, square_number, cmt->mv1, ctu, false, dummy, steps);
 #endif
@@ -721,6 +726,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 mvd = mvd_translation;
                 selected_index = selected_index_translation;
                 method_flag = method_translation;
+                flag_code_sum = flag_code_sum_translation;
+                flag_result = flag_result_translation;
                 square_gauss_results[square_index].translation_flag = true;
                 square_gauss_results[square_index].method = method_translation;
                 translation_flag = true;
@@ -731,6 +738,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 mvd = mvd_warping;
                 selected_index = selected_index_warping;
                 method_flag = method_warping;
+                flag_code_sum = flag_code_sum_warping;
+                flag_result = flag_result_warping;
                 square_gauss_results[square_index].translation_flag = false;
                 square_gauss_results[square_index].method = method_warping;
                 translation_flag = false;
@@ -756,7 +765,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             square_gauss_results[square_index].residual_bm = RMSE_before_subdiv;
             square_gauss_results[square_index].translation_flag = true;
             translation_flag = true;
-            std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
+            std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag, flag_code_sum, flag_result) = getMVD(
                     {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
                     square_index, square_number, cmt->mv1, ctu, true, dummy, steps);
         }
@@ -788,6 +797,29 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     ctu->translation_flag = translation_flag;
     ctu->method = method_flag;
     ctu->ref_square_idx = selected_index;
+    ctu->x_greater_0_flag = flag_result.x_greater_0_flag;
+    ctu->y_greater_0_flag = flag_result.y_greater_0_flag;
+    ctu->x_greater_1_flag = flag_result.x_greater_1_flag;
+    ctu->y_greater_1_flag = flag_result.y_greater_1_flag;
+    ctu->x_sign_flag = flag_result.x_sign_flag;
+    ctu->y_sign_flag = flag_result.y_sign_flag;
+    ctu->flags_code_sum = flag_code_sum;
+    if(method_flag != MV_CODE_METHOD::MERGE) {
+        (ctu->mvds_x).clear();
+        (ctu->mvds_y).clear();
+        (ctu->original_mvds_x).clear();
+        (ctu->original_mvds_y).clear();
+
+        if (translation_flag) {
+            (ctu->mvds_x).emplace_back(mvd[0].x);
+            (ctu->mvds_y).emplace_back(mvd[0].y);
+        } else {
+            for (int i = 0; i < 3; i++) {
+                (ctu->mvds_x).emplace_back(mvd[i].x);
+                (ctu->mvds_y).emplace_back(mvd[i].y);
+            }
+        }
+    }
 
     if(method_flag == SPATIAL) {
         ctu->mvds.clear();
@@ -892,12 +924,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             square_gauss_results[square_indexes[j]].mv_translation = mv_translation;
             square_gauss_results[square_indexes[j]].mv_warping = mv_warping;
 
-            std::tie(cost_translation, code_length_translation, mvd_translation, std::ignore, method_translation) = getMVD(
+            std::tie(cost_translation, code_length_translation, mvd_translation, std::ignore, method_translation, std::ignore, std::ignore) = getMVD(
                     {mv_translation, mv_translation, mv_translation}, error_translation,
                     square_indexes[j], j, cmts[j]->mv1, ctus[j], true, dummy, steps - 2);
 #if !GAUSS_NEWTON_TRANSLATION_ONLY
 
-            std::tie(cost_warping, code_length_warping, mvd_warping, std::ignore, method_warping) = getMVD(
+            std::tie(cost_warping, code_length_warping, mvd_warping, std::ignore, method_warping, std::ignore, std::ignore) = getMVD(
                     mv_warping, error_warping,
                     square_indexes[j], j, cmts[j]->mv1, ctus[j], false, dummy, steps - 2);
 #endif
@@ -935,7 +967,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             square_gauss_results[square_indexes[j]].translation_flag = true;
             square_gauss_results[square_indexes[j]].mv_translation = mv_translation;
 
-            std::tie(cost_translation, code_length_translation, std::ignore, std::ignore, method_translation) = getMVD(
+            std::tie(cost_translation, code_length_translation, std::ignore, std::ignore, method_translation, std::ignore, std::ignore) = getMVD(
                     {mv_translation, mv_translation, mv_translation}, error_translation,
                     square_indexes[j], j, cmts[j]->mv1, ctus[j], true, dummy, steps - 2);
             cost_after_subdivs[j] = cost_translation;
@@ -1756,7 +1788,7 @@ bool SquareDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE
  * @param[in] ctu CodingTreeUnit 符号木
  * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
  */
-std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, int square_number, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, int steps){
+std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> SquareDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, int square_number, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, int steps){
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors;
     std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> warping_vectors;   // ベクトルとモードを表すフラグのペア
     // 空間予測と時間予測の候補を取り出す
@@ -2091,29 +2123,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
     MV_CODE_METHOD method = std::get<4>(results[0]);
     FlagsCodeSum flag_code_sum = std::get<5>(results[0]);
     Flags result_flags = std::get<6>(results[0]);
-    ctu->x_greater_0_flag = result_flags.x_greater_0_flag;
-    ctu->y_greater_0_flag = result_flags.y_greater_0_flag;
-    ctu->x_greater_1_flag = result_flags.x_greater_1_flag;
-    ctu->y_greater_1_flag = result_flags.y_greater_1_flag;
-    ctu->x_sign_flag = result_flags.x_sign_flag;
-    ctu->y_sign_flag = result_flags.y_sign_flag;
-    ctu->flags_code_sum = flag_code_sum;
-    if(method != MV_CODE_METHOD::MERGE) {
-        (ctu->mvds_x).clear();
-        (ctu->mvds_y).clear();
-        (ctu->original_mvds_x).clear();
-        (ctu->original_mvds_y).clear();
-
-        if (translation_flag) {
-            (ctu->mvds_x).emplace_back(mvds[0].x);
-            (ctu->mvds_y).emplace_back(mvds[0].y);
-        } else {
-            for (int i = 0; i < 3; i++) {
-                (ctu->mvds_x).emplace_back(mvds[i].x);
-                (ctu->mvds_y).emplace_back(mvds[i].y);
-            }
-        }
-    }
 
 #if SPLIT_USE_SSE
     double RDCost;
@@ -2148,7 +2157,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> SquareDiv
 
     return {RDCost, code_length, mvds, selected_idx, method};
 #endif
-    return {cost, code_length, mvds, selected_idx, method};
+    return {cost, code_length, mvds, selected_idx, method, flag_code_sum, result_flags};
 }
 
 
