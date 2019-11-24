@@ -1426,30 +1426,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
         // 1つ目の頂点追加
         ctu->node1->triangle_index = t1_idx;
-        if(split_mv_result[0].translation_flag) {
-            ctu->node1->mv1 = split_mv_result[0].mv_translation;
-            ctu->node1->mv2 = split_mv_result[0].mv_translation;
-            ctu->node1->mv3 = split_mv_result[0].mv_translation;
-        }else{
-            ctu->node1->mv1 = split_mv_result[0].mv_warping[0];
-            ctu->node1->mv2 = split_mv_result[0].mv_warping[1];
-            ctu->node1->mv3 = split_mv_result[0].mv_warping[2];
-        }
         ctu->node1->code_length = code_length1;
         ctu->node1->translation_flag = split_mv_result[0].translation_flag;
         ctu->node1->method = method_flag1;
         triangle_gauss_results[t1_idx] = split_mv_result[0];
-        if(method_flag1 == MV_CODE_METHOD::MERGE || method_flag1 == MV_CODE_METHOD::MERGE2) {
-            if(ctu->node1->translation_flag){
-                ctu->node1->mv1 = triangle_gauss_results[triangle_indexes[0]].mv_translation;
-                ctu->node1->mv2 = triangle_gauss_results[triangle_indexes[0]].mv_translation;
-                ctu->node1->mv3 = triangle_gauss_results[triangle_indexes[0]].mv_translation;
-            }else{
-                ctu->node1->mv1 = triangle_gauss_results[triangle_indexes[0]].mv_warping[0];
-                ctu->node1->mv2 = triangle_gauss_results[triangle_indexes[0]].mv_warping[1];
-                ctu->node1->mv3 = triangle_gauss_results[triangle_indexes[0]].mv_warping[2];
-            }
-        }
+
         int next_step = steps - 2;
         if(ctu->node1->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
             next_step = 0;
@@ -1458,31 +1439,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
         // 2つ目の三角形
         ctu->node2->triangle_index = t2_idx;
-        if(split_mv_result[1].translation_flag){
-            ctu->node2->mv1 = split_mv_result[1].mv_translation;
-            ctu->node2->mv2 = split_mv_result[1].mv_translation;
-            ctu->node2->mv3 = split_mv_result[1].mv_translation;
-        }else{
-            ctu->node2->mv1 = split_mv_result[1].mv_warping[0];
-            ctu->node2->mv2 = split_mv_result[1].mv_warping[1];
-            ctu->node2->mv3 = split_mv_result[1].mv_warping[2];
-        }
         ctu->node2->code_length = code_length2;
         ctu->node2->translation_flag = split_mv_result[1].translation_flag;
         ctu->node2->method = method_flag2;
 
         triangle_gauss_results[t2_idx] = split_mv_result[1];
-        if(method_flag2 == MV_CODE_METHOD::MERGE || method_flag2 == MV_CODE_METHOD::MERGE2) {
-            if(ctu->node2->translation_flag){
-                ctu->node2->mv1 = triangle_gauss_results[triangle_indexes[1]].mv_translation;
-                ctu->node2->mv2 = triangle_gauss_results[triangle_indexes[1]].mv_translation;
-                ctu->node2->mv3 = triangle_gauss_results[triangle_indexes[1]].mv_translation;
-            }else{
-                ctu->node2->mv1 = triangle_gauss_results[triangle_indexes[1]].mv_warping[0];
-                ctu->node2->mv2 = triangle_gauss_results[triangle_indexes[1]].mv_warping[1];
-                ctu->node2->mv3 = triangle_gauss_results[triangle_indexes[1]].mv_warping[2];
-            }
-        }
         next_step = steps - 2;
         if(ctu->node2->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
             next_step = 0;
@@ -1491,30 +1452,10 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
         // 3つ目の三角形
         ctu->node3->triangle_index = t3_idx;
-        if(split_mv_result[2].translation_flag) {
-            ctu->node3->mv1 = split_mv_result[2].mv_translation;
-            ctu->node3->mv2 = split_mv_result[2].mv_translation;
-            ctu->node3->mv3 = split_mv_result[2].mv_translation;
-        }else{
-            ctu->node3->mv1 = split_mv_result[2].mv_warping[0];
-            ctu->node3->mv2 = split_mv_result[2].mv_warping[1];
-            ctu->node3->mv3 = split_mv_result[2].mv_warping[2];
-        }
         ctu->node3->code_length = code_length3;
         ctu->node3->translation_flag = split_mv_result[2].translation_flag;
         ctu->node3->method = method_flag3;
         triangle_gauss_results[t3_idx] = split_mv_result[2];
-        if(method_flag3 == MV_CODE_METHOD::MERGE || method_flag3 == MV_CODE_METHOD::MERGE2) {
-            if(ctu->node3->translation_flag){
-                ctu->node3->mv1 = triangle_gauss_results[triangle_indexes[2]].mv_translation;
-                ctu->node3->mv2 = triangle_gauss_results[triangle_indexes[2]].mv_translation;
-                ctu->node3->mv3 = triangle_gauss_results[triangle_indexes[2]].mv_translation;
-            }else{
-                ctu->node3->mv1 = triangle_gauss_results[triangle_indexes[2]].mv_warping[0];
-                ctu->node3->mv2 = triangle_gauss_results[triangle_indexes[2]].mv_warping[1];
-                ctu->node3->mv3 = triangle_gauss_results[triangle_indexes[2]].mv_warping[2];
-            }
-        }
         next_step = steps - 2;
         if(ctu->node3->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
             next_step = 0;
@@ -1523,30 +1464,10 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
         // 4つ目の三角形
         ctu->node4->triangle_index = t4_idx;
-        if(split_mv_result[3].translation_flag) {
-            ctu->node4->mv1 = split_mv_result[3].mv_translation;
-            ctu->node4->mv2 = split_mv_result[3].mv_translation;
-            ctu->node4->mv3 = split_mv_result[3].mv_translation;
-        }else{
-            ctu->node4->mv1 = split_mv_result[3].mv_warping[0];
-            ctu->node4->mv2 = split_mv_result[3].mv_warping[1];
-            ctu->node4->mv3 = split_mv_result[3].mv_warping[2];
-        }
         ctu->node4->code_length = code_length4;
         ctu->node4->translation_flag = split_mv_result[3].translation_flag;
         ctu->node4->method = method_flag4;
         triangle_gauss_results[t4_idx] = split_mv_result[3];
-        if(method_flag4 == MV_CODE_METHOD::MERGE || method_flag4 == MV_CODE_METHOD::MERGE2) {
-            if(ctu->node4->translation_flag){
-                ctu->node4->mv1 = triangle_gauss_results[triangle_indexes[3]].mv_translation;
-                ctu->node4->mv2 = triangle_gauss_results[triangle_indexes[3]].mv_translation;
-                ctu->node4->mv3 = triangle_gauss_results[triangle_indexes[3]].mv_translation;
-            }else{
-                ctu->node4->mv1 = triangle_gauss_results[triangle_indexes[3]].mv_warping[0];
-                ctu->node4->mv2 = triangle_gauss_results[triangle_indexes[3]].mv_warping[1];
-                ctu->node4->mv3 = triangle_gauss_results[triangle_indexes[3]].mv_warping[2];
-            }
-        }
         next_step = steps - 2;
         if(ctu->node4->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
             next_step = 0;
