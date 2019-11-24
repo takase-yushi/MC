@@ -1008,6 +1008,8 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
             triangle_gauss_results[triangle_index].mv_warping = gauss_result_warping;
             triangle_gauss_results[triangle_index].mv_translation = gauss_result_translation;
+            triangle_gauss_results[triangle_index].original_mv_warping = gauss_result_warping;
+            triangle_gauss_results[triangle_index].original_mv_translation = gauss_result_translation;
             triangle_gauss_results[triangle_index].triangle_size = triangle_size;
             triangle_gauss_results[triangle_index].residual = RMSE_before_subdiv;
 
