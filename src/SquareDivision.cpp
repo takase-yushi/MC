@@ -626,7 +626,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         GaussResult result_before = square_gauss_results[square_index];
         gauss_result_warping = result_before.mv_warping;
         gauss_result_translation = result_before.mv_translation;
-        square_size = result_before.square_size;
         translation_flag = result_before.translation_flag;
         error_translation = result_before.residual_translation;
         error_warping = result_before.residual_warping;
