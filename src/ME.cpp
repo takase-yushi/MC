@@ -1055,12 +1055,12 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     MSE_warping += fabs(f_org - g_org_warping);   // * (f_org - g_org_warping);
                 }
 
-                double mu = 10;
-                for(int row = 0 ; row < warping_matrix_dim ; row++){
-                    for(int col = 0 ; col < warping_matrix_dim ; col++) {
-                        gg_warping.at<double>(row, col) += mu * ((area_after_move * area_after_move * area_after_move - area_before_move * area_before_move * area_after_move) / (area_before_move * area_before_move * area_before_move * area_before_move) * S[row]);
-                    }
-                }
+//                double mu = 10;
+//                for(int row = 0 ; row < warping_matrix_dim ; row++){
+//                    for(int col = 0 ; col < warping_matrix_dim ; col++) {
+//                        gg_warping.at<double>(row, col) += mu * ((area_after_move * area_after_move * area_after_move - area_before_move * area_before_move * area_after_move) / (area_before_move * area_before_move * area_before_move * area_before_move) * S[row]);
+//                    }
+//                }
 
                 double Error_warping = MSE_warping;
                 double Error_translation = MSE_translation;
