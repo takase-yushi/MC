@@ -93,6 +93,7 @@ enum {
 #define USE_BM_TRANSLATION_MV false
 #define MV_LIST_MAX_NUM 5
 #define MERGE_MODE true
+#define MERGE2_ENABLE true
 #define STORE_IMG_LOG false
 #define RD_BLOCK_MATCHING true
 #define SPLIT_USE_SSE false

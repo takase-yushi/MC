@@ -776,6 +776,9 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         square_gauss_results[square_index].mv_warping = mvd;
         gauss_result_translation = mvd[0];
         gauss_result_warping = mvd;
+    } else if(method_flag == MV_CODE_METHOD::MERGE2) {
+        square_gauss_results[square_index].mv_warping[0] = mvd[0];
+        square_gauss_results[square_index].mv_warping[1] = mvd[1];
     }
 
     std::vector<cv::Point2f> mv;
@@ -803,7 +806,16 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     ctu->x_sign_flag = flag_result.x_sign_flag;
     ctu->y_sign_flag = flag_result.y_sign_flag;
     ctu->flags_code_sum = flag_code_sum;
-    if(method_flag != MV_CODE_METHOD::MERGE) {
+    if(method_flag != MV_CODE_METHOD::MERGE2) {
+        (ctu->mvds_x).clear();
+        (ctu->mvds_y).clear();
+        (ctu->original_mvds_x).clear();
+        (ctu->original_mvds_y).clear();
+
+        (ctu->mvds_x).emplace_back(mvd[2].x);
+        (ctu->mvds_y).emplace_back(mvd[2].y);
+
+    } else if(method_flag != MV_CODE_METHOD::MERGE) {
         (ctu->mvds_x).clear();
         (ctu->mvds_y).clear();
         (ctu->original_mvds_x).clear();
@@ -984,6 +996,11 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 square_gauss_results[square_indexes[j]].mv_warping = mvd;
             }
         }
+        else if(method_flags[j] == MV_CODE_METHOD::MERGE2) {
+            original_mv_warping[j] = square_gauss_results[square_indexes[j]].mv_warping;
+            square_gauss_results[square_indexes[j]].mv_warping[0] = mvd[0];
+            square_gauss_results[square_indexes[j]].mv_warping[1] = mvd[1];
+        }
         isCodedSquare[square_indexes[j]] = true;
     }
     for(int i = 0 ; i < 4 ; i++) isCodedSquare[square_indexes[i]] = false;
@@ -1008,6 +1025,10 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 } else {
                     split_mv_result[j].mv_warping = original_mv_warping[j];
                 }
+            }
+            else if(method_flags[j] == MV_CODE_METHOD::MERGE2) {
+                split_mv_result[j].mv_warping[0] = original_mv_warping[j][0];
+                split_mv_result[j].mv_warping[1] = original_mv_warping[j][1];
             }
             square_gauss_results[square_indexes[j]] = split_mv_result[j];
             split(expand_images, ctus[j], cmts[j], subdiv_target_squares[j], square_indexes[j], j, steps - 2);
@@ -1613,6 +1634,198 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
 
 
 /**
+ * @fn std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> SquareDivision::getMerge2SquareList(int square_idx, Point4Vec coordinate)
+ * @brief square_idx番目の四角形の参照候補ブロックの動きベクトルを返す
+ * @param[in] square_idx 符号化対照ブロックのインデックス
+ * @param[in] translation_flag 符号化対照ブロックのflag
+ * @param[in] coordinate 符号化対照ブロックの頂点の座標
+ * @param[in] image_size 画像のサイズ
+ * @return 候補ブロックの動きベクトルを返す [0]:マージ先のmv[0], [1]:マージ先のmv[1], [2]:自分のmv[2], [3]:マージ先のmv[2]
+ */
+std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> SquareDivision::getMerge2SquareList(int square_idx, Point4Vec coordinate) {
+    //隣接するブロックを取得する
+    std::vector<int> reference_vertexes = merge_reference_block_list[square_idx];
+    int i, j;
+    std::vector<int> tmp_reference_block;
+    for (i = 0 ; i < reference_vertexes.size() ; i++) {
+        tmp_reference_block.emplace_back(covered_square[reference_vertexes[i]]);
+    }
+
+//    std::cout << "reference_block_size : " << reference_block.size() << ", ";
+
+    std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors;
+    std::vector<cv::Point2f> tmp_merge_vectors;
+    std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> warping_vectors;
+    std::vector<std::vector<cv::Point2f>> tmp_warping_merge_vectors;
+    //参照可能候補に入れるかどうかを判定する配列
+    bool is_in_flag[5] = {true, true, true, true, true};
+    std::vector<cv::Point2f> on_hold_translation_vectors;
+
+    std::vector<int> reference_block_list;
+
+    //平行移動とワーピングの動きベクトル
+    for(i = 0 ; i < tmp_reference_block.size() ; i++) {
+        int reference_block_index = tmp_reference_block[i];
+        if(!isCodedSquare[reference_block_index]) {  //符号化済みでないブロックも参照候補リストに入れているのでその場合は空のものを入れておく
+            tmp_merge_vectors.emplace_back();
+            tmp_warping_merge_vectors.emplace_back();
+            is_in_flag[i] = false;                    //符号化済みでないものは入れないのでfalseにする
+            continue;
+        }
+        if(square_gauss_results[reference_block_index].translation_flag) { //参照候補ブロックが平行移動の場合
+            cv::Point2f current_mv = square_gauss_results[reference_block_index].mv_translation;
+            if ((current_mv.x + coordinate.p1.x < -SERACH_RANGE || current_mv.y + coordinate.p1.y < -SERACH_RANGE || current_mv.x + coordinate.p1.x >= target_image.cols + SERACH_RANGE || current_mv.y + coordinate.p1.y >= target_image.rows + SERACH_RANGE) ||
+                (current_mv.x + coordinate.p2.x < -SERACH_RANGE || current_mv.y + coordinate.p2.y < -SERACH_RANGE || current_mv.x + coordinate.p2.x >= target_image.cols + SERACH_RANGE || current_mv.y + coordinate.p2.y >= target_image.rows + SERACH_RANGE) ||
+                (current_mv.x + coordinate.p3.x < -SERACH_RANGE || current_mv.y + coordinate.p3.y < -SERACH_RANGE || current_mv.x + coordinate.p3.x >= target_image.cols + SERACH_RANGE || current_mv.y + coordinate.p3.y >= target_image.rows + SERACH_RANGE) ||
+                (current_mv.x + coordinate.p4.x < -SERACH_RANGE || current_mv.y + coordinate.p4.y < -SERACH_RANGE || current_mv.x + coordinate.p4.x >= target_image.cols + SERACH_RANGE || current_mv.y + coordinate.p4.y >= target_image.rows + SERACH_RANGE)) {
+                tmp_warping_merge_vectors.emplace_back();
+                is_in_flag[i] = false;
+            }
+            else {
+                std::vector<cv::Point2f> v{current_mv, current_mv, current_mv, current_mv};
+                tmp_warping_merge_vectors.emplace_back(v);
+//                tmp_warping_merge_vectors.emplace_back();
+//                is_in_flag[i] = false;
+            }
+
+        } else {  //参照候補ブロックがワーピングの場合
+            cv::Point2f current_mv1 = square_gauss_results[reference_block_index].mv_warping[0];
+            cv::Point2f current_mv2 = square_gauss_results[reference_block_index].mv_warping[1];
+            cv::Point2f current_mv3 = square_gauss_results[reference_block_index].mv_warping[2];
+#if MVD_DEBUG_LOG
+            std::cout << "target_square_coordinate:";
+            std::cout << corners[squares[square_idx].p1_idx] << " ";
+            std::cout << corners[squares[square_idx].p2_idx] << " ";
+            std::cout << corners[squares[square_idx].p3_idx] << " ";
+            std::cout << corners[squares[square_idx].p4_idx] << std::endl;
+            std::cout << "ref_square_coordinate:";
+            std::cout << corners[squares[tmp_reference_block[i]].p1_idx] << " ";
+            std::cout << corners[squares[tmp_reference_block[i]].p2_idx] << " ";
+            std::cout << corners[squares[tmp_reference_block[i]].p3_idx] << " ";
+            std::cout << corners[squares[tmp_reference_block[i]].p4_idx] <<std::endl;
+            std::cout << "ref_square_mvs:";
+            std::cout << current_mv1 << " " << current_mv2 << " " << current_mv3 << std::endl;
+#endif
+            std::vector<cv::Point2f> ref_mvs{current_mv1, current_mv2, current_mv3};
+            Square target_square = squares[square_idx];
+            cv::Point2f pp1 = coordinate.p1, pp2 = coordinate.p2, pp3 = coordinate.p3, pp4 = coordinate.p4;
+            Square ref_square = squares[reference_block_index];
+            std::vector<cv::Point2f> ref_square_coordinates{corners[ref_square.p1_idx], corners[ref_square.p2_idx], corners[ref_square.p3_idx], corners[ref_square.p4_idx]};
+            std::vector<cv::Point2f> target_square_coordinates;
+            target_square_coordinates.emplace_back(pp1);
+            target_square_coordinates.emplace_back(pp2);
+            target_square_coordinates.emplace_back(pp3);
+            std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_square_coordinates, ref_mvs, target_square_coordinates);
+            mvs.emplace_back(mvs[2]); //
+            mvs[2] = square_gauss_results[square_idx].mv_warping[2];
+            cv::Point2f p4 = pp3 + mvs[2] + pp2 + mvs[1] - pp1 - mvs[0]; //右下の頂点の変形後の座標
+            if ((mvs[0].x + coordinate.p1.x < -SERACH_RANGE || mvs[0].y + coordinate.p1.y < -SERACH_RANGE || mvs[0].x + coordinate.p1.x >= target_image.cols + SERACH_RANGE || mvs[0].y + coordinate.p1.y >= target_image.rows + SERACH_RANGE) ||
+                (mvs[1].x + coordinate.p2.x < -SERACH_RANGE || mvs[1].y + coordinate.p2.y < -SERACH_RANGE || mvs[1].x + coordinate.p2.x >= target_image.cols + SERACH_RANGE || mvs[1].y + coordinate.p2.y >= target_image.rows + SERACH_RANGE) ||
+                (mvs[2].x + coordinate.p3.x < -SERACH_RANGE || mvs[2].y + coordinate.p3.y < -SERACH_RANGE || mvs[2].x + coordinate.p3.x >= target_image.cols + SERACH_RANGE || mvs[2].y + coordinate.p3.y >= target_image.rows + SERACH_RANGE) ||
+                (p4.x < -SERACH_RANGE || p4.y < -SERACH_RANGE || p4.x >= target_image.cols + SERACH_RANGE || p4.y >= target_image.rows + SERACH_RANGE)) {
+                tmp_warping_merge_vectors.emplace_back();
+                is_in_flag[i] = false;
+            }
+            else {
+                std::vector<cv::Point2f> v{mvs[0], mvs[1], mvs[2], mvs[3]};
+                tmp_warping_merge_vectors.emplace_back(v);
+            }
+        }
+    }
+
+    if(tmp_reference_block.size() == 2) {
+        //③
+        if (is_in_flag[0] && is_in_flag[1] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[1])
+            is_in_flag[1] = false;
+    }
+    else if(tmp_reference_block.size() == 3) {
+        //①
+        if(is_in_flag[0] && is_in_flag[1] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[1])
+           is_in_flag[1] = false;
+        //④
+        if((is_in_flag[0] && is_in_flag[2] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[2]) ||
+           (is_in_flag[1] && is_in_flag[2] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[2]))
+            is_in_flag[2] = false;
+    }
+    else if(tmp_reference_block.size() == 4) {
+        bool flag = false;
+        cv::Point2f p2 = corners[squares[square_idx].p2_idx];
+        if(p2.x == target_image.cols - 1) flag = true;
+
+        if(flag) { //右上にブロックがない場合
+            //①
+            if (is_in_flag[0] && is_in_flag[1] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[1])
+                is_in_flag[1] = false;
+            //③
+            if (is_in_flag[0] && is_in_flag[2] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[2])
+                is_in_flag[2] = false;
+            //④
+            if ((is_in_flag[0] && is_in_flag[3] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[3]) ||
+                (is_in_flag[1] && is_in_flag[3] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[3]))
+                is_in_flag[3] = false;
+        }
+        else {
+            //①
+            if (is_in_flag[0] && is_in_flag[1] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[1])
+                is_in_flag[1] = false;
+            //②
+            if (is_in_flag[1] && is_in_flag[2] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[2])
+                is_in_flag[2] = false;
+            //④
+            if ((is_in_flag[0] && is_in_flag[3] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[3]) ||
+                (is_in_flag[1] && is_in_flag[3] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[3]))
+                is_in_flag[3] = false;
+        }
+    }
+    else if(tmp_reference_block.size() == 5) {
+        //①
+        if (is_in_flag[0] && is_in_flag[1] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[1])
+            is_in_flag[1] = false;
+        //②
+        if (is_in_flag[1] && is_in_flag[2] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[2])
+            is_in_flag[2] = false;
+        //③
+        if (is_in_flag[0] && is_in_flag[3] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[3])
+            is_in_flag[3] = false;
+        //④
+        if ((is_in_flag[0] && is_in_flag[4] && tmp_warping_merge_vectors[0] == tmp_warping_merge_vectors[4]) ||
+            (is_in_flag[1] && is_in_flag[4] && tmp_warping_merge_vectors[1] == tmp_warping_merge_vectors[4]))
+            is_in_flag[4] = false;
+    }
+    //重複がなく，符号化済みのブロックのみ入れる
+        for (j = 0; j < tmp_warping_merge_vectors.size(); j++) {
+            if (is_in_flag[j]) {
+//                if(square_gauss_results[tmp_reference_block[j]].translation_flag) {
+//                    on_hold_translation_vectors.emplace_back(tmp_warping_merge_vectors[j][0]);
+//                }
+//                else {
+                std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> v;
+                v.emplace_back(tmp_warping_merge_vectors[j][0], MERGE2);
+                v.emplace_back(tmp_warping_merge_vectors[j][1], MERGE2);
+                v.emplace_back(tmp_warping_merge_vectors[j][2], MERGE2);
+                v.emplace_back(tmp_warping_merge_vectors[j][3], MERGE2);
+                warping_vectors.emplace_back(v);
+//                }
+            }
+        }
+//        for(j = 0 ; j < on_hold_translation_vectors.size() ; j++) {
+//            if(warping_vectors.size() < 5) {
+//                std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> v;
+//                v.emplace_back(on_hold_translation_vectors[j], MERGE2);
+//                v.emplace_back(on_hold_translation_vectors[j], MERGE2);
+//                v.emplace_back(on_hold_translation_vectors[j], MERGE2);
+//                v.emplace_back(on_hold_translation_vectors[j], MERGE2);
+//                warping_vectors.emplace_back(v);
+//            }
+//        }
+
+//    std::cout << "square_index : " << square_idx << ", method : " << "MERGE2" << ", SquareList_size : " << warping_vectors.size() << std::endl;
+
+    return warping_vectors;
+}
+
+
+/**
  * @fn void SquareDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num)
  * @brief 過去の動きベクトルを参照するためのTreeを構築する
  * @param trees 分割形状
@@ -2082,6 +2295,11 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 //    }
 
     int merge_count = 0;
+    int merge2_flags_code = 0;
+
+#if MERGE2_ENABLE
+    merge2_flags_code++;
+#endif
 
     if(translation_flag) {
         for (int i = 0; i < vectors.size(); i++) {
@@ -2112,6 +2330,118 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code, mvs, merge_count, warping_vectors[i][0].second, FlagsCodeSum(0, 0, 0, 0), Flags());
             merge_count++;
         }
+#if MERGE2_ENABLE
+        warping_vectors = getMerge2SquareList(square_idx, coordinate);
+        if(warping_vectors.size() < 5) {
+            std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> v;
+            v.emplace_back(cv::Point2f(0.0, 0.0), MERGE2);
+            v.emplace_back(cv::Point2f(0.0, 0.0), MERGE2);
+            v.emplace_back(cv::Point2f(0.0, 0.0), MERGE2);
+            v.emplace_back(cv::Point2f(0.0, 0.0), MERGE2);
+            warping_vectors.emplace_back(v);
+        }
+        for (int i = 0; i < warping_vectors.size(); i++) {
+            std::vector<cv::Point2f> mvs;
+
+            mvs.emplace_back(warping_vectors[i][0].first);         //マージ先のmv[0]
+            mvs.emplace_back(warping_vectors[i][1].first);         //マージ先のmv[1]
+            mvs.emplace_back(warping_vectors[i][2].first);         //自分のMV[2]
+            mvs.emplace_back(warping_vectors[i][3].first);         //マージ先のmv[2]
+            FlagsCodeSum flag_code_sum(0, 0, 0, 0);
+            Flags flags;
+
+            cv::Point2f mvd = mvs[2] - mvs[3];
+#if MVD_DEBUG_LOG
+            std::cout << "target_vector_idx       :" << i << std::endl;
+            std::cout << "diff_target_mv(translation):" << current_mv << std::endl;
+            std::cout << "encode_mv(translation)     :" << mv[0] << std::endl;
+#endif
+            mvd = getQuantizedMv(mvd, 4);
+
+            // 正負の判定(使ってません！！！)
+            bool is_x_minus = mvd.x < 0;
+            bool is_y_minus = mvd.y < 0;
+
+            flags.x_sign_flag.emplace_back(is_x_minus);
+            flags.y_sign_flag.emplace_back(is_y_minus);
+
+#if MVD_DEBUG_LOG
+            std::cout << "mvd(translation)           :" << mvd << std::endl;
+#endif
+            mvd.x = std::fabs(mvd.x);
+            mvd.y = std::fabs(mvd.y);
+
+            mvd *= 4;
+            int abs_x = mvd.x;
+            int abs_y = mvd.y;
+#if MVD_DEBUG_LOG
+            std::cout << "4 * mvd(translation)       :" << mvd << std::endl;
+#endif
+
+            // 動きベクトル差分の絶対値が0より大きいのか？
+            bool is_x_greater_than_zero = abs_x > 0;
+            bool is_y_greater_than_zero = abs_y > 0;
+
+            flags.x_greater_0_flag.emplace_back(is_x_greater_than_zero);
+            flags.y_greater_0_flag.emplace_back(is_y_greater_than_zero);
+
+            flag_code_sum.countGreater0Code();
+            flag_code_sum.countGreater0Code();
+            flag_code_sum.setXGreater0Flag(is_x_greater_than_zero);
+            flag_code_sum.setYGreater0Flag(is_y_greater_than_zero);
+
+            // 動きベクトル差分の絶対値が1より大きいのか？
+            bool is_x_greater_than_one = abs_x > 1;
+            bool is_y_greater_than_one = abs_y > 1;
+
+            flags.x_greater_1_flag.emplace_back(is_x_greater_than_one);
+            flags.y_greater_1_flag.emplace_back(is_y_greater_than_one);
+
+            int mvd_code_length = 2;
+            if (is_x_greater_than_zero) {
+                mvd_code_length += 1;
+
+                if (is_x_greater_than_one) {
+                    int mvd_x_minus_2 = mvd.x - 2.0;
+                    mvd.x -= 2.0;
+                    mvd_code_length += getExponentialGolombCodeLength((int) mvd_x_minus_2, 0);
+                    flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_x_minus_2, 0));
+                }
+
+                flag_code_sum.countGreater1Code();
+                flag_code_sum.setXGreater1Flag(is_x_greater_than_one);
+                flag_code_sum.countSignFlagCode();
+            }
+
+            if (is_y_greater_than_zero) {
+                mvd_code_length += 1;
+
+                if (is_y_greater_than_one) {
+                    int mvd_y_minus_2 = mvd.y - 2.0;
+                    mvd.y -= 2.0;
+                    mvd_code_length += getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
+                    flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_y_minus_2, 0));
+                }
+
+                flag_code_sum.countGreater1Code();
+                flag_code_sum.setYGreater1Flag(is_y_greater_than_one);
+                flag_code_sum.countSignFlagCode();
+            }
+
+//            std::cout << "mvd_code_length" << mvd_code_length << std::endl;
+
+            // 参照箇所符号化
+            int reference_index = i; //std::get<1>(vector);
+            int reference_index_code_length = getUnaryCodeLength(reference_index);
+
+            // 各種フラグ分を(3*2)bit足してます
+            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code + merge2_flags_code);
+
+            std::vector<cv::Point2f> mvds{mvs[0], mvs[1], mvd};
+            // 結果に入れる
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length + flags_code + merge2_flags_code, mvds, i, warping_vectors[i][0].second, flag_code_sum, flags);
+        }
+#endif
     }
 #endif
 
@@ -2448,9 +2778,9 @@ void SquareDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat 
                     G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     B(out, (int)pixel.x, (int)pixel.y) = 0;
                 }
-            } else if(ctu->method == MV_CODE_METHOD::MERGE_Collocated) {
+            } else if(ctu->method == MV_CODE_METHOD::MERGE2) {
                 for(auto pixel : pixels) {
-                    R(out, (int)pixel.x, (int)pixel.y) = 0;
+                    R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     G(out, (int)pixel.x, (int)pixel.y) = 0;
                     B(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                 }
