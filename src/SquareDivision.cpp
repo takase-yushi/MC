@@ -978,7 +978,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             square_gauss_results[square_indexes[j]].translation_flag = true;
             square_gauss_results[square_indexes[j]].mv_translation = mv_translation;
 
-            std::tie(cost_translation, code_length_translation, std::ignore, std::ignore, method_translation, std::ignore, std::ignore) = getMVD(
+            std::tie(cost_translation, code_length_translation, mvd, std::ignore, method_translation, std::ignore, std::ignore) = getMVD(
                     {mv_translation, mv_translation, mv_translation}, error_translation,
                     square_indexes[j], j, cmts[j]->mv1, ctus[j], true, dummy, steps - 2);
             cost_after_subdivs[j] = cost_translation;
