@@ -2313,7 +2313,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             mvs.emplace_back(current_mv);
 
             double ret_residual = getSquareResidual_Pred(target_image, coordinate, mvs, pixels_in_square, ref_hevc);
-            double rd = (ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code)) * MERGE_ALPHA;
+            double rd = (ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code + merge2_flags_code)) * MERGE_ALPHA;
             results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code, mvs, merge_count, merge_vector.second, FlagsCodeSum(0, 0, 0, 0), Flags());
             merge_count++;
         }
@@ -2326,7 +2326,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             mvs.emplace_back(warping_vectors[i][2].first);
 
             double ret_residual = getSquareResidual_Pred(target_image, coordinate, mvs, pixels_in_square, ref_hevc);
-            double rd = (ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code)) * MERGE_ALPHA;
+            double rd = (ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code + merge2_flags_code)) * MERGE_ALPHA;
             results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code, mvs, merge_count, warping_vectors[i][0].second, FlagsCodeSum(0, 0, 0, 0), Flags());
             merge_count++;
         }
