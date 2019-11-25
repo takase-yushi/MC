@@ -1299,7 +1299,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                     triangle_gauss_results[triangle_indexes[j]].mv_warping = mvd_warping;
                 }
             }
-
         }else if(PRED_MODE == BM){
             std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_triangles[j], target_image, expansion_ref, diagonal_line_area_flag, triangle_indexes[j], ctus[j]);
             mv_warping_tmp = tmp_bm_mv;
@@ -1405,7 +1404,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         ctu->node1->code_length = code_length1;
         ctu->node1->translation_flag = split_mv_result[0].translation_flag;
         ctu->node1->method = method_flag1;
-        triangle_gauss_results[t1_idx] = split_mv_result[0];
 
         int next_step = steps - 2;
         if(ctu->node1->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
@@ -1419,7 +1417,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         ctu->node2->translation_flag = split_mv_result[1].translation_flag;
         ctu->node2->method = method_flag2;
 
-        triangle_gauss_results[t2_idx] = split_mv_result[1];
         next_step = steps - 2;
         if(ctu->node2->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
             next_step = 0;
@@ -1431,7 +1428,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         ctu->node3->code_length = code_length3;
         ctu->node3->translation_flag = split_mv_result[2].translation_flag;
         ctu->node3->method = method_flag3;
-        triangle_gauss_results[t3_idx] = split_mv_result[2];
         next_step = steps - 2;
         if(ctu->node3->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
             next_step = 0;
@@ -1443,7 +1439,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         ctu->node4->code_length = code_length4;
         ctu->node4->translation_flag = split_mv_result[3].translation_flag;
         ctu->node4->method = method_flag4;
-        triangle_gauss_results[t4_idx] = split_mv_result[3];
         next_step = steps - 2;
         if(ctu->node4->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
             next_step = 0;
