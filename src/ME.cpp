@@ -501,7 +501,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
     }
 
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
-        cv::Point2f tmp_mv_translation(0.1, 0.1);
+        cv::Point2f tmp_mv_translation(initial_vector.x, initial_vector.y);
         bool translation_update_flag = true;
 
         for(int step = 3 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
