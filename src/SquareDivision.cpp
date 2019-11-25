@@ -1084,6 +1084,12 @@ SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1
 
 }
 
+/**
+ * @fn SquareDivision::addReferenceBlock(Point4Vec subdiv_target_square, int square_index)
+ * @brief square_idx番目の四角形の参照候補ブロックを入れる(隣接する頂点のインデックスを入れる)
+ * @param[in] subdiv_target_square 符号化対照ブロックの頂点座標の集合
+ * @param[in] square_idx 符号化対照ブロックのインデックス
+ */
 void SquareDivision::addReferenceBlock(Point4Vec subdiv_target_square, int square_index) {
     //追加する頂点を宣言                                           //
     cv::Point2f sp1 = subdiv_target_square.p3;                     //   ---------------     ---------------     ---------------
