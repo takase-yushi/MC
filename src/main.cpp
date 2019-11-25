@@ -48,7 +48,7 @@ bool lambda_inject_flag;
 
 std::string out_file_suffix = "_enable_merge";
 
-std::vector<int> freq_newton;
+std::vector<int> freq_newton_warping, freq_newton_translation;
 
 int main(int argc, char *argv[]){
     // Write test codes below
@@ -272,8 +272,12 @@ void run(std::string config_name) {
 
         std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_triangles.size(), std::vector< std::vector<int> >(block_size_x, std::vector<int>(block_size_y, -1)) );
 
-        freq_newton.resize(21);
-        for(int i = 0 ; i < 20 ; i++) freq_newton[i] = 0;
+        freq_newton_warping.resize(21);
+        freq_newton_translation.resize(21);
+        for(int i = 0 ; i < freq_newton_warping.size() ; i++) {
+            freq_newton_warping[i] = 0;
+            freq_newton_translation[i] = 0;
+        }
 
         for (int i = 0; i < init_triangles.size(); i++) {
             if(i % 2 == 0){
@@ -356,10 +360,15 @@ void run(std::string config_name) {
         previous_qp = qp;
 
         std::ofstream ofs_newton;
-        ofs.open(getProjectDirectory(OS) + tasks[0].getLogDirectory() + "/Newton_freq_" + getCurrentTimestamp() + "_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".csv");
+        ofs_newton.open(getProjectDirectory(OS) + tasks[0].getLogDirectory() + "/Newton_freq_" + getCurrentTimestamp() + "_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".csv");
 
-        for(int i = 0 ; i < 20 ; i++) {
-            ofs << i + 1 << "," << freq_newton[i] << std::endl;
+        ofs_newton << "translation" << std::endl;
+        for(int i = 1 ; i < freq_newton_translation.size() ; i++) {
+            ofs_newton << i << "," << freq_newton_translation[i] << std::endl;
+        }
+        ofs_newton << "warping" << std::endl;
+        for(int i = 1 ; i < freq_newton_warping.size() ; i++) {
+            ofs_newton << i << "," << freq_newton_warping[i] << std::endl;
         }
 
         ofs.close();

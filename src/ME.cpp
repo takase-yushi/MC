@@ -778,6 +778,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
                 double eps = 1e-3;
 
+                iterate_counter++;
+
                 if(MSE_translation != 0.0) {
                     if (((fabs(prev_error_translation - MSE_translation) / MSE_translation) < eps)) {
                         translation_update_flag = false;
@@ -792,9 +794,10 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
                 prev_error_translation = MSE_translation;
                 prev_mv_translation = tmp_mv_translation;
-                iterate_counter++;
             }
 
+            extern std::vector<int> freq_newton_translation;
+            freq_newton_translation[std::min(iterate_counter, 20)]++;
             std::sort(v_stack_translation.begin(), v_stack_translation.end(), [](std::pair<cv::Point2f,double> a, std::pair<cv::Point2f,double> b){
                 return a.second < b.second;
             });
@@ -815,7 +818,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
     }
 
     // ワーピングの推定
-    extern std::vector<int> freq_newton;
+    extern std::vector<int> freq_newton_warping;
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
         std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(max_v_translation.x, max_v_translation.y));
         bool warping_update_flag = true;
@@ -1095,6 +1098,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     }
                 }
 
+                iterate_counter++;
+
                 double eps = 1e-3;
                 if(warping_update_flag) {
 //                    std::cout << iterate_counter << " " << MSE_warping << std::endl;
@@ -1115,10 +1120,9 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
                 prev_error_warping = MSE_warping;
                 prev_mv_warping = tmp_mv_warping;
-                iterate_counter++;
             }
 
-            freq_newton[std::min(iterate_counter, 20)]++;
+            freq_newton_warping[std::min(iterate_counter, 20)]++;
             std::sort(v_stack_warping.begin(), v_stack_warping.end(), [](std::pair<std::vector<cv::Point2f>,double> a, std::pair<std::vector<cv::Point2f>,double> b){
                 return a.second < b.second;
             });
