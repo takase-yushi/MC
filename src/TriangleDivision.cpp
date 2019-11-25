@@ -1333,15 +1333,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 {split_mv_result[0].mv_translation, split_mv_result[0].mv_translation, split_mv_result[0].mv_translation},
                 split_mv_result[0].residual,
                 triangle_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->node1, true, dummy);
-
-        if(method_flag1 == MV_CODE_METHOD::MERGE || method_flag1 == MV_CODE_METHOD::MERGE2) {
-            if(split_mv_result[0].translation_flag) {
-                gauss_result_translation = mvd[0];
-                triangle_gauss_results[triangle_indexes[0]].mv_translation = gauss_result_translation;
-            }else{
-                triangle_gauss_results[triangle_indexes[0]].mv_warping = mvd;
-            }
-        }
     }else{
         std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag1) = getMVD(
                 split_mv_result[0].mv_warping, split_mv_result[0].residual,
@@ -1355,15 +1346,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
                 {split_mv_result[1].mv_translation, split_mv_result[1].mv_translation, split_mv_result[1].mv_translation}, split_mv_result[1].residual,
                 triangle_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->node2, true, dummy);
-
-        if(method_flag2 == MV_CODE_METHOD::MERGE || method_flag2 == MV_CODE_METHOD::MERGE2) {
-            if(split_mv_result[1].translation_flag) {
-                gauss_result_translation = mvd[0];
-                triangle_gauss_results[triangle_indexes[1]].mv_translation = gauss_result_translation;
-            }else{
-                triangle_gauss_results[triangle_indexes[1]].mv_warping = mvd;
-            }
-        }
     }else{
         std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
                 split_mv_result[1].mv_warping, split_mv_result[1].residual,
@@ -1378,15 +1360,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 {split_mv_result[2].mv_translation, split_mv_result[2].mv_translation, split_mv_result[2].mv_translation},
                 split_mv_result[2].residual,
                 triangle_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->node3, true, dummy);
-
-        if(method_flag3 == MV_CODE_METHOD::MERGE || method_flag3 == MV_CODE_METHOD::MERGE2) {
-            if(split_mv_result[2].translation_flag) {
-                gauss_result_translation = mvd[0];
-                triangle_gauss_results[triangle_indexes[2]].mv_translation = gauss_result_translation;
-            }else{
-                triangle_gauss_results[triangle_indexes[2]].mv_warping = mvd;
-            }
-        }
     }else{
         std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag3) = getMVD(
                 split_mv_result[2].mv_warping, split_mv_result[2].residual,
@@ -1400,15 +1373,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
                 {split_mv_result[3].mv_translation, split_mv_result[3].mv_translation, split_mv_result[3].mv_translation}, split_mv_result[3].residual,
                 triangle_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->node4, true, dummy);
-
-        if(method_flag4 == MV_CODE_METHOD::MERGE || method_flag4 == MV_CODE_METHOD::MERGE2) {
-            if(split_mv_result[3].translation_flag) {
-                gauss_result_translation = mvd[0];
-                triangle_gauss_results[triangle_indexes[3]].mv_translation = gauss_result_translation;
-            }else{
-                triangle_gauss_results[triangle_indexes[3]].mv_warping = mvd;
-            }
-        }
     }else{
         std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
                 split_mv_result[3].mv_warping, split_mv_result[3].residual,
