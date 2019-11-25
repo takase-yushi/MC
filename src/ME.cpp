@@ -1118,6 +1118,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 iterate_counter++;
             }
 
+            freq_newton[std::min(iterate_counter, 20)]++;
             std::sort(v_stack_warping.begin(), v_stack_warping.end(), [](std::pair<std::vector<cv::Point2f>,double> a, std::pair<std::vector<cv::Point2f>,double> b){
                 return a.second < b.second;
             });

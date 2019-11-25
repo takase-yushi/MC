@@ -48,6 +48,8 @@ bool lambda_inject_flag;
 
 std::string out_file_suffix = "_enable_merge";
 
+std::vector<int> freq_newton;
+
 int main(int argc, char *argv[]){
     // Write test codes below
 //    std::string basePath = getProjectDirectory(OS);
@@ -270,6 +272,9 @@ void run(std::string config_name) {
 
         std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_triangles.size(), std::vector< std::vector<int> >(block_size_x, std::vector<int>(block_size_y, -1)) );
 
+        freq_newton.resize(21);
+        for(int i = 0 ; i < 20 ; i++) freq_newton[i] = 0;
+
         for (int i = 0; i < init_triangles.size(); i++) {
             if(i % 2 == 0){
                 bool flag = false;
@@ -334,7 +339,6 @@ void run(std::string config_name) {
 #endif
 #endif
 
-
         if(STORE_IMG_LOG) {
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
@@ -350,6 +354,15 @@ void run(std::string config_name) {
         std::vector<CodingTreeUnit *>().swap(foo);
 
         previous_qp = qp;
+
+        std::ofstream ofs_newton;
+        ofs.open(getProjectDirectory(OS) + tasks[0].getLogDirectory() + "/Newton_freq_" + getCurrentTimestamp() + "_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".csv");
+
+        for(int i = 0 ; i < 20 ; i++) {
+            ofs << i + 1 << "," << freq_newton[i] << std::endl;
+        }
+
+        ofs.close();
     }
     ofs.close();
 }
