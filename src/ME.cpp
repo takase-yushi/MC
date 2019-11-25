@@ -1040,7 +1040,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 #endif
                     }
 
-                    if(iterate_counter > 4){
+                    if(iterate_counter >= 0){
                         f = f_org;
                         g_warping = g_org_warping;
                     }
