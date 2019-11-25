@@ -41,6 +41,7 @@ void tests();
 #define DIVIDE_MODE LEFT_DIVIDE
 
 int qp;
+int qp_offset;
 int block_size_x;
 int block_size_y;
 int division_steps;
@@ -67,7 +68,10 @@ int main(int argc, char *argv[]){
 
 //getDiff_image();
 //    draw_HEVC_MergeMode("HM_minato_mirai_nointra_37.png", "result.txt");
-//    draw_parallelogram(cv::Point2f(-15, 15), cv::Point2f(-15, -15), cv::Point2f(15, 15));
+//    draw_parallelogram(cv::Point2f(18.5 * 5, 4.25 * 5), cv::Point2f(2.75 * 5, 5 * 5), cv::Point2f(-14.5 * 5, 3.25 * 5));
+//    test_getPredictedWarpingMv(cv::Point2f(18.5, 4.25), cv::Point2f(2.75, 5), cv::Point2f(-14.5, 3.25));
+//    test_getPredictedWarpingMv(cv::Point2f(-15, 15), cv::Point2f(-15, -15), cv::Point2f(15, 15));
+//    draw_parallelogram(cv::Point2f(0, 0), cv::Point2f(0, 0), cv::Point2f(0, 0));
 #endif
 
 }
@@ -95,6 +99,8 @@ void run(std::string config_name) {
     std::map<int, std::vector<std::vector<cv::Mat>>> ref_images_with_qp, target_images_with_qp;
     std::map<int, EXPAND_ARRAY_TYPE> expand_images_with_qp;
 
+    int previous_qp = -1;
+
     // 全画像分ループ
     for(const auto& task : tasks){
 
@@ -115,6 +121,7 @@ void run(std::string config_name) {
         block_size_x                            = task.getCtuWidth();
         block_size_y                            = task.getCtuHeight();
         qp                                      = task.getQp();
+        qp_offset                               = task.getQpOffset();
         division_steps                          = task.getDivisionStep();
 
         lambda_inject_flag                      = task.isLambdaEnable();
@@ -129,10 +136,16 @@ void run(std::string config_name) {
         std::cout << "ref_intra_file_path    : " << ref_intra_file_path << std::endl;
         std::cout << "ref_gauss file path    : " << ref_file_path << std::endl;
         std::cout << "QP                     : " << qp << std::endl;
+        std::cout << "QP + offset            : " << qp + qp_offset << std::endl;
         std::cout << "CTU_WIDTH              : " << block_size_x << std::endl;
         std::cout << "CTU_HEIGHT             : " << block_size_y << std::endl;
         std::cout << "lambda_inject_flag     : " << lambda_inject_flag << std::endl;
         std::cout << "injected lambda        : " << injected_lambda << std::endl;
+
+        if(previous_qp == -1) previous_qp = qp;
+
+        // オフセットを足して計測する
+        qp = qp + qp_offset;
 
         out_file_suffix = "_lambda_" + std::to_string(getLambdaPred(qp)) + "_";
 
@@ -332,6 +345,8 @@ void run_square(std::string config_name) {
     std::map<int, std::vector<std::vector<cv::Mat>>> ref_images_with_qp, target_images_with_qp;
     std::map<int, EXPAND_ARRAY_TYPE> expand_images_with_qp;
 
+    int previous_qp = -1;
+
     // 全画像分ループ
     for(const auto& task : tasks){
 
@@ -352,6 +367,7 @@ void run_square(std::string config_name) {
         block_size_x                            = task.getCtuWidth();
         block_size_y                            = task.getCtuHeight();
         qp                                      = task.getQp();
+        qp_offset                               = task.getQpOffset();
         division_steps                          = task.getDivisionStep();
 
         lambda_inject_flag                      = task.isLambdaEnable();
@@ -366,10 +382,16 @@ void run_square(std::string config_name) {
         std::cout << "ref_intra_file_path    : " << ref_intra_file_path << std::endl;
         std::cout << "ref_gauss file path    : " << ref_file_path << std::endl;
         std::cout << "QP                     : " << qp << std::endl;
+        std::cout << "QP + offset            : " << qp + qp_offset << std::endl;
         std::cout << "CTU_WIDTH              : " << block_size_x << std::endl;
         std::cout << "CTU_HEIGHT             : " << block_size_y << std::endl;
         std::cout << "lambda_inject_flag     : " << lambda_inject_flag << std::endl;
         std::cout << "injected lambda        : " << injected_lambda << std::endl;
+
+        if(previous_qp == -1) previous_qp = qp;
+
+        // オフセットを足して計測する
+        qp = qp + qp_offset;
 
         out_file_suffix = "_lambda_" + std::to_string(getLambdaPred(qp)) + "_";
 
