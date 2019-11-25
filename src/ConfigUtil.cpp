@@ -55,13 +55,14 @@ std::vector<Config> readTasks(std::string config_name) {
         std::string target_image    = task["target_image"   ].get<std::string>();
         std::string log_directory   = task["log_directory"].get<std::string>();
         int qp                      = static_cast<int>(task["QP"             ].get<double>());
+        int qp_offset               = static_cast<int>(task["QP_offset"      ].get<double>());
         int ctu_width               = static_cast<int>(task["ctu_width"      ].get<double>());
         int ctu_height              = static_cast<int>(task["ctu_height"     ].get<double>());
         int division_steps          = static_cast<int>(task["division_step"  ].get<double>());
 
         bool lambda_enable          = task["lambda_enable"].get<bool>();
         double lambda               = static_cast<double>(task["lambda"].get<double>());
-        tasks.emplace_back(enable_flag, img_directory, log_directory, gauss_ref_image, ref_image, target_image, qp, ctu_width, ctu_height, division_steps, lambda_enable, lambda);
+        tasks.emplace_back(enable_flag, img_directory, log_directory, gauss_ref_image, ref_image, target_image, qp, qp_offset, ctu_width, ctu_height, division_steps, lambda_enable, lambda);
     }
 
     return tasks;
@@ -125,7 +126,8 @@ void appendConfigItem(std::string input_file_path, std::string output_file_path)
             ofs << "            \"ctu_height\"     : " << static_cast<int>(task["ctu_height"].get<double>()) << "," << std::endl;
             ofs << "            \"division_step\"  : " << static_cast<int>(task["division_step"].get<double>()) << "," << std::endl;
             ofs << "            \"lambda_enable\"  : true," << std::endl;
-            ofs << "            \"lambda\"         : " << lambdas[i] << std::endl;
+            ofs << "            \"lambda\"         : " << lambdas[i] << "," << std::endl;
+            ofs << R"(            "QP_offset"      : 0)" << std::endl;
 
             if (count == array_size - 1) {
                 ofs << "        }" << std::endl;

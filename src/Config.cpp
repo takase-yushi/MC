@@ -55,7 +55,7 @@ double Config::getLambda() const {
 }
 
 Config::Config(bool enable, const std::string &imgDirectory, const std::string &logDirectory,
-               const std::string &gaussRefImage, const std::string &refImage, const std::string &targetImage, int qp,
+               const std::string &gaussRefImage, const std::string &refImage, const std::string &targetImage, int qp, int qpOffset,
                int ctuWidth, int ctuHeight, int divisionStep, bool lambdaEnable, double lambda) : enable(enable),
                                                                                                   img_directory(
                                                                                                           imgDirectory),
@@ -67,6 +67,7 @@ Config::Config(bool enable, const std::string &imgDirectory, const std::string &
                                                                                                   target_image(
                                                                                                           targetImage),
                                                                                                   qp(qp),
+                                                                                                  qp_offset(qpOffset),
                                                                                                   ctu_width(ctuWidth),
                                                                                                   ctu_height(ctuHeight),
                                                                                                   division_step(
@@ -74,3 +75,7 @@ Config::Config(bool enable, const std::string &imgDirectory, const std::string &
                                                                                                   lambda_enable(
                                                                                                           lambdaEnable),
                                                                                                   lambda(lambda) {}
+
+int Config::getQpOffset() const {
+    return qp_offset;
+}
