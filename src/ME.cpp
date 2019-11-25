@@ -725,7 +725,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
                 if(translation_update_flag){
 //                    std::cout << tmp_mv_translation << std::endl;
-                    std::cout << iterate_counter << " " << (double)MSE_translation / pixels_in_triangle.size() << std::endl;
+//                    std::cout << iterate_counter << " " << (double)MSE_translation / pixels_in_triangle.size() << std::endl;
                 }
 
                 if(translation_update_flag) {

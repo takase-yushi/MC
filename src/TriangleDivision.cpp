@@ -2704,9 +2704,6 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
         std::vector<cv::Point2f> mvs{mv, mv, mv};
         std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, block_size_x, block_size_y);
 
-        std::cout << "triangle_index:" << ctu->triangle_index << std::endl;
-        std::cout << std::boolalpha << ctu->translation_flag << std::endl;
-        std::cout << ctu->method << std::endl;
         if(ctu->translation_flag) {
             if(ctu->method == MV_CODE_METHOD::MERGE){
                 for(auto pixel : pixels) {
