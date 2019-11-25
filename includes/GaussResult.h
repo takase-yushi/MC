@@ -15,8 +15,8 @@ public:
 
     GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvParallel, double residual,
                 int triangleSize, bool translationFlag, double residual_bm, double residual_newton);
-    std::vector<cv::Point2f> mv_warping;
-    cv::Point2f mv_translation;
+    std::vector<cv::Point2f> mv_warping, original_mv_warping;
+    cv::Point2f mv_translation, original_mv_translation;
     double residual;
     int triangle_size;
     bool translation_flag;

@@ -99,6 +99,7 @@ enum {
 #define MERGE2_ENABLE true
 #define SEARCH_RANGE 16
 #define DISPLAY_RD_COST false
+#define COLLOCATED_ENABLE false
 
 const std::string OS = "Ubuntu";
 
