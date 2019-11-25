@@ -1946,10 +1946,12 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
     std::cout << corners[triangles[triangle_idx].first.p1_idx] << " " << corners[triangles[triangle_idx].first.p2_idx] << " " << corners[triangles[triangle_idx].first.p3_idx] << std::endl;
     #endif
 
+#if COLLOCATED_ENABLE
     if(!isMvExists(vectors, collocated_mv)) {
         vectors.emplace_back(collocated_mv, Collocated);
         warping_vectors.emplace_back();
     }
+#endif
 
     if(vectors.size() < 2) {
         vectors.emplace_back(cv::Point2f(0.0, 0.0), SPATIAL);
@@ -2160,11 +2162,12 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             int reference_index = i;
             int reference_index_code_length = getUnaryCodeLength(reference_index);
 
-            // 各種フラグ分を(3*2)bit足してます
-            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code);
+            // +1は新マージのフラグ
+            // ワーピングのみ適用するのでワーピングのみ足す
+            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code + 1);
 
             // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length + flags_code, mvds, i, vector.second, flag_code_sum, flags);
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length + flags_code + 1, mvds, i, vector.second, flag_code_sum, flags);
         }
     }
 
@@ -2251,8 +2254,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
 
                 if (!isMvExists(warping_vector_history, mvs) && warping_vector_history.size() <= MV_LIST_MAX_NUM) {
                     double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
-                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count));
-                    results.emplace_back(rd, getUnaryCodeLength(merge_count), mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
+                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code + 1);
+                    results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code + 1, mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
                     warping_vector_history.emplace_back(mvs[0], mvs[1], mvs[2]);
                 }
@@ -2383,8 +2386,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
                             warping2_mvds[j].y = mvd.y;
                         }
 
-                        double rd = ret_residual + lambda * (getUnaryCodeLength(merge2_count) + mvd_code_length + flags_code);
-                        results.emplace_back(rd, getUnaryCodeLength(merge2_count) + mvd_code_length + flags_code, mvs, merge2_count,
+                        double rd = ret_residual + lambda * (getUnaryCodeLength(merge2_count) + mvd_code_length + flags_code + 1);
+                        results.emplace_back(rd, getUnaryCodeLength(merge2_count) + mvd_code_length + flags_code + 1, mvs, merge2_count,
                                              MERGE2, flag_code_sum, flags);
                         merge2_count++;
                         warping2_vector_history.emplace_back(mvs[0], mvs[1], mvs[2]);
@@ -2701,6 +2704,9 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
         std::vector<cv::Point2f> mvs{mv, mv, mv};
         std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, block_size_x, block_size_y);
 
+        std::cout << "triangle_index:" << ctu->triangle_index << std::endl;
+        std::cout << std::boolalpha << ctu->translation_flag << std::endl;
+        std::cout << ctu->method << std::endl;
         if(ctu->translation_flag) {
             if(ctu->method == MV_CODE_METHOD::MERGE){
                 for(auto pixel : pixels) {
@@ -2708,28 +2714,6 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
                     G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     B(out, (int)pixel.x, (int)pixel.y) = 0;
                 }
-            }else if(ctu->method == MV_CODE_METHOD::MERGE2){
-
-                int share_count = 0;
-                for(auto f : ctu->share_flag) {
-                    if(f) share_count++;
-                }
-
-                if(share_count == 1){
-                    for(auto pixel : pixels) {
-                        R(out, (int)pixel.x, (int)pixel.y) = 54;
-                        G(out, (int)pixel.x, (int)pixel.y) = 115;
-                        B(out, (int)pixel.x, (int)pixel.y) = 255;
-                    }
-                }else if(share_count == 2){
-                    for(auto pixel : pixels) {
-                        R(out, (int)pixel.x, (int)pixel.y) = 212;
-                        G(out, (int)pixel.x, (int)pixel.y) = 61;
-                        B(out, (int)pixel.x, (int)pixel.y) = 0;
-                    }
-                }
-
-                std::cout << "------------------- MERGE2 -------------------" << std::endl;
             }else if(ctu->method == MV_CODE_METHOD::SPATIAL){
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
