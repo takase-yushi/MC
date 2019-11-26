@@ -465,7 +465,7 @@ double w(double x){
  * @param mode 補間モード。モードはImageUtil.hにenumで定義してある
  * @return 補間値
  */
-int img_ip(unsigned char **img, cv::Rect rect, double x, double y, int mode){
+double img_ip(unsigned char **img, cv::Rect rect, double x, double y, int mode){
     int x0, y0;          /* 補間点 (x, y) の整数部分 */
     double dx, dy;       /* 補間点 (x, y) の小数部分 */
     int nx, ny;          /* 双3次補間用のループ変数 */
@@ -516,7 +516,7 @@ int img_ip(unsigned char **img, cv::Rect rect, double x, double y, int mode){
     /*** リミッタを掛けて return ***/
     if (val >= 255.5) return 255;
     else if (val < -0.5) return 0;
-    else return (int) (val + 0.5);
+    else return val;
 }
 
 /**

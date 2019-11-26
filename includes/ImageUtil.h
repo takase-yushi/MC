@@ -30,7 +30,7 @@ cv::Mat getExpansionMatImage(cv::Mat &image, int k, int expansion_size, IP_MODE 
 bool isMyTriangle(const CodingTreeUnit* ctu, int triangle_index);
 std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const std::vector<std::vector<int>>& area_flag, int triangle_index, CodingTreeUnit* ctu, int block_size_x, int block_size_y);
 double w(double x);
-int img_ip(unsigned char **img, cv::Rect rect, double x, double y, int mode);
+double img_ip(unsigned char **img, cv::Rect rect, double x, double y, int mode);
 unsigned char** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size);
 cv::Mat getExpansionMatHEVCImage(cv::Mat image, int k, int expansion_size);
 double getTriangleResidual(unsigned char **ref_image, const cv::Mat &target_image, Point3Vec &triangle, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_triangle_pixels, cv::Rect rect);
