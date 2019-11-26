@@ -500,10 +500,13 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
         initial_vector.y = init_vector.y;
     }
 
+    extern std::vector<std::vector<int>> slow_newton_translation, slow_newton_warping;
+
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
         cv::Point2f tmp_mv_translation(initial_vector.x, initial_vector.y);
         bool translation_update_flag = true;
 
+        slow_newton_translation.emplace_back();
         for(int step = 3 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
 
             double scale = pow(2, 3 - step);
@@ -780,6 +783,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
                 iterate_counter++;
 
+                slow_newton_translation[slow_newton_translation.size() - 1].emplace_back(MSE_translation);
                 if(MSE_translation != 0.0) {
                     if (((fabs(prev_error_translation - MSE_translation) / MSE_translation) < eps)) {
                         translation_update_flag = false;
@@ -798,6 +802,11 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
             extern std::vector<int> freq_newton_translation;
             freq_newton_translation[std::min(iterate_counter, 20)]++;
+
+            if(iterate_counter < 15 && !slow_newton_translation.empty()) {
+                slow_newton_translation.erase(slow_newton_translation.begin() + slow_newton_translation.size() - 1);
+            }
+
             std::sort(v_stack_translation.begin(), v_stack_translation.end(), [](std::pair<cv::Point2f,double> a, std::pair<cv::Point2f,double> b){
                 return a.second < b.second;
             });
@@ -823,6 +832,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
         std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(max_v_translation.x, max_v_translation.y));
         bool warping_update_flag = true;
 
+        slow_newton_warping.emplace_back();
         for(int step = 3 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
 
             double scale = pow(2, 3 - step);
@@ -1105,7 +1115,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 //                    std::cout << iterate_counter << " " << MSE_warping << std::endl;
                 }
 
-
+                slow_newton_warping[slow_newton_warping.size() - 1].emplace_back(MSE_warping);
                 if(MSE_warping != 0.0) {
                     if ((fabs(prev_error_warping - MSE_warping) / MSE_warping < eps)) {
                         warping_update_flag = false;
@@ -1123,6 +1133,9 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
             }
 
             freq_newton_warping[std::min(iterate_counter, 20)]++;
+            if(iterate_counter < 15 && !slow_newton_warping.empty()) {
+                slow_newton_warping.erase(slow_newton_warping.begin() + slow_newton_warping.size() - 1);
+            }
             std::sort(v_stack_warping.begin(), v_stack_warping.end(), [](std::pair<std::vector<cv::Point2f>,double> a, std::pair<std::vector<cv::Point2f>,double> b){
                 return a.second < b.second;
             });

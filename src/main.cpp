@@ -49,6 +49,7 @@ bool lambda_inject_flag;
 std::string out_file_suffix = "_enable_merge";
 
 std::vector<int> freq_newton_warping, freq_newton_translation;
+std::vector<std::vector<int>> slow_newton_warping, slow_newton_translation;
 
 int main(int argc, char *argv[]){
     // Write test codes below
@@ -372,6 +373,26 @@ void run(std::string config_name) {
         }
 
         ofs.close();
+
+        std::ofstream ofs_newton2;
+        ofs_newton2.open(getProjectDirectory(OS) + tasks[0].getLogDirectory() + "/Slowlog_" + getCurrentTimestamp() + "_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".csv");
+        ofs_newton2 << "translation" << std::endl;
+        for(int i = 1 ; i < slow_newton_translation.size() ; i++) {
+            for(int j = 0 ; j < slow_newton_translation[i].size() ; j++) {
+                ofs_newton2 << slow_newton_translation[i][j] << std::endl;
+            }
+            ofs_newton2 << std::endl;
+
+        }
+        ofs_newton2 << "warping" << std::endl;
+        for(int i = 1 ; i < freq_newton_warping.size() ; i++) {
+            for(int j = 0 ; j < slow_newton_warping[i].size() ; j++) {
+                ofs_newton2 <<  slow_newton_warping[i][j] << std::endl;
+            }
+            ofs_newton2 << std::endl;
+        }
+
+        ofs_newton2.close();
     }
     ofs.close();
 }
