@@ -379,7 +379,7 @@ void run(std::string config_name) {
         ofs_newton2 << "translation" << std::endl;
         for(int i = 1 ; i < slow_newton_translation.size() ; i++) {
             for(int j = 0 ; j < slow_newton_translation[i].size() ; j++) {
-                ofs_newton2 << slow_newton_translation[i][j] << std::endl;
+                ofs_newton2 << j + 1 << slow_newton_translation[i][j] << std::endl;
             }
             ofs_newton2 << std::endl;
 
@@ -387,7 +387,7 @@ void run(std::string config_name) {
         ofs_newton2 << "warping" << std::endl;
         for(int i = 1 ; i < freq_newton_warping.size() ; i++) {
             for(int j = 0 ; j < slow_newton_warping[i].size() ; j++) {
-                ofs_newton2 <<  slow_newton_warping[i][j] << std::endl;
+                ofs_newton2 << j + 1 << slow_newton_warping[i][j] << std::endl;
             }
             ofs_newton2 << std::endl;
         }
