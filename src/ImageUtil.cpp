@@ -180,7 +180,7 @@ std::vector<std::vector<cv::Mat>> getRefImages(const cv::Mat& ref_image, const c
 
     // 参照画像のフィルタ処理（２）
     std::vector<cv::Mat> ref2_levels;
-    cv::Mat ref2_level_1 = gauss_ref_image;
+    cv::Mat ref2_level_1 = getAppliedLPFImage(gauss_ref_image);
     cv::Mat ref2_level_2 = half(ref2_level_1, 2);
     cv::Mat ref2_level_3 = half(ref2_level_2, 1);
     cv::Mat ref2_level_4 = half(ref2_level_3, 1);
@@ -219,7 +219,7 @@ std::vector<std::vector<cv::Mat>> getTargetImages(const cv::Mat target_image){
 
     // 対象画像のフィルタ処理（２）
     std::vector<cv::Mat> target2_levels;
-    cv::Mat target2_level_1 = getAppliedLPFImage(target_image);
+    cv::Mat target2_level_1 = target_image;
     cv::Mat target2_level_2 = half(target2_level_1, 2);
     cv::Mat target2_level_3 = half(target2_level_2, 1);
     cv::Mat target2_level_4 = half(target2_level_3, 1);
