@@ -439,7 +439,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
     cv::Mat delta_uv_warping = cv::Mat::zeros(warping_matrix_dim, 1, CV_64F); // 式(45)の左辺 delta
     cv::Mat delta_uv_translation = cv::Mat::zeros(translation_matrix_dim, 1, CV_64F); // 式(52)の右辺 delta
 
-    double MSE_warping, MSE_translation;
+    double MSE_warping;
     double min_error_warping = 1E6, min_error_translation = 1E6;
     double max_PSNR_warping = -1, max_PSNR_translation = -1;
 
@@ -450,8 +450,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
     std::vector<std::pair<std::vector<cv::Point2f>,double>> v_stack_warping;
     std::vector<std::pair<cv::Point2f,double>> v_stack_translation;
     std::vector<cv::Point2f> pixels_in_triangle;
-
-    bool translation_flag = true;
 
     cv::Point2f initial_vector(0.0, 0.0);
 
@@ -500,14 +498,32 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
         initial_vector.y = init_vector.y;
     }
 
-    extern std::vector<std::vector<int>> slow_newton_translation, slow_newton_warping;
+    extern std::vector<std::vector<std::vector<double>>> slow_newton_translation, slow_newton_warping;
+    extern std::vector<std::vector<std::vector<cv::Point2f>>> mv_newton_translation;
+    extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_translation1;
+    extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_translation2;
+    extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_translation3;
+    extern std::vector<std::vector<std::vector<cv::Point2f>>> p0_newton_translation;
+    extern std::vector<std::vector<std::vector<cv::Point2f>>> p1_newton_translation;
+    extern std::vector<std::vector<std::vector<cv::Point2f>>> p2_newton_translation;
 
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
         cv::Point2f tmp_mv_translation(initial_vector.x, initial_vector.y);
         bool translation_update_flag = true;
 
-        slow_newton_translation.emplace_back();
+        slow_newton_translation[filter_num].emplace_back();
+        mv_newton_translation[filter_num].emplace_back();
+
+        coordinate_newton_translation1[filter_num].emplace_back();
+        coordinate_newton_translation2[filter_num].emplace_back();
+        coordinate_newton_translation3[filter_num].emplace_back();
+
+        p0_newton_translation[filter_num].emplace_back();
+        p1_newton_translation[filter_num].emplace_back();
+        p2_newton_translation[filter_num].emplace_back();
+
         for(int step = 3 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
+            double SAD_translation = 0.0;
 
             double scale = pow(2, 3 - step);
             cv::Mat current_ref_image = ref_images[filter_num][step];
@@ -569,12 +585,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
             int iterate_counter = 0;
             while(true){
                 // 移動後の座標を格納する
-                std::vector<cv::Point2f> ref_coordinates_warping;
                 std::vector<cv::Point2f> ref_coordinates_translation;
-
-                ref_coordinates_warping.emplace_back(p0);
-                ref_coordinates_warping.emplace_back(p1);
-                ref_coordinates_warping.emplace_back(p2);
 
                 ref_coordinates_translation.emplace_back(p0);
                 ref_coordinates_translation.emplace_back(p1);
@@ -586,10 +597,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 // tmp_mv_warping, tmp_mv_translationは現在の動きベクトル
                 // 初回は初期値が入ってる
 
-                double area_before_move = 0.5 * fabs(det); // 移動前の面積
-
-                MSE_translation = 0.0;
-
                 gg_translation = cv::Mat::zeros(translation_matrix_dim, translation_matrix_dim, CV_64F);
                 B_translation = cv::Mat::zeros(translation_matrix_dim, 1, CV_64F);
                 delta_uv_translation = cv::Mat::zeros(translation_matrix_dim, 1, CV_64F);
@@ -597,7 +604,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 double delta_g_translation[translation_matrix_dim] = {0};
 
                 cv::Point2f X;
-                double RMSE_translation_filter = 0;
+                SAD_translation = 0.0;
                 for(auto pixel : pixels_in_triangle) {
                     X.x = pixel.x - p0.x;
                     X.y = pixel.y - p0.y;
@@ -622,11 +629,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     ref_coordinates_translation[1] = p1 + tmp_mv_translation;
                     ref_coordinates_translation[2] = p2 + tmp_mv_translation;
 
-                    std::vector<cv::Point2f> triangle_later_warping;
                     std::vector<cv::Point2f> triangle_later_translation;
-                    triangle_later_warping.emplace_back(ref_coordinates_warping[0]);
-                    triangle_later_warping.emplace_back(ref_coordinates_warping[1]);
-                    triangle_later_warping.emplace_back(ref_coordinates_warping[2]);
+
                     triangle_later_translation.emplace_back(ref_coordinates_translation[0]);
                     triangle_later_translation.emplace_back(ref_coordinates_translation[1]);
                     triangle_later_translation.emplace_back(ref_coordinates_translation[2]);
@@ -645,10 +649,38 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
                     // 参照フレームの中心差分
                     spread+=1;
-                    double g_x, g_y;
 #if GAUSS_NEWTON_HEVC_IMAGE
-                    g_x_translation = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x + 1), 4 * (X_later_translation.y    ), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x - 1), 4 * (X_later_translation.y    ), 1)) / 2.0;  // (current_ref_expand[x_translation_tmp + 4][y_translation_tmp    ] - current_ref_expand[x_translation_tmp - 4][y_translation_tmp    ]) / 2.0;
-                    g_y_translation = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x    ), 4 * (X_later_translation.y + 1), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x    ), 4 * (X_later_translation.y - 1), 1)) / 2.0;  // (current_ref_expand[x_translation_tmp    ][y_translation_tmp + 4] - current_ref_expand[x_translation_tmp    ][y_translation_tmp - 4]) / 2.0;
+                    // 4倍画像上でやる->1/4しか進んでいないので，最終的な微分の結果は4倍する
+//                    g_x_translation = 4 * (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x) + 1, 4 * (X_later_translation.y)    , 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x) - 1, 4 * (X_later_translation.y)    , 1));
+//                    g_y_translation = 4 * (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x)    , 4 * (X_later_translation.y) + 1, 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x)    , 4 * (X_later_translation.y) - 1, 1));
+
+                    int x_int = (int)floor(X_later_translation.x);
+                    int y_int = (int)floor(X_later_translation.y);
+                    double dx = X_later_translation.x - x_int;
+                    double dy = X_later_translation.y - y_int;
+
+                    //
+                    // (x_int, y_int)     (x_int + 1, y_int)
+                    //             o x x x x o
+                    //             x x x x x x
+                    //             x x x x x x
+                    //             x x x x x x
+                    //             x x x x x x
+                    //             o x x x x o
+                    // (x_int, y_int+1)   (x_int + 1, y_int + 1)
+                    //
+//                    double x1_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int    ] * dx + current_ref_expand[4 * x_int][4 * y_int    ] * (1.0 - dx);
+//                    double x2_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int + 1] * dx + current_ref_expand[4 * x_int][4 * y_int + 1] * (1.0 - dx);
+                    double x1_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int    ] - current_ref_expand[4 * x_int][4 * y_int    ];
+                    double x2_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int + 1] - current_ref_expand[4 * x_int][4 * y_int + 1];
+                    g_x_translation = 4 * (x1_slope * (1 - dy) + x2_slope * dy);
+
+//                    double y1_slope = current_ref_expand[4 * (x_int)    ][4 * y_int + 1] * dy + current_ref_expand[4 * x_int    ][4 * y_int] * (1.0 - dy);
+//                    double y2_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int + 1] * dy + current_ref_expand[4 * x_int + 1][4 * y_int] * (1.0 - dy);
+                    double y1_slope = current_ref_expand[4 * (x_int)    ][4 * y_int + 1] + current_ref_expand[4 * x_int    ][4 * y_int];
+                    double y2_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int + 1] + current_ref_expand[4 * x_int + 1][4 * y_int];
+                    g_y_translation = 4 * (y1_slope * (1 - dx) +  y2_slope * dx);
+
 #else
                     g_x   = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x  + 1 , X_later_warping.y    , 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x  - 1, X_later_warping.y     , 1)) / 2.0;  // (current_ref_expand[x_warping_tmp + 4 ][y_warping_tmp     ] - current_ref_expand[x_warping_tmp - 4 ][y_warping_tmp     ]) / 2.0;
                             g_y   = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x     , X_later_warping.y  + 1, 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x     , X_later_warping.y  - 1, 1)) / 2.0;  // (current_ref_expand[x_warping_tmp     ][y_warping_tmp + 4 ] - current_ref_expand[x_warping_tmp     ][y_warping_tmp - 4 ]) / 2.0;
@@ -662,12 +694,11 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
                     double f;
                     double f_org;
-                    double g_warping;
                     double g_translation;
 
 #if GAUSS_NEWTON_HEVC_IMAGE
-                    f              = img_ip(current_target_expand    , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                X.x, 4 *                X.y, 1);
-                    f_org          = img_ip(current_target_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                X.x, 4 *                X.y, 1);
+                    f              = img_ip(current_target_expand    , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                   X.x, 4 *                   X.y, 1);
+                    f_org          = img_ip(current_target_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                   X.x, 4 *                   X.y, 1);
                     g_translation  = img_ip(current_ref_expand       , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_translation.x, 4 * X_later_translation.y, 1);
 #else
                     f              = img_ip(current_target_expand    , cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)),                X.x,                X.y, 2);
@@ -676,26 +707,19 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     g_translation     = img_ip(current_ref_expand       , cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x, X_later_translation.y, 2);
 #endif
                     double g_org_translation;
-                    RMSE_translation_filter += fabs(f - g_translation);
-
-                    cv::Point2f tmp_X_later_translation;
-                    tmp_X_later_translation.x = X_later_translation.x;
-                    tmp_X_later_translation.y = X_later_translation.y;
-
-//                    tmp_X_later_translation = roundVecQuarter(tmp_X_later_translation);
 
                     if(ref_hevc != nullptr) {
-                        g_org_translation = img_ip(ref_hevc, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * tmp_X_later_translation.x, 4 * tmp_X_later_translation.y, 1);
+                        g_org_translation = img_ip(ref_hevc, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_translation.x, 4 * X_later_translation.y, 1);
                     }else {
 #if GAUSS_NEWTON_HEVC_IMAGE
-                        g_org_translation = img_ip(current_ref_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * tmp_X_later_translation.x, 4 * tmp_X_later_translation.y, 1);
+                        g_org_translation = img_ip(current_ref_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_translation.x, 4 * X_later_translation.y, 1);
 #else
                         g_org_warping  = img_ip(current_ref_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread),  tmp_X_later_warping.x, tmp_X_later_warping.y, 2);
                             g_org_translation = img_ip(current_ref_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread), tmp_X_later_translation.x, tmp_X_later_translation.y, 2);
 #endif
                     }
 
-                    if(iterate_counter > 4){
+                    if(iterate_counter >= 0){
                         f = f_org;
                         g_translation = g_org_translation;
                     }
@@ -706,14 +730,9 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                         }
                         B_translation.at<double>(row, 0) += (f - g_translation) * delta_g_translation[row];
                     }
-
-                    MSE_translation += fabs(f_org - g_org_translation); // * (f_org - g_org_translation);
+                    SAD_translation += fabs(f_org - g_org_translation); // * (f_org - g_org_translation);
                 }
 
-                double mu = 10;
-
-                double Error_warping = MSE_warping;
-                double Error_translation = MSE_translation;
                 double mu2 = pixels_in_triangle.size() * 0.0001;
                 gg_translation.at<double>(0, 0) += 4 * mu2 * tmp_mv_translation.x * tmp_mv_translation.x;
                 gg_translation.at<double>(0, 1) += 4 * mu2 * tmp_mv_translation.x * tmp_mv_translation.y;
@@ -723,13 +742,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 B_translation.at<double>(1, 0) -= 2 * mu2 * tmp_mv_translation.y * (tmp_mv_translation.x * tmp_mv_translation.x + tmp_mv_translation.y * tmp_mv_translation.y);
 
                 cv::solve(gg_translation, B_translation, delta_uv_translation);
-                v_stack_translation.emplace_back(tmp_mv_translation, Error_translation);
-
-
-                if(translation_update_flag){
-//                    std::cout << tmp_mv_translation << std::endl;
-//                    std::cout << iterate_counter << " " << (double)MSE_translation / pixels_in_triangle.size() << std::endl;
-                }
+                v_stack_translation.emplace_back(tmp_mv_translation, SAD_translation);
 
                 if(translation_update_flag) {
                     for (int k = 0; k < 2; k++) {
@@ -783,12 +796,16 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
                 iterate_counter++;
 
-                slow_newton_translation[slow_newton_translation.size() - 1].emplace_back(MSE_translation);
-                if(MSE_translation != 0.0) {
-                    if (((fabs(prev_error_translation - MSE_translation) / MSE_translation) < eps)) {
-                        translation_update_flag = false;
-                    }
-                }else{
+                slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1].emplace_back(SAD_translation);
+                mv_newton_translation[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation);
+                coordinate_newton_translation1[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation + p0);
+                coordinate_newton_translation2[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation + p1);
+                coordinate_newton_translation3[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation + p2);
+                p0_newton_translation[filter_num][p0_newton_translation[filter_num].size() - 1].emplace_back(p0);
+                p1_newton_translation[filter_num][p1_newton_translation[filter_num].size() - 1].emplace_back(p1);
+                p2_newton_translation[filter_num][p2_newton_translation[filter_num].size() - 1].emplace_back(p2);
+
+                if ((fabs(prev_error_translation - SAD_translation) / SAD_translation) < eps) {
                     translation_update_flag = false;
                 }
 
@@ -796,15 +813,34 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     break;
                 }
 
-                prev_error_translation = MSE_translation;
+                prev_error_translation = SAD_translation;
                 prev_mv_translation = tmp_mv_translation;
+                SAD_translation = 0.0;
             }
 
-            extern std::vector<int> freq_newton_translation;
-            freq_newton_translation[std::min(iterate_counter, 20)]++;
+            extern std::vector<std::vector<double>> freq_newton_translation;
+            freq_newton_translation[filter_num][std::min(iterate_counter, 20)]++;
 
-            if(iterate_counter < 15 && !slow_newton_translation.empty()) {
-                slow_newton_translation.erase(slow_newton_translation.begin() + slow_newton_translation.size() - 1);
+            if(iterate_counter < 20 && !slow_newton_translation[filter_num].empty()){
+                slow_newton_translation[filter_num].erase(slow_newton_translation[filter_num].begin() + slow_newton_translation[filter_num].size() - 1);
+                mv_newton_translation[filter_num].erase(mv_newton_translation[filter_num].begin() + mv_newton_translation[filter_num].size() - 1);
+                coordinate_newton_translation1[filter_num].erase(coordinate_newton_translation1[filter_num].begin() + coordinate_newton_translation1[filter_num].size() - 1);
+                coordinate_newton_translation2[filter_num].erase(coordinate_newton_translation2[filter_num].begin() + coordinate_newton_translation2[filter_num].size() - 1);
+                coordinate_newton_translation3[filter_num].erase(coordinate_newton_translation3[filter_num].begin() + coordinate_newton_translation3[filter_num].size() - 1);
+                p0_newton_translation[filter_num].erase(p0_newton_translation[filter_num].begin() + p0_newton_translation[filter_num].size() - 1);
+                p1_newton_translation[filter_num].erase(p1_newton_translation[filter_num].begin() + p1_newton_translation[filter_num].size() - 1);
+                p2_newton_translation[filter_num].erase(p2_newton_translation[filter_num].begin() + p2_newton_translation[filter_num].size() - 1);
+
+            }else if((slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1][slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1].size() - 1]
+                      - slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1][0]) < 0){
+                slow_newton_translation[filter_num].erase(slow_newton_translation[filter_num].begin() + slow_newton_translation[filter_num].size() - 1);
+                mv_newton_translation[filter_num].erase(mv_newton_translation[filter_num].begin() + mv_newton_translation[filter_num].size() - 1);
+                coordinate_newton_translation1[filter_num].erase(coordinate_newton_translation1[filter_num].begin() + coordinate_newton_translation1[filter_num].size() - 1);
+                coordinate_newton_translation2[filter_num].erase(coordinate_newton_translation2[filter_num].begin() + coordinate_newton_translation2[filter_num].size() - 1);
+                coordinate_newton_translation3[filter_num].erase(coordinate_newton_translation3[filter_num].begin() + coordinate_newton_translation3[filter_num].size() - 1);
+                p0_newton_translation[filter_num].erase(p0_newton_translation[filter_num].begin() + p0_newton_translation[filter_num].size() - 1);
+                p1_newton_translation[filter_num].erase(p1_newton_translation[filter_num].begin() + p1_newton_translation[filter_num].size() - 1);
+                p2_newton_translation[filter_num].erase(p2_newton_translation[filter_num].begin() + p2_newton_translation[filter_num].size() - 1);
             }
 
             std::sort(v_stack_translation.begin(), v_stack_translation.end(), [](std::pair<cv::Point2f,double> a, std::pair<cv::Point2f,double> b){
@@ -813,8 +849,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
             tmp_mv_translation = v_stack_translation[0].first;
             double Error_translation = v_stack_translation[0].second;
-            MSE_translation = Error_translation / (double)pixels_in_triangle.size();
-            double PSNR_translation = 10 * log10((255 * 255) / MSE_translation);
+            double PSNR_translation = 10 * log10((255 * 255) / (Error_translation / (double)pixels_in_triangle.size()));
 
             if(step == 3) {//一番下の階層で
                 if(PSNR_translation >= max_PSNR_translation){//2種類のボケ方で良い方を採用
@@ -827,12 +862,12 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
     }
 
     // ワーピングの推定
-    extern std::vector<int> freq_newton_warping;
+    extern std::vector<std::vector<double>> freq_newton_warping;
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
         std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(max_v_translation.x, max_v_translation.y));
         bool warping_update_flag = true;
 
-        slow_newton_warping.emplace_back();
+        slow_newton_warping[filter_num].emplace_back();
         for(int step = 3 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
 
             double scale = pow(2, 3 - step);
@@ -1053,10 +1088,10 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 #endif
                     }
 
-                    if(iterate_counter >= 0){
-                        f = f_org;
-                        g_warping = g_org_warping;
-                    }
+//                    if(iterate_counter >= 0){
+//                        f = f_org;
+//                        g_warping = g_org_warping;
+//                    }
 
                     for (int row = 0; row < warping_matrix_dim; row++) {
                         for (int col = 0; col < warping_matrix_dim; col++) {
@@ -1076,7 +1111,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 //                }
 
                 double Error_warping = MSE_warping;
-                double Error_translation = MSE_translation;
 
                 cv::solve(gg_warping, B_warping, delta_uv_warping); //6x6の連立方程式を解いてdelta_uvに格納
                 v_stack_warping.emplace_back(tmp_mv_warping, Error_warping);
@@ -1115,7 +1149,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 //                    std::cout << iterate_counter << " " << MSE_warping << std::endl;
                 }
 
-                slow_newton_warping[slow_newton_warping.size() - 1].emplace_back(MSE_warping);
+                slow_newton_warping[filter_num][slow_newton_warping[filter_num].size() - 1].emplace_back(MSE_warping);
                 if(MSE_warping != 0.0) {
                     if ((fabs(prev_error_warping - MSE_warping) / MSE_warping < eps)) {
                         warping_update_flag = false;
@@ -1132,9 +1166,9 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 prev_mv_warping = tmp_mv_warping;
             }
 
-            freq_newton_warping[std::min(iterate_counter, 20)]++;
-            if(iterate_counter < 15 && !slow_newton_warping.empty()) {
-                slow_newton_warping.erase(slow_newton_warping.begin() + slow_newton_warping.size() - 1);
+            freq_newton_warping[filter_num][std::min(iterate_counter, 20)]++;
+            if(iterate_counter < 15 && !slow_newton_warping[filter_num].empty()) {
+                slow_newton_warping[filter_num].erase(slow_newton_warping[filter_num].begin() + slow_newton_warping[filter_num].size() - 1);
             }
             std::sort(v_stack_warping.begin(), v_stack_warping.end(), [](std::pair<std::vector<cv::Point2f>,double> a, std::pair<std::vector<cv::Point2f>,double> b){
                 return a.second < b.second;
@@ -1144,7 +1178,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
             double Error_warping = v_stack_warping[0].second;
             MSE_warping = Error_warping / (double)pixels_in_triangle.size();
             double PSNR_warping = 10 * log10((255 * 255) / MSE_warping);
-            double PSNR_translation = 10 * log10((255 * 255) / MSE_translation);
 
             if(step == 3) {//一番下の階層で
                 if (PSNR_warping >= max_PSNR_warping) {
