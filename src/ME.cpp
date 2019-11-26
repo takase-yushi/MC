@@ -523,7 +523,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
         p2_newton_translation[filter_num].emplace_back();
 
         for(int step = 3 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
-            double SAD_translation = 0.0;
+            double SSE_translation = 0.0;
 
             double scale = pow(2, 3 - step);
             cv::Mat current_ref_image = ref_images[filter_num][step];
@@ -604,7 +604,11 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 double delta_g_translation[translation_matrix_dim] = {0};
 
                 cv::Point2f X;
-                SAD_translation = 0.0;
+                SSE_translation = 0.0;
+
+                double E_delta_x = 0.0;
+                double E_delta_y = 0.0;
+
                 for(auto pixel : pixels_in_triangle) {
                     X.x = pixel.x - p0.x;
                     X.y = pixel.y - p0.y;
@@ -719,10 +723,13 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 #endif
                     }
 
-                    if(iterate_counter >= 0){
-                        f = f_org;
-                        g_translation = g_org_translation;
-                    }
+                    E_delta_x += -2 * (f - g_translation) * delta_g_translation[0];
+                    E_delta_y += -2 * (f - g_translation) * delta_g_translation[1];
+
+//                    if(iterate_counter >= 0){
+//                        f = f_org;
+//                        g_translation = g_org_translation;
+//                    }
 
                     for (int row = 0; row < 2; row++) {
                         for (int col = 0; col < 2; col++) {
@@ -730,7 +737,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                         }
                         B_translation.at<double>(row, 0) += (f - g_translation) * delta_g_translation[row];
                     }
-                    SAD_translation += fabs(f_org - g_org_translation); // * (f_org - g_org_translation);
+                    SSE_translation += (f_org - g_org_translation) * (f_org - g_org_translation);
                 }
 
                 double mu2 = pixels_in_triangle.size() * 0.0001;
@@ -741,62 +748,116 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 B_translation.at<double>(0, 0) -= 2 * mu2 * tmp_mv_translation.x * (tmp_mv_translation.x * tmp_mv_translation.x + tmp_mv_translation.y * tmp_mv_translation.y);
                 B_translation.at<double>(1, 0) -= 2 * mu2 * tmp_mv_translation.y * (tmp_mv_translation.x * tmp_mv_translation.x + tmp_mv_translation.y * tmp_mv_translation.y);
 
-                cv::solve(gg_translation, B_translation, delta_uv_translation);
-                v_stack_translation.emplace_back(tmp_mv_translation, SAD_translation);
+//                cv::solve(gg_translation, B_translation, delta_uv_translation);
+
+                v_stack_translation.emplace_back(tmp_mv_translation, SSE_translation);
+
+                double alpha = std::max(1.0, std::max(E_delta_x, E_delta_y));
+
 
                 if(translation_update_flag) {
                     for (int k = 0; k < 2; k++) {
                         if (k % 2 == 0) {
+                            double du =  -0.001 * 1/alpha * E_delta_x;
                             if ((-scaled_spread <=
-                                 scaled_coordinates[0].x + tmp_mv_translation.x +
-                                 delta_uv_translation.at<double>(k, 0)) &&
+                                 scaled_coordinates[0].x + tmp_mv_translation.x + du) &&
                                 (target_images[0][step].cols - 1 + scaled_spread >=
                                  scaled_coordinates[0].x + tmp_mv_translation.x +
-                                 delta_uv_translation.at<double>(k, 0)) &&
+                                 du ) &&
                                 (-scaled_spread <=
                                  scaled_coordinates[1].x + tmp_mv_translation.x +
-                                 delta_uv_translation.at<double>(k, 0)) &&
+                                 du) &&
                                 (target_images[0][step].cols - 1 + scaled_spread >=
                                  scaled_coordinates[1].x + tmp_mv_translation.x +
-                                 delta_uv_translation.at<double>(k, 0)) &&
+                                 du) &&
                                 (-scaled_spread <=
                                  scaled_coordinates[2].x + tmp_mv_translation.x +
-                                 delta_uv_translation.at<double>(k, 0)) &&
+                                 du) &&
                                 (target_images[0][step].cols - 1 + scaled_spread >=
-                                 scaled_coordinates[2].x + tmp_mv_translation.x +
-                                 delta_uv_translation.at<double>(k, 0))) {
-                                tmp_mv_translation.x = tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0);
+                                 scaled_coordinates[2].x + tmp_mv_translation.x + du)) {
+                                tmp_mv_translation.x = tmp_mv_translation.x + du;
+
                             }
                         } else {
+                            double dv = -0.001 * 1/alpha * E_delta_y;
+
                             if ((-scaled_spread <=
-                                 scaled_coordinates[0].y + tmp_mv_translation.y +
-                                 delta_uv_translation.at<double>(k, 0)) &&
+                                 scaled_coordinates[0].y + tmp_mv_translation.y + dv) &&
                                 (target_images[0][step].rows - 1 + scaled_spread >=
-                                 scaled_coordinates[0].y + tmp_mv_translation.y +
-                                 delta_uv_translation.at<double>(k, 0)) &&
+                                 scaled_coordinates[0].y + tmp_mv_translation.y + dv) &&
                                 (-scaled_spread <=
-                                 scaled_coordinates[1].y + tmp_mv_translation.y +
-                                 delta_uv_translation.at<double>(k, 0)) &&
+                                 scaled_coordinates[1].y + tmp_mv_translation.y + dv) &&
                                 (target_images[0][step].rows - 1 + scaled_spread >=
-                                 scaled_coordinates[1].y + tmp_mv_translation.y +
-                                 delta_uv_translation.at<double>(k, 0)) &&
+                                 scaled_coordinates[1].y + tmp_mv_translation.y + dv) &&
                                 (-scaled_spread <=
-                                 scaled_coordinates[2].y + tmp_mv_translation.y +
-                                 delta_uv_translation.at<double>(k, 0)) &&
+                                 scaled_coordinates[2].y + tmp_mv_translation.y + dv) &&
                                 (target_images[0][step].rows - 1 + scaled_spread >=
-                                 scaled_coordinates[2].y + tmp_mv_translation.y +
-                                 delta_uv_translation.at<double>(k, 0))) {
-                                tmp_mv_translation.y = tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0);
+                                 scaled_coordinates[2].y + tmp_mv_translation.y + dv)) {
+                                tmp_mv_translation.y = tmp_mv_translation.y + dv;
                             }
                         }
                     }
                 }
+//
+//                if(translation_update_flag) {
+//                    for (int k = 0; k < 2; k++) {
+//                        if (k % 2 == 0) {
+//                            if ((-scaled_spread <=
+//                                 scaled_coordinates[0].x + tmp_mv_translation.x +
+//                                 delta_uv_translation.at<double>(k, 0)) &&
+//                                (target_images[0][step].cols - 1 + scaled_spread >=
+//                                 scaled_coordinates[0].x + tmp_mv_translation.x +
+//                                 delta_uv_translation.at<double>(k, 0)) &&
+//                                (-scaled_spread <=
+//                                 scaled_coordinates[1].x + tmp_mv_translation.x +
+//                                 delta_uv_translation.at<double>(k, 0)) &&
+//                                (target_images[0][step].cols - 1 + scaled_spread >=
+//                                 scaled_coordinates[1].x + tmp_mv_translation.x +
+//                                 delta_uv_translation.at<double>(k, 0)) &&
+//                                (-scaled_spread <=
+//                                 scaled_coordinates[2].x + tmp_mv_translation.x +
+//                                 delta_uv_translation.at<double>(k, 0)) &&
+//                                (target_images[0][step].cols - 1 + scaled_spread >=
+//                                 scaled_coordinates[2].x + tmp_mv_translation.x +
+//                                 delta_uv_translation.at<double>(k, 0))) {
+////                                tmp_mv_translation.x = tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0);
+//                                tmp_mv_translation.x = tmp_mv_translation.x - 0.1 * 1/alpha * E_delta_x;
+//                                std::cout <<  0.1 * 1/alpha * E_delta_x << std::endl;
+//
+//                            }
+//                        } else {
+//                            if ((-scaled_spread <=
+//                                 scaled_coordinates[0].y + tmp_mv_translation.y +
+//                                 delta_uv_translation.at<double>(k, 0)) &&
+//                                (target_images[0][step].rows - 1 + scaled_spread >=
+//                                 scaled_coordinates[0].y + tmp_mv_translation.y +
+//                                 delta_uv_translation.at<double>(k, 0)) &&
+//                                (-scaled_spread <=
+//                                 scaled_coordinates[1].y + tmp_mv_translation.y +
+//                                 delta_uv_translation.at<double>(k, 0)) &&
+//                                (target_images[0][step].rows - 1 + scaled_spread >=
+//                                 scaled_coordinates[1].y + tmp_mv_translation.y +
+//                                 delta_uv_translation.at<double>(k, 0)) &&
+//                                (-scaled_spread <=
+//                                 scaled_coordinates[2].y + tmp_mv_translation.y +
+//                                 delta_uv_translation.at<double>(k, 0)) &&
+//                                (target_images[0][step].rows - 1 + scaled_spread >=
+//                                 scaled_coordinates[2].y + tmp_mv_translation.y +
+//                                 delta_uv_translation.at<double>(k, 0))) {
+//                                tmp_mv_translation.y = tmp_mv_translation.y - 0.1 * 1/alpha * E_delta_y;
+//                                std::cout <<  0.1 * 1/alpha * E_delta_y << std::endl;
+////                                tmp_mv_translation.y = tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0);
+//                            }
+//                        }
+//                    }
+//                }
+
 
                 double eps = 1e-3;
 
                 iterate_counter++;
 
-                slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1].emplace_back(SAD_translation);
+                slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1].emplace_back(SSE_translation);
                 mv_newton_translation[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation);
                 coordinate_newton_translation1[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation + p0);
                 coordinate_newton_translation2[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation + p1);
@@ -805,7 +866,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 p1_newton_translation[filter_num][p1_newton_translation[filter_num].size() - 1].emplace_back(p1);
                 p2_newton_translation[filter_num][p2_newton_translation[filter_num].size() - 1].emplace_back(p2);
 
-                if ((fabs(prev_error_translation - SAD_translation) / SAD_translation) < eps) {
+                if ((fabs(prev_error_translation - SSE_translation) / SSE_translation) < eps) {
                     translation_update_flag = false;
                 }
 
@@ -813,35 +874,35 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     break;
                 }
 
-                prev_error_translation = SAD_translation;
+                prev_error_translation = SSE_translation;
                 prev_mv_translation = tmp_mv_translation;
-                SAD_translation = 0.0;
+                SSE_translation = 0.0;
             }
 
             extern std::vector<std::vector<double>> freq_newton_translation;
             freq_newton_translation[filter_num][std::min(iterate_counter, 20)]++;
 
-            if(iterate_counter < 20 && !slow_newton_translation[filter_num].empty()){
-                slow_newton_translation[filter_num].erase(slow_newton_translation[filter_num].begin() + slow_newton_translation[filter_num].size() - 1);
-                mv_newton_translation[filter_num].erase(mv_newton_translation[filter_num].begin() + mv_newton_translation[filter_num].size() - 1);
-                coordinate_newton_translation1[filter_num].erase(coordinate_newton_translation1[filter_num].begin() + coordinate_newton_translation1[filter_num].size() - 1);
-                coordinate_newton_translation2[filter_num].erase(coordinate_newton_translation2[filter_num].begin() + coordinate_newton_translation2[filter_num].size() - 1);
-                coordinate_newton_translation3[filter_num].erase(coordinate_newton_translation3[filter_num].begin() + coordinate_newton_translation3[filter_num].size() - 1);
-                p0_newton_translation[filter_num].erase(p0_newton_translation[filter_num].begin() + p0_newton_translation[filter_num].size() - 1);
-                p1_newton_translation[filter_num].erase(p1_newton_translation[filter_num].begin() + p1_newton_translation[filter_num].size() - 1);
-                p2_newton_translation[filter_num].erase(p2_newton_translation[filter_num].begin() + p2_newton_translation[filter_num].size() - 1);
-
-            }else if((slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1][slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1].size() - 1]
-                      - slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1][0]) < 0){
-                slow_newton_translation[filter_num].erase(slow_newton_translation[filter_num].begin() + slow_newton_translation[filter_num].size() - 1);
-                mv_newton_translation[filter_num].erase(mv_newton_translation[filter_num].begin() + mv_newton_translation[filter_num].size() - 1);
-                coordinate_newton_translation1[filter_num].erase(coordinate_newton_translation1[filter_num].begin() + coordinate_newton_translation1[filter_num].size() - 1);
-                coordinate_newton_translation2[filter_num].erase(coordinate_newton_translation2[filter_num].begin() + coordinate_newton_translation2[filter_num].size() - 1);
-                coordinate_newton_translation3[filter_num].erase(coordinate_newton_translation3[filter_num].begin() + coordinate_newton_translation3[filter_num].size() - 1);
-                p0_newton_translation[filter_num].erase(p0_newton_translation[filter_num].begin() + p0_newton_translation[filter_num].size() - 1);
-                p1_newton_translation[filter_num].erase(p1_newton_translation[filter_num].begin() + p1_newton_translation[filter_num].size() - 1);
-                p2_newton_translation[filter_num].erase(p2_newton_translation[filter_num].begin() + p2_newton_translation[filter_num].size() - 1);
-            }
+//            if(iterate_counter < 20 && !slow_newton_translation[filter_num].empty()){
+//                slow_newton_translation[filter_num].erase(slow_newton_translation[filter_num].begin() + slow_newton_translation[filter_num].size() - 1);
+//                mv_newton_translation[filter_num].erase(mv_newton_translation[filter_num].begin() + mv_newton_translation[filter_num].size() - 1);
+//                coordinate_newton_translation1[filter_num].erase(coordinate_newton_translation1[filter_num].begin() + coordinate_newton_translation1[filter_num].size() - 1);
+//                coordinate_newton_translation2[filter_num].erase(coordinate_newton_translation2[filter_num].begin() + coordinate_newton_translation2[filter_num].size() - 1);
+//                coordinate_newton_translation3[filter_num].erase(coordinate_newton_translation3[filter_num].begin() + coordinate_newton_translation3[filter_num].size() - 1);
+//                p0_newton_translation[filter_num].erase(p0_newton_translation[filter_num].begin() + p0_newton_translation[filter_num].size() - 1);
+//                p1_newton_translation[filter_num].erase(p1_newton_translation[filter_num].begin() + p1_newton_translation[filter_num].size() - 1);
+//                p2_newton_translation[filter_num].erase(p2_newton_translation[filter_num].begin() + p2_newton_translation[filter_num].size() - 1);
+//
+//            }else if((slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1][slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1].size() - 1]
+//                      - slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1][0]) < 0){
+//                slow_newton_translation[filter_num].erase(slow_newton_translation[filter_num].begin() + slow_newton_translation[filter_num].size() - 1);
+//                mv_newton_translation[filter_num].erase(mv_newton_translation[filter_num].begin() + mv_newton_translation[filter_num].size() - 1);
+//                coordinate_newton_translation1[filter_num].erase(coordinate_newton_translation1[filter_num].begin() + coordinate_newton_translation1[filter_num].size() - 1);
+//                coordinate_newton_translation2[filter_num].erase(coordinate_newton_translation2[filter_num].begin() + coordinate_newton_translation2[filter_num].size() - 1);
+//                coordinate_newton_translation3[filter_num].erase(coordinate_newton_translation3[filter_num].begin() + coordinate_newton_translation3[filter_num].size() - 1);
+//                p0_newton_translation[filter_num].erase(p0_newton_translation[filter_num].begin() + p0_newton_translation[filter_num].size() - 1);
+//                p1_newton_translation[filter_num].erase(p1_newton_translation[filter_num].begin() + p1_newton_translation[filter_num].size() - 1);
+//                p2_newton_translation[filter_num].erase(p2_newton_translation[filter_num].begin() + p2_newton_translation[filter_num].size() - 1);
+//            }
 
             std::sort(v_stack_translation.begin(), v_stack_translation.end(), [](std::pair<cv::Point2f,double> a, std::pair<cv::Point2f,double> b){
                 return a.second < b.second;
