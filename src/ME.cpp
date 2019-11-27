@@ -583,6 +583,9 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
             cv::Point2f prev_mv_translation;
 
             int iterate_counter = 0;
+
+            mv_newton_translation[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation);
+
             while(true){
                 // 移動後の座標を格納する
                 std::vector<cv::Point2f> ref_coordinates_translation;
