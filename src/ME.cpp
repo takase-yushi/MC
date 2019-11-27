@@ -438,7 +438,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
     cv::Mat delta_uv_warping = cv::Mat::zeros(warping_matrix_dim, 1, CV_64F); // 式(45)の左辺 delta
     cv::Mat delta_uv_translation = cv::Mat::zeros(translation_matrix_dim, 1, CV_64F); // 式(52)の右辺 delta
 
-    double MSE_warping;
     double min_error_warping = 1E6, min_error_translation = 1E6;
     double max_PSNR_warping = -1, max_PSNR_translation = -1;
 
@@ -854,9 +853,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 #if STORE_NEWTON_LOG
         slow_newton_warping[filter_num].emplace_back();
 #endif
-
         for(int step = 3 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
-
+            double SSE_warping = 0.0;
             double scale = pow(2, 3 - step);
             cv::Mat current_ref_image = ref_images[filter_num][step];
             cv::Mat current_target_image = target_images[filter_num][step];
@@ -919,6 +917,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
             while(true){
                 // 移動後の座標を格納する
                 std::vector<cv::Point2f> ref_coordinates_warping;
+                SSE_warping = 0.0;
 
                 ref_coordinates_warping.emplace_back(p0);
                 ref_coordinates_warping.emplace_back(p1);
@@ -943,7 +942,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 S[4] = -0.5*(b.y + d.y);
                 S[5] = 0.5*(b.x + d.x);
 
-                MSE_warping = 0.0;
                 gg_warping = cv::Mat::zeros(warping_matrix_dim, warping_matrix_dim, CV_64F);
                 B_warping = cv::Mat::zeros(warping_matrix_dim, 1, CV_64F);
                 delta_uv_warping = cv::Mat::zeros(warping_matrix_dim, 1, CV_64F);
@@ -1087,7 +1085,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                         B_warping.at<double>(row, 0) += (f - g_warping) * delta_g_warping[row];//bの行列を生成(右辺の6x1のベクトルに相当)
                     }
 
-                    MSE_warping += (f_org - g_org_warping) * (f_org - g_org_warping);
                 }
 
 //                double mu = 10;
@@ -1097,10 +1094,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 //                    }
 //                }
 
-                double Error_warping = MSE_warping;
 
                 cv::solve(gg_warping, B_warping, delta_uv_warping); //6x6の連立方程式を解いてdelta_uvに格納
-                v_stack_warping.emplace_back(tmp_mv_warping, Error_warping);
 
                 if(warping_update_flag) {
                     for (int k = 0; k < 6; k++) {
@@ -1129,6 +1124,11 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     }
                 }
 
+                SSE_warping = getTriangleSSE(ref_hevc, current_target_org_expand, target_corners, tmp_mv_warping, pixels_in_triangle, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)));
+                v_stack_translation.emplace_back(tmp_mv_warping, SSE_warping);
+
+                v_stack_warping.emplace_back(tmp_mv_warping, SSE_warping);
+
                 iterate_counter++;
 
                 double eps = 1e-3;
@@ -1136,8 +1136,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 #if STORE_NEWTON_LOG
                 slow_newton_warping[filter_num][slow_newton_warping[filter_num].size() - 1].emplace_back(MSE_warping);
 #endif
-                if(MSE_warping != 0.0) {
-                    if ((fabs(prev_error_warping - MSE_warping) / MSE_warping < eps)) {
+                if(SSE_warping != 0.0) {
+                    if ((fabs(prev_error_warping - SSE_warping) / SSE_warping < eps)) {
                         warping_update_flag = false;
                     }
                 }else{
@@ -1148,7 +1148,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     break;
                 }
 
-                prev_error_warping = MSE_warping;
+                prev_error_warping = SSE_warping;
                 prev_mv_warping = tmp_mv_warping;
             }
 
