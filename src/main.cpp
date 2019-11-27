@@ -337,8 +337,8 @@ void run(std::string config_name) {
 
         time_t end = clock();
 
-        const double time = static_cast<double>(end - start) / CLOCKS_PER_SEC * 1000.0;
-        printf("time %d[m]%d[sec]\n", (int)time*1000, (int)time%60);
+        const double time = static_cast<double>(end - start) / CLOCKS_PER_SEC;
+        printf("time %d[m]%d[sec]\n", (int)time/60, (int)time%60);
 //        Decoder decoder(ref_image, target_image);
 //        decoder.initTriangle(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);
 //        decoder.reconstructionTriangle(foo);
