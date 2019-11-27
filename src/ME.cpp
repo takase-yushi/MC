@@ -836,7 +836,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 }
 
                 if(prev_error_translation > SSE_translation){
-                    alpha_marquardt *= 0.5;
+                    alpha_marquardt *= 0.2;
                     prev_error_translation = SSE_translation;
                     prev_mv_translation = tmp_mv_translation;
                 }else{
