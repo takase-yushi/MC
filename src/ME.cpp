@@ -14,6 +14,7 @@
 #include <memory>
 #include "../includes/Utils.h"
 #include "../includes/ImageUtil.h"
+#include "../includes/MELog.h"
 #include <algorithm>
 
 #define HEIGHT 1024
@@ -497,15 +498,13 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
     }
 
 #if STORE_NEWTON_LOG
-    extern std::vector<std::vector<std::vector<double>>> slow_newton_translation, slow_newton_warping;
-    extern std::vector<std::vector<std::vector<cv::Point2f>>> mv_newton_translation;
+    extern std::vector<std::vector<std::vector<double>>> slow_newton_warping;
     extern std::vector<std::vector<std::vector<std::vector<cv::Point2f>>>> mv_newton_warping;
-    extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_translation1;
-    extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_translation2;
-    extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_translation3;
     extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_warping1;
     extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_warping2;
     extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_warping3;
+    extern std::vector<MELog> ME_log_translation;
+
 #endif
 
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
@@ -514,14 +513,15 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
 #if STORE_NEWTON_LOG
 
-        slow_newton_translation[filter_num].emplace_back();
-        mv_newton_translation[filter_num].emplace_back();
+//        slow_newton_translation[filter_num].emplace_back();
+//        mv_newton_translation[filter_num].emplace_back();
+//
+//        coordinate_newton_translation1[filter_num].emplace_back();
+//        coordinate_newton_translation2[filter_num].emplace_back();
+//        coordinate_newton_translation3[filter_num].emplace_back();
 
-        coordinate_newton_translation1[filter_num].emplace_back();
-        coordinate_newton_translation2[filter_num].emplace_back();
-        coordinate_newton_translation3[filter_num].emplace_back();
-
-
+        ME_log_translation.emplace_back();
+        MELog& current_me_log = ME_log_translation.back();
 #endif
         // Marquardtの係数
         double alpha_marquardt = 0.5;
@@ -589,8 +589,13 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
             int iterate_counter = 0;
 
 #if STORE_NEWTON_LOG
-            mv_newton_translation[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation);
-            slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1].emplace_back(error_bm_min);
+            current_me_log.mv_newton_translation.emplace_back(tmp_mv_translation);
+            current_me_log.residual.emplace_back(error_bm_min);
+            current_me_log.coordinate_newton_warping1.emplace_back();
+            current_me_log.coordinate_newton_warping2.emplace_back();
+            current_me_log.coordinate_newton_warping3.emplace_back();
+//            mv_newton_translation[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation);
+//            slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1].emplace_back(error_bm_min);
 #endif
 
             while(true){
@@ -770,11 +775,16 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 iterate_counter++;
 
 #if STORE_NEWTON_LOG
-                slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1].emplace_back(SSE_translation);
-                mv_newton_translation[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation);
-                coordinate_newton_translation1[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation + p0);
-                coordinate_newton_translation2[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation + p1);
-                coordinate_newton_translation3[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation + p2);
+                current_me_log.residual.emplace_back(SSE_translation);
+                current_me_log.mv_newton_translation.emplace_back(tmp_mv_translation);
+                current_me_log.coordinate_newton_warping1.emplace_back(tmp_mv_translation + p0);
+                current_me_log.coordinate_newton_warping2.emplace_back(tmp_mv_translation + p1);
+                current_me_log.coordinate_newton_warping3.emplace_back(tmp_mv_translation + p2);
+//                slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1].emplace_back(SSE_translation);
+//                mv_newton_translation[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation);
+//                coordinate_newton_translation1[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation + p0);
+//                coordinate_newton_translation2[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation + p1);
+//                coordinate_newton_translation3[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation + p2);
 #endif
                 if ((fabs(prev_error_translation - SSE_translation) / SSE_translation) < eps) {
                     translation_update_flag = false;
@@ -789,7 +799,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     prev_error_translation = SSE_translation;
                     prev_mv_translation = tmp_mv_translation;
                 }else{
-                    alpha_marquardt *= 5;
+                    alpha_marquardt *= 10;
                     tmp_mv_translation = prev_mv_translation;
                 }
 
@@ -798,6 +808,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
             extern std::vector<std::vector<double>> freq_newton_translation;
             freq_newton_translation[filter_num][std::min(iterate_counter, 20)]++;
+
+            current_me_log.percentage = (fabs(current_me_log.residual.back() - current_me_log.residual.front()) / current_me_log.residual.front() * 100);
 
 //            if(iterate_counter < 20 && !slow_newton_translation[filter_num].empty()){
 //                slow_newton_translation[filter_num].erase(slow_newton_translation[filter_num].begin() + slow_newton_translation[filter_num].size() - 1);
@@ -1163,7 +1175,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     prev_error_warping = SSE_warping;
                     prev_mv_warping = tmp_mv_warping;
                 }else{
-                    alpha_marquardt *= 5;
+                    alpha_marquardt *= 10;
                     tmp_mv_warping = prev_mv_warping;
                 }
 
