@@ -301,7 +301,7 @@ void run(std::string config_name) {
             }
         }
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < init_triangles.size(); i++) {
             if(i % 2 == 0){
                 bool flag = false;
                 for (int x = 0; x < block_size_x; x++) {
@@ -356,11 +356,11 @@ void run(std::string config_name) {
         analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image));
 
 #else
-//        Analyzer analayzer(log_file_suffix);
-//        analayzer.storeDistributionOfMv(foo, log_directory);
-//        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
-//        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time);
-//        analayzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
+        Analyzer analayzer(log_file_suffix);
+        analayzer.storeDistributionOfMv(foo, log_directory);
+        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
+        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time);
+        analayzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
 #endif
 #endif
 #endif
@@ -420,49 +420,50 @@ void storeNewtonLogs(std::string logDirectoryPath){
     ofs_newton2_0 << "translation" << std::endl;
     for(int i = 0 ; i < slow_newton_translation[0].size() ; i++) {
         if(slow_newton_translation[0][i].size() >= 2) {
-            if(slow_newton_translation[0][i][0] < slow_newton_translation[0][i][1]){
-                ofs_newton2_0 << "increase distortion" << std::endl;
+            if(slow_newton_translation[0][i][0] < slow_newton_translation[0][i][slow_newton_translation[0][i].size() - 1]){
+                ofs_newton2_0 << "increase distortion," << fabs(slow_newton_translation[0][i][0] - slow_newton_translation[0][i][slow_newton_translation[0][i].size() - 1]) / slow_newton_translation[0][i][0] * 100.0<< ",%" << std::endl;
             }
+
+            ofs_newton2_0 << "Initial Vector," << slow_newton_translation[0][i][0] << "," << mv_newton_translation[0][i][0] << std::endl;
+            for(int j = 1 ; j < slow_newton_translation[0][i].size() ; j++) {
+                ofs_newton2_0 << j << "," << slow_newton_translation[0][i][j] << ", " << mv_newton_translation[0][i][j] << "," << coordinate_newton_translation1[0][i][j-1] << "," << coordinate_newton_translation2[0][i][j-1] << "," << coordinate_newton_translation3[0][i][j-1] << std::endl;
+            }
+            ofs_newton2_0 << std::endl;
         }
-        std::cout << "Initial Vector,," << mv_newton_translation[0][i][0] << std::endl;
-        for(int j = 0 ; j < slow_newton_translation[0][i].size() ; j++) {
-            ofs_newton2_0 << j+1 << "," << slow_newton_translation[0][i][j] << ", " << mv_newton_translation[0][i][j+1] << "," << coordinate_newton_translation1[0][i][j] << "," << coordinate_newton_translation2[0][i][j] << "," << coordinate_newton_translation3[0][i][j] << std::endl;
-        }
-        ofs_newton2_0 << std::endl;
     }
-    ofs_newton2_0 << "warping" << std::endl;
-    for(int i = 0 ; i < slow_newton_warping[0].size() ; i++) {
-        for(int j = 0 ; j < slow_newton_warping[0][i].size() ; j++) {
-            ofs_newton2_0 << j+1 << "," << slow_newton_warping[0][i][j] << std::endl;
-        }
-        ofs_newton2_0 << std::endl;
-    }
+//    ofs_newton2_0 << "warping" << std::endl;
+//    for(int i = 0 ; i < slow_newton_warping[0].size() ; i++) {
+//        for(int j = 0 ; j < slow_newton_warping[0][i].size() ; j++) {
+//            ofs_newton2_0 << j+1 << "," << slow_newton_warping[0][i][j] << std::endl;
+//        }
+//        ofs_newton2_0 << std::endl;
+//    }
 
     ofs_newton2_0.close();
 
-    std::ofstream ofs_newton2_1;
-    ofs_newton2_1.open(logDirectoryPath + "/Slowlog_ref_1_" + getCurrentTimestamp() + "_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".csv");
-    ofs_newton2_1 << "translation" << std::endl;
-    for(int i = 0 ; i < slow_newton_translation[1].size() ; i++) {
-        if(slow_newton_translation[1][i].size() >= 2) {
-            if(slow_newton_translation[1][i][0] < slow_newton_translation[1][i][1]){
-                ofs_newton2_0 << "increase distortion" << std::endl;
-            }
-        }
-        std::cout << "Initial Vector,," << mv_newton_translation[1][i][0] << std::endl;
-        for(int j = 0 ; j < slow_newton_translation[1][i].size() ; j++) {
-            ofs_newton2_1 << j+1 << "," << slow_newton_translation[1][i][j] << ", " << mv_newton_translation[1][i][j+1] << "," << coordinate_newton_translation1[1][i][j]  << coordinate_newton_translation2[1][i][j] << "," << coordinate_newton_translation3[1][i][j]<< std::endl;
-        }
-        ofs_newton2_1 << std::endl;
-
-    }
-    ofs_newton2_1 << "warping" << std::endl;
-    for(int i = 0 ; i < freq_newton_warping[1].size() ; i++) {
-        for(int j = 0 ; j < slow_newton_warping[1][i].size() ; j++) {
-            ofs_newton2_1 << j+1 << "," << slow_newton_warping[1][i][j] << std::endl;
-        }
-        ofs_newton2_1 << std::endl;
-    }
-
-    ofs_newton2_1.close();
+//    std::ofstream ofs_newton2_1;
+//    ofs_newton2_1.open(logDirectoryPath + "/Slowlog_ref_1_" + getCurrentTimestamp() + "_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".csv");
+//    ofs_newton2_1 << "translation" << std::endl;
+//    for(int i = 0 ; i < slow_newton_translation[1].size() ; i++) {
+//        if(slow_newton_translation[1][i].size() >= 2) {
+//            if(slow_newton_translation[1][i][0] < slow_newton_translation[1][i][1]){
+//                ofs_newton2_1 << "increase distortion" << std::endl;
+//            }
+//        }
+//        ofs_newton2_1 << "Initial Vector," << slow_newton_translation[1][i][0] << "," << mv_newton_translation[1][i][0] << std::endl;
+//        for(int j = 1 ; j < slow_newton_translation[1][i].size() ; j++) {
+//            ofs_newton2_1 << j << "," << slow_newton_translation[1][i][j] << ", " << mv_newton_translation[1][i][j] << "," << coordinate_newton_translation1[1][i][j-1]  << coordinate_newton_translation2[1][i][j-1] << "," << coordinate_newton_translation3[1][i][j-1]<< std::endl;
+//        }
+//        ofs_newton2_1 << std::endl;
+//
+//    }
+//    ofs_newton2_1 << "warping" << std::endl;
+//    for(int i = 0 ; i < freq_newton_warping[1].size() ; i++) {
+//        for(int j = 0 ; j < slow_newton_warping[1][i].size() ; j++) {
+//            ofs_newton2_1 << j+1 << "," << slow_newton_warping[1][i][j] << std::endl;
+//        }
+//        ofs_newton2_1 << std::endl;
+//    }
+//
+//    ofs_newton2_1.close();
 }
