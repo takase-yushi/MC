@@ -381,7 +381,9 @@ void run(std::string config_name) {
 
         previous_qp = qp;
 
+#if STORE_NEWTON_LOG
         storeNewtonLogs(getProjectDirectory(OS) + tasks[0].getLogDirectory());
+#endif
     }
     ofs.close();
 }
