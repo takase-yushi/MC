@@ -499,12 +499,13 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 #if STORE_NEWTON_LOG
     extern std::vector<std::vector<std::vector<double>>> slow_newton_translation, slow_newton_warping;
     extern std::vector<std::vector<std::vector<cv::Point2f>>> mv_newton_translation;
+    extern std::vector<std::vector<std::vector<std::vector<cv::Point2f>>>> mv_newton_warping;
     extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_translation1;
     extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_translation2;
     extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_translation3;
-    extern std::vector<std::vector<std::vector<cv::Point2f>>> p0_newton_translation;
-    extern std::vector<std::vector<std::vector<cv::Point2f>>> p1_newton_translation;
-    extern std::vector<std::vector<std::vector<cv::Point2f>>> p2_newton_translation;
+    extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_warping1;
+    extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_warping2;
+    extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_warping3;
 #endif
 
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
@@ -520,9 +521,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
         coordinate_newton_translation2[filter_num].emplace_back();
         coordinate_newton_translation3[filter_num].emplace_back();
 
-        p0_newton_translation[filter_num].emplace_back();
-        p1_newton_translation[filter_num].emplace_back();
-        p2_newton_translation[filter_num].emplace_back();
 
 #endif
         // Marquardtの係数
@@ -777,9 +775,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 coordinate_newton_translation1[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation + p0);
                 coordinate_newton_translation2[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation + p1);
                 coordinate_newton_translation3[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation + p2);
-                p0_newton_translation[filter_num][p0_newton_translation[filter_num].size() - 1].emplace_back(p0);
-                p1_newton_translation[filter_num][p1_newton_translation[filter_num].size() - 1].emplace_back(p1);
-                p2_newton_translation[filter_num][p2_newton_translation[filter_num].size() - 1].emplace_back(p2);
 #endif
                 if ((fabs(prev_error_translation - SSE_translation) / SSE_translation) < eps) {
                     translation_update_flag = false;
@@ -846,13 +841,24 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
     // ワーピングの推定
     extern std::vector<std::vector<double>> freq_newton_warping;
+
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
         std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(initial_vector.x, initial_vector.y));
         bool warping_update_flag = true;
 
 #if STORE_NEWTON_LOG
+
         slow_newton_warping[filter_num].emplace_back();
+        mv_newton_warping[filter_num].emplace_back();
+
+        coordinate_newton_warping1[filter_num].emplace_back();
+        coordinate_newton_warping2[filter_num].emplace_back();
+        coordinate_newton_warping3[filter_num].emplace_back();
 #endif
+
+        // Marquardtの係数
+        double alpha_marquardt = 0.5;
+
         for(int step = 3 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
             double SSE_warping = 0.0;
             double scale = pow(2, 3 - step);
@@ -912,6 +918,12 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
             double prev_error_warping = error_bm_min;
             std::vector<cv::Point2f> prev_mv_warping{initial_vector, initial_vector, initial_vector};
+
+
+#if STORE_NEWTON_LOG
+            mv_newton_warping[filter_num][mv_newton_warping[filter_num].size() - 1].emplace_back(tmp_mv_warping);
+            slow_newton_warping[filter_num][slow_newton_warping[filter_num].size() - 1].emplace_back(error_bm_min);
+#endif
 
             int iterate_counter = 0;
             while(true){
@@ -1091,10 +1103,13 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 //                    }
 //                }
 
+                for(int k = 0 ; k < warping_matrix_dim ; k++){
+                    gg_warping.at<double>(k, k) *= (1 + alpha_marquardt);
+                }
 
                 cv::solve(gg_warping, B_warping, delta_uv_warping); //6x6の連立方程式を解いてdelta_uvに格納
 
-                if(warping_update_flag) {
+                if(warping_update_flag && prev_error_warping > SSE_warping) {
                     for (int k = 0; k < 6; k++) {
                         if (k % 2 == 0) {
                             if ((-scaled_spread <=
@@ -1126,9 +1141,15 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
                 iterate_counter++;
                 double eps = 1e-3;
+
 #if STORE_NEWTON_LOG
-                slow_newton_warping[filter_num][slow_newton_warping[filter_num].size() - 1].emplace_back(MSE_warping);
+                slow_newton_warping[filter_num][slow_newton_warping[filter_num].size() - 1].emplace_back(SSE_warping);
+                mv_newton_warping[filter_num][mv_newton_warping[filter_num].size() - 1].emplace_back(tmp_mv_warping);
+                coordinate_newton_warping1[filter_num][mv_newton_warping[filter_num].size() - 1].emplace_back(tmp_mv_warping[0] + p0);
+                coordinate_newton_warping2[filter_num][mv_newton_warping[filter_num].size() - 1].emplace_back(tmp_mv_warping[1] + p1);
+                coordinate_newton_warping3[filter_num][mv_newton_warping[filter_num].size() - 1].emplace_back(tmp_mv_warping[2] + p2);
 #endif
+
                 if ((fabs(prev_error_warping - SSE_warping) / SSE_warping < eps)) {
                     warping_update_flag = false;
                 }
@@ -1137,24 +1158,26 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     break;
                 }
 
-                prev_error_warping = SSE_warping;
-                prev_mv_warping = tmp_mv_warping;
+                if(prev_error_warping > SSE_warping){
+                    alpha_marquardt *= 0.2;
+                    prev_error_warping = SSE_warping;
+                    prev_mv_warping = tmp_mv_warping;
+                }else{
+                    alpha_marquardt *= 5;
+                    tmp_mv_warping = prev_mv_warping;
+                }
+
             }
 
             freq_newton_warping[filter_num][std::min(iterate_counter, 20)]++;
 
-#if STORE_NEWTON_LOG
-            if(iterate_counter < 15 && !slow_newton_warping[filter_num].empty()) {
-                slow_newton_warping[filter_num].erase(slow_newton_warping[filter_num].begin() + slow_newton_warping[filter_num].size() - 1);
-            }
-#endif
             std::sort(v_stack_warping.begin(), v_stack_warping.end(), [](std::pair<std::vector<cv::Point2f>,double> a, std::pair<std::vector<cv::Point2f>,double> b){
                 return a.second < b.second;
             });
 
             tmp_mv_warping = v_stack_warping[0].first;//一番良い動きベクトルを採用
             double Error_warping = v_stack_warping[0].second;
-            double PSNR_warping = 10 * log10((255 * 255) / Error_warping / (double)pixels_in_triangle.size());
+            double PSNR_warping = 10 * log10((255 * 255) / (Error_warping / (double)pixels_in_triangle.size()));
 
             if(step == 3) {//一番下の階層で
                 if (PSNR_warping >= max_PSNR_warping) {
@@ -1288,9 +1311,6 @@ std::tuple<cv::Point2f, double, int> GaussNewtonTranslation(std::vector<std::vec
     extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_translation1;
     extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_translation2;
     extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_translation3;
-    extern std::vector<std::vector<std::vector<cv::Point2f>>> p0_newton_translation;
-    extern std::vector<std::vector<std::vector<cv::Point2f>>> p1_newton_translation;
-    extern std::vector<std::vector<std::vector<cv::Point2f>>> p2_newton_translation;
 
     /**
      * 2種類の参照画像を使って試し，良い方を採用する
@@ -1309,10 +1329,6 @@ std::tuple<cv::Point2f, double, int> GaussNewtonTranslation(std::vector<std::vec
         coordinate_newton_translation1[filter_num].emplace_back();
         coordinate_newton_translation2[filter_num].emplace_back();
         coordinate_newton_translation3[filter_num].emplace_back();
-
-        p0_newton_translation[filter_num].emplace_back();
-        p1_newton_translation[filter_num].emplace_back();
-        p2_newton_translation[filter_num].emplace_back();
 
         for(int step = 3 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
             cv::Mat current_ref_image    = ref_images[filter_num][step];
@@ -1521,9 +1537,7 @@ std::tuple<cv::Point2f, double, int> GaussNewtonTranslation(std::vector<std::vec
                 coordinate_newton_translation1[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation + p0);
                 coordinate_newton_translation2[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation + p1);
                 coordinate_newton_translation3[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation + p2);
-                p0_newton_translation[filter_num][p0_newton_translation[filter_num].size() - 1].emplace_back(p0);
-                p1_newton_translation[filter_num][p1_newton_translation[filter_num].size() - 1].emplace_back(p1);
-                p2_newton_translation[filter_num][p2_newton_translation[filter_num].size() - 1].emplace_back(p2);
+
 
                 if ((fabs(prev_error_translation - SSE_translation) / SSE_translation) < eps) {
                     translation_update_flag = false;

@@ -49,8 +49,9 @@ bool lambda_inject_flag;
 std::string out_file_suffix = "_enable_merge";
 
 std::vector<std::vector<double>> freq_newton_warping, freq_newton_translation;
-std::vector<std::vector<std::vector<cv::Point2f>>> mv_newton_translation,coordinate_newton_translation1, coordinate_newton_translation2, coordinate_newton_translation3;
-std::vector<std::vector<std::vector<cv::Point2f>>> p0_newton_translation, p1_newton_translation, p2_newton_translation;
+std::vector<std::vector<std::vector<cv::Point2f>>> mv_newton_translation, coordinate_newton_translation1, coordinate_newton_translation2, coordinate_newton_translation3;
+std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_warping1, coordinate_newton_warping2, coordinate_newton_warping3;
+std::vector<std::vector<std::vector<std::vector<cv::Point2f>>>> mv_newton_warping;
 std::vector<std::vector<std::vector<int>>> triangle_index_translation;
 std::vector<std::vector<std::vector<double>>> slow_newton_warping, slow_newton_translation;
 
@@ -287,12 +288,13 @@ void run(std::string config_name) {
         slow_newton_translation.resize(2);
         slow_newton_warping.resize(2);
         mv_newton_translation.resize(2);
+        mv_newton_warping.resize(2);
         coordinate_newton_translation1.resize(2);
         coordinate_newton_translation2.resize(2);
         coordinate_newton_translation3.resize(2);
-        p0_newton_translation.resize(2);
-        p1_newton_translation.resize(2);
-        p2_newton_translation.resize(2);
+        coordinate_newton_warping1.resize(2);
+        coordinate_newton_warping2.resize(2);
+        coordinate_newton_warping3.resize(2);
         triangle_index_translation.resize(2);
         for(int i = 0 ; i < freq_newton_warping.size() ; i++) {
             for(int j = 0 ; j < freq_newton_warping[i].size() ; j++){
@@ -433,13 +435,26 @@ void storeNewtonLogs(std::string logDirectoryPath){
             ofs_newton2_0 << std::endl;
         }
     }
-//    ofs_newton2_0 << "warping" << std::endl;
-//    for(int i = 0 ; i < slow_newton_warping[0].size() ; i++) {
-//        for(int j = 0 ; j < slow_newton_warping[0][i].size() ; j++) {
-//            ofs_newton2_0 << j+1 << "," << slow_newton_warping[0][i][j] << std::endl;
-//        }
-//        ofs_newton2_0 << std::endl;
-//    }
+    ofs_newton2_0 << "warping" << std::endl;
+    for(int i = 0 ; i < slow_newton_warping[0].size() ; i++) {
+        if(slow_newton_warping[0][i].size() >= 2) {
+            if(slow_newton_warping[0][i][0] < slow_newton_warping[0][i][slow_newton_warping[0][i].size() - 1]) {
+                ofs_newton2_0 << "increase distortion," << fabs(slow_newton_warping[0][i][0] - slow_newton_warping[0][i][slow_newton_warping[0][i].size() - 1]) / slow_newton_warping[0][i][0] * 100.0<< ",%" << std::endl;
+
+            }
+
+            for (int j = 1; j < slow_newton_warping[0][i].size(); j++) {
+                ofs_newton2_0 << j << "," << slow_newton_warping[0][i][j] << ",";
+                for (int k = 0; k < 3; k++) {
+                    ofs_newton2_0 << mv_newton_warping[0][i][j - 1][k] << ",";
+                }
+                ofs_newton2_0 << coordinate_newton_warping1[0][i][j - 1] << ","
+                              << coordinate_newton_warping2[0][i][j - 1] << ","
+                              << coordinate_newton_warping3[0][i][j - 1] << std::endl;
+            }
+            ofs_newton2_0 << std::endl;
+        }
+    }
 
     ofs_newton2_0.close();
 
