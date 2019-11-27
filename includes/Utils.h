@@ -100,6 +100,7 @@ enum {
 #define SEARCH_RANGE 16
 #define DISPLAY_RD_COST false
 #define COLLOCATED_ENABLE false
+#define STORE_NEWTON_LOG false
 
 const std::string OS = "Ubuntu";
 

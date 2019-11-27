@@ -497,6 +497,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
         initial_vector.y = init_vector.y;
     }
 
+#if STORE_NEWTON_LOG
     extern std::vector<std::vector<std::vector<double>>> slow_newton_translation, slow_newton_warping;
     extern std::vector<std::vector<std::vector<cv::Point2f>>> mv_newton_translation;
     extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_translation1;
@@ -505,10 +506,13 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
     extern std::vector<std::vector<std::vector<cv::Point2f>>> p0_newton_translation;
     extern std::vector<std::vector<std::vector<cv::Point2f>>> p1_newton_translation;
     extern std::vector<std::vector<std::vector<cv::Point2f>>> p2_newton_translation;
+#endif
 
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
         cv::Point2f tmp_mv_translation(initial_vector.x, initial_vector.y);
         bool translation_update_flag = true;
+
+#if STORE_NEWTON_LOG
 
         slow_newton_translation[filter_num].emplace_back();
         mv_newton_translation[filter_num].emplace_back();
@@ -521,6 +525,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
         p1_newton_translation[filter_num].emplace_back();
         p2_newton_translation[filter_num].emplace_back();
 
+#endif
         // Marquardtの係数
         double alpha_marquardt = 0.5;
 
@@ -586,17 +591,13 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
             int iterate_counter = 0;
 
+#if STORE_NEWTON_LOG
             mv_newton_translation[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation);
             slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1].emplace_back(error_min);
+#endif
 
             while(true){
                 // 移動後の座標を格納する
-                std::vector<cv::Point2f> ref_coordinates_translation;
-
-                ref_coordinates_translation.emplace_back(p0);
-                ref_coordinates_translation.emplace_back(p1);
-                ref_coordinates_translation.emplace_back(p2);
-
                 cv::Point2f a = p2 - p0;
                 cv::Point2f b = p1 - p0;
                 double det = a.x * b.y - a.y * b.x;
@@ -615,7 +616,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 double E_delta_x = 0.0;
                 double E_delta_y = 0.0;
 
-                for(auto pixel : pixels_in_triangle) {
+                for(const auto& pixel : pixels_in_triangle) {
                     X.x = pixel.x - p0.x;
                     X.y = pixel.y - p0.y;
 
@@ -624,33 +625,18 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     X.x += p0.x;
                     X.y += p0.y;
 
-                    int x_integer = (int)floor(X.x);
-                    int y_integer = (int)floor(X.y);
-                    int x_decimal = X.x - x_integer;
-                    int y_decimal = X.y - y_integer;
-
                     // 参照フレームの前進差分（平行移動）
-                    double g_x_translation;
-                    double g_y_translation;
-                    cv::Point2f X_later_translation;
+
 
                     // 移動後の頂点を計算し格納
-                    ref_coordinates_translation[0] = p0 + tmp_mv_translation;
-                    ref_coordinates_translation[1] = p1 + tmp_mv_translation;
-                    ref_coordinates_translation[2] = p2 + tmp_mv_translation;
+                    std::vector<cv::Point2f> triangle_later_translation(3);
+                    triangle_later_translation[0] = p0 + tmp_mv_translation;
+                    triangle_later_translation[1] = p1 + tmp_mv_translation;
+                    triangle_later_translation[2] = p2 + tmp_mv_translation;
 
-                    std::vector<cv::Point2f> triangle_later_translation;
-
-                    triangle_later_translation.emplace_back(ref_coordinates_translation[0]);
-                    triangle_later_translation.emplace_back(ref_coordinates_translation[1]);
-                    triangle_later_translation.emplace_back(ref_coordinates_translation[2]);
-
-                    cv::Point2f a_later_translation;
-                    cv::Point2f b_later_translation;
-
-                    a_later_translation = triangle_later_translation[2] - triangle_later_translation[0];
-                    b_later_translation = triangle_later_translation[1] - triangle_later_translation[0];
-                    X_later_translation = alpha * a_later_translation + beta * b_later_translation + triangle_later_translation[0];
+                    cv::Point2f a_later_translation = triangle_later_translation[2] - triangle_later_translation[0];
+                    cv::Point2f b_later_translation = triangle_later_translation[1] - triangle_later_translation[0];
+                    cv::Point2f X_later_translation = alpha * a_later_translation + beta * b_later_translation + triangle_later_translation[0];
 
                     if(X_later_translation.x >= (current_ref_image.cols - 1 + scaled_spread)) X_later_translation.x = current_ref_image.cols - 1 + scaled_spread;
                     if(X_later_translation.y >= (current_ref_image.rows - 1 + scaled_spread)) X_later_translation.y = current_ref_image.rows - 1 + scaled_spread;
@@ -679,17 +665,14 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     //             o x x x x o
                     // (x_int, y_int+1)   (x_int + 1, y_int + 1)
                     //
-//                    double x1_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int    ] * dx + current_ref_expand[4 * x_int][4 * y_int    ] * (1.0 - dx);
-//                    double x2_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int + 1] * dx + current_ref_expand[4 * x_int][4 * y_int + 1] * (1.0 - dx);
+
                     double x1_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int    ] - current_ref_expand[4 * x_int][4 * y_int    ];
                     double x2_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int + 1] - current_ref_expand[4 * x_int][4 * y_int + 1];
-                    g_x_translation = 4 * (x1_slope * (1 - dy) + x2_slope * dy);
+                    double g_x_translation = 4 * (x1_slope * (1 - dy) + x2_slope * dy);
 
-//                    double y1_slope = current_ref_expand[4 * (x_int)    ][4 * y_int + 1] * dy + current_ref_expand[4 * x_int    ][4 * y_int] * (1.0 - dy);
-//                    double y2_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int + 1] * dy + current_ref_expand[4 * x_int + 1][4 * y_int] * (1.0 - dy);
                     double y1_slope = current_ref_expand[4 * (x_int)    ][4 * y_int + 1] + current_ref_expand[4 * x_int    ][4 * y_int];
                     double y2_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int + 1] + current_ref_expand[4 * x_int + 1][4 * y_int];
-                    g_y_translation = 4 * (y1_slope * (1 - dx) +  y2_slope * dx);
+                    double g_y_translation = 4 * (y1_slope * (1 - dx) +  y2_slope * dx);
 
 #else
                     g_x   = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x  + 1 , X_later_warping.y    , 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x  - 1, X_later_warping.y     , 1)) / 2.0;  // (current_ref_expand[x_warping_tmp + 4 ][y_warping_tmp     ] - current_ref_expand[x_warping_tmp - 4 ][y_warping_tmp     ]) / 2.0;
@@ -732,19 +715,12 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     E_delta_x += -2 * (f - g_translation) * delta_g_translation[0];
                     E_delta_y += -2 * (f - g_translation) * delta_g_translation[1];
 
-//                    if(iterate_counter >= 0){
-//                        f = f_org;
-//                        g_translation = g_org_translation;
-//                    }
-
                     for (int row = 0; row < 2; row++) {
                         for (int col = 0; col < 2; col++) {
                             gg_translation.at<double>(row, col) += delta_g_translation[row] * delta_g_translation[col];
                         }
                         B_translation.at<double>(row, 0) += (f - g_translation) * delta_g_translation[row];
                     }
-
-//                    SSE_translation += (f_org - g_org_translation) * (f_org - g_org_translation);
                 }
 
                 gg_translation.at<double>(0, 0) *= (1 + alpha_marquardt);
@@ -763,46 +739,24 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 if(translation_update_flag && prev_error_translation > SSE_translation) {
                     for (int k = 0; k < 2; k++) {
                         if (k % 2 == 0) {
-                            if ((-scaled_spread <=
-                                 scaled_coordinates[0].x + tmp_mv_translation.x +
-                                 delta_uv_translation.at<double>(k, 0)) &&
-                                (target_images[0][step].cols - 1 + scaled_spread >=
-                                 scaled_coordinates[0].x + tmp_mv_translation.x +
-                                 delta_uv_translation.at<double>(k, 0)) &&
-                                (-scaled_spread <=
-                                 scaled_coordinates[1].x + tmp_mv_translation.x +
-                                 delta_uv_translation.at<double>(k, 0)) &&
-                                (target_images[0][step].cols - 1 + scaled_spread >=
-                                 scaled_coordinates[1].x + tmp_mv_translation.x +
-                                 delta_uv_translation.at<double>(k, 0)) &&
-                                (-scaled_spread <=
-                                 scaled_coordinates[2].x + tmp_mv_translation.x +
-                                 delta_uv_translation.at<double>(k, 0)) &&
-                                (target_images[0][step].cols - 1 + scaled_spread >=
-                                 scaled_coordinates[2].x + tmp_mv_translation.x +
-                                 delta_uv_translation.at<double>(k, 0))) {
-                                tmp_mv_translation.x = tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0);
+                            double translated_x = tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0);
+                            if ((-scaled_spread <= scaled_coordinates[0].x + translated_x) &&
+                                (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[0].x + translated_x) &&
+                                (-scaled_spread <= scaled_coordinates[1].x + translated_x) &&
+                                (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[1].x + translated_x) &&
+                                (-scaled_spread <= scaled_coordinates[2].x + translated_x) &&
+                                (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[2].x + translated_x)) {
+                                tmp_mv_translation.x = translated_x;
                             }
                         } else {
-                            if ((-scaled_spread <=
-                                 scaled_coordinates[0].y + tmp_mv_translation.y +
-                                 delta_uv_translation.at<double>(k, 0)) &&
-                                (target_images[0][step].rows - 1 + scaled_spread >=
-                                 scaled_coordinates[0].y + tmp_mv_translation.y +
-                                 delta_uv_translation.at<double>(k, 0)) &&
-                                (-scaled_spread <=
-                                 scaled_coordinates[1].y + tmp_mv_translation.y +
-                                 delta_uv_translation.at<double>(k, 0)) &&
-                                (target_images[0][step].rows - 1 + scaled_spread >=
-                                 scaled_coordinates[1].y + tmp_mv_translation.y +
-                                 delta_uv_translation.at<double>(k, 0)) &&
-                                (-scaled_spread <=
-                                 scaled_coordinates[2].y + tmp_mv_translation.y +
-                                 delta_uv_translation.at<double>(k, 0)) &&
-                                (target_images[0][step].rows - 1 + scaled_spread >=
-                                 scaled_coordinates[2].y + tmp_mv_translation.y +
-                                 delta_uv_translation.at<double>(k, 0))) {
-                                tmp_mv_translation.y = tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0);
+                            double translated_y = tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0);
+                            if ((-scaled_spread <= scaled_coordinates[0].y + translated_y) &&
+                                (target_images[0][step].rows - 1 + scaled_spread >= scaled_coordinates[0].y + translated_y) &&
+                                (-scaled_spread <=scaled_coordinates[1].y + translated_y) &&
+                                (target_images[0][step].rows - 1 + scaled_spread >= scaled_coordinates[1].y + translated_y) &&
+                                (-scaled_spread <=scaled_coordinates[2].y + translated_y) &&
+                                (target_images[0][step].rows - 1 + scaled_spread >= scaled_coordinates[2].y + translated_y)) {
+                                tmp_mv_translation.y = translated_y;
                             }
                         }
                     }
@@ -813,11 +767,12 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 SSE_translation = getTriangleSSE(ref_hevc, current_target_org_expand, target_corners, translation_mvs, pixels_in_triangle, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)));
                 v_stack_translation.emplace_back(tmp_mv_translation, SSE_translation);
 
-//                std::cout << "after update mv:" << tmp_mv_translation << std::endl;
 
                 double eps = 1e-3;
 
                 iterate_counter++;
+
+#if STORE_NEWTON_LOG
                 slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1].emplace_back(SSE_translation);
                 mv_newton_translation[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation);
                 coordinate_newton_translation1[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation + p0);
@@ -826,7 +781,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 p0_newton_translation[filter_num][p0_newton_translation[filter_num].size() - 1].emplace_back(p0);
                 p1_newton_translation[filter_num][p1_newton_translation[filter_num].size() - 1].emplace_back(p1);
                 p2_newton_translation[filter_num][p2_newton_translation[filter_num].size() - 1].emplace_back(p2);
-
+#endif
                 if ((fabs(prev_error_translation - SSE_translation) / SSE_translation) < eps) {
                     translation_update_flag = false;
                 }
@@ -896,7 +851,10 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
         std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(initial_vector.x, initial_vector.y));
         bool warping_update_flag = true;
 
+#if STORE_NEWTON_LOG
         slow_newton_warping[filter_num].emplace_back();
+#endif
+
         for(int step = 3 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
 
             double scale = pow(2, 3 - step);
@@ -1174,7 +1132,10 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 iterate_counter++;
 
                 double eps = 1e-3;
+
+#if STORE_NEWTON_LOG
                 slow_newton_warping[filter_num][slow_newton_warping[filter_num].size() - 1].emplace_back(MSE_warping);
+#endif
                 if(MSE_warping != 0.0) {
                     if ((fabs(prev_error_warping - MSE_warping) / MSE_warping < eps)) {
                         warping_update_flag = false;
@@ -1192,9 +1153,12 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
             }
 
             freq_newton_warping[filter_num][std::min(iterate_counter, 20)]++;
+
+#if STORE_NEWTON_LOG
             if(iterate_counter < 15 && !slow_newton_warping[filter_num].empty()) {
                 slow_newton_warping[filter_num].erase(slow_newton_warping[filter_num].begin() + slow_newton_warping[filter_num].size() - 1);
             }
+#endif
             std::sort(v_stack_warping.begin(), v_stack_warping.end(), [](std::pair<std::vector<cv::Point2f>,double> a, std::pair<std::vector<cv::Point2f>,double> b){
                 return a.second < b.second;
             });
