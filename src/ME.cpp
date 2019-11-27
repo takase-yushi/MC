@@ -752,7 +752,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
                 v_stack_translation.emplace_back(tmp_mv_translation, SSE_translation);
 
-                double alpha = std::max(1.0, std::max(E_delta_x, E_delta_y));
+                double alpha = std::max(1.0, std::max(std::fabs(E_delta_x), std::fabs(E_delta_y)));
 
 
                 if(translation_update_flag) {
