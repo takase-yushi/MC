@@ -149,7 +149,7 @@ double getTriangleResidual(unsigned char **ref_image, const cv::Mat &target_imag
 
         int y = img_ip(ref_image, rect, 4 * X_later.x, 4 * X_later.y, 1);
 
-        sad += fabs(M(target_image, (int)pixel.x, (int)pixel.y) - (0.299 * y + 0.587 * y + 0.114 * y));
+        sad += std::pow((M(target_image, (int)pixel.x, (int)pixel.y) - (0.299 * y + 0.587 * y + 0.114 * y)), 2);
     }
 
     return sad;
