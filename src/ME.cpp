@@ -467,7 +467,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
     int bm_x_offset = 32;
     int bm_y_offset = 32;
-    double error_min = 1e9;
+    double error_bm_min = 1e9;
 
     if(init_vector.x == -1000 && init_vector.y == -1000) {
         for (int by = -bm_y_offset; by < bm_y_offset; by++) {
@@ -485,8 +485,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                                                      expand_image[0][3][3][(int) (pixel.x)][(int) (pixel.y)]);
 #endif
                 }
-                if (error_min > error_tmp) {
-                    error_min = error_tmp;
+                if (error_bm_min > error_tmp) {
+                    error_bm_min = error_tmp;
                     initial_vector.x = bx;
                     initial_vector.y = by;
                 }
@@ -586,14 +586,14 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
             }
             v_stack_translation.clear();
 
-            double prev_error_translation = error_min;
+            double prev_error_translation = error_bm_min;
             cv::Point2f prev_mv_translation = tmp_mv_translation;
 
             int iterate_counter = 0;
 
 #if STORE_NEWTON_LOG
             mv_newton_translation[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation);
-            slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1].emplace_back(error_min);
+            slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1].emplace_back(error_bm_min);
 #endif
 
             while(true){
@@ -912,8 +912,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
             }
             v_stack_warping.clear();
 
-            double prev_error_warping = 1e6;
-            std::vector<cv::Point2f> prev_mv_warping;
+            double prev_error_warping = error_bm_min;
+            std::vector<cv::Point2f> prev_mv_warping{initial_vector, initial_vector, initial_vector};
 
             int iterate_counter = 0;
             while(true){
