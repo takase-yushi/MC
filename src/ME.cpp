@@ -959,30 +959,15 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     X.x += p0.x;
                     X.y += p0.y;
 
-                    int x_integer = (int)floor(X.x);
-                    int y_integer = (int)floor(X.y);
-                    int x_decimal = X.x - x_integer;
-                    int y_decimal = X.y - y_integer;
-
-                    // 参照フレームの前進差分（平行移動）
-                    cv::Point2f X_later_warping;
-
                     // 移動後の頂点を計算し格納
-                    ref_coordinates_warping[0] = p0 + tmp_mv_warping[0];
-                    ref_coordinates_warping[1] = p1 + tmp_mv_warping[1];
-                    ref_coordinates_warping[2] = p2 + tmp_mv_warping[2];
+                    std::vector<cv::Point2f> triangle_later_warping(3);
+                    triangle_later_warping[0] = p0 + tmp_mv_warping[0];
+                    triangle_later_warping[1] = p1 + tmp_mv_warping[1];
+                    triangle_later_warping[2] = p2 + tmp_mv_warping[2];
 
-                    std::vector<cv::Point2f> triangle_later_warping;
-                    triangle_later_warping.emplace_back(ref_coordinates_warping[0]);
-                    triangle_later_warping.emplace_back(ref_coordinates_warping[1]);
-                    triangle_later_warping.emplace_back(ref_coordinates_warping[2]);
-
-                    cv::Point2f a_later_warping;
-                    cv::Point2f b_later_warping;
-
-                    a_later_warping  =  triangle_later_warping[2] -  triangle_later_warping[0];
-                    b_later_warping  =  triangle_later_warping[1] -  triangle_later_warping[0];
-                    X_later_warping  = alpha *  a_later_warping + beta *  b_later_warping +  triangle_later_warping[0];
+                    cv::Point2f a_later_warping  =  triangle_later_warping[2] -  triangle_later_warping[0];
+                    cv::Point2f b_later_warping  =  triangle_later_warping[1] -  triangle_later_warping[0];
+                    cv::Point2f  X_later_warping  = alpha *  a_later_warping + beta *  b_later_warping +  triangle_later_warping[0];
 
                     if(X_later_warping.x >= current_ref_image.cols - 1 + scaled_spread) X_later_warping.x = current_ref_image.cols - 1.00 + scaled_spread;
                     if(X_later_warping.y >= current_ref_image.rows - 1 + scaled_spread) X_later_warping.y = current_ref_image.rows - 1.00 + scaled_spread;
@@ -993,12 +978,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     spread+=1;
 
                     #if GAUSS_NEWTON_HEVC_IMAGE
-
-                    int x_int = (int)floor(X_later_warping.x);
-                    int y_int = (int)floor(X_later_warping.y);
-                    double dx = X_later_warping.x - x_int;
-                    double dy = X_later_warping.y - y_int;
-
                     //
                     // (x_int, y_int)     (x_int + 1, y_int)
                     //             o x x x x o
@@ -1009,6 +988,11 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     //             o x x x x o
                     // (x_int, y_int+1)   (x_int + 1, y_int + 1)
                     //
+
+                    int x_int = (int)floor(X_later_warping.x);
+                    int y_int = (int)floor(X_later_warping.y);
+                    double dx = X_later_warping.x - x_int;
+                    double dy = X_later_warping.y - y_int;
 
                     double x1_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int    ] - current_ref_expand[4 * x_int][4 * y_int    ];
                     double x2_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int + 1] - current_ref_expand[4 * x_int][4 * y_int + 1];
@@ -1078,27 +1062,18 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     g_translation     = img_ip(current_ref_expand       , cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x, X_later_translation.y, 2);
 #endif
                     double g_org_warping;
-                    RMSE_warping_filter += fabs(f - g_warping);
-
-                    cv::Point2f tmp_X_later_warping;
-                    tmp_X_later_warping.x = X_later_warping.x;
-                    tmp_X_later_warping.y = X_later_warping.y;
 
                     if(ref_hevc != nullptr) {
-                        g_org_warping  = img_ip(ref_hevc, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * tmp_X_later_warping.x,  4 * tmp_X_later_warping.y, 1);
+                        g_org_warping  = img_ip(ref_hevc, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_warping.x, 4 * X_later_warping.y, 1);
                     }else {
 #if GAUSS_NEWTON_HEVC_IMAGE
-                        g_org_warping  = img_ip(current_ref_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *  tmp_X_later_warping.x, 4 *  tmp_X_later_warping.y, 1);
+                        g_org_warping  = img_ip(current_ref_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_warping.x, 4 * X_later_warping.y, 1);
 #else
                         g_org_warping  = img_ip(current_ref_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread),  tmp_X_later_warping.x, tmp_X_later_warping.y, 2);
                             g_org_translation = img_ip(current_ref_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread), tmp_X_later_translation.x, tmp_X_later_translation.y, 2);
 #endif
                     }
 
-//                    if(iterate_counter >= 0){
-//                        f = f_org;
-//                        g_warping = g_org_warping;
-//                    }
 
                     for (int row = 0; row < warping_matrix_dim; row++) {
                         for (int col = 0; col < warping_matrix_dim; col++) {
@@ -1147,22 +1122,14 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 }
 
                 SSE_warping = getTriangleSSE(ref_hevc, current_target_org_expand, target_corners, tmp_mv_warping, pixels_in_triangle, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)));
-                v_stack_translation.emplace_back(tmp_mv_warping, SSE_warping);
-
                 v_stack_warping.emplace_back(tmp_mv_warping, SSE_warping);
 
                 iterate_counter++;
-
                 double eps = 1e-3;
-
 #if STORE_NEWTON_LOG
                 slow_newton_warping[filter_num][slow_newton_warping[filter_num].size() - 1].emplace_back(MSE_warping);
 #endif
-                if(SSE_warping != 0.0) {
-                    if ((fabs(prev_error_warping - SSE_warping) / SSE_warping < eps)) {
-                        warping_update_flag = false;
-                    }
-                }else{
+                if ((fabs(prev_error_warping - SSE_warping) / SSE_warping < eps)) {
                     warping_update_flag = false;
                 }
 
@@ -1187,8 +1154,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
             tmp_mv_warping = v_stack_warping[0].first;//一番良い動きベクトルを採用
             double Error_warping = v_stack_warping[0].second;
-            MSE_warping = Error_warping / (double)pixels_in_triangle.size();
-            double PSNR_warping = 10 * log10((255 * 255) / MSE_warping);
+            double PSNR_warping = 10 * log10((255 * 255) / Error_warping / (double)pixels_in_triangle.size());
 
             if(step == 3) {//一番下の階層で
                 if (PSNR_warping >= max_PSNR_warping) {
