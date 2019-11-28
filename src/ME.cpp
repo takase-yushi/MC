@@ -743,10 +743,17 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
                 cv::solve(gg_translation, B_translation, delta_uv_translation);
 
+                // 更新量がしきい値以上であれば打ち切る
+                double delta_u = delta_uv_translation.at<double>(0, 0);
+                double delta_v = delta_uv_translation.at<double>(1, 0);
+                if(delta_u >= DELTA_UV_THRESHOLD || delta_v >= DELTA_UV_THRESHOLD){
+                    break;
+                }
+
                 if(translation_update_flag && prev_SSE_translation > SSE_translation) {
                     for (int k = 0; k < 2; k++) {
                         if (k % 2 == 0) {
-                            double translated_x = tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0);
+                            double translated_x = tmp_mv_translation.x + delta_u;
                             if ((-scaled_spread <= scaled_coordinates[0].x + translated_x) &&
                                 (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[0].x + translated_x) &&
                                 (-scaled_spread <= scaled_coordinates[1].x + translated_x) &&
@@ -756,7 +763,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                                 tmp_mv_translation.x = translated_x;
                             }
                         } else {
-                            double translated_y = tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0);
+                            double translated_y = tmp_mv_translation.y + delta_v;
                             if ((-scaled_spread <= scaled_coordinates[0].y + translated_y) &&
                                 (target_images[0][step].rows - 1 + scaled_spread >= scaled_coordinates[0].y + translated_y) &&
                                 (-scaled_spread <=scaled_coordinates[1].y + translated_y) &&
@@ -1128,6 +1135,16 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 }
 
                 cv::solve(gg_warping, B_warping, delta_uv_warping); //6x6の連立方程式を解いてdelta_uvに格納
+
+                // delta_uvの値がしきい値を超えたら更新を終了する
+                bool delta_uv_threshold_flag = false;
+                for(int row = 0 ; row < warping_matrix_dim ; row++ ){
+                    if(delta_uv_warping.at<double>(row, 0) >= DELTA_UV_THRESHOLD){
+                        delta_uv_threshold_flag = true;
+                        break;
+                    }
+                }
+                if(delta_uv_threshold_flag) break;
 
                 if(warping_update_flag && prev_SSE_warping > SSE_warping) {
                     for (int k = 0; k < 6; k++) {
