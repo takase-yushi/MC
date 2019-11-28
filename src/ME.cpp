@@ -733,14 +733,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 gg_translation.at<double>(0, 0) *= (1 + alpha_marquardt);
                 gg_translation.at<double>(1, 1) *= (1 + alpha_marquardt);
 
-                double mu2 = pixels_in_triangle.size() * 0.0001;
-                gg_translation.at<double>(0, 0) += 4 * mu2 * tmp_mv_translation.x * tmp_mv_translation.x;
-                gg_translation.at<double>(0, 1) += 4 * mu2 * tmp_mv_translation.x * tmp_mv_translation.y;
-                gg_translation.at<double>(1, 0) += 4 * mu2 * tmp_mv_translation.y * tmp_mv_translation.x;
-                gg_translation.at<double>(1, 1) += 4 * mu2 * tmp_mv_translation.y * tmp_mv_translation.y;
-                B_translation.at<double>(0, 0) -= 2 * mu2 * tmp_mv_translation.x * (tmp_mv_translation.x * tmp_mv_translation.x + tmp_mv_translation.y * tmp_mv_translation.y);
-                B_translation.at<double>(1, 0) -= 2 * mu2 * tmp_mv_translation.y * (tmp_mv_translation.x * tmp_mv_translation.x + tmp_mv_translation.y * tmp_mv_translation.y);
-
                 cv::solve(gg_translation, B_translation, delta_uv_translation);
 
                 // 更新量がしきい値以上であれば打ち切る
@@ -1123,12 +1115,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
                 }
 
-//                double mu = 10;
-//                for(int row = 0 ; row < warping_matrix_dim ; row++){
-//                    for(int col = 0 ; col < warping_matrix_dim ; col++) {
-//                        gg_warping.at<double>(row, col) += mu * ((area_after_move * area_after_move * area_after_move - area_before_move * area_before_move * area_after_move) / (area_before_move * area_before_move * area_before_move * area_before_move) * S[row]);
-//                    }
-//                }
 
                 for(int k = 0 ; k < warping_matrix_dim ; k++){
                     gg_warping.at<double>(k, k) *= (1 + alpha_marquardt);
