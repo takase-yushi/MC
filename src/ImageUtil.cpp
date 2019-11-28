@@ -576,14 +576,12 @@ double img_ip(unsigned char *img, cv::Rect rect, double x, double y, int offset,
     if(x0 == (rect.width + rect.x)) x0 = (rect.width + rect.x);
     if(y0 == (rect.height + rect.y)) x0 = (rect.height + rect.y);
 
-    double val = F(img, x0    , y0    , k * offset, rect.width - 2 * k * offset) +
-                 F(img, x0 + 1, y0    , k * offset, rect.width - 2 * k * offset) +
-                 F(img, x0    , y0 + 1, k * offset, rect.width - 2 * k * offset) +
-                 F(img, x0 + 1, y0 + 1, k * offset, rect.width - 2 * k * offset);
+    double val = F(img, x0    , y0    , k * offset, rect.width - 2 * k * offset) * (1.0 - dx) * (1.0 - dy) +
+                 F(img, x0 + 1, y0    , k * offset, rect.width - 2 * k * offset) * dx         * (1.0 - dy) +
+                 F(img, x0    , y0 + 1, k * offset, rect.width - 2 * k * offset) * (1.0 - dx) * dy         +
+                 F(img, x0 + 1, y0 + 1, k * offset, rect.width - 2 * k * offset) * dx         * dy;
 
-    if (val >= 255.5) return 255;
-    else if (val < -0.5) return 0;
-    else return val;
+    return val;
 }
 
 /**
