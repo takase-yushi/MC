@@ -76,6 +76,13 @@
  */
 #define M(img, x, y) (int)round(0.299 * (double)(R(img, (x), (y))) + 0.587 * (double)(G(img, (x), (y))) + 0.114 * (double)(B(img, (x), (y))))
 
+/**
+ * @def F(img, x, y, f, width) (unsigned char)img[((x) + f) + ((y) * (2 * (f) + (width))]
+ * @brief unsigned charの画像（一次元配列）から画素値を返す
+ *
+ */
+#define F(img, x, y, f, width) img[((x) + (f)) + (((y) + (f)) * (2 * (f) + (width)))]
+
 enum {
     BM,
     NEWTON,
