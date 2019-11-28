@@ -125,7 +125,7 @@ public:
     void constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num = 0);
 
     static SplitResult getSplitTriangle(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, int type);
-    bool split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point3Vec triangle, int triangle_index, int type, int steps, std::vector<std::vector<int>> &diagonal_line_area_flag);
+    bool split(std::vector<std::vector<std::vector<unsigned char *>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point3Vec triangle, int triangle_index, int type, int steps, std::vector<std::vector<int>> &diagonal_line_area_flag);
     std::vector<int> getSpatialTriangleList(int t_idx);
     cv::Point2f getCollocatedTriangleList(CodingTreeUnit* unit);
     int getCtuCodeLength(std::vector<CodingTreeUnit*> ctus);
@@ -167,7 +167,7 @@ private:
     std::vector<std::vector<cv::Mat>> target_images;
     int qp;
     cv::Mat expansion_ref;
-    unsigned char **ref_hevc;
+    unsigned char *ref_hevc;
     unsigned char **expansion_ref_uchar;
     std::vector<std::vector<bool>> intra_flag;
     cv::Mat intra_tmp_image;

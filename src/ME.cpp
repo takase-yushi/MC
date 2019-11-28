@@ -363,7 +363,7 @@ int bicubic_interpolation(unsigned char **img, double x, double y){
  * @param[in] translation_flag
  * @return 2乗誤差
  */
-double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::Mat& output_image, Point3Vec& triangle, std::vector<cv::Point2f>& mv, int offset, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Rect block_size, unsigned char **ref_hevc) {
+double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::Mat& output_image, Point3Vec& triangle, std::vector<cv::Point2f>& mv, int offset, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Rect block_size, unsigned char *ref_hevc) {
     cv::Point2f pp0, pp1, pp2;
 
     pp0.x = triangle.p1.x + mv[0].x;
@@ -398,9 +398,9 @@ double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::
 
         int y;
         if(ref_hevc != nullptr){
-            y = img_ip(ref_hevc, cv::Rect(-SEARCH_RANGE * 4, -SEARCH_RANGE * 4, 4 * (target_image.cols + 2 * SEARCH_RANGE), 4 * (target_image.rows + 2 * SEARCH_RANGE)), 4 * X_later.x, 4 * X_later.y, 1);
+            y = img_ip(ref_hevc, cv::Rect(-SEARCH_RANGE * 4, -SEARCH_RANGE * 4, 4 * (target_image.cols + 2 * SEARCH_RANGE), 4 * (target_image.rows + 2 * SEARCH_RANGE)), 4 * X_later.x, 4 * X_later.y);
         }else{
-            y = bicubic_interpolation(expand_ref, X_later.x, X_later.y);
+            // y = bicubic_interpolation(expand_ref, X_later.x, X_later.y);
         }
 
         R(output_image, (int)pixel.x, (int)pixel.y) = y;
@@ -427,7 +427,7 @@ double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::
  * @param block_size_y
  * @return ワーピングの動きベクトル・平行移動の動きベクトル・予測残差・面積・平行移動のフラグのtuple
  */
-std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewton(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char **>>> expand_image, Point3Vec target_corners, const std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, int block_size_x, int block_size_y, cv::Point2f init_vector, unsigned char **ref_hevc){
+std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewton(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char *>>> expand_image, Point3Vec target_corners, const std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, int block_size_x, int block_size_y, cv::Point2f init_vector, unsigned char *ref_hevc){
     // 画像の初期化 vector[filter][picture_number]
 
     /**
@@ -484,6 +484,9 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
     int bm_y_offset = 32;
     double error_bm_min = 1e9;
 
+    int image_width  = ref_images[0][3].cols;
+    int image_height = ref_images[0][3].rows;
+
     if(init_vector.x == -1000 && init_vector.y == -1000) {
         for (int by = -bm_y_offset; by < bm_y_offset; by++) {
             for (int bx = -bm_x_offset; bx < bm_x_offset; bx++) {
@@ -493,8 +496,9 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 double error_tmp = 0.0;
                 for (const auto &pixel : pixels_in_triangle) {
 #if GAUSS_NEWTON_HEVC_IMAGE
-                    error_tmp += std::pow(expand_image[0][3][1][4 * (int) (pixel.x + bx)][4 * (int) (pixel.y + by)] -
-                                     expand_image[0][3][3][4 * (int) (pixel.x)][4 * (int) (pixel.y)], 2);
+
+                    unsigned char pel = F(expand_image[0][3][1], 4 * (int) (pixel.x + bx), 4 * (int) (pixel.y + by), 4 * SEARCH_RANGE, 4 * (ref_images[0][3].cols));
+                    error_tmp += pel * pel;
 #else
                     error_tmp += abs(expand_image[0][3][1][(int) (pixel.x + bx)][(int) (pixel.y + by)] -
                                                      expand_image[0][3][3][(int) (pixel.x)][(int) (pixel.y)]);
@@ -540,8 +544,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
             cv::Mat current_ref_image = ref_images[filter_num][step];
             cv::Mat current_target_image = target_images[filter_num][step];
 
-            unsigned char **current_target_expand, **current_target_org_expand; //画像の周りに500ピクセルだけ黒の領域を設ける(念のため)
-            unsigned char **current_ref_expand, **current_ref_org_expand;    //f_expandと同様
+            unsigned char *current_target_expand, *current_target_org_expand; //画像の周りに500ピクセルだけ黒の領域を設ける(念のため)
+            unsigned char *current_ref_expand, *current_ref_org_expand;    //f_expandと同様
 
             current_ref_expand        = expand_image[filter_num][step][0];
             current_ref_org_expand    = expand_image[filter_num][step][1];
@@ -673,12 +677,14 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     // (x_int, y_int+1)   (x_int + 1, y_int + 1)
                     //
 
-                    double x1_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int    ] - current_ref_expand[4 * x_int][4 * y_int    ];
-                    double x2_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int + 1] - current_ref_expand[4 * x_int][4 * y_int + 1];
+                    double x1_slope = F(current_ref_expand, 4 * (x_int) + 1, 4 * y_int    , 4 * SEARCH_RANGE, 4 * image_width) - F(current_ref_expand, 4 * x_int, 4 * y_int    , 4 * SEARCH_RANGE, 4 * image_width);
+                    double x2_slope = F(current_ref_expand, 4 * (x_int) + 1, 4 * y_int + 1, 4 * SEARCH_RANGE, 4 * image_width) - F(current_ref_expand, 4 * x_int, 4 * y_int + 1, 4 * SEARCH_RANGE, 4 * image_width);
                     double g_x_translation = 4 * (x1_slope * (1 - dy) + x2_slope * dy);
 
-                    double y1_slope = current_ref_expand[4 * (x_int)    ][4 * y_int + 1] + current_ref_expand[4 * x_int    ][4 * y_int];
-                    double y2_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int + 1] + current_ref_expand[4 * x_int + 1][4 * y_int];
+
+                    double y1_slope = F(current_ref_expand, 4 * (x_int)    , 4 * y_int + 1, 4 * SEARCH_RANGE, 4 * image_width) - F(current_ref_expand, 4 * x_int    , 4 * y_int, 4 * SEARCH_RANGE, 4 * image_width);
+                    double y2_slope = F(current_ref_expand, 4 * (x_int) + 1, 4 * y_int + 1, 4 * SEARCH_RANGE, 4 * image_width) - F(current_ref_expand, 4 * x_int + 1, 4 * y_int, 4 * SEARCH_RANGE, 4 * image_width);
+
                     double g_y_translation = 4 * (y1_slope * (1 - dx) +  y2_slope * dx);
 
 #else
@@ -697,9 +703,9 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     double g_translation;
 
 #if GAUSS_NEWTON_HEVC_IMAGE
-                    f              = img_ip(current_target_expand    , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                   X.x, 4 *                   X.y, 1);
-                    f_org          = img_ip(current_target_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                   X.x, 4 *                   X.y, 1);
-                    g_translation  = img_ip(current_ref_expand       , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_translation.x, 4 * X_later_translation.y, 1);
+                    f              = img_ip(current_target_expand    , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                   X.x, 4 *                   X.y);
+                    f_org          = img_ip(current_target_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                   X.x, 4 *                   X.y);
+                    g_translation  = img_ip(current_ref_expand       , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_translation.x, 4 * X_later_translation.y);
 #else
                     f              = img_ip(current_target_expand    , cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)),                X.x,                X.y, 2);
                     f_org          = img_ip(current_target_org_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)),                X.x,                X.y, 2);
@@ -709,10 +715,10 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     double g_org_translation;
 
                     if(ref_hevc != nullptr) {
-                        g_org_translation = img_ip(ref_hevc, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_translation.x, 4 * X_later_translation.y, 1);
+                        g_org_translation = img_ip(ref_hevc, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_translation.x, 4 * X_later_translation.y);
                     }else {
 #if GAUSS_NEWTON_HEVC_IMAGE
-                        g_org_translation = img_ip(current_ref_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_translation.x, 4 * X_later_translation.y, 1);
+                        g_org_translation = img_ip(current_ref_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_translation.x, 4 * X_later_translation.y);
 #else
                         g_org_warping  = img_ip(current_ref_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread),  tmp_X_later_warping.x, tmp_X_later_warping.y, 2);
                             g_org_translation = img_ip(current_ref_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread), tmp_X_later_translation.x, tmp_X_later_translation.y, 2);
@@ -882,8 +888,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
             cv::Mat current_ref_image = ref_images[filter_num][step];
             cv::Mat current_target_image = target_images[filter_num][step];
 
-            unsigned char **current_target_expand, **current_target_org_expand; //画像の周りに500ピクセルだけ黒の領域を設ける(念のため)
-            unsigned char **current_ref_expand, **current_ref_org_expand;    //f_expandと同様
+            unsigned char *current_target_expand, *current_target_org_expand; //画像の周りに500ピクセルだけ黒の領域を設ける(念のため)
+            unsigned char *current_ref_expand, *current_ref_org_expand;    //f_expandと同様
 
             current_ref_expand        = expand_image[filter_num][step][0];
             current_ref_org_expand    = expand_image[filter_num][step][1];
@@ -962,9 +968,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 cv::Point2f c = tmp_mv_warping[2] - tmp_mv_warping[0];
                 cv::Point2f d = tmp_mv_warping[1] - tmp_mv_warping[0];
 
-                double area_before_move = 0.5 * fabs(det); // 移動前の面積
-                double area_after_move = 0.5 * fabs((b.x + d.x)*(a.y + c.y) - (a.x + c.x)*(b.y + d.y)); // 移動後の面積
-
                 double S[6];
                 S[0] = -0.5*(a.y + c.y - b.y - d.y);
                 S[1] = -0.5*(b.x + d.x - a.x - c.x);
@@ -1005,8 +1008,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     if(X_later_warping.x < -scaled_spread) X_later_warping.x = -scaled_spread;
                     if(X_later_warping.y < -scaled_spread) X_later_warping.y = -scaled_spread;
 
-                    // 参照フレームの中心差分
-                    spread+=1;
 
                     #if GAUSS_NEWTON_HEVC_IMAGE
                     //
@@ -1025,14 +1026,16 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     double dx = X_later_warping.x - x_int;
                     double dy = X_later_warping.y - y_int;
 
-                    double x1_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int    ] - current_ref_expand[4 * x_int][4 * y_int    ];
-                    double x2_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int + 1] - current_ref_expand[4 * x_int][4 * y_int + 1];
+
+                    double x1_slope = F(current_ref_expand, 4 * (x_int) + 1, 4 * y_int    , 4 * SEARCH_RANGE, 4 * image_width) - F(current_ref_expand, 4 * x_int, 4 * y_int    , 4 * SEARCH_RANGE, 4 * image_width);
+                    double x2_slope = F(current_ref_expand, 4 * (x_int) + 1, 4 * y_int + 1, 4 * SEARCH_RANGE, 4 * image_width) - F(current_ref_expand, 4 * x_int, 4 * y_int + 1, 4 * SEARCH_RANGE, 4 * image_width);
                     double g_x = 4 * (x1_slope * (1 - dy) + x2_slope * dy);
 
-                    double y1_slope = current_ref_expand[4 * (x_int)    ][4 * y_int + 1] + current_ref_expand[4 * x_int    ][4 * y_int];
-                    double y2_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int + 1] + current_ref_expand[4 * x_int + 1][4 * y_int];
-                    double g_y = 4 * (y1_slope * (1 - dx) +  y2_slope * dx);
 
+                    double y1_slope = F(current_ref_expand, 4 * (x_int)    , 4 * y_int + 1, 4 * SEARCH_RANGE, 4 * image_width) - F(current_ref_expand, 4 * x_int    , 4 * y_int, 4 * SEARCH_RANGE, 4 * image_width);
+                    double y2_slope = F(current_ref_expand, 4 * (x_int) + 1, 4 * y_int + 1, 4 * SEARCH_RANGE, 4 * image_width) - F(current_ref_expand, 4 * x_int + 1, 4 * y_int, 4 * SEARCH_RANGE, 4 * image_width);
+
+                    double g_y = 4 * (y1_slope * (1 - dx) +  y2_slope * dx);
                     #else
                         g_x   = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x  + 1 , X_later_warping.y    , 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x  - 1, X_later_warping.y     , 1)) / 2.0;  // (current_ref_expand[x_warping_tmp + 4 ][y_warping_tmp     ] - current_ref_expand[x_warping_tmp - 4 ][y_warping_tmp     ]) / 2.0;
                             g_y   = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x     , X_later_warping.y  + 1, 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x     , X_later_warping.y  - 1, 1)) / 2.0;  // (current_ref_expand[x_warping_tmp     ][y_warping_tmp + 4 ] - current_ref_expand[x_warping_tmp     ][y_warping_tmp - 4 ]) / 2.0;
@@ -1040,7 +1043,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                             g_y_translation = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x    , X_later_translation.y + 1, 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x    , X_later_translation.y - 1, 1)) / 2.0;  // (current_ref_expand[x_translation_tmp    ][y_translation_tmp + 4] - current_ref_expand[x_translation_tmp    ][y_translation_tmp - 4]) / 2.0;
                     #endif
 
-                    spread-=1;
 
                     for(int i = 0 ; i < 6 ; i++) {
                         // 頂点を動かしたときのパッチ内の変動量x軸y軸独立に計算(delta_gを求めるために必要)
@@ -1083,9 +1085,9 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     double g_warping;
 
 #if GAUSS_NEWTON_HEVC_IMAGE
-                    f              = img_ip(current_target_expand    , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                X.x, 4 *                X.y, 1);
-                    f_org          = img_ip(current_target_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                X.x, 4 *                X.y, 1);
-                    g_warping      = img_ip(current_ref_expand       , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *  X_later_warping.x, 4 *  X_later_warping.y, 1);
+                    f              = img_ip(current_target_expand    , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                X.x, 4 *                X.y);
+                    f_org          = img_ip(current_target_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                X.x, 4 *                X.y);
+                    g_warping      = img_ip(current_ref_expand       , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *  X_later_warping.x, 4 *  X_later_warping.y);
 #else
                     f              = img_ip(current_target_expand    , cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)),                X.x,                X.y, 2);
                     f_org          = img_ip(current_target_org_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)),                X.x,                X.y, 2);
@@ -1095,10 +1097,10 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     double g_org_warping;
 
                     if(ref_hevc != nullptr) {
-                        g_org_warping  = img_ip(ref_hevc, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_warping.x, 4 * X_later_warping.y, 1);
+                        g_org_warping  = img_ip(ref_hevc, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_warping.x, 4 * X_later_warping.y);
                     }else {
 #if GAUSS_NEWTON_HEVC_IMAGE
-                        g_org_warping  = img_ip(current_ref_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_warping.x, 4 * X_later_warping.y, 1);
+                        g_org_warping  = img_ip(current_ref_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_warping.x, 4 * X_later_warping.y);
 #else
                         g_org_warping  = img_ip(current_ref_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread),  tmp_X_later_warping.x, tmp_X_later_warping.y, 2);
                             g_org_translation = img_ip(current_ref_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread), tmp_X_later_translation.x, tmp_X_later_translation.y, 2);
@@ -1243,398 +1245,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
     }
 
     return std::make_tuple(std::vector<cv::Point2f>{max_v_warping[0], max_v_warping[1], max_v_warping[2]}, max_v_translation, min_error_warping, min_error_translation, pixels_in_triangle.size());
-}
-
-/**
- * @fn std::pair<std::vector<cv::Point2f>, cv::Point2f> GaussNewton(cv::Mat ref_image, cv::Mat target_mage, cv::Mat gauss_ref_image, Point3Vec target_corners)
- * @brief ガウス・ニュートン法を行い、動きベクトル・予測残差・面積を返す
- * @param ref_images
- * @param target_images
- * @param expand_image
- * @param target_corners
- * @param area_flag
- * @param triangle_index
- * @param ctu
- * @param block_size_x
- * @param block_size_y
- * @return ワーピングの動きベクトル・平行移動の動きベクトル・予測残差・面積・平行移動のフラグのtuple
- */
-std::tuple<cv::Point2f, double, int> GaussNewtonTranslation(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char **>>> expand_image, Point3Vec target_corners, const std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, int block_size_x, int block_size_y, unsigned char **ref_hevc){
-    const int translation_matrix_dim = 2;  // 平行移動の次元
-
-    /**
-     * Translation用の動きベクトル推定
-     * - 変動量(u,v)を求める
-     *
-     * ## 方程式の命名
-     *
-     * -                - -          -     -   -
-     * |                | |          |     |   |
-     * |                | |          |     |   |
-     * | gg_translation | | delta_uv |  =  | B |
-     * |                | |          |     |   |
-     * |                | |          |     |   |
-     * -                - -          -     -   -
-     *
-     */
-    cv::Mat gg_translation       = cv::Mat::zeros(translation_matrix_dim, translation_matrix_dim, CV_64F); // 式(52)の左辺2×2行列
-    cv::Mat B_translation        = cv::Mat::zeros(translation_matrix_dim, 1, CV_64F); // 式(52)の右辺
-    cv::Mat delta_uv_translation = cv::Mat::zeros(translation_matrix_dim, 1, CV_64F); // 式(52)の右辺 delta
-
-    double  min_error_translation = 1E6, max_PSNR_translation = -1;
-
-    // 対象パッチの3つの頂点をそれぞれp0,p1,p2とする
-    cv::Point2f p0, p1, p2;
-    cv::Point2f best_mv;
-
-    std::vector<std::pair<cv::Point2f,double>> v_stack_translation;
-
-    cv::Point2f initial_vector(0.0, 0.0);
-
-    p0 = target_corners.p1;
-    p1 = target_corners.p2;
-    p2 = target_corners.p3;
-
-    Point3Vec current_triangle_coordinates(p0, p1, p2);
-
-    std::vector<cv::Point2f> pixels_in_triangle = getPixelsInTriangle(current_triangle_coordinates, area_flag, triangle_index, ctu, block_size_x, block_size_y);
-
-    double sx = std::min({(int) p0.x, (int) p1.x, (int) p2.x});
-    double lx = std::max({(int) p0.x, (int) p1.x, (int) p2.x});
-    double sy = std::min({(int) p0.y, (int) p1.y, (int) p2.y});
-    double ly = std::max({(int) p0.y, (int) p1.y, (int) p2.y});
-
-    int bm_x_offset = 32;
-    int bm_y_offset = 32;
-    double error_min = 1e9;
-
-    int ref_image_width = ref_images[0][3].cols;
-    int ref_image_heght = ref_images[0][3].rows;
-    for (int by = -bm_y_offset; by < bm_y_offset; by++) {
-        for (int bx = -bm_x_offset; bx < bm_x_offset; bx++) {
-            if (sx + bx < -SEARCH_RANGE || ref_image_width + SEARCH_RANGE <= (lx + bx) || sy + by < -SEARCH_RANGE || ref_image_heght+ SEARCH_RANGE <= (ly + by)) {
-                continue;
-            }
-
-            double error_tmp = 0.0;
-            for (const auto &pixel : pixels_in_triangle) {
-#if GAUSS_NEWTON_HEVC_IMAGE
-                error_tmp += abs(expand_image[0][3][1][4 * (int) (pixel.x + bx)][4 * (int) (pixel.y + by)] - expand_image[0][3][3][4 * (int) (pixel.x)][4 * (int) (pixel.y)]);
-#else
-                    error_tmp += abs(expand_image[0][3][1][(int) (pixel.x + bx)][(int) (pixel.y + by)] - expand_image[0][3][3][(int) (pixel.x)][(int) (pixel.y)]);
-#endif
-            }
-            if (error_min > error_tmp) {
-                error_min = error_tmp;
-                initial_vector.x = bx;
-                initial_vector.y = by;
-            }
-        }
-    }
-
-    // デバッグ用の変数群
-    extern std::vector<std::vector<std::vector<double>>> slow_newton_translation, slow_newton_warping;
-    extern std::vector<std::vector<std::vector<cv::Point2f>>> mv_newton_translation;
-    extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_translation1;
-    extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_translation2;
-    extern std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_translation3;
-
-    /**
-     * 2種類の参照画像を使って試し，良い方を採用する
-     *
-     * - filter_num:0 原画像
-     * - filter_num:1 1:2:1のLPFがかかっている画像
-     *
-     */
-    for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
-        cv::Point2f tmp_mv_translation(initial_vector.x, initial_vector.y);
-        bool translation_update_flag = true;
-
-        slow_newton_translation[filter_num].emplace_back();
-        mv_newton_translation[filter_num].emplace_back();
-
-        coordinate_newton_translation1[filter_num].emplace_back();
-        coordinate_newton_translation2[filter_num].emplace_back();
-        coordinate_newton_translation3[filter_num].emplace_back();
-
-        for(int step = 3 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
-            cv::Mat current_ref_image    = ref_images[filter_num][step];
-            cv::Mat current_target_image = target_images[filter_num][step];
-
-            unsigned char **current_target_expand, **current_target_org_expand;
-            unsigned char **current_ref_expand, **current_ref_org_expand;
-
-            current_ref_expand        = expand_image[filter_num][step][0];
-            current_ref_org_expand    = expand_image[filter_num][step][1];
-            current_target_expand     = expand_image[filter_num][step][2];
-            current_target_org_expand = expand_image[filter_num][step][3];
-
-            int spread = SEARCH_RANGE; // 探索範囲は16までなので16に戻す
-
-            int scaled_spread = spread;
-            p0 = target_corners.p1;
-            p1 = target_corners.p2;
-            p2 = target_corners.p3;
-
-            // 端の頂点の調整
-            if (target_corners.p1.x == target_images[0][3].cols - 1) p0.x = target_images[0][step].cols - 1;
-            if (target_corners.p1.y == target_images[0][3].rows - 1) p0.y = target_images[0][step].rows - 1;
-            if (target_corners.p2.x == target_images[0][3].cols - 1) p1.x = target_images[0][step].cols - 1;
-            if (target_corners.p2.y == target_images[0][3].rows - 1) p1.y = target_images[0][step].rows - 1;
-            if (target_corners.p3.x == target_images[0][3].cols - 1) p2.x = target_images[0][step].cols - 1;
-            if (target_corners.p3.y == target_images[0][3].rows - 1) p2.y = target_images[0][step].rows - 1;
-
-            std::vector<cv::Point2f> scaled_coordinates{p0, p1, p2};
-
-            v_stack_translation.clear();
-
-            double prev_error_translation = 1e6;
-            cv::Point2f prev_mv_translation;
-
-            int iterate_counter = 0;
-            double SSE_translation = 0.0;
-            while(true){
-
-                cv::Point2f a = p2 - p0;
-                cv::Point2f b = p1 - p0;
-                double det = a.x * b.y - a.y * b.x;
-                // tmp_mv_warping, tmp_mv_translationは現在の動きベクトル
-                // 初回は初期値が入ってる
-
-                gg_translation       = cv::Mat::zeros(translation_matrix_dim, translation_matrix_dim, CV_64F);
-                B_translation        = cv::Mat::zeros(translation_matrix_dim, 1, CV_64F);
-                delta_uv_translation = cv::Mat::zeros(translation_matrix_dim, 1, CV_64F);
-
-                double delta_g_translation[translation_matrix_dim] = {0};
-
-                SSE_translation = 0.0;
-
-                double E_delta_x = 0.0;
-                double E_delta_y = 0.0;
-
-                for(const auto& pixel : pixels_in_triangle) {
-                    /**
-                     * ## 任意画素に対してのα,βを求める
-                     * 対象パッチ上の任意の画素Pをつかってα,βを求める
-                     */
-                    cv::Point2f P(pixel.x - p0.x, pixel.y - p0.y);
-
-                    double alpha = (P.x * b.y - P.y * b.x) / det;
-                    double beta = (a.x * P.y - a.y * P.x)/ det;
-
-                    // 移動後の頂点を計算し格納
-                    std::vector<cv::Point2f> triangle_later_translation;
-                    triangle_later_translation.emplace_back(p0 + tmp_mv_translation);
-                    triangle_later_translation.emplace_back(p1 + tmp_mv_translation);
-                    triangle_later_translation.emplace_back(p2 + tmp_mv_translation);
-
-                    cv::Point2f a_later_translation = triangle_later_translation[2] - triangle_later_translation[0];
-                    cv::Point2f b_later_translation = triangle_later_translation[1] - triangle_later_translation[0];
-                    cv::Point2f X_later_translation = alpha * a_later_translation + beta * b_later_translation + triangle_later_translation[0];
-
-                    if(X_later_translation.x >= (current_ref_image.cols - 1 + scaled_spread)) X_later_translation.x = current_ref_image.cols - 1 + scaled_spread;
-                    if(X_later_translation.y >= (current_ref_image.rows - 1 + scaled_spread)) X_later_translation.y = current_ref_image.rows - 1 + scaled_spread;
-                    if(X_later_translation.x < -scaled_spread) X_later_translation.x = -scaled_spread;
-                    if(X_later_translation.y < -scaled_spread) X_later_translation.y = -scaled_spread;
-
-                    /**
-                     * ## 微分を行う
-                     *
-                     * 　∂g   ∂g
-                     * 　-- , -- を求める
-                     * 　∂x   ∂y
-                     *
-                     * (x_int, y_int)     (x_int + 1, y_int)
-                     *             o x x x x o
-                     *             x x x x x x
-                     *             x x x x x x
-                     *             x x x x x x
-                     *             x x x x x x
-                     *             o x x x x o
-                     * (x_int, y_int+1)   (x_int + 1, y_int + 1)
-                     *
-                     */
-                    // 4倍画像上でやる->1/4しか進んでいないので，最終的な微分の結果は4倍する
-                    // g_x_translation = 4 * (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x) + 1, 4 * (X_later_translation.y)    , 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x) - 1, 4 * (X_later_translation.y)    , 1));
-                    // g_y_translation = 4 * (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x)    , 4 * (X_later_translation.y) + 1, 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x)    , 4 * (X_later_translation.y) - 1, 1));
-
-                    int x_int = (int)floor(X_later_translation.x);
-                    int y_int = (int)floor(X_later_translation.y);
-                    double dx = X_later_translation.x - x_int;
-                    double dy = X_later_translation.y - y_int;
-
-                    double x1_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int    ] - current_ref_expand[4 * x_int][4 * y_int    ];
-                    double x2_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int + 1] - current_ref_expand[4 * x_int][4 * y_int + 1];
-                    double g_x_translation = 4 * (x1_slope * (1 - dy) + x2_slope * dy);
-
-                    double y1_slope = current_ref_expand[4 * (x_int)    ][4 * y_int + 1] + current_ref_expand[4 * x_int    ][4 * y_int];
-                    double y2_slope = current_ref_expand[4 * (x_int) + 1][4 * y_int + 1] + current_ref_expand[4 * x_int + 1][4 * y_int];
-                    double g_y_translation = 4 * (y1_slope * (1 - dx) +  y2_slope * dx);
-
-                    delta_g_translation[0] = g_x_translation;
-                    delta_g_translation[1] = g_y_translation;
-
-                    /**
-                     * ## 補間画像の生成
-                     *
-                     * - f    : 4倍拡大された対象画像であり，フィルターが掛かっているものもある
-                     * - f_org: 4倍拡大された対象画像の原画像
-                     * - g    : 4倍拡大された参照画像の原画像
-                     * - g_org: HEVCのフィルターで4倍拡大された対象画像の原画像
-                     */
-                    double f     = img_ip(current_target_expand    , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *               pixel.x, 4 *               pixel.y, 1);
-                    double f_org = img_ip(current_target_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *               pixel.x, 4 *               pixel.y, 1);
-                    double g     = img_ip(current_ref_expand       , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_translation.x, 4 * X_later_translation.y, 1);
-                    double g_org = img_ip(current_ref_org_expand   , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_translation.x, 4 * X_later_translation.y, 1);
-
-                    E_delta_x += -2 * (f - g) * delta_g_translation[0];
-                    E_delta_y += -2 * (f - g) * delta_g_translation[1];
-
-                    for (int row = 0; row < 2; row++) {
-                        for (int col = 0; col < 2; col++) {
-                            gg_translation.at<double>(row, col) += delta_g_translation[row] * delta_g_translation[col];
-                        }
-                        B_translation.at<double>(row, 0) += (f - g) * delta_g_translation[row];
-                    }
-                    SSE_translation += (f_org - g_org) * (f_org - g_org);
-                }
-
-                double mu2 = pixels_in_triangle.size() * 0.0001;
-                gg_translation.at<double>(0, 0) += 4 * mu2 * tmp_mv_translation.x * tmp_mv_translation.x;
-                gg_translation.at<double>(0, 1) += 4 * mu2 * tmp_mv_translation.x * tmp_mv_translation.y;
-                gg_translation.at<double>(1, 0) += 4 * mu2 * tmp_mv_translation.y * tmp_mv_translation.x;
-                gg_translation.at<double>(1, 1) += 4 * mu2 * tmp_mv_translation.y * tmp_mv_translation.y;
-                B_translation.at<double>(0, 0) -= 2 * mu2 * tmp_mv_translation.x * (tmp_mv_translation.x * tmp_mv_translation.x + tmp_mv_translation.y * tmp_mv_translation.y);
-                B_translation.at<double>(1, 0) -= 2 * mu2 * tmp_mv_translation.y * (tmp_mv_translation.x * tmp_mv_translation.x + tmp_mv_translation.y * tmp_mv_translation.y);
-
-                cv::solve(gg_translation, B_translation, delta_uv_translation);
-                v_stack_translation.emplace_back(tmp_mv_translation, SSE_translation);
-
-                double alpha = std::max(1.0, std::max(E_delta_x, E_delta_y));
-                if(translation_update_flag) {
-                    for (int k = 0; k < 2; k++) {
-                        if (k % 2 == 0) {
-                            double du =  -0.001 * 1/alpha * E_delta_x;
-                            if ((-scaled_spread <=
-                                 scaled_coordinates[0].x + tmp_mv_translation.x + du) &&
-                                (target_images[0][step].cols - 1 + scaled_spread >=
-                                 scaled_coordinates[0].x + tmp_mv_translation.x +
-                                 du ) &&
-                                (-scaled_spread <=
-                                 scaled_coordinates[1].x + tmp_mv_translation.x +
-                                 du) &&
-                                (target_images[0][step].cols - 1 + scaled_spread >=
-                                 scaled_coordinates[1].x + tmp_mv_translation.x +
-                                 du) &&
-                                (-scaled_spread <=
-                                 scaled_coordinates[2].x + tmp_mv_translation.x +
-                                 du) &&
-                                (target_images[0][step].cols - 1 + scaled_spread >=
-                                 scaled_coordinates[2].x + tmp_mv_translation.x + du)) {
-                                tmp_mv_translation.x = tmp_mv_translation.x + du;
-
-                            }
-                        } else {
-                            double dv = -0.001 * 1/alpha * E_delta_y;
-
-                            if ((-scaled_spread <=
-                                 scaled_coordinates[0].y + tmp_mv_translation.y + dv) &&
-                                (target_images[0][step].rows - 1 + scaled_spread >=
-                                 scaled_coordinates[0].y + tmp_mv_translation.y + dv) &&
-                                (-scaled_spread <=
-                                 scaled_coordinates[1].y + tmp_mv_translation.y + dv) &&
-                                (target_images[0][step].rows - 1 + scaled_spread >=
-                                 scaled_coordinates[1].y + tmp_mv_translation.y + dv) &&
-                                (-scaled_spread <=
-                                 scaled_coordinates[2].y + tmp_mv_translation.y + dv) &&
-                                (target_images[0][step].rows - 1 + scaled_spread >=
-                                 scaled_coordinates[2].y + tmp_mv_translation.y + dv)) {
-                                tmp_mv_translation.y = tmp_mv_translation.y + dv;
-                            }
-                        }
-                    }
-                }
-
-                double eps = 1e-3;
-
-                iterate_counter++;
-
-                slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1].emplace_back(SSE_translation);
-                mv_newton_translation[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation);
-                coordinate_newton_translation1[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation + p0);
-                coordinate_newton_translation2[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation + p1);
-                coordinate_newton_translation3[filter_num][mv_newton_translation[filter_num].size() - 1].emplace_back(tmp_mv_translation + p2);
-
-
-                if ((fabs(prev_error_translation - SSE_translation) / SSE_translation) < eps) {
-                    translation_update_flag = false;
-                }
-
-                if(iterate_counter > 20 || !(translation_update_flag)){
-                    break;
-                }
-
-                prev_error_translation = SSE_translation;
-                prev_mv_translation = tmp_mv_translation;
-                SSE_translation = 0.0;
-            }
-
-            extern std::vector<std::vector<double>> freq_newton_translation;
-            freq_newton_translation[filter_num][std::min(iterate_counter, 20)]++;
-
-//            if(iterate_counter < 20 && !slow_newton_translation[filter_num].empty()){
-//                slow_newton_translation[filter_num].erase(slow_newton_translation[filter_num].begin() + slow_newton_translation[filter_num].size() - 1);
-//                mv_newton_translation[filter_num].erase(mv_newton_translation[filter_num].begin() + mv_newton_translation[filter_num].size() - 1);
-//                coordinate_newton_translation1[filter_num].erase(coordinate_newton_translation1[filter_num].begin() + coordinate_newton_translation1[filter_num].size() - 1);
-//                coordinate_newton_translation2[filter_num].erase(coordinate_newton_translation2[filter_num].begin() + coordinate_newton_translation2[filter_num].size() - 1);
-//                coordinate_newton_translation3[filter_num].erase(coordinate_newton_translation3[filter_num].begin() + coordinate_newton_translation3[filter_num].size() - 1);
-//                p0_newton_translation[filter_num].erase(p0_newton_translation[filter_num].begin() + p0_newton_translation[filter_num].size() - 1);
-//                p1_newton_translation[filter_num].erase(p1_newton_translation[filter_num].begin() + p1_newton_translation[filter_num].size() - 1);
-//                p2_newton_translation[filter_num].erase(p2_newton_translation[filter_num].begin() + p2_newton_translation[filter_num].size() - 1);
-//
-//            }else if((slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1][slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1].size() - 1]
-//                      - slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1][0]) < 0){
-//                slow_newton_translation[filter_num].erase(slow_newton_translation[filter_num].begin() + slow_newton_translation[filter_num].size() - 1);
-//                mv_newton_translation[filter_num].erase(mv_newton_translation[filter_num].begin() + mv_newton_translation[filter_num].size() - 1);
-//                coordinate_newton_translation1[filter_num].erase(coordinate_newton_translation1[filter_num].begin() + coordinate_newton_translation1[filter_num].size() - 1);
-//                coordinate_newton_translation2[filter_num].erase(coordinate_newton_translation2[filter_num].begin() + coordinate_newton_translation2[filter_num].size() - 1);
-//                coordinate_newton_translation3[filter_num].erase(coordinate_newton_translation3[filter_num].begin() + coordinate_newton_translation3[filter_num].size() - 1);
-//                p0_newton_translation[filter_num].erase(p0_newton_translation[filter_num].begin() + p0_newton_translation[filter_num].size() - 1);
-//                p1_newton_translation[filter_num].erase(p1_newton_translation[filter_num].begin() + p1_newton_translation[filter_num].size() - 1);
-//                p2_newton_translation[filter_num].erase(p2_newton_translation[filter_num].begin() + p2_newton_translation[filter_num].size() - 1);
-//            }
-
-            std::sort(v_stack_translation.begin(), v_stack_translation.end(), [](std::pair<cv::Point2f,double> a, std::pair<cv::Point2f,double> b){
-                return a.second < b.second;
-            });
-
-            tmp_mv_translation = v_stack_translation[0].first;
-            double Error_translation = v_stack_translation[0].second;
-            double PSNR_translation = 10 * log10((255 * 255) / (Error_translation / (double)pixels_in_triangle.size()));
-
-            if(PSNR_translation >= max_PSNR_translation){//2種類のボケ方で良い方を採用
-                max_PSNR_translation = PSNR_translation;
-                min_error_translation = Error_translation;
-                best_mv = roundVecQuarter(tmp_mv_translation);
-            }
-        }
-    }
-
-    // 量子化
-    double quantize_offset = 0.125;
-    if(best_mv.x < 0) {
-        best_mv.x = ((int)((best_mv.x - quantize_offset) * 4) / 4.0);
-    }else{
-        best_mv.x = ((int)((best_mv.x + quantize_offset) * 4) / 4.0);
-    }
-
-    if(best_mv.y < 0) {
-        best_mv.y = ((int) ((best_mv.y - quantize_offset) * 4) / 4.0);
-    }else{
-        best_mv.y = ((int) ((best_mv.y + quantize_offset) * 4) / 4.0);
-    }
-
-    return std::make_tuple(best_mv, min_error_translation, pixels_in_triangle.size());
 }
 
 /**

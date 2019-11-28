@@ -116,7 +116,7 @@ double getTriangleResidual(const cv::Mat ref_image, const cv::Mat &target_image,
  * @param vec 動きベクトル
  * @return 残差(SAD)
  */
-double getTriangleResidual(unsigned char **ref_image, const cv::Mat &target_image, Point3Vec &triangle, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_triangle_pixels, cv::Rect rect){
+double getTriangleResidual(unsigned char *ref_image, const cv::Mat &target_image, Point3Vec &triangle, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_triangle_pixels, cv::Rect rect){
     cv::Point2f pp0, pp1, pp2;
 
     pp0.x = triangle.p1.x + mv[0].x;
@@ -147,7 +147,7 @@ double getTriangleResidual(unsigned char **ref_image, const cv::Mat &target_imag
         b_later = pp1 - pp0;
         X_later = alpha * a_later + beta * b_later + pp0;
 
-        int y = img_ip(ref_image, rect, 4 * X_later.x, 4 * X_later.y, 1);
+        int y = img_ip(ref_image, rect, 4 * X_later.x, 4 * X_later.y);
 
         sad += std::pow((M(target_image, (int)pixel.x, (int)pixel.y) - (0.299 * y + 0.587 * y + 0.114 * y)), 2);
     }
@@ -156,7 +156,7 @@ double getTriangleResidual(unsigned char **ref_image, const cv::Mat &target_imag
 }
 
 
-double getTriangleSSE(unsigned char **ref_image, unsigned char **target_image, Point3Vec &triangle, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_triangle_pixels, cv::Rect rect){
+double getTriangleSSE(unsigned char *ref_image, unsigned char *target_image, Point3Vec &triangle, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_triangle_pixels, cv::Rect rect){
     cv::Point2f pp0, pp1, pp2;
 
     // 移動後の座標
@@ -188,8 +188,8 @@ double getTriangleSSE(unsigned char **ref_image, unsigned char **target_image, P
         b_later = pp1 - pp0;
         X_later = alpha * a_later + beta * b_later + pp0;
 
-        double ref_y    = img_ip(   ref_image, rect, 4 * X_later.x, 4 * X_later.y, 1);
-        double target_y = img_ip(target_image, rect, 4 * pixel.x  , 4 *   pixel.y, 1);
+        double ref_y    = img_ip(   ref_image, rect, 4 * X_later.x, 4 * X_later.y);
+        double target_y = img_ip(target_image, rect, 4 * pixel.x  , 4 *   pixel.y);
 
         sad += (target_y - ref_y) * (target_y - ref_y);
     }
@@ -420,27 +420,27 @@ void freeExpandImages(EXPAND_ARRAY_TYPE expand_images, int expand, int filter_nu
             auto current_target_expand = expand_images[filter][step][2];
             auto current_target_org_expand = expand_images[filter][step][3];
 
-            for (int d = -expand; d < scaled_col + expand; d++) {
-                current_target_expand[d] -= expand;
-                current_ref_expand[d] -= expand;
-                free(current_ref_expand[d]);
-                free(current_target_expand[d]);
-
-                current_target_org_expand[d] -= expand;
-                current_ref_org_expand[d] -= expand;
-                free(current_ref_org_expand[d]);
-                free(current_target_org_expand[d]);
-            }
-
-            current_target_expand -= expand;
-            current_ref_expand -= expand;
-            free(current_target_expand);
-            free(current_ref_expand);
-
-            current_target_org_expand -= expand;
-            current_ref_org_expand -= expand;
-            free(current_target_org_expand);
-            free(current_ref_org_expand);
+//            for (int d = -expand; d < scaled_col + expand; d++) {
+//                current_target_expand[d] -= expand;
+//                current_ref_expand[d] -= expand;
+//                free(current_ref_expand[d]);
+//                free(current_target_expand[d]);
+//
+//                current_target_org_expand[d] -= expand;
+//                current_ref_org_expand[d] -= expand;
+//                free(current_ref_org_expand[d]);
+//                free(current_target_org_expand[d]);
+//            }
+//
+//            current_target_expand -= expand;
+//            current_ref_expand -= expand;
+//            free(current_target_expand);
+//            free(current_ref_expand);
+//
+//            current_target_org_expand -= expand;
+//            current_ref_org_expand -= expand;
+//            free(current_target_org_expand);
+//            free(current_ref_org_expand);
         }
     }
 
@@ -448,33 +448,16 @@ void freeExpandImages(EXPAND_ARRAY_TYPE expand_images, int expand, int filter_nu
 
 void freeHEVCExpandImage(EXPAND_ARRAY_TYPE expand_images, int expand, int filter_num, int step_num, int rows, int cols){
     for(int filter = 0 ; filter < filter_num ; filter++){
-        for(int step = 3 ; step < step_num ; step++){
+        for(int step = 3 ; step < step_num ; step++) {
             auto current_ref_expand = expand_images[filter][step][0];
             auto current_ref_org_expand = expand_images[filter][step][1];
             auto current_target_expand = expand_images[filter][step][2];
             auto current_target_org_expand = expand_images[filter][step][3];
 
-            for (int d = -4 * expand; d < 4 * (cols + expand); d++) {
-                current_target_expand[d] -= 4 * expand;
-                current_ref_expand[d] -= 4 * expand;
-                free(current_ref_expand[d]);
-                free(current_target_expand[d]);
-
-                current_target_org_expand[d] -= 4 * expand;
-                current_ref_org_expand[d] -= 4 * expand;
-                free(current_ref_org_expand[d]);
-                free(current_target_org_expand[d]);
-            }
-
-            current_target_expand -= 4 * expand;
-            current_ref_expand -= 4 * expand;
-            free(current_target_expand);
             free(current_ref_expand);
-
-            current_target_org_expand -= 4 * expand;
-            current_ref_org_expand -= 4 * expand;
-            free(current_target_org_expand);
             free(current_ref_org_expand);
+            free(current_target_expand);
+            free(current_target_org_expand);
         }
     }
 }
@@ -557,6 +540,47 @@ double img_ip(unsigned char **img, cv::Rect rect, double x, double y, int mode){
     }
 
     /*** リミッタを掛けて return ***/
+    if (val >= 255.5) return 255;
+    else if (val < -0.5) return 0;
+    else return val;
+}
+
+/**
+ * @fn int img_ip(unsigned char **img, int xs, int ys, double x, double y, int mode)
+ * @brief x,yの座標の補間値を返す
+ * @param img 保管するための原画像
+ * @param xs xの最大値
+ * @param ys yの最大値
+ * @param x 補間するx座標
+ * @param y 補間するy座標
+ * @param mode 補間モード。モードはImageUtil.hにenumで定義してある
+ * @return 補間値
+ */
+double img_ip(unsigned char *img, cv::Rect rect, double x, double y, int offset, int k){
+    int x0, y0;          /* 補間点 (x, y) の整数部分 */
+    double dx, dy;       /* 補間点 (x, y) の小数部分 */
+
+    /*** 補間点(x, y)が原画像の領域外なら, 範囲外を示す -1 を返す ***/
+    if (x < rect.x || x > rect.x + rect.width || y < rect.y || y > rect.y + rect.height ) {
+        std::cout << "Error in img_ip!" << std::endl;
+        std::cout << x << " " << y << std::endl;
+        exit(-1);
+    }
+
+    /*** 補間点(x, y)の整数部分(x0, y0), 小数部分(dx, dy)を求める ***/
+    x0 = (int) floor(x);
+    y0 = (int) floor(y);
+    dx = x - (double) x0;
+    dy = y - (double) y0;
+
+    if(x0 == (rect.width + rect.x)) x0 = (rect.width + rect.x);
+    if(y0 == (rect.height + rect.y)) x0 = (rect.height + rect.y);
+
+    double val = F(img, x0    , y0    , k * offset, rect.width - 2 * k * offset) +
+                 F(img, x0 + 1, y0    , k * offset, rect.width - 2 * k * offset) +
+                 F(img, x0    , y0 + 1, k * offset, rect.width - 2 * k * offset) +
+                 F(img, x0 + 1, y0 + 1, k * offset, rect.width - 2 * k * offset);
+
     if (val >= 255.5) return 255;
     else if (val < -0.5) return 0;
     else return val;
@@ -773,24 +797,12 @@ unsigned char* getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
         }
     }
 
-    auto *ret = (unsigned char *)malloc(sizeof(unsigned char) * k * (image.cols + 2 * scaled_expansion_size) * k * (image.rows + 2 * scaled_expansion_size));
+    auto *ret = (unsigned char *)malloc(sizeof(unsigned char) * k * (image.cols + 2 * expansion_size) * k * (image.rows + 2 * expansion_size));
 
 #pragma omp parallel for
     for(int y = -k * expansion_size ; y < k * (image.rows + expansion_size) ; y++){
         for(int x = -k * expansion_size ; x < k * (image.cols + expansion_size) ; x++){
-            F(ret, x, y, k * scaled_expansion_size, k * image.cols) = expansion_image[x][y];
-        }
-    }
-    for(int y = -k * expansion_size ; y < k * (image.rows + expansion_size) ; y++){
-        for(int x = -k * scaled_expansion_size ; x <= -k * expansion_size ; x++){
-            F(ret, x, y, k * scaled_expansion_size, k * image.cols) = F(ret, -k * expansion_size, y, k * scaled_expansion_size, k * image.cols);
-            F(ret, k*(image.cols + scaled_expansion_size + expansion_size) + x - 1, y, k * scaled_expansion_size, k * image.cols) = F(ret, k * image.cols - 1, y, k * scaled_expansion_size, k * image.cols);
-        }
-    }
-    for(int y = -k * scaled_expansion_size ; y < -k * expansion_size ; y++){
-        for(int x = -k * scaled_expansion_size ; x < k * (image.cols + scaled_expansion_size); x++){
-            F(ret, x, y, k * scaled_expansion_size, k * image.cols) = F(ret, x, -k * expansion_size + 1, k * scaled_expansion_size, k * image.cols);
-            F(ret, x, k * (image.rows + scaled_expansion_size + expansion_size) + y - 1, k * scaled_expansion_size, k * image.cols) = F(ret, x, k * (image.rows - 1 + expansion_size), k * scaled_expansion_size, k * image.cols);
+            F(ret, x, y, k * expansion_size, k * image.cols) = expansion_image[x][y];
         }
     }
 

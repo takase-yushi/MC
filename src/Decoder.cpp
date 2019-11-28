@@ -169,8 +169,6 @@ void Decoder::initTriangle(int _block_size_x, int _block_size_y, int _divide_ste
     }
 
     int expansion_size = SEARCH_RANGE;
-    int scaled_expansion_size = expansion_size + 2;
-    hevc_expansion_ref = getExpansionMatHEVCImage(ref_image, 4, scaled_expansion_size);
 
     // 0行目
     for(int block_x = 1 ; block_x < (block_num_x * 2) - 1; block_x+=2){
