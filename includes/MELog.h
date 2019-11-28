@@ -17,9 +17,11 @@ public:
     std::vector<double> residual;
     std::vector<cv::Point2f> mv_newton_translation;
     std::vector<std::vector<cv::Point2f>> mv_newton_warping;
-    std::vector<cv::Point2f> coordinate_newton_warping1;
-    std::vector<cv::Point2f> coordinate_newton_warping2;
-    std::vector<cv::Point2f> coordinate_newton_warping3;
+
+    // ここでのtranslationは動いたあとって意味で使ってますよ
+    std::vector<cv::Point2f> coordinate_after_move1;
+    std::vector<cv::Point2f> coordinate_after_move2;
+    std::vector<cv::Point2f> coordinate_after_move3;
 };
 
 

@@ -56,6 +56,7 @@ std::vector<std::vector<std::vector<std::vector<cv::Point2f>>>> mv_newton_warpin
 std::vector<std::vector<std::vector<double>>> slow_newton_warping, slow_newton_translation;
 
 std::vector<MELog> ME_log_translation;
+std::vector<MELog> ME_log_warping;
 
 void storeNewtonLogs(std::string logDirectoryPath);
 
@@ -451,17 +452,33 @@ void storeNewtonLogs(std::string logDirectoryPath){
 
     std::ofstream ofs_test;
     ofs_test.open(logDirectoryPath + "/log_test1.csv");
+
+    ofs_test << "translation" << std::endl;
     for(auto & m : ME_log_translation){
         if(m.residual.back() - m.residual.front() > 0.0 && m.percentage > 2.0) {
             ofs_test << "increase distortion," << m.percentage << ",%" << std::endl;
 
             ofs_test << "Initial Vector," << m.residual[0] << "," << m.mv_newton_translation[0] << std::endl;
             for(int j = 1 ; j < (int)m.residual.size() ; j++){
-                ofs_test << j << "," << m.residual[j] << "," << m.mv_newton_translation[j] << "," << m.coordinate_newton_warping1[j] << "," << m.coordinate_newton_warping2[j] << "," << m.coordinate_newton_warping3[j] << std::endl;
+                ofs_test << j << "," << m.residual[j] << "," << m.mv_newton_translation[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
             }
             ofs_test << std::endl;
         }
     }
+
+    ofs_test << "warping" << std::endl;
+    for(auto & m : ME_log_warping){
+        if(m.residual.back() - m.residual.front() > 0.0 && m.percentage > 2.0) {
+            ofs_test << "increase distortion," << m.percentage << ",%" << std::endl;
+
+            ofs_test << "Initial Vector," << m.residual[0] << "," << m.mv_newton_warping[0] << std::endl;
+            for(int j = 1 ; j < (int)m.residual.size() ; j++){
+                ofs_test << j << "," << m.residual[j] << "," << m.mv_newton_warping[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
+            }
+            ofs_test << std::endl;
+        }
+    }
+
     ofs_test.close();
 
 //    ofs_newton2_0 << "warping" << std::endl;
