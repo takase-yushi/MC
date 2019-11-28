@@ -498,17 +498,22 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
     }
 
 #if STORE_NEWTON_LOG
-    extern std::vector<MELog> ME_log_translation;
-    extern std::vector<MELog> ME_log_warping;
+    extern std::vector<MELog> ME_log_translation_0;
+    extern std::vector<MELog> ME_log_translation_1;
+    extern std::vector<MELog> ME_log_warping_0;
+    extern std::vector<MELog> ME_log_warping_1;
+
+    ME_log_translation_0.emplace_back();
+    ME_log_translation_1.emplace_back();
 #endif
+
 
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
         cv::Point2f tmp_mv_translation(initial_vector.x, initial_vector.y);
         bool translation_update_flag = true;
 
 #if STORE_NEWTON_LOG
-        ME_log_translation.emplace_back();
-        MELog& current_me_log = ME_log_translation.back();
+        MELog& current_me_log = (filter_num == 0 ? ME_log_translation_0.back() : ME_log_translation_1.back());
 #endif
         // Marquardtの係数
         double alpha_marquardt = 0.5;
@@ -840,13 +845,17 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
      * 3本の動きベクトルを推定してワーピングする
      *
      */
+#if STORE_NEWTON_LOG
+    ME_log_warping_0.emplace_back();
+    ME_log_warping_1.emplace_back();
+#endif
+
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
         std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(initial_vector.x, initial_vector.y));
         bool warping_update_flag = true;
 
 #if STORE_NEWTON_LOG
-        ME_log_warping.emplace_back();
-        MELog& current_me_log = ME_log_warping.back();
+        MELog& current_me_log = (filter_num == 0 ? ME_log_warping_0.back() : ME_log_warping_1.back());
 #endif
 
         // Marquardtの係数
@@ -911,7 +920,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
             double prev_error_warping = error_bm_min;
             std::vector<cv::Point2f> prev_mv_warping{initial_vector, initial_vector, initial_vector};
-
 
 #if STORE_NEWTON_LOG
             current_me_log.mv_newton_warping.emplace_back(tmp_mv_warping);
@@ -1214,7 +1222,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
         max_v_warping[i].x = ((int)((max_v_warping[i].x) * 4) / 4.0);
         max_v_warping[i].y = ((int)((max_v_warping[i].y) * 4) / 4.0);
     }
-
 
     return std::make_tuple(std::vector<cv::Point2f>{max_v_warping[0], max_v_warping[1], max_v_warping[2]}, max_v_translation, min_error_warping, min_error_translation, pixels_in_triangle.size());
 }
