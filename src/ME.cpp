@@ -575,7 +575,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
             }
             v_stack_translation.clear();
 
-            double prev_error_translation = error_bm_min;
+            double prev_SSE_translation = error_bm_min;
             cv::Point2f prev_mv_translation = tmp_mv_translation;
 
             int iterate_counter = 0;
@@ -728,7 +728,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
                 cv::solve(gg_translation, B_translation, delta_uv_translation);
 
-                if(translation_update_flag && prev_error_translation > SSE_translation) {
+                if(translation_update_flag && prev_SSE_translation > SSE_translation) {
                     for (int k = 0; k < 2; k++) {
                         if (k % 2 == 0) {
                             double translated_x = tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0);
@@ -772,16 +772,16 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 current_me_log.coordinate_after_move3.emplace_back(tmp_mv_translation + p2);
 #endif
 
-                if(prev_error_translation > SSE_translation){
+                if(prev_SSE_translation > SSE_translation){
                     alpha_marquardt *= 0.2;
-                    prev_error_translation = SSE_translation;
+                    prev_SSE_translation = SSE_translation;
                     prev_mv_translation = tmp_mv_translation;
                 }else{
                     alpha_marquardt *= 10;
                     tmp_mv_translation = prev_mv_translation;
                 }
 
-                if ((fabs(prev_error_translation - SSE_translation) / SSE_translation) < eps) {
+                if ((fabs(prev_SSE_translation - SSE_translation) / SSE_translation) < eps) {
                     translation_update_flag = false;
                 }
 
@@ -919,7 +919,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
             }
             v_stack_warping.clear();
 
-            double prev_error_warping = error_bm_min;
+            double prev_SSE_warping = error_bm_min;
             std::vector<cv::Point2f> prev_mv_warping{initial_vector, initial_vector, initial_vector};
 
 #if STORE_NEWTON_LOG
@@ -1114,7 +1114,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
                 cv::solve(gg_warping, B_warping, delta_uv_warping); //6x6の連立方程式を解いてdelta_uvに格納
 
-                if(warping_update_flag && prev_error_warping > SSE_warping) {
+                if(warping_update_flag && prev_SSE_warping > SSE_warping) {
                     for (int k = 0; k < 6; k++) {
                         if (k % 2 == 0) {
                             if ((-scaled_spread <=
@@ -1155,16 +1155,16 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 current_me_log.coordinate_after_move3.emplace_back(tmp_mv_warping[2] + p2);
 #endif
 
-                if(prev_error_warping > SSE_warping){
+                if(prev_SSE_warping > SSE_warping){
                     alpha_marquardt *= 0.2;
-                    prev_error_warping = SSE_warping;
+                    prev_SSE_warping = SSE_warping;
                     prev_mv_warping = tmp_mv_warping;
                 }else{
                     alpha_marquardt *= 10;
                     tmp_mv_warping = prev_mv_warping;
                 }
 
-                if ((fabs(prev_error_warping - SSE_warping) / SSE_warping < eps)) {
+                if ((fabs(prev_SSE_warping - SSE_warping) / SSE_warping < eps)) {
                     warping_update_flag = false;
                 }
 
