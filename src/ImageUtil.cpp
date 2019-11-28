@@ -1024,3 +1024,26 @@ cv::Mat getAppliedLPFImage(const cv::Mat &image){
 
     return out;
 }
+
+/**
+ *
+ * @param output_path
+ * @param array
+ * @param width
+ * @param height
+ * @param offset
+ * @param k
+ */
+void store1DArrayImage(std::string output_path, unsigned char *array, int width, int height, int offset, int k){
+    cv::Mat out = cv::Mat::zeros(k * (2 * offset + height), k * (2 * offset + width), CV_8UC3);
+
+    for(int y = -k * offset ; y < k * (height + offset) ; y++){
+        for(int x = -k * offset ; x < k * (width + offset) ; x++){
+            R(out, x + k * offset, y + k * offset) = F(array, x, y, k * offset, k * width);
+            G(out, x + k * offset, y + k * offset) = F(array, x, y, k * offset, k * width);
+            B(out, x + k * offset, y + k * offset) = F(array, x, y, k * offset, k * width);
+        }
+    }
+
+    cv::imwrite(output_path, out);
+}

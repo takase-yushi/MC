@@ -39,4 +39,6 @@ double getTriangleResidual(unsigned char *ref_image, const cv::Mat &target_image
 double getTriangleSSE(unsigned char *ref_image, unsigned char *target_image, Point3Vec &triangle, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_triangle_pixels, cv::Rect rect);
 cv::Mat getAppliedLPFImage(const cv::Mat &image);
 
+void store1DArrayImage(std::string output_path, unsigned char *array, int width, int height, int offset, int k);
+
 #endif //ENCODER_IMAGEUTIL_H
