@@ -251,7 +251,7 @@ void run(std::string config_name) {
             target_images = target_images_with_qp[qp];
         }
 
-        std::vector<std::vector<std::vector<unsigned char **>>> expand_images;
+        std::vector<std::vector<std::vector<unsigned char *>>> expand_images;
         int expand = SEARCH_RANGE;
         if(expand_images_with_qp.count(qp) == 0) {
             expand_images = getExpandImages(ref_images, target_images, expand);
