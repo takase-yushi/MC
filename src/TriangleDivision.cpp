@@ -3006,8 +3006,6 @@ TriangleDivision::~TriangleDivision() {
     free(expansion_ref_uchar);
 
     free(ref_hevc);
-    ref_hevc -= 4 * (SEARCH_RANGE + 4);
-    free(ref_hevc);
 
     expansion_ref.release();
 }
