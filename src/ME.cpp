@@ -430,6 +430,21 @@ double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::
 std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewton(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char **>>> expand_image, Point3Vec target_corners, const std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, int block_size_x, int block_size_y, cv::Point2f init_vector, unsigned char **ref_hevc){
     // 画像の初期化 vector[filter][picture_number]
 
+    /**
+     * Translation用の動きベクトル推定
+     * - 変動量(u,v)を求める
+     *
+     * ## 方程式の命名
+     *
+     * -                - -          -     -   -
+     * |                | |          |     |   |
+     * |                | |          |     |   |
+     * | gg_translation | | delta_uv |  =  | B |
+     * |                | |          |     |   |
+     * |                | |          |     |   |
+     * -                - -          -     -   -
+     *
+     */
     const int warping_matrix_dim = 6; // 方程式の次元
     const int translation_matrix_dim = 2;
     cv::Mat gg_warping = cv::Mat::zeros(warping_matrix_dim, warping_matrix_dim, CV_64F); // 式(45)の左辺6×6行列
