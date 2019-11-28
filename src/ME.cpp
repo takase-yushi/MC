@@ -806,10 +806,12 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 SSE_translation = 0.0;
             }
 
+#if STORE_NEWTON_LOG
             extern std::vector<std::vector<double>> freq_newton_translation;
             freq_newton_translation[filter_num][std::min(iterate_counter, 20)]++;
 
             current_me_log.percentage = (fabs(current_me_log.residual.back() - current_me_log.residual.front()) / current_me_log.residual.front() * 100);
+#endif
 
 //            if(iterate_counter < 20 && !slow_newton_translation[filter_num].empty()){
 //                slow_newton_translation[filter_num].erase(slow_newton_translation[filter_num].begin() + slow_newton_translation[filter_num].size() - 1);
