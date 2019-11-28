@@ -537,6 +537,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
         // Marquardtの係数
         double alpha_marquardt = 0.5;
 
+        v_stack_translation.emplace_back(tmp_mv_translation, error_bm_min);
+
         for(int step = 3 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
             double SSE_translation = 0.0;
 
@@ -777,7 +779,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 // 移動後のSSEを求める
                 std::vector<cv::Point2f> translation_mvs{tmp_mv_translation, tmp_mv_translation, tmp_mv_translation};
                 SSE_translation = getTriangleSSE(ref_hevc, current_target_org_expand, target_corners, translation_mvs, pixels_in_triangle, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)));
-                v_stack_translation.emplace_back(tmp_mv_translation, SSE_translation);
 
 
                 double eps = 1e-3;
@@ -796,6 +797,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     alpha_marquardt *= 0.2;
                     prev_SSE_translation = SSE_translation;
                     prev_mv_translation = tmp_mv_translation;
+                    v_stack_translation.emplace_back(tmp_mv_translation, SSE_translation);
                 }else{
                     alpha_marquardt *= 10;
                     tmp_mv_translation = prev_mv_translation;
@@ -881,6 +883,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
         // Marquardtの係数
         double alpha_marquardt = 0.5;
+
+        v_stack_warping.emplace_back(tmp_mv_warping, error_bm_min);
 
         for(int step = 3 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
             double SSE_warping = 0.0;
@@ -1162,7 +1166,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 }
 
                 SSE_warping = getTriangleSSE(ref_hevc, current_target_org_expand, target_corners, tmp_mv_warping, pixels_in_triangle, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)));
-                v_stack_warping.emplace_back(tmp_mv_warping, SSE_warping);
 
                 iterate_counter++;
                 double eps = 1e-3;
@@ -1179,6 +1182,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     alpha_marquardt *= 0.2;
                     prev_SSE_warping = SSE_warping;
                     prev_mv_warping = tmp_mv_warping;
+                    v_stack_warping.emplace_back(tmp_mv_warping, SSE_warping);
                 }else{
                     alpha_marquardt *= 10;
                     tmp_mv_warping = prev_mv_warping;
