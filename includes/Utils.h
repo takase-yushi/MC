@@ -81,7 +81,8 @@
  * @brief unsigned charの画像（一次元配列）から画素値を返す
  *
  */
-#define F(img, x, y, f, width) img[((x) + (f)) + (((y) + (f)) * (2 * (f) + (width)))]
+#define F(img, x, y, offset, width) img[((x) + (offset)) + (((y) + (offset)) * (2 * (offset) + (width)))]
+
 
 enum {
     BM,
