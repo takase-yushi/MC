@@ -814,15 +814,15 @@ unsigned char* getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
 }
 
 cv::Mat getExpansionMatHEVCImage(cv::Mat image, int k, int expansion_size){
-    unsigned char **expansion_image = getExpansionHEVCImage(image, k, expansion_size);
+    unsigned char *expansion_image = getExpansionHEVCImage(image, k, expansion_size);
 
     cv::Mat out = cv::Mat::zeros(k * (image.rows + 2 * expansion_size), k * (image.cols + 2 * expansion_size), CV_8UC3);
 
     for(int y = 0 ; y < k * (image.rows + 2 * expansion_size) ; y++){
         for(int x = 0 ; x < k * (image.cols + 2 * expansion_size) ; x++){
-            R(out, x, y) = expansion_image[x - k * expansion_size][y - k * expansion_size];
-            B(out, x, y) = expansion_image[x - k * expansion_size][y - k * expansion_size];
-            G(out, x, y) = expansion_image[x - k * expansion_size][y - k * expansion_size];
+            R(out, x, y) = F(expansion_image, x - k * expansion_size, y - k * expansion_size, k * expansion_size, k * image.cols);
+            B(out, x, y) = F(expansion_image, x - k * expansion_size, y - k * expansion_size, k * expansion_size, k * image.cols);
+            G(out, x, y) = F(expansion_image, x - k * expansion_size, y - k * expansion_size, k * expansion_size, k * image.cols);
         }
     }
 
