@@ -681,11 +681,11 @@ unsigned char** getExpansionImage(cv::Mat image, int k, int expansion_size, IP_M
 unsigned char* getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
     // 引き伸ばし＋補間で使うため4画素余分に取る
     int scaled_expansion_size = expansion_size + 4;
-    auto **expansion_image_tmp = (unsigned char **) malloc(sizeof(unsigned char *) * (image.cols + scaled_expansion_size * 2));
+    auto **expansion_image_tmp = (unsigned int **) malloc(sizeof(unsigned int *) * (image.cols + scaled_expansion_size * 2));
     expansion_image_tmp += scaled_expansion_size;
 
     for (int i = -scaled_expansion_size; i < image.cols + scaled_expansion_size; i++) {
-        expansion_image_tmp[i] = (unsigned char *) malloc(sizeof(unsigned char) * (image.rows + scaled_expansion_size * 2));
+        expansion_image_tmp[i] = (unsigned int *) malloc(sizeof(unsigned int) * (image.rows + scaled_expansion_size * 2));
         expansion_image_tmp[i] += scaled_expansion_size;
     }
 
@@ -710,11 +710,11 @@ unsigned char* getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
             expansion_image_tmp[x][image.rows - y - 1] = expansion_image_tmp[x][image.rows - 1];
         }
     }
-    auto **expansion_image = (unsigned char **) malloc(sizeof(unsigned char *) * (k * image.cols + 2 * k * scaled_expansion_size));
+    auto **expansion_image = (unsigned int **) malloc(sizeof(unsigned int *) * (k * image.cols + 2 * k * scaled_expansion_size));
     expansion_image += (k * scaled_expansion_size);
 
     for (int i = -k * scaled_expansion_size; i < k * image.cols + k * scaled_expansion_size; i++) {
-        expansion_image[i] = (unsigned char *) malloc(sizeof(unsigned char) * (k * image.rows + 2 * k * scaled_expansion_size));
+        expansion_image[i] = (unsigned int *) malloc(sizeof(unsigned int) * (k * image.rows + 2 * k * scaled_expansion_size));
         expansion_image[i] += (k * scaled_expansion_size);
     }
 
