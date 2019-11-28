@@ -445,14 +445,14 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
      * -                - -          -     -   -
      *
      */
-    const int warping_matrix_dim = 6; // 方程式の次元
+    const int warping_matrix_dim     = 6; // 方程式の次元
     const int translation_matrix_dim = 2;
-    cv::Mat gg_warping = cv::Mat::zeros(warping_matrix_dim, warping_matrix_dim, CV_64F); // 式(45)の左辺6×6行列
-    cv::Mat gg_translation = cv::Mat::zeros(translation_matrix_dim, translation_matrix_dim, CV_64F); // 式(52)の左辺2×2行列
-    cv::Mat B_warping = cv::Mat::zeros(warping_matrix_dim, 1, CV_64F); // 式(45)の右辺
-    cv::Mat B_translation = cv::Mat::zeros(translation_matrix_dim, 1, CV_64F); // 式(52)の右辺
-    cv::Mat delta_uv_warping = cv::Mat::zeros(warping_matrix_dim, 1, CV_64F); // 式(45)の左辺 delta
-    cv::Mat delta_uv_translation = cv::Mat::zeros(translation_matrix_dim, 1, CV_64F); // 式(52)の右辺 delta
+    cv::Mat gg_warping               = cv::Mat::zeros(warping_matrix_dim, warping_matrix_dim, CV_64F);         // 式(45)の左辺6×6行列
+    cv::Mat gg_translation           = cv::Mat::zeros(translation_matrix_dim, translation_matrix_dim, CV_64F); // 式(52)の左辺2×2行列
+    cv::Mat B_warping                = cv::Mat::zeros(warping_matrix_dim, 1, CV_64F);                          // 式(45)の右辺
+    cv::Mat B_translation            = cv::Mat::zeros(translation_matrix_dim, 1, CV_64F);                      // 式(52)の右辺
+    cv::Mat delta_uv_warping         = cv::Mat::zeros(warping_matrix_dim, 1, CV_64F);                          // 式(45)の左辺 delta
+    cv::Mat delta_uv_translation     = cv::Mat::zeros(translation_matrix_dim, 1, CV_64F);                      // 式(52)の右辺 delta
 
     double min_error_warping = 1E6, min_error_translation = 1E6;
     double max_PSNR_warping = -1, max_PSNR_translation = -1;
