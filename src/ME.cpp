@@ -771,13 +771,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 current_me_log.coordinate_after_move2.emplace_back(tmp_mv_translation + p1);
                 current_me_log.coordinate_after_move3.emplace_back(tmp_mv_translation + p2);
 #endif
-                if ((fabs(prev_error_translation - SSE_translation) / SSE_translation) < eps) {
-                    translation_update_flag = false;
-                }
-
-                if(iterate_counter > 30 || !(translation_update_flag)){
-                    break;
-                }
 
                 if(prev_error_translation > SSE_translation){
                     alpha_marquardt *= 0.2;
@@ -786,6 +779,14 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 }else{
                     alpha_marquardt *= 10;
                     tmp_mv_translation = prev_mv_translation;
+                }
+
+                if ((fabs(prev_error_translation - SSE_translation) / SSE_translation) < eps) {
+                    translation_update_flag = false;
+                }
+
+                if(iterate_counter > 30 || !(translation_update_flag)){
+                    break;
                 }
 
                 SSE_translation = 0.0;
@@ -1154,14 +1155,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 current_me_log.coordinate_after_move3.emplace_back(tmp_mv_warping[2] + p2);
 #endif
 
-                if ((fabs(prev_error_warping - SSE_warping) / SSE_warping < eps)) {
-                    warping_update_flag = false;
-                }
-
-                if(iterate_counter > 20 || !(warping_update_flag)){
-                    break;
-                }
-
                 if(prev_error_warping > SSE_warping){
                     alpha_marquardt *= 0.2;
                     prev_error_warping = SSE_warping;
@@ -1169,6 +1162,14 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 }else{
                     alpha_marquardt *= 10;
                     tmp_mv_warping = prev_mv_warping;
+                }
+
+                if ((fabs(prev_error_warping - SSE_warping) / SSE_warping < eps)) {
+                    warping_update_flag = false;
+                }
+
+                if(iterate_counter > 20 || !(warping_update_flag)){
+                    break;
                 }
 
             }
