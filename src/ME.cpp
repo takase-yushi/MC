@@ -746,7 +746,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 // 更新量がしきい値以上であれば打ち切る
                 double delta_u = delta_uv_translation.at<double>(0, 0);
                 double delta_v = delta_uv_translation.at<double>(1, 0);
-                if(delta_u >= DELTA_UV_THRESHOLD || delta_v >= DELTA_UV_THRESHOLD){
+                if(fabs(delta_u) >= DELTA_UV_THRESHOLD || fabs(delta_v) >= DELTA_UV_THRESHOLD){
                     break;
                 }
 
@@ -1131,7 +1131,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 // delta_uvの値がしきい値を超えたら更新を終了する
                 bool delta_uv_threshold_flag = false;
                 for(int row = 0 ; row < warping_matrix_dim ; row++ ){
-                    if(delta_uv_warping.at<double>(row, 0) >= DELTA_UV_THRESHOLD){
+                    if(fabs(delta_uv_warping.at<double>(row, 0)) >= DELTA_UV_THRESHOLD){
                         delta_uv_threshold_flag = true;
                         break;
                     }
