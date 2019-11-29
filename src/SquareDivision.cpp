@@ -907,8 +907,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     std::vector<cv::Point2f> mv_warping;
     std::vector<cv::Point2f> tmp_bm_mv;
     std::vector<double> tmp_bm_errors;
-    cv::Point2f original_mv_translation[4];
-    std::vector<cv::Point2f> original_mv_warping[4];
     double cost_after_subdivs[4];
     MV_CODE_METHOD method_flags[4];
     CollocatedMvTree *cmts[4];
@@ -989,15 +987,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         if(method_flags[j] == MV_CODE_METHOD::MERGE) {
             if(split_mv_result[j].translation_flag) {
                 gauss_result_translation = mvd[0];
-                original_mv_translation[j] = square_gauss_results[square_indexes[j]].mv_translation;
                 square_gauss_results[square_indexes[j]].mv_translation = gauss_result_translation;
             }else{
-                original_mv_warping[j] = square_gauss_results[square_indexes[j]].mv_warping;
                 square_gauss_results[square_indexes[j]].mv_warping = mvd;
             }
         }
         else if(method_flags[j] == MV_CODE_METHOD::MERGE2) {
-            original_mv_warping[j] = square_gauss_results[square_indexes[j]].mv_warping;
             square_gauss_results[square_indexes[j]].mv_warping[0] = mvd[0];
             square_gauss_results[square_indexes[j]].mv_warping[1] = mvd[1];
         }
