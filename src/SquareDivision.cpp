@@ -865,7 +865,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     subdiv_target_squares.emplace_back(split_sub_squares2.s2);
 
     double RMSE_after_subdiv = 0.0;
-    std::vector<GaussResult> split_mv_result(subdiv_target_squares.size());
 
     int s1_p1_idx = getOrAddCornerIndex(split_squares.s1.p1);
     int s1_p2_idx = getOrAddCornerIndex(split_squares.s1.p2);
@@ -956,13 +955,11 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 cost_after_subdivs[j] = cost_translation;
                 method_flags[j] = method_translation;
                 mvd = mvd_translation;
-                split_mv_result[j] = GaussResult(mv_warping, mv_translation, error_warping, error_translation, square_size, true, error_translation);
             }else{
                 square_gauss_results[square_indexes[j]].translation_flag = false;
                 cost_after_subdivs[j] = cost_warping;
                 method_flags[j] = method_warping;
                 mvd = mvd_warping;
-                split_mv_result[j] = GaussResult(mv_warping, mv_translation, error_warping, error_translation, square_size, false, error_warping);
             }
 
         }else if(PRED_MODE == BM){
@@ -976,8 +973,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             error_translation = tmp_bm_errors[2];
             error_warping = tmp_bm_errors[2];
             square_size = (double)1e6;
-
-            split_mv_result[j] = GaussResult(mv_warping, mv_translation, error_warping, error_translation, square_size, true, tmp_bm_errors[2]);
 
             square_gauss_results[square_indexes[j]].translation_flag = true;
             square_gauss_results[square_indexes[j]].mv_translation = mv_translation;
