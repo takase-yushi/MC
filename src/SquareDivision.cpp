@@ -771,7 +771,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
     }
 
     if(method_flag == MV_CODE_METHOD::MERGE) {
-        //参照ブロックを作るときのためにマージのベクトルを入れる
+        //マージの時はマージ先のベクトルを入れる
         square_gauss_results[square_index].mv_translation = mvd[0];
         square_gauss_results[square_index].mv_warping = mvd;
         gauss_result_translation = mvd[0];
@@ -983,7 +983,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             method_flags[j] = method_translation;
         }
 
-        //分割後の参照ブロックを作るときのために一旦マージのベクトルを入れる
+        //マージの時はマージ先のベクトルを入れる
         if(method_flags[j] == MV_CODE_METHOD::MERGE) {
             if(split_mv_result[j].translation_flag) {
                 gauss_result_translation = mvd[0];
