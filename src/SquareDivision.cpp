@@ -168,6 +168,7 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
     // この1bitは手法フラグ(warpingかtranslation),もう1bitはマージフラグ分です
     if(PRED_MODE == NEWTON && !GAUSS_NEWTON_TRANSLATION_ONLY) flags_code++;
     if (MERGE_MODE) flags_code++;
+    if(PRED_MODE == BM)flags_code += 3;
 
     int expansion_size = SERACH_RANGE;
     int scaled_expansion_size = expansion_size + 2;
