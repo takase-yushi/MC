@@ -595,6 +595,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 tmp_mv_translation *= magnification;
             }
             v_stack_translation.clear();
+            v_stack_translation.emplace_back(tmp_mv_translation, SSE_translation);
 
             double prev_SSE_translation = error_bm_min;
             cv::Point2f prev_mv_translation = tmp_mv_translation;
@@ -942,6 +943,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
             }
             v_stack_warping.clear();
+
+            v_stack_warping.emplace_back(tmp_mv_warping, error_bm_min);
 
             double prev_SSE_warping = error_bm_min;
             std::vector<cv::Point2f> prev_mv_warping{initial_vector, initial_vector, initial_vector};
