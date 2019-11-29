@@ -63,8 +63,8 @@ public:
 
     GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvTranslation, double residual_warping, double residual_translation,
                 int squareSize, bool translationFlag, double residual_bm);
-    std::vector<cv::Point2f> mv_warping;
-    cv::Point2f mv_translation;
+    std::vector<cv::Point2f> mv_warping, original_mv_warping;
+    cv::Point2f mv_translation, original_mv_translation;
     double residual_warping;
     double residual_translation;
     int square_size;
