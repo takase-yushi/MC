@@ -987,7 +987,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
         //マージの時はマージ先のベクトルを入れる
         if(method_flags[j] == MV_CODE_METHOD::MERGE) {
-            if(split_mv_result[j].translation_flag) {
+            if(square_gauss_results[square_indexes[j]].translation_flag) {
                 gauss_result_translation = mvd[0];
                 square_gauss_results[square_indexes[j]].mv_translation = gauss_result_translation;
             }else{
@@ -1017,17 +1017,15 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         for (int j = 0; j < (int) subdiv_target_squares.size(); j++) {
             // j個目の四角形
             if (method_flags[j] == MV_CODE_METHOD::MERGE) {
-                if (split_mv_result[j].translation_flag) {
-                    split_mv_result[j].mv_translation = original_mv_translation[j];
+                if (square_gauss_results[square_indexes[j]].translation_flag) {
+                    square_gauss_results[square_indexes[j]].mv_translation = square_gauss_results[square_indexes[j]].original_mv_translation;
                 } else {
-                    split_mv_result[j].mv_warping = original_mv_warping[j];
+                    square_gauss_results[square_indexes[j]].mv_warping = square_gauss_results[square_indexes[j]].original_mv_warping;
                 }
             }
             else if(method_flags[j] == MV_CODE_METHOD::MERGE2) {
-                split_mv_result[j].mv_warping[0] = original_mv_warping[j][0];
-                split_mv_result[j].mv_warping[1] = original_mv_warping[j][1];
+                square_gauss_results[square_indexes[j]].mv_warping = square_gauss_results[square_indexes[j]].original_mv_warping;
             }
-            square_gauss_results[square_indexes[j]] = split_mv_result[j];
             split(expand_images, ctus[j], cmts[j], subdiv_target_squares[j], square_indexes[j], j, steps - 2);
         }
 
