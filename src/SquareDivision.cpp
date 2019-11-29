@@ -2636,7 +2636,7 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
 
         std::vector<cv::Point2f> mvds{mvd};
         // 結果に入れる
-        results.emplace_back(rd, mvd_code_length + reference_index_code_length, mvds, i, vector.second, flag_code_sum, flags);
+        results.emplace_back(rd, mvd_code_length + reference_index_code_length + flags_code, mvds, i, vector.second, flag_code_sum, flags);
     }
 
     // RDしたスコアが小さい順にソート
