@@ -497,8 +497,9 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 for (const auto &pixel : pixels_in_triangle) {
 #if GAUSS_NEWTON_HEVC_IMAGE
 
-                    unsigned char pel = F(expand_image[0][3][1], 4 * (int) (pixel.x + bx), 4 * (int) (pixel.y + by), 4 * SEARCH_RANGE, 4 * (ref_images[0][3].cols));
-                    error_tmp += pel * pel;
+                    unsigned char pel1 = F(expand_image[0][3][1], 4 * (int) (pixel.x + bx), 4 * (int) (pixel.y + by), 4 * SEARCH_RANGE, 4 * (ref_images[0][3].cols));
+                    unsigned char pel2 = F(expand_image[0][3][3], 4 * (int) (pixel.x)     , 4 * (int) (pixel.y)     , 4 * SEARCH_RANGE, 4 * (ref_images[0][3].cols));
+                    error_tmp += (pel1 - pel2) * (pel1 - pel2);
 #else
                     error_tmp += abs(expand_image[0][3][1][(int) (pixel.x + bx)][(int) (pixel.y + by)] -
                                                      expand_image[0][3][3][(int) (pixel.x)][(int) (pixel.y)]);
