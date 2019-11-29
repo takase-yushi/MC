@@ -624,8 +624,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
     if(square_gauss_results[square_index].residual_translation > 0) {
         GaussResult result_before = square_gauss_results[square_index];
-        gauss_result_warping = result_before.mv_warping;
-        gauss_result_translation = result_before.mv_translation;
+        gauss_result_warping = result_before.original_mv_warping;
+        gauss_result_translation = result_before.original_mv_translation;
         translation_flag = result_before.translation_flag;
         error_translation = result_before.residual_translation;
         error_warping = result_before.residual_warping;
@@ -705,6 +705,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
             square_gauss_results[square_index].mv_translation = gauss_result_translation;
             square_gauss_results[square_index].mv_warping = gauss_result_warping;
+            square_gauss_results[square_index].original_mv_translation = gauss_result_translation;
+            square_gauss_results[square_index].original_mv_warping = gauss_result_warping;
             square_gauss_results[square_index].residual_translation = error_translation;
             square_gauss_results[square_index].residual_warping = error_warping;
             square_gauss_results[square_index].square_size = square_size;
@@ -760,6 +762,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             error_translation = tmp_bm_errors[2];
             square_gauss_results[square_index].mv_warping = gauss_result_warping;
             square_gauss_results[square_index].mv_translation = gauss_result_translation;
+            square_gauss_results[square_index].original_mv_translation = gauss_result_translation;
+            square_gauss_results[square_index].residual_translation = error_translation;
             square_gauss_results[square_index].square_size = square_size;
             square_gauss_results[square_index].residual_bm = RMSE_before_subdiv;
             square_gauss_results[square_index].translation_flag = true;
@@ -932,6 +936,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
             square_gauss_results[square_indexes[j]].mv_translation = mv_translation;
             square_gauss_results[square_indexes[j]].mv_warping = mv_warping;
+            square_gauss_results[square_indexes[j]].original_mv_translation = mv_translation;
+            square_gauss_results[square_indexes[j]].original_mv_warping = mv_warping;
 
             std::tie(cost_translation, code_length_translation, mvd_translation, std::ignore, method_translation, std::ignore, std::ignore) = getMVD(
                     {mv_translation, mv_translation, mv_translation}, error_translation,
@@ -975,6 +981,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 
             square_gauss_results[square_indexes[j]].translation_flag = true;
             square_gauss_results[square_indexes[j]].mv_translation = mv_translation;
+            square_gauss_results[square_indexes[j]].original_mv_translation = mv_translation;
 
             std::tie(cost_translation, code_length_translation, mvd, std::ignore, method_translation, std::ignore, std::ignore) = getMVD(
                     {mv_translation, mv_translation, mv_translation}, error_translation,
