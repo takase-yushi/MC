@@ -756,11 +756,9 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 #endif
             square_gauss_results[square_index].residual_bm = tmp_bm_errors[2];
             ctu->error_bm = tmp_bm_errors[2];
-            gauss_result_warping = tmp_bm_mv;
             gauss_result_translation = tmp_bm_mv[2];
             RMSE_before_subdiv = tmp_bm_errors[2];
             error_translation = tmp_bm_errors[2];
-            square_gauss_results[square_index].mv_warping = gauss_result_warping;
             square_gauss_results[square_index].mv_translation = gauss_result_translation;
             square_gauss_results[square_index].original_mv_translation = gauss_result_translation;
             square_gauss_results[square_index].residual_translation = error_translation;
@@ -968,10 +966,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
 #else
             std::tie(tmp_bm_mv, tmp_bm_errors) = ::blockMatching(subdiv_target_squares[j], target_image, expansion_ref);
 #endif
-            mv_warping = tmp_bm_mv;
             mv_translation = tmp_bm_mv[2];
             error_translation = tmp_bm_errors[2];
-            error_warping = tmp_bm_errors[2];
             square_size = (double)1e6;
 
             square_gauss_results[square_indexes[j]].translation_flag = true;
