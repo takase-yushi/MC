@@ -685,6 +685,9 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag, flag_code_sum, flag_result) = getMVD(
                     {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
                     square_index, square_number, cmt->mv1, ctu, true, dummy, steps);
+            square_gauss_results[square_index].translation_flag = true;
+            square_gauss_results[square_index].method = method_translation;
+            translation_flag = true;
         }
     }else {
         if(PRED_MODE == NEWTON) {
@@ -769,6 +772,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag, flag_code_sum, flag_result) = getMVD(
                     {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
                     square_index, square_number, cmt->mv1, ctu, true, dummy, steps);
+            square_gauss_results[square_index].method = method_flag;
         }
     }
 
@@ -935,6 +939,9 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             square_gauss_results[square_indexes[j]].mv_warping = mv_warping;
             square_gauss_results[square_indexes[j]].original_mv_translation = mv_translation;
             square_gauss_results[square_indexes[j]].original_mv_warping = mv_warping;
+            square_gauss_results[square_indexes[j]].residual_translation = error_translation;
+            square_gauss_results[square_indexes[j]].residual_warping = error_warping;
+            square_gauss_results[square_indexes[j]].square_size = square_size;
 
             std::tie(cost_translation, code_length_translation, mvd_translation, std::ignore, method_translation, std::ignore, std::ignore) = getMVD(
                     {mv_translation, mv_translation, mv_translation}, error_translation,
@@ -953,11 +960,13 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
                 cost_after_subdivs[j] = cost_translation;
                 method_flags[j] = method_translation;
                 mvd = mvd_translation;
+                translation_flag = true;
             }else{
                 square_gauss_results[square_indexes[j]].translation_flag = false;
                 cost_after_subdivs[j] = cost_warping;
                 method_flags[j] = method_warping;
                 mvd = mvd_warping;
+                translation_flag = false;
             }
 
         }else if(PRED_MODE == BM){
@@ -973,6 +982,10 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             square_gauss_results[square_indexes[j]].translation_flag = true;
             square_gauss_results[square_indexes[j]].mv_translation = mv_translation;
             square_gauss_results[square_indexes[j]].original_mv_translation = mv_translation;
+            square_gauss_results[square_indexes[j]].residual_translation = error_translation;
+            square_gauss_results[square_indexes[j]].square_size = square_size;
+            square_gauss_results[square_indexes[j]].residual_bm = error_translation;
+            translation_flag = true;
 
             std::tie(cost_translation, code_length_translation, mvd, std::ignore, method_translation, std::ignore, std::ignore) = getMVD(
                     {mv_translation, mv_translation, mv_translation}, error_translation,
@@ -980,6 +993,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
             cost_after_subdivs[j] = cost_translation;
             method_flags[j] = method_translation;
         }
+        square_gauss_results[square_indexes[j]].method = method_flags[j];
 
         //マージの時はマージ先のベクトルを入れる
         if(method_flags[j] == MV_CODE_METHOD::MERGE) {
