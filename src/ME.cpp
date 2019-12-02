@@ -636,9 +636,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     X.y = pixel.y - p0.y;
 
                     double alpha = (X.x * b.y - X.y * b.x) / det;
-                    double beta = (a.x * X.y - a.y * X.x)/ det;
-                    X.x += p0.x;
-                    X.y += p0.y;
+                    double beta = (a.x * X.y - a.y * X.x)/ det;;
 
                     // 参照フレームの前進差分（平行移動）
 
@@ -706,8 +704,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     double g_translation;
 
 #if GAUSS_NEWTON_HEVC_IMAGE
-                    f              = img_ip(current_target_expand    , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                   X.x, 4 *                   X.y);
-                    f_org          = img_ip(current_target_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                   X.x, 4 *                   X.y);
+                    f              = img_ip(current_target_expand    , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *               pixel.x, 4 *               pixel.y);
+                    f_org          = img_ip(current_target_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *               pixel.x, 4 *               pixel.y);
                     g_translation  = img_ip(current_ref_expand       , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_translation.x, 4 * X_later_translation.y);
 #else
                     f              = img_ip(current_target_expand    , cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)),                X.x,                X.y, 2);
