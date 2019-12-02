@@ -961,7 +961,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     Point3Vec targetTriangle(p1, p2, p3);
     int triangle_size = 0;
     bool translation_flag;
-    int num;
 
     std::vector<cv::Point2f> dummy;
     std::vector<cv::Point2f> gauss_result_warping;
@@ -980,12 +979,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         SSE_before_subdiv_traslation = result_before.residual_translation;
         SSE_before_subdiv_warping = result_before.residual_warping;
         triangle_size = result_before.triangle_size;
-        translation_flag = result_before.translation_flag;
-        if(translation_flag){
-            error_translation = result_before.residual;
-        }else{
-            error_warping = result_before.residual;
-        }
+
         ctu->error_bm = result_before.residual_bm;
         ctu->error_newton = result_before.residual_newton;
     }else {
@@ -1181,7 +1175,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     subdiv_target_triangles.emplace_back(split_sub_triangles2.t1);
     subdiv_target_triangles.emplace_back(split_sub_triangles2.t2);
 
-    double RMSE_after_subdiv = 0.0;
     std::vector<GaussResult> split_mv_result(subdiv_target_triangles.size());
 
 //    int p1_idx = getCornerIndex(p1);
