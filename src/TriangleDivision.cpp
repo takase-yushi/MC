@@ -1355,8 +1355,8 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
     if(cost_before_subdiv >= alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4)) {
 
-        for(int i = 0 ; i < 4 ; i++){
-            isCodedTriangle[triangle_indexes[i]] = false;
+        for(int triangle_indexe : triangle_indexes){
+            isCodedTriangle[triangle_indexe] = false;
         }
         ctu->split_cu_flag = true;
 
