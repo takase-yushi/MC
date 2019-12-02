@@ -1351,8 +1351,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     cmt_right_left   = (cmt->node3 == nullptr ? cmt : cmt->node3);
     cmt_right_right  = (cmt->node4 == nullptr ? cmt : cmt->node4);
 
-    double alpha = 1;
-
 #if DISPLAY_RD_COST
     std::cout << "before:" << cost_before_subdiv << " after:" << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4) << std::endl;
 #endif
@@ -1362,7 +1360,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     double cost_after_subdiv3 = costs[2];
     double cost_after_subdiv4 = costs[3];
 
-    if(cost_before_subdiv >= alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4)) {
+    if(cost_before_subdiv >= (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4)) {
 
         for(int triangle_indexe : triangle_indexes){
             isCodedTriangle[triangle_indexe] = false;
