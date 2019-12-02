@@ -972,7 +972,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         cmt = previousMvList[0][triangle_index];
     }
 
-    if(triangle_gauss_results[triangle_index].residual > 0) {
+    if(triangle_gauss_results[triangle_index].residual_translation > 0 || triangle_gauss_results[triangle_index].residual_warping > 0) {
         GaussResult result_before = triangle_gauss_results[triangle_index];
         gauss_result_warping = result_before.original_mv_warping;
         gauss_result_translation = result_before.original_mv_translation;
