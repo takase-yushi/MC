@@ -1027,6 +1027,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>
         ctu->split_cu_flag = true;
         for (int j = 0; j < (int) subdiv_target_squares.size(); j++) {
             // j個目の四角形
+            //RDコスト再計算時にマージじゃなくなる可能性があるのでオリジナルに戻す
             if (method_flags[j] == MV_CODE_METHOD::MERGE) {
                 if (square_gauss_results[square_indexes[j]].translation_flag) {
                     square_gauss_results[square_indexes[j]].mv_translation = square_gauss_results[square_indexes[j]].original_mv_translation;
