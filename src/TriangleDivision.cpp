@@ -1320,6 +1320,13 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                     triangle_gauss_results[triangle_indexes[j]].mv_warping = mvd_warping;
                 }
             }
+            triangle_gauss_results[triangle_indexes[j]].mv_translation = mv_translation_tmp;
+            triangle_gauss_results[triangle_indexes[j]].original_mv_translation = mv_translation_tmp;
+            triangle_gauss_results[triangle_indexes[j]].mv_warping = mv_warping_tmp;
+            triangle_gauss_results[triangle_indexes[j]].original_mv_warping = mv_warping_tmp;
+            triangle_gauss_results[triangle_indexes[j]].residual_translation = error_translation_tmp;
+            triangle_gauss_results[triangle_indexes[j]].residual_warping = error_warping_tmp;
+
         }else if(PRED_MODE == BM){
             std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_triangles[j], target_image, expansion_ref, diagonal_line_area_flag, triangle_indexes[j], ctus[j]);
             mv_warping_tmp = tmp_bm_mv;
