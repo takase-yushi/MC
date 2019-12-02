@@ -1484,7 +1484,6 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
             std::cout << current_mv1 << " " << current_mv2 << " " << current_mv3 << std::endl;
 #endif
             std::vector<cv::Point2f> ref_mvs{current_mv1, current_mv2, current_mv3};
-            Square target_square = squares[square_idx];
             cv::Point2f pp1 = coordinate.p1, pp2 = coordinate.p2, pp3 = coordinate.p3, pp4 = coordinate.p4;
             Square ref_square = squares[reference_block_index];
             std::vector<cv::Point2f> ref_square_coordinates{corners[ref_square.p1_idx], corners[ref_square.p2_idx], corners[ref_square.p3_idx], corners[ref_square.p4_idx]};
@@ -1748,8 +1747,7 @@ std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> SquareDivision
             std::cout << current_mv1 << " " << current_mv2 << " " << current_mv3 << std::endl;
 #endif
             std::vector<cv::Point2f> ref_mvs{current_mv1, current_mv2, current_mv3};
-            Square target_square = squares[square_idx];
-            cv::Point2f pp1 = coordinate.p1, pp2 = coordinate.p2, pp3 = coordinate.p3, pp4 = coordinate.p4;
+            cv::Point2f pp1 = coordinate.p1, pp2 = coordinate.p2, pp3 = coordinate.p3;
             Square ref_square = squares[reference_block_index];
             std::vector<cv::Point2f> ref_square_coordinates{corners[ref_square.p1_idx], corners[ref_square.p2_idx], corners[ref_square.p3_idx], corners[ref_square.p4_idx]};
             std::vector<cv::Point2f> target_square_coordinates;
