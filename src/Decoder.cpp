@@ -244,7 +244,8 @@ int Decoder::insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type) {
     triangles.emplace_back(triangle, type);
     isCodedTriangle.emplace_back(false);
     triangle_info.emplace_back();
-    triangle_info[triangle_info.size() - 1].residual = -1.0;
+    triangle_info[triangle_info.size() - 1].residual_warping = -1.0;
+    triangle_info[triangle_info.size() - 1].residual_translation = -1.0;
     delete_flag.emplace_back(false);
 
     return static_cast<int>(triangles.size() - 1);
@@ -544,7 +545,8 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
         }
 
         triangle_info[triangle_index].translation_flag = ctu->translation_flag;
-        triangle_info[triangle_index].method = ctu->method;
+        triangle_info[triangle_index].method_warping = ctu->method;
+        triangle_info[triangle_index].method_translation = ctu->method;
 
 //        std::cout << (decode_ctu->method == MERGE ? "MERGE" : "SPATIAL") << " " << (decode_ctu->translation_flag ? "PARALLEL" : "WARPING") << " "  <<decode_ctu->mv1 << " " << decode_ctu->mv2 << " " << decode_ctu->mv3 << std::endl;
         return;
