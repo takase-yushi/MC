@@ -2478,7 +2478,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             int reference_index_code_length = getUnaryCodeLength(reference_index);
 
             // 各種フラグ分を(3*2)bit足してます
-            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code + merge2_flags_code);
+            double ret_residual = getSquareResidual_Pred(target_image, coordinate, mvs, pixels_in_square, ref_hevc);
+            double rd = ret_residual + lambda * (mvd_code_length + reference_index_code_length + flags_code + merge2_flags_code);
 
             std::vector<cv::Point2f> mvds{mvs[0], mvs[1], mvd};
             // 結果に入れる
