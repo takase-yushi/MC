@@ -948,7 +948,7 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
  * @param steps 分割回数
  * @return 分割した場合はtrue, そうでない場合falseを返す
  */
-bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point3Vec triangle, int triangle_index, int type, int steps, std::vector<std::vector<int>> &diagonal_line_area_flag) {
+bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point3Vec triangle, int triangle_index, int type, int steps, std::vector<std::vector<int>> &diagonal_line_area_flag) {
 
 
     double RMSE_before_subdiv = 0.0;
@@ -2704,9 +2704,6 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
         std::vector<cv::Point2f> mvs{mv, mv, mv};
         std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, block_size_x, block_size_y);
 
-        std::cout << "triangle_index:" << ctu->triangle_index << std::endl;
-        std::cout << std::boolalpha << ctu->translation_flag << std::endl;
-        std::cout << ctu->method << std::endl;
         if(ctu->translation_flag) {
             if(ctu->method == MV_CODE_METHOD::MERGE){
                 for(auto pixel : pixels) {
@@ -3008,11 +3005,6 @@ TriangleDivision::~TriangleDivision() {
     expansion_ref_uchar -= scaled_expansion_size;
     free(expansion_ref_uchar);
 
-    for(int i = 4 * (SEARCH_RANGE + 4) ; i < 4 * (ref_image.cols + (SEARCH_RANGE + 4)) ; i++) {
-        ref_hevc[i] -= 4 * (SEARCH_RANGE + 4);
-        free(ref_hevc[i]);
-    }
-    ref_hevc -= 4 * (SEARCH_RANGE + 4);
     free(ref_hevc);
 
     expansion_ref.release();

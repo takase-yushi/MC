@@ -27,6 +27,7 @@
 #include "../includes/tests.h"
 #include "../includes/Decoder.h"
 #include "../includes/ConfigUtil.h"
+#include "../includes/MELog.h"
 
 void run(std::string config_name);
 void tests();
@@ -47,6 +48,19 @@ double injected_lambda;
 bool lambda_inject_flag;
 
 std::string out_file_suffix = "_enable_merge";
+
+std::vector<std::vector<double>> freq_newton_warping, freq_newton_translation;
+std::vector<std::vector<std::vector<cv::Point2f>>> mv_newton_translation, coordinate_newton_translation1, coordinate_newton_translation2, coordinate_newton_translation3;
+std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_warping1, coordinate_newton_warping2, coordinate_newton_warping3;
+std::vector<std::vector<std::vector<std::vector<cv::Point2f>>>> mv_newton_warping;
+std::vector<std::vector<std::vector<double>>> slow_newton_warping, slow_newton_translation;
+
+std::vector<MELog> ME_log_translation_0;
+std::vector<MELog> ME_log_translation_1;
+std::vector<MELog> ME_log_warping_0;
+std::vector<MELog> ME_log_warping_1;
+
+void storeNewtonLogs(std::string logDirectoryPath);
 
 int main(int argc, char *argv[]){
     // Write test codes below
@@ -237,7 +251,7 @@ void run(std::string config_name) {
             target_images = target_images_with_qp[qp];
         }
 
-        std::vector<std::vector<std::vector<unsigned char **>>> expand_images;
+        std::vector<std::vector<std::vector<unsigned char *>>> expand_images;
         int expand = SEARCH_RANGE;
         if(expand_images_with_qp.count(qp) == 0) {
             expand_images = getExpandImages(ref_images, target_images, expand);
@@ -269,6 +283,29 @@ void run(std::string config_name) {
         triangle_division.constructPreviousCodingTree(foo, 0);
 
         std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_triangles.size(), std::vector< std::vector<int> >(block_size_x, std::vector<int>(block_size_y, -1)) );
+
+        freq_newton_warping.resize(2);
+        freq_newton_translation.resize(2);
+        freq_newton_warping[0].resize(21);
+        freq_newton_warping[1].resize(21);
+        freq_newton_translation[0].resize(21);
+        freq_newton_translation[1].resize(21);
+        slow_newton_translation.resize(2);
+        slow_newton_warping.resize(2);
+        mv_newton_translation.resize(2);
+        mv_newton_warping.resize(2);
+        coordinate_newton_translation1.resize(2);
+        coordinate_newton_translation2.resize(2);
+        coordinate_newton_translation3.resize(2);
+        coordinate_newton_warping1.resize(2);
+        coordinate_newton_warping2.resize(2);
+        coordinate_newton_warping3.resize(2);
+        for(int i = 0 ; i < freq_newton_warping.size() ; i++) {
+            for(int j = 0 ; j < freq_newton_warping[i].size() ; j++){
+                freq_newton_warping[i][j]     = 0;
+                freq_newton_translation[i][j] = 0;
+            }
+        }
 
         for (int i = 0; i < init_triangles.size(); i++) {
             if(i % 2 == 0){
@@ -306,8 +343,8 @@ void run(std::string config_name) {
 
         time_t end = clock();
 
-        const double time = static_cast<double>(end - start) / CLOCKS_PER_SEC * 1000.0;
-        printf("time %lf[ms]\n", time);
+        const double time = static_cast<double>(end - start) / CLOCKS_PER_SEC;
+        printf("time %d[m]%d[sec]\n", (int)time/60, (int)time%60);
 //        Decoder decoder(ref_image, target_image);
 //        decoder.initTriangle(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);
 //        decoder.reconstructionTriangle(foo);
@@ -334,7 +371,6 @@ void run(std::string config_name) {
 #endif
 #endif
 
-
         if(STORE_IMG_LOG) {
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
@@ -350,6 +386,112 @@ void run(std::string config_name) {
         std::vector<CodingTreeUnit *>().swap(foo);
 
         previous_qp = qp;
+
+#if STORE_NEWTON_LOG
+        storeNewtonLogs(getProjectDirectory(OS) + tasks[0].getLogDirectory());
+#endif
     }
     ofs.close();
+}
+
+void storeNewtonLogs(std::string logDirectoryPath){
+//    std::ofstream ofs_newton_0;
+//    ofs_newton_0.open(logDirectoryPath + "/Newton_freq_ref_0_" + getCurrentTimestamp() + "_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".csv");
+
+    /**
+     *
+     * イテレーション回数の頻度をCSVに吐き出す
+     *
+     */
+//    ofs_newton_0 << "translation" << std::endl;
+//    for(int i = 1 ; i < freq_newton_translation[0].size() ; i++) {
+//        ofs_newton_0 << i << "," << freq_newton_translation[0][i] << std::endl;
+//    }
+//    ofs_newton_0 << "warping" << std::endl;
+//    for(int i = 1 ; i < freq_newton_warping[0].size() ; i++) {
+//        ofs_newton_0 << i << "," << freq_newton_warping[0][i] << std::endl;
+//    }
+//
+//    ofs_newton_0.close();
+//
+//    std::ofstream ofs_newton_1;
+//    ofs_newton_1.open(logDirectoryPath + "/Newton_freq_ref_1_" + getCurrentTimestamp() + "_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".csv");
+//
+//    ofs_newton_1 << "translation" << std::endl;
+//    for(int i = 1 ; i < freq_newton_translation[1].size() ; i++) {
+//        ofs_newton_1 << i << "," << freq_newton_translation[1][i] << std::endl;
+//    }
+//    ofs_newton_1 << "warping" << std::endl;
+//    for(int i = 1 ; i < freq_newton_warping[1].size() ; i++) {
+//        ofs_newton_1 << i << "," << freq_newton_warping[1][i] << std::endl;
+//    }
+//
+//    ofs_newton_1.close();
+
+    /**
+     *
+     * 残差減少の過程をCSVファイルに書き出す
+     *
+     */
+    std::ofstream ofs_newton2_0;
+    ofs_newton2_0.open(logDirectoryPath + "/Slowlog_ref_0_" + getCurrentTimestamp() + "_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".csv");
+
+    ofs_newton2_0 << "translation" << std::endl;
+    for(auto & m : ME_log_translation_0){
+        if(m.residual.back() - m.residual.front() > 0.0 && m.percentage > 2.0) {
+            ofs_newton2_0 << "increase distortion," << m.percentage << ",%" << std::endl;
+
+            ofs_newton2_0 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_translation[0] << std::endl;
+            for(int j = 1 ; j < (int)m.residual.size() ; j++){
+                ofs_newton2_0 << j << "," << m.residual[j] << "," << m.mv_newton_translation[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
+            }
+            ofs_newton2_0 << std::endl;
+        }
+    }
+
+    ofs_newton2_0 << "warping" << std::endl;
+    for(auto & m : ME_log_warping_0){
+        if(m.residual.back() - m.residual.front() > 0.0 && m.percentage > 2.0) {
+            ofs_newton2_0 << "increase distortion," << m.percentage << ",%" << std::endl;
+
+            ofs_newton2_0 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_warping[0] << std::endl;
+            for(int j = 1 ; j < (int)m.residual.size() ; j++){
+                ofs_newton2_0 << j << "," << m.residual[j] << "," << m.mv_newton_warping[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
+            }
+            ofs_newton2_0 << std::endl;
+        }
+    }
+
+    ofs_newton2_0.close();
+
+    std::ofstream ofs_newton2_1;
+    ofs_newton2_1.open(logDirectoryPath + "/Slowlog_ref_1_" + getCurrentTimestamp() + "_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".csv");
+    ofs_newton2_1 << "translation" << std::endl;
+    for(auto & m : ME_log_translation_0){
+        if(m.residual.back() - m.residual.front() > 0.0 && m.percentage > 2.0) {
+            ofs_newton2_1 << "increase distortion," << m.percentage << ",%" << std::endl;
+
+            ofs_newton2_1 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_translation[0] << std::endl;
+            for(int j = 1 ; j < (int)m.residual.size() ; j++){
+                ofs_newton2_1 << j << "," << m.residual[j] << "," << m.mv_newton_translation[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
+            }
+            ofs_newton2_1 << std::endl;
+        }
+    }
+
+    ofs_newton2_1 << "warping" << std::endl;
+    for(auto & m : ME_log_warping_0){
+        if(m.residual.back() - m.residual.front() > 0.0 && m.percentage > 2.0) {
+            ofs_newton2_1 << "increase distortion," << m.percentage << ",%" << std::endl;
+
+            ofs_newton2_1 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_warping[0] << std::endl;
+            for(int j = 1 ; j < (int)m.residual.size() ; j++){
+                ofs_newton2_1 << j << "," << m.residual[j] << "," << m.mv_newton_warping[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
+            }
+            ofs_newton2_1 << std::endl;
+        }
+    }
+
+    ofs_newton2_1.close();
+
 }

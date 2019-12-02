@@ -127,7 +127,7 @@ void test5(){
     std::vector<std::vector<cv::Mat>> ref_images, target_images;
     ref_images = getRefImages(ref_image, gauss_ref_image);
     target_images = getTargetImages(target_image);
-    std::vector<std::vector<std::vector<unsigned char **>>> expand_images = getExpandImages(ref_images, target_images, 500);
+    std::vector<std::vector<std::vector<unsigned char *>>> expand_images = getExpandImages(ref_images, target_images, 500);
 
     std::vector<CodingTreeUnit *> foo(init_triangles.size());
     for (int i = 0; i < init_triangles.size(); i++) {
@@ -195,8 +195,9 @@ void test6(){
 }
 
 void test7(){
+    /*
     cv::Mat ref_image = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
-    unsigned char **img1 = getExpansionHEVCImage(ref_image, 4, SEARCH_RANGE);
+    unsigned char *img1 = getExpansionHEVCImage(ref_image, 4, SEARCH_RANGE);
 
 
     cv::Mat out = cv::Mat::zeros(ref_image.rows * 4 + 2 * 4 * SEARCH_RANGE, ref_image.cols * 4 + 2 * 4 * SEARCH_RANGE, CV_8UC3);
@@ -221,6 +222,7 @@ void test7(){
     }
 
     cv::imwrite(getProjectDirectory(OS) + "/img/minato/out_hevc_filter.png", out);
+     */
 }
 
 void testFilter(){
@@ -230,8 +232,8 @@ void testFilter(){
 
     cv::Mat bilinear = getExpansionMatImage(out, 4, 0, IP_MODE::BILINEAR);
     cv::Mat bicubic = getExpansionMatImage(out, 4, 0, IP_MODE::BICUBIC);
-    unsigned char **hevc_ip = getExpansionHEVCImage(out, 4, 0);
-
+    unsigned char *hevc_ip = getExpansionHEVCImage(out, 4, 0);
+/*
     cv::Mat hevc = cv::Mat::zeros(ref_image.size(), CV_8UC3);
     for(int y = 0 ; y < hevc.rows ; y++) {
         for (int x = 0; x < hevc.cols; x++) {
@@ -249,14 +251,16 @@ void testFilter(){
     cv::imwrite(getProjectDirectory(OS) + "/img/minato/resize_bilinear.png", bilinear);
     cv::imwrite(getProjectDirectory(OS) + "/img/minato/resize_bicubic.png", bicubic);
     cv::imwrite(getProjectDirectory(OS) + "/img/minato/resize_hevc.png", hevc);
-}
+*/
+ }
 
 void test4xHEVCImage(){
+    /*
     cv::Mat ref_image = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_limit_2_I22.bmp");
 
     int k = 4;
     int expansion_size = SEARCH_RANGE;
-    unsigned char **hevc_ip = getExpansionHEVCImage(ref_image, k, expansion_size);
+    unsigned char *hevc_ip = getExpansionHEVCImage(ref_image, k, expansion_size);
 
     cv::Mat hevc = cv::Mat::zeros(k * (ref_image.rows + 2 * expansion_size), k * (ref_image.cols + 2 * expansion_size), CV_8UC3);
 
@@ -269,6 +273,7 @@ void test4xHEVCImage(){
     }
 
     cv::imwrite(getProjectDirectory(OS) + "/img/minato/test_4x_hevc.png", hevc);
+     */
 }
 
 void testRoundVecQuarter(){

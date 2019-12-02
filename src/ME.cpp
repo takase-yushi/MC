@@ -14,6 +14,7 @@
 #include <memory>
 #include "../includes/Utils.h"
 #include "../includes/ImageUtil.h"
+#include "../includes/MELog.h"
 #include <algorithm>
 
 #define HEIGHT 1024
@@ -362,7 +363,7 @@ int bicubic_interpolation(unsigned char **img, double x, double y){
  * @param[in] translation_flag
  * @return 2乗誤差
  */
-double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::Mat& output_image, Point3Vec& triangle, std::vector<cv::Point2f>& mv, int offset, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Rect block_size, unsigned char **ref_hevc) {
+double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::Mat& output_image, Point3Vec& triangle, std::vector<cv::Point2f>& mv, int offset, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Rect block_size, unsigned char *ref_hevc) {
     cv::Point2f pp0, pp1, pp2;
 
     pp0.x = triangle.p1.x + mv[0].x;
@@ -397,10 +398,9 @@ double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::
 
         int y;
         if(ref_hevc != nullptr){
-            y = img_ip(ref_hevc, cv::Rect(-SEARCH_RANGE * 4, -SEARCH_RANGE * 4, 4 * (target_image.cols + 2 * SEARCH_RANGE), 4 * (target_image.rows + 2 * SEARCH_RANGE)), 4 * X_later.x, 4 * X_later.y, 1);
+            y = img_ip(ref_hevc, cv::Rect(-SEARCH_RANGE * 4, -SEARCH_RANGE * 4, 4 * (target_image.cols + 2 * SEARCH_RANGE), 4 * (target_image.rows + 2 * SEARCH_RANGE)), 4 * X_later.x, 4 * X_later.y);
         }else{
-            std::cout << X_later.x << " " << X_later.y << std::endl;
-            y = bicubic_interpolation(expand_ref, X_later.x, X_later.y);
+            // y = bicubic_interpolation(expand_ref, X_later.x, X_later.y);
         }
 
         R(output_image, (int)pixel.x, (int)pixel.y) = y;
@@ -427,19 +427,33 @@ double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::
  * @param block_size_y
  * @return ワーピングの動きベクトル・平行移動の動きベクトル・予測残差・面積・平行移動のフラグのtuple
  */
-std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewton(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char **>>> expand_image, Point3Vec target_corners, const std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, int block_size_x, int block_size_y, cv::Point2f init_vector, unsigned char **ref_hevc){
+std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewton(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char *>>> expand_image, Point3Vec target_corners, const std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, int block_size_x, int block_size_y, cv::Point2f init_vector, unsigned char *ref_hevc){
     // 画像の初期化 vector[filter][picture_number]
 
-    const int warping_matrix_dim = 6; // 方程式の次元
+    /**
+     * Translation用の動きベクトル推定
+     * - 変動量(u,v)を求める
+     *
+     * ## 方程式の命名
+     *
+     * -                - -          -     -   -
+     * |                | |          |     |   |
+     * |                | |          |     |   |
+     * | gg_translation | | delta_uv |  =  | B |
+     * |                | |          |     |   |
+     * |                | |          |     |   |
+     * -                - -          -     -   -
+     *
+     */
+    const int warping_matrix_dim     = 6; // 方程式の次元
     const int translation_matrix_dim = 2;
-    cv::Mat gg_warping = cv::Mat::zeros(warping_matrix_dim, warping_matrix_dim, CV_64F); // 式(45)の左辺6×6行列
-    cv::Mat gg_translation = cv::Mat::zeros(translation_matrix_dim, translation_matrix_dim, CV_64F); // 式(52)の左辺2×2行列
-    cv::Mat B_warping = cv::Mat::zeros(warping_matrix_dim, 1, CV_64F); // 式(45)の右辺
-    cv::Mat B_translation = cv::Mat::zeros(translation_matrix_dim, 1, CV_64F); // 式(52)の右辺
-    cv::Mat delta_uv_warping = cv::Mat::zeros(warping_matrix_dim, 1, CV_64F); // 式(45)の左辺 delta
-    cv::Mat delta_uv_translation = cv::Mat::zeros(translation_matrix_dim, 1, CV_64F); // 式(52)の右辺 delta
+    cv::Mat gg_warping               = cv::Mat::zeros(warping_matrix_dim, warping_matrix_dim, CV_64F);         // 式(45)の左辺6×6行列
+    cv::Mat gg_translation           = cv::Mat::zeros(translation_matrix_dim, translation_matrix_dim, CV_64F); // 式(52)の左辺2×2行列
+    cv::Mat B_warping                = cv::Mat::zeros(warping_matrix_dim, 1, CV_64F);                          // 式(45)の右辺
+    cv::Mat B_translation            = cv::Mat::zeros(translation_matrix_dim, 1, CV_64F);                      // 式(52)の右辺
+    cv::Mat delta_uv_warping         = cv::Mat::zeros(warping_matrix_dim, 1, CV_64F);                          // 式(45)の左辺 delta
+    cv::Mat delta_uv_translation     = cv::Mat::zeros(translation_matrix_dim, 1, CV_64F);                      // 式(52)の右辺 delta
 
-    double MSE_warping, MSE_translation;
     double min_error_warping = 1E6, min_error_translation = 1E6;
     double max_PSNR_warping = -1, max_PSNR_translation = -1;
 
@@ -450,8 +464,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
     std::vector<std::pair<std::vector<cv::Point2f>,double>> v_stack_warping;
     std::vector<std::pair<cv::Point2f,double>> v_stack_translation;
     std::vector<cv::Point2f> pixels_in_triangle;
-
-    bool translation_flag = true;
 
     cv::Point2f initial_vector(0.0, 0.0);
 
@@ -470,7 +482,10 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
     int bm_x_offset = 32;
     int bm_y_offset = 32;
-    double error_min = 1e9;
+    double error_bm_min = 1e9;
+
+    int image_width  = ref_images[0][3].cols;
+    int image_height = ref_images[0][3].rows;
 
     if(init_vector.x == -1000 && init_vector.y == -1000) {
         for (int by = -bm_y_offset; by < bm_y_offset; by++) {
@@ -481,15 +496,17 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 double error_tmp = 0.0;
                 for (const auto &pixel : pixels_in_triangle) {
 #if GAUSS_NEWTON_HEVC_IMAGE
-                    error_tmp += abs(expand_image[0][3][1][4 * (int) (pixel.x + bx)][4 * (int) (pixel.y + by)] -
-                                     expand_image[0][3][3][4 * (int) (pixel.x)][4 * (int) (pixel.y)]);
+
+                    unsigned char pel1 = F(expand_image[0][3][1], 4 * (int) (pixel.x + bx), 4 * (int) (pixel.y + by), 4 * SEARCH_RANGE, 4 * (ref_images[0][3].cols));
+                    unsigned char pel2 = F(expand_image[0][3][3], 4 * (int) (pixel.x)     , 4 * (int) (pixel.y)     , 4 * SEARCH_RANGE, 4 * (ref_images[0][3].cols));
+                    error_tmp += (pel1 - pel2) * (pel1 - pel2);
 #else
                     error_tmp += abs(expand_image[0][3][1][(int) (pixel.x + bx)][(int) (pixel.y + by)] -
                                                      expand_image[0][3][3][(int) (pixel.x)][(int) (pixel.y)]);
 #endif
                 }
-                if (error_min > error_tmp) {
-                    error_min = error_tmp;
+                if (error_bm_min > error_tmp) {
+                    error_bm_min = error_tmp;
                     initial_vector.x = bx;
                     initial_vector.y = by;
                 }
@@ -500,19 +517,377 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
         initial_vector.y = init_vector.y;
     }
 
-    initial_vector /= 2.0;
+#if STORE_NEWTON_LOG
+    extern std::vector<MELog> ME_log_translation_0;
+    extern std::vector<MELog> ME_log_translation_1;
+    extern std::vector<MELog> ME_log_warping_0;
+    extern std::vector<MELog> ME_log_warping_1;
+
+    ME_log_translation_0.emplace_back();
+    ME_log_translation_1.emplace_back();
+#endif
+
+
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
-        std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(initial_vector.x, initial_vector.y));
         cv::Point2f tmp_mv_translation(initial_vector.x, initial_vector.y);
+        bool translation_update_flag = true;
+
+#if STORE_NEWTON_LOG
+        MELog& current_me_log = (filter_num == 0 ? ME_log_translation_0.back() : ME_log_translation_1.back());
+#endif
+        // Marquardtの係数
+        double alpha_marquardt = 0.5;
+
+        v_stack_translation.emplace_back(tmp_mv_translation, error_bm_min);
 
         for(int step = 3 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
+            double SSE_translation = 0.0;
 
             double scale = pow(2, 3 - step);
             cv::Mat current_ref_image = ref_images[filter_num][step];
             cv::Mat current_target_image = target_images[filter_num][step];
 
-            unsigned char **current_target_expand, **current_target_org_expand; //画像の周りに500ピクセルだけ黒の領域を設ける(念のため)
-            unsigned char **current_ref_expand, **current_ref_org_expand;    //f_expandと同様
+            unsigned char *current_target_expand, *current_target_org_expand; //画像の周りに500ピクセルだけ黒の領域を設ける(念のため)
+            unsigned char *current_ref_expand, *current_ref_org_expand;    //f_expandと同様
+
+            current_ref_expand        = expand_image[filter_num][step][0];
+            current_ref_org_expand    = expand_image[filter_num][step][1];
+            current_target_expand     = expand_image[filter_num][step][2];
+            current_target_org_expand = expand_image[filter_num][step][3];
+
+            int spread = SEARCH_RANGE; // 探索範囲は16までなので16に戻す
+
+            int scaled_spread = spread / scale;
+            p0 = target_corners.p1 / scale;
+            p1 = target_corners.p2 / scale;
+            p2 = target_corners.p3 / scale;
+
+            // 端の頂点の調整
+            if (target_corners.p1.x == target_images[0][3].cols - 1) p0.x = target_images[0][step].cols - 1;
+            if (target_corners.p1.y == target_images[0][3].rows - 1) p0.y = target_images[0][step].rows - 1;
+            if (target_corners.p2.x == target_images[0][3].cols - 1) p1.x = target_images[0][step].cols - 1;
+            if (target_corners.p2.y == target_images[0][3].rows - 1) p1.y = target_images[0][step].rows - 1;
+            if (target_corners.p3.x == target_images[0][3].cols - 1) p2.x = target_images[0][step].cols - 1;
+            if (target_corners.p3.y == target_images[0][3].rows - 1) p2.y = target_images[0][step].rows - 1;
+
+            if(fabs((p2 - p0).x * (p1 - p0).y - (p2 - p0).y * (p1 - p0).x) <= 0) break;
+
+            current_triangle_coordinates.p1 = p0;
+            current_triangle_coordinates.p2 = p1;
+            current_triangle_coordinates.p3 = p2;
+            pixels_in_triangle = getPixelsInTriangle(current_triangle_coordinates, area_flag, triangle_index, ctu, block_size_x, block_size_y);
+
+            std::vector<cv::Point2f> scaled_coordinates{p0, p1, p2};
+
+            if(step != 0) {
+                // 画面外にはみ出してる場合、２倍からだんだん小さく縮小していく
+
+                // 平行移動
+                double magnification = 1.0;
+                while ( (p0.x + tmp_mv_translation.x * magnification < -scaled_spread && p0.x + tmp_mv_translation.x * magnification > current_target_image.cols - 1 + scaled_spread) &&
+                        (p1.x + tmp_mv_translation.x * magnification < -scaled_spread && p1.x + tmp_mv_translation.x * magnification > current_target_image.cols - 1 + scaled_spread) &&
+                        (p2.x + tmp_mv_translation.x * magnification < -scaled_spread && p2.x + tmp_mv_translation.x * magnification > current_target_image.cols - 1 + scaled_spread) &&
+                        (p0.y + tmp_mv_translation.y * magnification < -scaled_spread && p0.y + tmp_mv_translation.y * magnification > current_target_image.rows - 1 + scaled_spread) &&
+                        (p1.y + tmp_mv_translation.y * magnification < -scaled_spread && p1.y + tmp_mv_translation.y * magnification > current_target_image.rows - 1 + scaled_spread) &&
+                        (p2.y + tmp_mv_translation.y * magnification < -scaled_spread && p2.y + tmp_mv_translation.y * magnification > current_target_image.rows - 1 + scaled_spread) ) {
+                    if(magnification <= 1)break;
+                    magnification -= 0.1;
+                }
+                tmp_mv_translation *= magnification;
+            }
+            v_stack_translation.clear();
+            v_stack_translation.emplace_back(tmp_mv_translation, error_bm_min);
+
+            double prev_SSE_translation = error_bm_min;
+            cv::Point2f prev_mv_translation = tmp_mv_translation;
+
+            int iterate_counter = 0;
+
+#if STORE_NEWTON_LOG
+            current_me_log.mv_newton_translation.emplace_back(tmp_mv_translation);
+            current_me_log.residual.emplace_back(error_bm_min);
+            current_me_log.coordinate_after_move1.emplace_back();
+            current_me_log.coordinate_after_move2.emplace_back();
+            current_me_log.coordinate_after_move3.emplace_back();
+#endif
+
+            while(true){
+                // 移動後の座標を格納する
+                cv::Point2f a = p2 - p0;
+                cv::Point2f b = p1 - p0;
+                double det = a.x * b.y - a.y * b.x;
+                // tmp_mv_warping, tmp_mv_translationは現在の動きベクトル
+                // 初回は初期値が入ってる
+
+                gg_translation = cv::Mat::zeros(translation_matrix_dim, translation_matrix_dim, CV_64F);
+                B_translation = cv::Mat::zeros(translation_matrix_dim, 1, CV_64F);
+                delta_uv_translation = cv::Mat::zeros(translation_matrix_dim, 1, CV_64F);
+
+                double delta_g_translation[translation_matrix_dim] = {0};
+
+                cv::Point2f X;
+                SSE_translation = 0.0;
+
+                double E_delta_x = 0.0;
+                double E_delta_y = 0.0;
+
+                for(const auto& pixel : pixels_in_triangle) {
+                    X.x = pixel.x - p0.x;
+                    X.y = pixel.y - p0.y;
+
+                    double alpha = (X.x * b.y - X.y * b.x) / det;
+                    double beta = (a.x * X.y - a.y * X.x)/ det;;
+
+                    // 参照フレームの前進差分（平行移動）
+
+
+                    // 移動後の頂点を計算し格納
+                    std::vector<cv::Point2f> triangle_later_translation(3);
+                    triangle_later_translation[0] = p0 + tmp_mv_translation;
+                    triangle_later_translation[1] = p1 + tmp_mv_translation;
+                    triangle_later_translation[2] = p2 + tmp_mv_translation;
+
+                    cv::Point2f a_later_translation = triangle_later_translation[2] - triangle_later_translation[0];
+                    cv::Point2f b_later_translation = triangle_later_translation[1] - triangle_later_translation[0];
+                    cv::Point2f X_later_translation = alpha * a_later_translation + beta * b_later_translation + triangle_later_translation[0];
+
+                    if(X_later_translation.x >= (current_ref_image.cols - 1 + scaled_spread)) X_later_translation.x = current_ref_image.cols - 1 + scaled_spread;
+                    if(X_later_translation.y >= (current_ref_image.rows - 1 + scaled_spread)) X_later_translation.y = current_ref_image.rows - 1 + scaled_spread;
+                    if(X_later_translation.x < -scaled_spread) X_later_translation.x = -scaled_spread;
+                    if(X_later_translation.y < -scaled_spread) X_later_translation.y = -scaled_spread;
+
+#if GAUSS_NEWTON_HEVC_IMAGE
+
+                    /**
+                     * 微分を行う
+                     *
+                     * - 4倍画像上でやる->1/4しか進んでいないので，最終的な微分の結果は4倍する
+                     *
+                     *  (x_int, y_int)     (x_int + 1, y_int)
+                     *               o x x x x o
+                     *               x x x x x x
+                     *               x x x x x x
+                     *               x x x x x x
+                     *               x x x x x x
+                     *               o x x x x o
+                     *  (x_int, y_int+1)   (x_int + 1, y_int + 1)
+                     *
+                     */
+
+                    int x_int = (int)floor(X_later_translation.x);
+                    int y_int = (int)floor(X_later_translation.y);
+                    double dx = X_later_translation.x - x_int;
+                    double dy = X_later_translation.y - y_int;
+
+                    double x1_slope = F(current_ref_expand, 4 * (x_int) + 1, 4 * y_int    , 4 * SEARCH_RANGE, 4 * image_width) - F(current_ref_expand, 4 * x_int, 4 * y_int    , 4 * SEARCH_RANGE, 4 * image_width);
+                    double x2_slope = F(current_ref_expand, 4 * (x_int) + 1, 4 * y_int + 1, 4 * SEARCH_RANGE, 4 * image_width) - F(current_ref_expand, 4 * x_int, 4 * y_int + 1, 4 * SEARCH_RANGE, 4 * image_width);
+                    double g_x_translation = 4 * (x1_slope * (1 - dy) + x2_slope * dy);
+
+                    double y1_slope = F(current_ref_expand, 4 * (x_int)    , 4 * y_int + 1, 4 * SEARCH_RANGE, 4 * image_width) - F(current_ref_expand, 4 * x_int    , 4 * y_int, 4 * SEARCH_RANGE, 4 * image_width);
+                    double y2_slope = F(current_ref_expand, 4 * (x_int) + 1, 4 * y_int + 1, 4 * SEARCH_RANGE, 4 * image_width) - F(current_ref_expand, 4 * x_int + 1, 4 * y_int, 4 * SEARCH_RANGE, 4 * image_width);
+
+                    double g_y_translation = 4 * (y1_slope * (1 - dx) +  y2_slope * dx);
+
+#else
+                    g_x   = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x  + 1 , X_later_warping.y    , 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x  - 1, X_later_warping.y     , 1)) / 2.0;  // (current_ref_expand[x_warping_tmp + 4 ][y_warping_tmp     ] - current_ref_expand[x_warping_tmp - 4 ][y_warping_tmp     ]) / 2.0;
+                            g_y   = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x     , X_later_warping.y  + 1, 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x     , X_later_warping.y  - 1, 1)) / 2.0;  // (current_ref_expand[x_warping_tmp     ][y_warping_tmp + 4 ] - current_ref_expand[x_warping_tmp     ][y_warping_tmp - 4 ]) / 2.0;
+                            g_x_translation = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x + 1, X_later_translation.y    , 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x - 1, X_later_translation.y    , 1)) / 2.0;  // (current_ref_expand[x_translation_tmp + 4][y_translation_tmp    ] - current_ref_expand[x_translation_tmp - 4][y_translation_tmp    ]) / 2.0;
+                            g_y_translation = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x    , X_later_translation.y + 1, 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x    , X_later_translation.y - 1, 1)) / 2.0;  // (current_ref_expand[x_translation_tmp    ][y_translation_tmp + 4] - current_ref_expand[x_translation_tmp    ][y_translation_tmp - 4]) / 2.0;
+#endif
+
+                    delta_g_translation[0] = g_x_translation;
+                    delta_g_translation[1] = g_y_translation;
+
+#if GAUSS_NEWTON_HEVC_IMAGE
+                    double f              = img_ip(current_target_expand    , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *               pixel.x, 4 *               pixel.y);
+                    double f_org          = img_ip(current_target_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *               pixel.x, 4 *               pixel.y);
+                    double g_translation  = img_ip(current_ref_expand       , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_translation.x, 4 * X_later_translation.y);
+#else
+                    f              = img_ip(current_target_expand    , cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)),                X.x,                X.y, 2);
+                    f_org          = img_ip(current_target_org_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)),                X.x,                X.y, 2);
+                    g_warping      = img_ip(current_ref_expand       , cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)),  X_later_warping.x,  X_later_warping.y, 2);
+                    g_translation     = img_ip(current_ref_expand       , cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x, X_later_translation.y, 2);
+#endif
+                    double g_org_translation;
+
+                    if(ref_hevc != nullptr) {
+                        g_org_translation = img_ip(ref_hevc, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_translation.x, 4 * X_later_translation.y);
+                    }else {
+#if GAUSS_NEWTON_HEVC_IMAGE
+                        g_org_translation = img_ip(current_ref_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_translation.x, 4 * X_later_translation.y);
+#else
+                        g_org_warping  = img_ip(current_ref_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread),  tmp_X_later_warping.x, tmp_X_later_warping.y, 2);
+                            g_org_translation = img_ip(current_ref_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread), tmp_X_later_translation.x, tmp_X_later_translation.y, 2);
+#endif
+                    }
+
+                    E_delta_x += -2 * (f - g_translation) * delta_g_translation[0];
+                    E_delta_y += -2 * (f - g_translation) * delta_g_translation[1];
+
+                    for (int row = 0; row < 2; row++) {
+                        for (int col = 0; col < 2; col++) {
+                            gg_translation.at<double>(row, col) += delta_g_translation[row] * delta_g_translation[col];
+                        }
+                        B_translation.at<double>(row, 0) += (f - g_translation) * delta_g_translation[row];
+                    }
+                }
+
+                gg_translation.at<double>(0, 0) *= (1 + alpha_marquardt);
+                gg_translation.at<double>(1, 1) *= (1 + alpha_marquardt);
+
+                cv::solve(gg_translation, B_translation, delta_uv_translation);
+
+                // 更新量がしきい値以上であれば打ち切る
+                double delta_u = delta_uv_translation.at<double>(0, 0);
+                double delta_v = delta_uv_translation.at<double>(1, 0);
+                if(fabs(delta_u) >= DELTA_UV_THRESHOLD || fabs(delta_v) >= DELTA_UV_THRESHOLD){
+                    break;
+                }
+
+                if(translation_update_flag && prev_SSE_translation > SSE_translation) {
+                    for (int k = 0; k < 2; k++) {
+                        if (k % 2 == 0) {
+                            double translated_x = tmp_mv_translation.x + delta_u;
+                            if ((-scaled_spread <= scaled_coordinates[0].x + translated_x) &&
+                                (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[0].x + translated_x) &&
+                                (-scaled_spread <= scaled_coordinates[1].x + translated_x) &&
+                                (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[1].x + translated_x) &&
+                                (-scaled_spread <= scaled_coordinates[2].x + translated_x) &&
+                                (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[2].x + translated_x)) {
+                                tmp_mv_translation.x = translated_x;
+                            }
+                        } else {
+                            double translated_y = tmp_mv_translation.y + delta_v;
+                            if ((-scaled_spread <= scaled_coordinates[0].y + translated_y) &&
+                                (target_images[0][step].rows - 1 + scaled_spread >= scaled_coordinates[0].y + translated_y) &&
+                                (-scaled_spread <=scaled_coordinates[1].y + translated_y) &&
+                                (target_images[0][step].rows - 1 + scaled_spread >= scaled_coordinates[1].y + translated_y) &&
+                                (-scaled_spread <=scaled_coordinates[2].y + translated_y) &&
+                                (target_images[0][step].rows - 1 + scaled_spread >= scaled_coordinates[2].y + translated_y)) {
+                                tmp_mv_translation.y = translated_y;
+                            }
+                        }
+                    }
+                }
+
+                // 移動後のSSEを求める
+                std::vector<cv::Point2f> translation_mvs{tmp_mv_translation, tmp_mv_translation, tmp_mv_translation};
+                SSE_translation = getTriangleSSE(ref_hevc, current_target_org_expand, target_corners, translation_mvs, pixels_in_triangle, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)));
+
+
+                double eps = 1e-3;
+
+                iterate_counter++;
+
+#if STORE_NEWTON_LOG
+                current_me_log.residual.emplace_back(SSE_translation);
+                current_me_log.mv_newton_translation.emplace_back(tmp_mv_translation);
+                current_me_log.coordinate_after_move1.emplace_back(tmp_mv_translation + p0);
+                current_me_log.coordinate_after_move2.emplace_back(tmp_mv_translation + p1);
+                current_me_log.coordinate_after_move3.emplace_back(tmp_mv_translation + p2);
+#endif
+
+                if(prev_SSE_translation > SSE_translation){
+                    alpha_marquardt *= 0.2;
+                    prev_SSE_translation = SSE_translation;
+                    prev_mv_translation = tmp_mv_translation;
+                    v_stack_translation.emplace_back(tmp_mv_translation, SSE_translation);
+                }else{
+                    alpha_marquardt *= 10;
+                    tmp_mv_translation = prev_mv_translation;
+                }
+
+                if ((fabs(prev_SSE_translation - SSE_translation) / SSE_translation) < eps) {
+                    translation_update_flag = false;
+                }
+
+                if(iterate_counter > 30 || !(translation_update_flag)){
+                    break;
+                }
+
+                SSE_translation = 0.0;
+            }
+
+#if STORE_NEWTON_LOG
+            extern std::vector<std::vector<double>> freq_newton_translation;
+            freq_newton_translation[filter_num][std::min(iterate_counter, 20)]++;
+
+            current_me_log.percentage = (fabs(current_me_log.residual.back() - current_me_log.residual.front()) / current_me_log.residual.front() * 100);
+#endif
+
+//            if(iterate_counter < 20 && !slow_newton_translation[filter_num].empty()){
+//                slow_newton_translation[filter_num].erase(slow_newton_translation[filter_num].begin() + slow_newton_translation[filter_num].size() - 1);
+//                mv_newton_translation[filter_num].erase(mv_newton_translation[filter_num].begin() + mv_newton_translation[filter_num].size() - 1);
+//                coordinate_newton_translation1[filter_num].erase(coordinate_newton_translation1[filter_num].begin() + coordinate_newton_translation1[filter_num].size() - 1);
+//                coordinate_newton_translation2[filter_num].erase(coordinate_newton_translation2[filter_num].begin() + coordinate_newton_translation2[filter_num].size() - 1);
+//                coordinate_newton_translation3[filter_num].erase(coordinate_newton_translation3[filter_num].begin() + coordinate_newton_translation3[filter_num].size() - 1);
+//                p0_newton_translation[filter_num].erase(p0_newton_translation[filter_num].begin() + p0_newton_translation[filter_num].size() - 1);
+//                p1_newton_translation[filter_num].erase(p1_newton_translation[filter_num].begin() + p1_newton_translation[filter_num].size() - 1);
+//                p2_newton_translation[filter_num].erase(p2_newton_translation[filter_num].begin() + p2_newton_translation[filter_num].size() - 1);
+//
+//            }else if((slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1][slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1].size() - 1]
+//                      - slow_newton_translation[filter_num][slow_newton_translation[filter_num].size() - 1][0]) < 0){
+//                slow_newton_translation[filter_num].erase(slow_newton_translation[filter_num].begin() + slow_newton_translation[filter_num].size() - 1);
+//                mv_newton_translation[filter_num].erase(mv_newton_translation[filter_num].begin() + mv_newton_translation[filter_num].size() - 1);
+//                coordinate_newton_translation1[filter_num].erase(coordinate_newton_translation1[filter_num].begin() + coordinate_newton_translation1[filter_num].size() - 1);
+//                coordinate_newton_translation2[filter_num].erase(coordinate_newton_translation2[filter_num].begin() + coordinate_newton_translation2[filter_num].size() - 1);
+//                coordinate_newton_translation3[filter_num].erase(coordinate_newton_translation3[filter_num].begin() + coordinate_newton_translation3[filter_num].size() - 1);
+//                p0_newton_translation[filter_num].erase(p0_newton_translation[filter_num].begin() + p0_newton_translation[filter_num].size() - 1);
+//                p1_newton_translation[filter_num].erase(p1_newton_translation[filter_num].begin() + p1_newton_translation[filter_num].size() - 1);
+//                p2_newton_translation[filter_num].erase(p2_newton_translation[filter_num].begin() + p2_newton_translation[filter_num].size() - 1);
+//            }
+
+            std::sort(v_stack_translation.begin(), v_stack_translation.end(), [](std::pair<cv::Point2f,double> a, std::pair<cv::Point2f,double> b){
+                return a.second < b.second;
+            });
+
+            tmp_mv_translation = v_stack_translation[0].first;
+            double Error_translation = v_stack_translation[0].second;
+            double PSNR_translation = 10 * log10((255 * 255) / (Error_translation / (double)pixels_in_triangle.size()));
+
+            if(step == 3) {//一番下の階層で
+                if(PSNR_translation >= max_PSNR_translation){//2種類のボケ方で良い方を採用
+                    max_PSNR_translation = PSNR_translation;
+                    min_error_translation = Error_translation;
+                    max_v_translation = roundVecQuarter(tmp_mv_translation);
+                }
+            }
+        }
+    }
+
+    /**
+     *
+     * ワーピングの推定
+     *
+     * 3本の動きベクトルを推定してワーピングする
+     *
+     */
+#if STORE_NEWTON_LOG
+    ME_log_warping_0.emplace_back();
+    ME_log_warping_1.emplace_back();
+#endif
+
+    for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
+        std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(initial_vector.x, initial_vector.y));
+        bool warping_update_flag = true;
+
+#if STORE_NEWTON_LOG
+        MELog& current_me_log = (filter_num == 0 ? ME_log_warping_0.back() : ME_log_warping_1.back());
+#endif
+
+        // Marquardtの係数
+        double alpha_marquardt = 0.5;
+
+        v_stack_warping.emplace_back(tmp_mv_warping, error_bm_min);
+
+        for(int step = 3 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
+            double SSE_warping = 0.0;
+            double scale = pow(2, 3 - step);
+            cv::Mat current_ref_image = ref_images[filter_num][step];
+            cv::Mat current_target_image = target_images[filter_num][step];
+
+            unsigned char *current_target_expand, *current_target_org_expand; //画像の周りに500ピクセルだけ黒の領域を設ける(念のため)
+            unsigned char *current_ref_expand, *current_ref_org_expand;    //f_expandと同様
 
             current_ref_expand        = expand_image[filter_num][step][0];
             current_ref_org_expand    = expand_image[filter_num][step][1];
@@ -547,7 +922,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 // 画面外にはみ出してる場合、２倍からだんだん小さく縮小していく
 
                 // ワーピング
-                double magnification = 2.0;
+                double magnification = 1.0;
                 while ( (p0.x + tmp_mv_warping[0].x * magnification < -scaled_spread && p0.x + tmp_mv_warping[0].x * magnification > current_target_image.cols - 1 + scaled_spread) &&
                         (p1.x + tmp_mv_warping[1].x * magnification < -scaled_spread && p1.x + tmp_mv_warping[1].x * magnification > current_target_image.cols - 1 + scaled_spread) &&
                         (p2.x + tmp_mv_warping[2].x * magnification < -scaled_spread && p2.x + tmp_mv_warping[2].x * magnification > current_target_image.cols - 1 + scaled_spread) &&
@@ -559,40 +934,31 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 }
                 for (int s = 0; s < 3; s++) tmp_mv_warping[s] *= magnification;
 
-                // 平行移動
-                magnification = 2.0;
-                while ( (p0.x + tmp_mv_translation.x * magnification < -scaled_spread && p0.x + tmp_mv_translation.x * magnification > current_target_image.cols - 1 + scaled_spread) &&
-                        (p1.x + tmp_mv_translation.x * magnification < -scaled_spread && p1.x + tmp_mv_translation.x * magnification > current_target_image.cols - 1 + scaled_spread) &&
-                        (p2.x + tmp_mv_translation.x * magnification < -scaled_spread && p2.x + tmp_mv_translation.x * magnification > current_target_image.cols - 1 + scaled_spread) &&
-                        (p0.y + tmp_mv_translation.y * magnification < -scaled_spread && p0.y + tmp_mv_translation.y * magnification > current_target_image.rows - 1 + scaled_spread) &&
-                        (p1.y + tmp_mv_translation.y * magnification < -scaled_spread && p1.y + tmp_mv_translation.y * magnification > current_target_image.rows - 1 + scaled_spread) &&
-                        (p2.y + tmp_mv_translation.y * magnification < -scaled_spread && p2.y + tmp_mv_translation.y * magnification > current_target_image.rows - 1 + scaled_spread) ) {
-                    if(magnification <= 1)break;
-                    magnification -= 0.1;
-                }
-                tmp_mv_translation *= magnification;
             }
-            v_stack_translation.clear();
             v_stack_warping.clear();
 
-            double prev_error_warping = 1e6, prev_error_translation = 1e6;
-            cv::Point2f prev_mv_translation;
-            std::vector<cv::Point2f> prev_mv_warping;
-            bool warping_update_flag = true, translation_update_flag = true;
+            v_stack_warping.emplace_back(tmp_mv_warping, error_bm_min);
+
+            double prev_SSE_warping = error_bm_min;
+            std::vector<cv::Point2f> prev_mv_warping{initial_vector, initial_vector, initial_vector};
+
+#if STORE_NEWTON_LOG
+            current_me_log.mv_newton_warping.emplace_back(tmp_mv_warping);
+            current_me_log.residual.emplace_back(error_bm_min);
+            current_me_log.coordinate_after_move1.emplace_back();
+            current_me_log.coordinate_after_move2.emplace_back();
+            current_me_log.coordinate_after_move3.emplace_back();
+#endif
 
             int iterate_counter = 0;
             while(true){
                 // 移動後の座標を格納する
                 std::vector<cv::Point2f> ref_coordinates_warping;
-                std::vector<cv::Point2f> ref_coordinates_translation;
+                SSE_warping = 0.0;
 
                 ref_coordinates_warping.emplace_back(p0);
                 ref_coordinates_warping.emplace_back(p1);
                 ref_coordinates_warping.emplace_back(p2);
-
-                ref_coordinates_translation.emplace_back(p0);
-                ref_coordinates_translation.emplace_back(p1);
-                ref_coordinates_translation.emplace_back(p2);
 
                 cv::Point2f a = p2 - p0;
                 cv::Point2f b = p1 - p0;
@@ -602,9 +968,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 cv::Point2f c = tmp_mv_warping[2] - tmp_mv_warping[0];
                 cv::Point2f d = tmp_mv_warping[1] - tmp_mv_warping[0];
 
-                double area_before_move = 0.5 * fabs(det); // 移動前の面積
-                double area_after_move = 0.5 * fabs((b.x + d.x)*(a.y + c.y) - (a.x + c.x)*(b.y + d.y)); // 移動後の面積
-
                 double S[6];
                 S[0] = -0.5*(a.y + c.y - b.y - d.y);
                 S[1] = -0.5*(b.x + d.x - a.x - c.x);
@@ -613,21 +976,14 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 S[4] = -0.5*(b.y + d.y);
                 S[5] = 0.5*(b.x + d.x);
 
-                MSE_translation = MSE_warping = 0.0;
                 gg_warping = cv::Mat::zeros(warping_matrix_dim, warping_matrix_dim, CV_64F);
                 B_warping = cv::Mat::zeros(warping_matrix_dim, 1, CV_64F);
                 delta_uv_warping = cv::Mat::zeros(warping_matrix_dim, 1, CV_64F);
 
-                gg_translation = cv::Mat::zeros(translation_matrix_dim, translation_matrix_dim, CV_64F);
-                B_translation = cv::Mat::zeros(translation_matrix_dim, 1, CV_64F);
-                delta_uv_translation = cv::Mat::zeros(translation_matrix_dim, 1, CV_64F);
-
                 double delta_g_warping[warping_matrix_dim] = {0};
-                double delta_g_translation[translation_matrix_dim] = {0};
 
                 cv::Point2f X;
                 double RMSE_warping_filter = 0;
-                double RMSE_translation_filter = 0;
                 for(auto pixel : pixels_in_triangle) {
                     X.x = pixel.x - p0.x;
                     X.y = pixel.y - p0.y;
@@ -637,68 +993,56 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     X.x += p0.x;
                     X.y += p0.y;
 
-                    int x_integer = (int)floor(X.x);
-                    int y_integer = (int)floor(X.y);
-                    int x_decimal = X.x - x_integer;
-                    int y_decimal = X.y - y_integer;
-
-                    // 参照フレームの前進差分（平行移動）
-                    double g_x_translation;
-                    double g_y_translation;
-                    cv::Point2f X_later_translation, X_later_warping;
-
                     // 移動後の頂点を計算し格納
-                    ref_coordinates_warping[0] = p0 + tmp_mv_warping[0];
-                    ref_coordinates_warping[1] = p1 + tmp_mv_warping[1];
-                    ref_coordinates_warping[2] = p2 + tmp_mv_warping[2];
-                    ref_coordinates_translation[0] = p0 + tmp_mv_translation;
-                    ref_coordinates_translation[1] = p1 + tmp_mv_translation;
-                    ref_coordinates_translation[2] = p2 + tmp_mv_translation;
+                    std::vector<cv::Point2f> triangle_later_warping(3);
+                    triangle_later_warping[0] = p0 + tmp_mv_warping[0];
+                    triangle_later_warping[1] = p1 + tmp_mv_warping[1];
+                    triangle_later_warping[2] = p2 + tmp_mv_warping[2];
 
-                    std::vector<cv::Point2f> triangle_later_warping;
-                    std::vector<cv::Point2f> triangle_later_translation;
-                    triangle_later_warping.emplace_back(ref_coordinates_warping[0]);
-                    triangle_later_warping.emplace_back(ref_coordinates_warping[1]);
-                    triangle_later_warping.emplace_back(ref_coordinates_warping[2]);
-                    triangle_later_translation.emplace_back(ref_coordinates_translation[0]);
-                    triangle_later_translation.emplace_back(ref_coordinates_translation[1]);
-                    triangle_later_translation.emplace_back(ref_coordinates_translation[2]);
-
-                    cv::Point2f a_later_warping, a_later_translation;
-                    cv::Point2f b_later_warping, b_later_translation;
-
-                    a_later_warping  =  triangle_later_warping[2] -  triangle_later_warping[0];
-                    a_later_translation = triangle_later_translation[2] - triangle_later_translation[0];
-                    b_later_warping  =  triangle_later_warping[1] -  triangle_later_warping[0];
-                    b_later_translation = triangle_later_translation[1] - triangle_later_translation[0];
-                    X_later_warping  = alpha *  a_later_warping + beta *  b_later_warping +  triangle_later_warping[0];
-                    X_later_translation = alpha * a_later_translation + beta * b_later_translation + triangle_later_translation[0];
+                    cv::Point2f a_later_warping  =  triangle_later_warping[2] -  triangle_later_warping[0];
+                    cv::Point2f b_later_warping  =  triangle_later_warping[1] -  triangle_later_warping[0];
+                    cv::Point2f  X_later_warping  = alpha *  a_later_warping + beta *  b_later_warping +  triangle_later_warping[0];
 
                     if(X_later_warping.x >= current_ref_image.cols - 1 + scaled_spread) X_later_warping.x = current_ref_image.cols - 1.00 + scaled_spread;
                     if(X_later_warping.y >= current_ref_image.rows - 1 + scaled_spread) X_later_warping.y = current_ref_image.rows - 1.00 + scaled_spread;
                     if(X_later_warping.x < -scaled_spread) X_later_warping.x = -scaled_spread;
                     if(X_later_warping.y < -scaled_spread) X_later_warping.y = -scaled_spread;
 
-                    if(X_later_translation.x >= (current_ref_image.cols - 1 + scaled_spread)) X_later_translation.x = current_ref_image.cols - 1 + scaled_spread;
-                    if(X_later_translation.y >= (current_ref_image.rows - 1 + scaled_spread)) X_later_translation.y = current_ref_image.rows - 1 + scaled_spread;
-                    if(X_later_translation.x < -scaled_spread) X_later_translation.x = -scaled_spread;
-                    if(X_later_translation.y < -scaled_spread) X_later_translation.y = -scaled_spread;
 
-                    // 参照フレームの中心差分
-                    spread+=1;
-                    double g_x, g_y;
                     #if GAUSS_NEWTON_HEVC_IMAGE
-                        g_x          = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_warping.x  + 1), 4 * (X_later_warping.y     ), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_warping.x  - 1), 4 * (X_later_warping.y     ), 1)) / 2.0;  // (current_ref_expand[x_warping_tmp + 4 ][y_warping_tmp     ] - current_ref_expand[x_warping_tmp - 4 ][y_warping_tmp     ]) / 2.0;
-                        g_y          = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_warping.x     ), 4 * (X_later_warping.y  + 1), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_warping.x     ), 4 * (X_later_warping.y  - 1), 1)) / 2.0;  // (current_ref_expand[x_warping_tmp     ][y_warping_tmp + 4 ] - current_ref_expand[x_warping_tmp     ][y_warping_tmp - 4 ]) / 2.0;
-                        g_x_translation = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x + 1), 4 * (X_later_translation.y    ), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x - 1), 4 * (X_later_translation.y    ), 1)) / 2.0;  // (current_ref_expand[x_translation_tmp + 4][y_translation_tmp    ] - current_ref_expand[x_translation_tmp - 4][y_translation_tmp    ]) / 2.0;
-                        g_y_translation = (img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x    ), 4 * (X_later_translation.y + 1), 1) - img_ip(current_ref_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * (X_later_translation.x    ), 4 * (X_later_translation.y - 1), 1)) / 2.0;  // (current_ref_expand[x_translation_tmp    ][y_translation_tmp + 4] - current_ref_expand[x_translation_tmp    ][y_translation_tmp - 4]) / 2.0;
+                    //
+                    // (x_int, y_int)     (x_int + 1, y_int)
+                    //             o x x x x o
+                    //             x x x x x x
+                    //             x x x x x x
+                    //             x x x x x x
+                    //             x x x x x x
+                    //             o x x x x o
+                    // (x_int, y_int+1)   (x_int + 1, y_int + 1)
+                    //
+
+                    int x_int = (int)floor(X_later_warping.x);
+                    int y_int = (int)floor(X_later_warping.y);
+                    double dx = X_later_warping.x - x_int;
+                    double dy = X_later_warping.y - y_int;
+
+
+                    double x1_slope = F(current_ref_expand, 4 * (x_int) + 1, 4 * y_int    , 4 * SEARCH_RANGE, 4 * image_width) - F(current_ref_expand, 4 * x_int, 4 * y_int    , 4 * SEARCH_RANGE, 4 * image_width);
+                    double x2_slope = F(current_ref_expand, 4 * (x_int) + 1, 4 * y_int + 1, 4 * SEARCH_RANGE, 4 * image_width) - F(current_ref_expand, 4 * x_int, 4 * y_int + 1, 4 * SEARCH_RANGE, 4 * image_width);
+                    double g_x = 4 * (x1_slope * (1 - dy) + x2_slope * dy);
+
+
+                    double y1_slope = F(current_ref_expand, 4 * (x_int)    , 4 * y_int + 1, 4 * SEARCH_RANGE, 4 * image_width) - F(current_ref_expand, 4 * x_int    , 4 * y_int, 4 * SEARCH_RANGE, 4 * image_width);
+                    double y2_slope = F(current_ref_expand, 4 * (x_int) + 1, 4 * y_int + 1, 4 * SEARCH_RANGE, 4 * image_width) - F(current_ref_expand, 4 * x_int + 1, 4 * y_int, 4 * SEARCH_RANGE, 4 * image_width);
+
+                    double g_y = 4 * (y1_slope * (1 - dx) +  y2_slope * dx);
                     #else
                         g_x   = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x  + 1 , X_later_warping.y    , 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x  - 1, X_later_warping.y     , 1)) / 2.0;  // (current_ref_expand[x_warping_tmp + 4 ][y_warping_tmp     ] - current_ref_expand[x_warping_tmp - 4 ][y_warping_tmp     ]) / 2.0;
                             g_y   = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x     , X_later_warping.y  + 1, 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_warping.x     , X_later_warping.y  - 1, 1)) / 2.0;  // (current_ref_expand[x_warping_tmp     ][y_warping_tmp + 4 ] - current_ref_expand[x_warping_tmp     ][y_warping_tmp - 4 ]) / 2.0;
                             g_x_translation = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x + 1, X_later_translation.y    , 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x - 1, X_later_translation.y    , 1)) / 2.0;  // (current_ref_expand[x_translation_tmp + 4][y_translation_tmp    ] - current_ref_expand[x_translation_tmp - 4][y_translation_tmp    ]) / 2.0;
                             g_y_translation = (img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x    , X_later_translation.y + 1, 1) - img_ip(current_ref_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x    , X_later_translation.y - 1, 1)) / 2.0;  // (current_ref_expand[x_translation_tmp    ][y_translation_tmp + 4] - current_ref_expand[x_translation_tmp    ][y_translation_tmp - 4]) / 2.0;
                     #endif
-                    spread-=1;
+
 
                     for(int i = 0 ; i < 6 ; i++) {
                         // 頂点を動かしたときのパッチ内の変動量x軸y軸独立に計算(delta_gを求めるために必要)
@@ -735,19 +1079,15 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                         // 式(28)～(33)
                         delta_g_warping[i] = g_x * delta_x + g_y * delta_y;
                     }
-                    delta_g_translation[0] = g_x_translation;
-                    delta_g_translation[1] = g_y_translation;
 
                     double f;
                     double f_org;
                     double g_warping;
-                    double g_translation;
 
 #if GAUSS_NEWTON_HEVC_IMAGE
-                    f              = img_ip(current_target_expand    , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                X.x, 4 *                X.y, 1);
-                    f_org          = img_ip(current_target_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                X.x, 4 *                X.y, 1);
-                    g_warping      = img_ip(current_ref_expand       , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *  X_later_warping.x, 4 *  X_later_warping.y, 1);
-                    g_translation     = img_ip(current_ref_expand       , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_translation.x, 4 * X_later_translation.y, 1);
+                    f              = img_ip(current_target_expand    , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                X.x, 4 *                X.y);
+                    f_org          = img_ip(current_target_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *                X.x, 4 *                X.y);
+                    g_warping      = img_ip(current_ref_expand       , cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *  X_later_warping.x, 4 *  X_later_warping.y);
 #else
                     f              = img_ip(current_target_expand    , cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)),                X.x,                X.y, 2);
                     f_org          = img_ip(current_target_org_expand, cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)),                X.x,                X.y, 2);
@@ -755,37 +1095,18 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     g_translation     = img_ip(current_ref_expand       , cv::Rect(-spread, -spread, (current_target_image.cols + 2 * spread), (current_target_image.rows + 2 * spread)), X_later_translation.x, X_later_translation.y, 2);
 #endif
                     double g_org_warping;
-                    double g_org_translation;
-                    RMSE_warping_filter += fabs(f - g_warping);
-                    RMSE_translation_filter += fabs(f - g_translation);
-
-                    cv::Point2f tmp_X_later_warping, tmp_X_later_translation;
-                    tmp_X_later_warping.x = X_later_warping.x;
-                    tmp_X_later_warping.y = X_later_warping.y;
-                    tmp_X_later_translation.x = X_later_translation.x;
-                    tmp_X_later_translation.y = X_later_translation.y;
-
-                    tmp_X_later_warping = roundVecQuarter(tmp_X_later_warping);
-                    tmp_X_later_translation = roundVecQuarter(tmp_X_later_translation);
 
                     if(ref_hevc != nullptr) {
-                        g_org_warping  = img_ip(ref_hevc, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * tmp_X_later_warping.x,  4 * tmp_X_later_warping.y, 1);
-                        g_org_translation = img_ip(ref_hevc, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * tmp_X_later_translation.x, 4 * tmp_X_later_translation.y, 1);
+                        g_org_warping  = img_ip(ref_hevc, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_warping.x, 4 * X_later_warping.y);
                     }else {
 #if GAUSS_NEWTON_HEVC_IMAGE
-                        g_org_warping  = img_ip(current_ref_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 *  tmp_X_later_warping.x, 4 *  tmp_X_later_warping.y, 1);
-                        g_org_translation = img_ip(current_ref_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * tmp_X_later_translation.x, 4 * tmp_X_later_translation.y, 1);
+                        g_org_warping  = img_ip(current_ref_org_expand, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), 4 * X_later_warping.x, 4 * X_later_warping.y);
 #else
                         g_org_warping  = img_ip(current_ref_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread),  tmp_X_later_warping.x, tmp_X_later_warping.y, 2);
                             g_org_translation = img_ip(current_ref_org_expand, cv::Rect(-spread, -spread, current_target_image.cols + 2 * spread, current_target_image.rows + 2 * spread), tmp_X_later_translation.x, tmp_X_later_translation.y, 2);
 #endif
                     }
 
-                    if(iterate_counter > 4){
-                        f = f_org;
-                        g_warping = g_org_warping;
-                        g_translation = g_org_translation;
-                    }
 
                     for (int row = 0; row < warping_matrix_dim; row++) {
                         for (int col = 0; col < warping_matrix_dim; col++) {
@@ -793,139 +1114,106 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                         }
                         B_warping.at<double>(row, 0) += (f - g_warping) * delta_g_warping[row];//bの行列を生成(右辺の6x1のベクトルに相当)
                     }
-                    for (int row = 0; row < 2; row++) {
-                        for (int col = 0; col < 2; col++) {
-                            gg_translation.at<double>(row, col) += delta_g_translation[row] * delta_g_translation[col];
-                        }
-                        B_translation.at<double>(row, 0) += (f - g_translation) * delta_g_translation[row];
-                    }
 
-
-                    MSE_warping += fabs(f_org - g_org_warping);   // * (f_org - g_org_warping);
-                    MSE_translation += fabs(f_org - g_org_translation); // * (f_org - g_org_translation);
                 }
 
-                double mu = 10;
-                for(int row = 0 ; row < warping_matrix_dim ; row++){
-                    for(int col = 0 ; col < warping_matrix_dim ; col++) {
-                        gg_warping.at<double>(row, col) += mu * ((area_after_move * area_after_move * area_after_move - area_before_move * area_before_move * area_after_move) / (area_before_move * area_before_move * area_before_move * area_before_move) * S[row]);
-                    }
+
+                for(int k = 0 ; k < warping_matrix_dim ; k++){
+                    gg_warping.at<double>(k, k) *= (1 + alpha_marquardt);
                 }
 
-                double Error_warping = MSE_warping;
-                double Error_translation = MSE_translation;
-                double mu2 = pixels_in_triangle.size() * 0.0001;
-                gg_translation.at<double>(0, 0) += 4 * mu2 * tmp_mv_translation.x * tmp_mv_translation.x;
-                gg_translation.at<double>(0, 1) += 4 * mu2 * tmp_mv_translation.x * tmp_mv_translation.y;
-                gg_translation.at<double>(1, 0) += 4 * mu2 * tmp_mv_translation.y * tmp_mv_translation.x;
-                gg_translation.at<double>(1, 1) += 4 * mu2 * tmp_mv_translation.y * tmp_mv_translation.y;
-                B_translation.at<double>(0, 0) -= 2 * mu2 * tmp_mv_translation.x * (tmp_mv_translation.x * tmp_mv_translation.x + tmp_mv_translation.y * tmp_mv_translation.y);
-                B_translation.at<double>(1, 0) -= 2 * mu2 * tmp_mv_translation.y * (tmp_mv_translation.x * tmp_mv_translation.x + tmp_mv_translation.y * tmp_mv_translation.y);
                 cv::solve(gg_warping, B_warping, delta_uv_warping); //6x6の連立方程式を解いてdelta_uvに格納
-                v_stack_warping.emplace_back(tmp_mv_warping, Error_warping);
 
-                for (int k = 0; k < 6; k++) {
+                // delta_uvの値がしきい値を超えたら更新を終了する
+                bool delta_uv_threshold_flag = false;
+                for(int row = 0 ; row < warping_matrix_dim ; row++ ){
+                    if(fabs(delta_uv_warping.at<double>(row, 0)) >= DELTA_UV_THRESHOLD){
+                        delta_uv_threshold_flag = true;
+                        break;
+                    }
+                }
+                if(delta_uv_threshold_flag) break;
 
-                    if (k % 2 == 0) {
-                        if ((-scaled_spread <= scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x +delta_uv_warping.at<double>(k, 0)) &&
-                            (target_images[0][step].cols - 1 + scaled_spread >=scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0))) {
-                            tmp_mv_warping[(int) (k / 2)].x = tmp_mv_warping[(int) (k / 2)].x + delta_uv_warping.at<double>(k, 0);//動きベクトルを更新(画像の外に出ないように)
-                        }
-                    } else {
-                        if ((-scaled_spread <=
-                             scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y +
-                             delta_uv_warping.at<double>(k, 0)) &&
-                            (target_images[0][step].rows - 1 + scaled_spread >=
-                             scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y +
-                             delta_uv_warping.at<double>(k, 0))) {
-                            tmp_mv_warping[(int) (k / 2)].y =
-                                    tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0);
+                if(warping_update_flag && prev_SSE_warping > SSE_warping) {
+                    for (int k = 0; k < 6; k++) {
+                        if (k % 2 == 0) {
+                            if ((-scaled_spread <=
+                                 scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x +
+                                 delta_uv_warping.at<double>(k, 0)) &&
+                                (target_images[0][step].cols - 1 + scaled_spread >=
+                                 scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x +
+                                 delta_uv_warping.at<double>(k, 0))) {
+                                tmp_mv_warping[(int) (k / 2)].x = tmp_mv_warping[(int) (k / 2)].x +
+                                                                  delta_uv_warping.at<double>(k,
+                                                                                              0);//動きベクトルを更新(画像の外に出ないように)
+                            }
+                        } else {
+                            if ((-scaled_spread <=
+                                 scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y +
+                                 delta_uv_warping.at<double>(k, 0)) &&
+                                (target_images[0][step].rows - 1 + scaled_spread >=
+                                 scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y +
+                                 delta_uv_warping.at<double>(k, 0))) {
+                                tmp_mv_warping[(int) (k / 2)].y =
+                                        tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0);
+                            }
                         }
                     }
                 }
 
-                cv::solve(gg_translation, B_translation, delta_uv_translation);
-                v_stack_translation.emplace_back(tmp_mv_translation, Error_translation);
+                SSE_warping = getTriangleSSE(ref_hevc, current_target_org_expand, target_corners, tmp_mv_warping, pixels_in_triangle, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)));
 
-                for (int k = 0; k < 2; k++) {
-                    if (k % 2 == 0) {
-                        if ((-scaled_spread <=
-                             scaled_coordinates[0].x + tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0)) &&
-                            (target_images[0][step].cols - 1 + scaled_spread >=
-                             scaled_coordinates[0].x + tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0)) &&
-                            (-scaled_spread <=
-                             scaled_coordinates[1].x + tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0)) &&
-                            (target_images[0][step].cols - 1 + scaled_spread >=
-                             scaled_coordinates[1].x + tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0)) &&
-                            (-scaled_spread <=
-                             scaled_coordinates[2].x + tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0)) &&
-                            (target_images[0][step].cols - 1 + scaled_spread >=
-                             scaled_coordinates[2].x + tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0))) {
-                            tmp_mv_translation.x = tmp_mv_translation.x + delta_uv_translation.at<double>(k, 0);
-                        }
-                    } else {
-                        if ((-scaled_spread <=
-                             scaled_coordinates[0].y + tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0)) &&
-                            (target_images[0][step].rows - 1 + scaled_spread >=
-                             scaled_coordinates[0].y + tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0)) &&
-                            (-scaled_spread <=
-                             scaled_coordinates[1].y + tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0)) &&
-                            (target_images[0][step].rows - 1 + scaled_spread >=
-                             scaled_coordinates[1].y + tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0)) &&
-                            (-scaled_spread <=
-                             scaled_coordinates[2].y + tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0)) &&
-                            (target_images[0][step].rows - 1 + scaled_spread >=
-                             scaled_coordinates[2].y + tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0))) {
-                            tmp_mv_translation.y = tmp_mv_translation.y + delta_uv_translation.at<double>(k, 0);
-                        }
-                    }
-                }
-
+                iterate_counter++;
                 double eps = 1e-3;
-                if(((fabs(prev_error_translation - MSE_translation) / MSE_translation) < eps && (fabs(prev_error_warping - MSE_warping) / MSE_warping < eps)) || (!translation_update_flag && !warping_update_flag) || iterate_counter > 20){
+
+#if STORE_NEWTON_LOG
+                current_me_log.mv_newton_warping.emplace_back(tmp_mv_warping);
+                current_me_log.residual.emplace_back(SSE_warping);
+                current_me_log.coordinate_after_move1.emplace_back(tmp_mv_warping[0] + p0);
+                current_me_log.coordinate_after_move2.emplace_back(tmp_mv_warping[1] + p1);
+                current_me_log.coordinate_after_move3.emplace_back(tmp_mv_warping[2] + p2);
+#endif
+
+                if(prev_SSE_warping > SSE_warping){
+                    alpha_marquardt *= 0.2;
+                    prev_SSE_warping = SSE_warping;
+                    prev_mv_warping = tmp_mv_warping;
+                    v_stack_warping.emplace_back(tmp_mv_warping, SSE_warping);
+                }else{
+                    alpha_marquardt *= 10;
+                    tmp_mv_warping = prev_mv_warping;
+                }
+
+                if ((fabs(prev_SSE_warping - SSE_warping) / SSE_warping < eps)) {
+                    warping_update_flag = false;
+                }
+
+                if(iterate_counter > 20 || !(warping_update_flag)){
                     break;
                 }
 
-                prev_error_translation = MSE_translation;
-                prev_error_warping = MSE_warping;
-                prev_mv_translation = tmp_mv_translation;
-                prev_mv_warping = tmp_mv_warping;
-                iterate_counter++;
             }
+
+#if STORE_NEWTON_LOG
+            extern std::vector<std::vector<double>> freq_newton_warping;
+            freq_newton_warping[filter_num][std::min(iterate_counter, 20)]++;
+
+            current_me_log.percentage = (fabs(current_me_log.residual.back() - current_me_log.residual.front()) / current_me_log.residual.front() * 100);
+#endif
 
             std::sort(v_stack_warping.begin(), v_stack_warping.end(), [](std::pair<std::vector<cv::Point2f>,double> a, std::pair<std::vector<cv::Point2f>,double> b){
                 return a.second < b.second;
             });
 
-            std::sort(v_stack_translation.begin(), v_stack_translation.end(), [](std::pair<cv::Point2f,double> a, std::pair<cv::Point2f,double> b){
-                return a.second < b.second;
-            });
-
             tmp_mv_warping = v_stack_warping[0].first;//一番良い動きベクトルを採用
             double Error_warping = v_stack_warping[0].second;
-            tmp_mv_translation = v_stack_translation[0].first;
-            double Error_translation = v_stack_translation[0].second;
-            MSE_warping = Error_warping / (double)pixels_in_triangle.size();
-            MSE_translation = Error_translation / (double)pixels_in_triangle.size();
-            double PSNR_warping = 10 * log10((255 * 255) / MSE_warping);
-            double PSNR_translation = 10 * log10((255 * 255) / MSE_translation);
+            double PSNR_warping = 10 * log10((255 * 255) / (Error_warping / (double)pixels_in_triangle.size()));
 
             if(step == 3) {//一番下の階層で
-                if(PSNR_translation >= max_PSNR_translation){//2種類のボケ方で良い方を採用
-                    max_PSNR_translation = PSNR_translation;
-                    min_error_translation = Error_translation;
-                    max_v_translation = tmp_mv_translation;
-                }
                 if (PSNR_warping >= max_PSNR_warping) {
                     max_PSNR_warping = PSNR_warping;
                     min_error_warping = Error_warping;
                     max_v_warping = tmp_mv_warping;
-                }
-
-                if (fabs(max_PSNR_warping - max_PSNR_translation) <= 0.5 || max_PSNR_translation > max_PSNR_warping) {//ワーピングと平行移動でRDのようなことをする
-                    translation_flag = true;//平行移動を採用
-                } else{
-                    translation_flag = false;//ワーピングを採用
                 }
             }
         }
@@ -955,7 +1243,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
         max_v_warping[i].x = ((int)((max_v_warping[i].x) * 4) / 4.0);
         max_v_warping[i].y = ((int)((max_v_warping[i].y) * 4) / 4.0);
     }
-
 
     return std::make_tuple(std::vector<cv::Point2f>{max_v_warping[0], max_v_warping[1], max_v_warping[2]}, max_v_translation, min_error_warping, min_error_translation, pixels_in_triangle.size());
 }

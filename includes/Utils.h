@@ -76,30 +76,59 @@
  */
 #define M(img, x, y) (int)round(0.299 * (double)(R(img, (x), (y))) + 0.587 * (double)(G(img, (x), (y))) + 0.114 * (double)(B(img, (x), (y))))
 
+/**
+ * @def F(img, x, y, f, width) (unsigned char)img[((x) + f) + ((y) * (2 * (f) + (width))]
+ * @brief unsigned charの画像（一次元配列）から画素値を返す
+ *
+ */
+#define F(img, x, y, offset, width) img[((x) + (offset)) + (((y) + (offset)) * (2 * (offset) + (width)))]
+
+
 enum {
     BM,
     NEWTON,
 };
 
+#define TEST_MODE false
+
+/**
+ * ガウス・ニュートン関連
+ */
 #define PRED_MODE NEWTON
 #define GAUSS_NEWTON_TRANSLATION_ONLY false
 #define GAUSS_NEWTON_INIT_VECTOR false
 #define GAUSS_NEWTON_HEVC_IMAGE true
 #define HEVC_REF_IMAGE true
-#define STORE_MVD_DISTRIBUTION_LOG true
-#define MVD_DEBUG_LOG false
-#define TEST_MODE false
-#define STORE_DISTRIBUTION_LOG true
 #define USE_BM_TRANSLATION_MV false
 #define MV_LIST_MAX_NUM 5
-#define MERGE_MODE true
-#define STORE_IMG_LOG true
-#define INTRA_MODE false
-#define INTRA_LIMIT_MODE false // イントラが選択されたらそれ以降は割らないモード
-#define MERGE2_ENABLE true
 #define SEARCH_RANGE 16
-#define DISPLAY_RD_COST false
+
+/**
+ * 各種モードのON/OFF
+ */
+#define MERGE_MODE true
+#define INTRA_MODE false
+#define MERGE2_ENABLE true
 #define COLLOCATED_ENABLE false
+#define INTRA_LIMIT_MODE false // イントラが選択されたらそれ以降は割らないモード
+
+/**
+ * ログファイル表示関連
+ */
+#define MVD_DEBUG_LOG false
+#define DISPLAY_RD_COST false
+
+/**
+ * ログファイル書き出し関連
+ */
+#define STORE_DISTRIBUTION_LOG true
+#define STORE_MVD_DISTRIBUTION_LOG true
+#define STORE_IMG_LOG false
+#define STORE_NEWTON_LOG false
+
+
+// 2画素以上のアップデートが来たら打ち切る
+#define DELTA_UV_THRESHOLD 2
 
 const std::string OS = "Ubuntu";
 

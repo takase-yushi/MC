@@ -8,7 +8,7 @@
 #include "Utils.h"
 #include "CodingTreeUnit.h"
 
-typedef std::vector<std::vector<std::vector<unsigned char **>>> EXPAND_ARRAY_TYPE;
+typedef std::vector<std::vector<std::vector<unsigned char *>>> EXPAND_ARRAY_TYPE;
 
 enum IP_MODE {
     BILINEAR,
@@ -30,10 +30,15 @@ cv::Mat getExpansionMatImage(cv::Mat &image, int k, int expansion_size, IP_MODE 
 bool isMyTriangle(const CodingTreeUnit* ctu, int triangle_index);
 std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const std::vector<std::vector<int>>& area_flag, int triangle_index, CodingTreeUnit* ctu, int block_size_x, int block_size_y);
 double w(double x);
-int img_ip(unsigned char **img, cv::Rect rect, double x, double y, int mode);
-unsigned char** getExpansionHEVCImage(cv::Mat image, int k, int expansion_size);
+double img_ip(unsigned char **img, cv::Rect rect, double x, double y, int mode);
+double img_ip(unsigned char *img, cv::Rect rect, double x, double y, int offset = SEARCH_RANGE, int k = 4);
+
+unsigned char* getExpansionHEVCImage(cv::Mat image, int k, int expansion_size);
 cv::Mat getExpansionMatHEVCImage(cv::Mat image, int k, int expansion_size);
-double getTriangleResidual(unsigned char **ref_image, const cv::Mat &target_image, Point3Vec &triangle, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_triangle_pixels, cv::Rect rect);
+double getTriangleResidual(unsigned char *ref_image, const cv::Mat &target_image, Point3Vec &triangle, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_triangle_pixels, cv::Rect rect);
+double getTriangleSSE(unsigned char *ref_image, unsigned char *target_image, Point3Vec &triangle, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_triangle_pixels, cv::Rect rect);
 cv::Mat getAppliedLPFImage(const cv::Mat &image);
+
+void store1DArrayImage(std::string output_path, unsigned char *array, int width, int height, int offset, int k);
 
 #endif //ENCODER_IMAGEUTIL_H
