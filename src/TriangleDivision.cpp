@@ -1096,6 +1096,18 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         translation_flag   = false;
     }
 
+    if(method_flag == MV_CODE_METHOD::SPATIAL){
+        triangle_gauss_results[triangle_index].mv_translation = triangle_gauss_results[triangle_index].mv_translation;
+        triangle_gauss_results[triangle_index].mv_warping = triangle_gauss_results[triangle_index].mv_warping;
+        gauss_result_translation = triangle_gauss_results[triangle_index].mv_translation;
+        gauss_result_warping = triangle_gauss_results[triangle_index].mv_warping;
+    }else if(method_flag == MV_CODE_METHOD::MERGE || method_flag == MV_CODE_METHOD::MERGE2) {
+        triangle_gauss_results[triangle_index].mv_translation = mvd_translation[0];
+        triangle_gauss_results[triangle_index].mv_warping = mvd_warping;
+        gauss_result_translation = mvd_translation[0];
+        gauss_result_warping = mvd_warping;
+    }
+
     std::vector<cv::Point2f> mv;
     if (translation_flag) {
         mv.emplace_back(gauss_result_translation);
