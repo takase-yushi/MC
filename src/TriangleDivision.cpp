@@ -1233,6 +1233,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     ctu->node4->parentNode = ctu;
 
     std::vector<CodingTreeUnit*> ctus{ctu->node1, ctu->node2, ctu->node3, ctu->node4};
+    std::vector<double> costs(4);
+    std::vector<MV_CODE_METHOD> methods(4);
+    std::vector<double> code_length_tmp(4);
 #if !MVD_DEBUG_LOG
 //    #pragma omp parallel for
 #endif
@@ -1285,6 +1288,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 triangle_gauss_results[triangle_indexes[j]].method = method_translation_tmp;
                 split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_translation_tmp, triangle_size_tmp, true, error_translation_tmp, error_warping_tmp);
 
+                costs[j] = cost_translation_tmp;
+                methods[j] = method_translation_tmp;
+                code_length_tmp[j] = code_length_translation_tmp;
                 if(method_translation_tmp == MV_CODE_METHOD::MERGE || method_translation_tmp == MV_CODE_METHOD::MERGE2){
                     triangle_gauss_results[triangle_indexes[j]].mv_translation = mvd_translation[0];
                 }
@@ -1295,6 +1301,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 triangle_gauss_results[triangle_indexes[j]].method = method_warping_tmp;
                 split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_warping_tmp, triangle_size_tmp, false, error_translation_tmp, error_warping_tmp);
 
+                costs[j] = cost_warping_tmp;
+                methods[j] = method_warping_tmp;
+                code_length_tmp[j] = code_length_warping_tmp;
                 if(method_warping_tmp == MV_CODE_METHOD::MERGE || method_warping_tmp == MV_CODE_METHOD::MERGE2){
                     triangle_gauss_results[triangle_indexes[j]].mv_warping = mvd_warping;
                 }
@@ -1387,6 +1396,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     std::cout << "before:" << cost_before_subdiv << " after:" << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4) << std::endl;
 #endif
 
+    double cost_after_subdiv1 = costs[0];
+    double cost_after_subdiv2 = costs[1];
+    double cost_after_subdiv3 = costs[2];
+    double cost_after_subdiv4 = costs[3];
+
     if(cost_before_subdiv >= alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4)) {
 
         for(int i = 0 ; i < 4 ; i++){
@@ -1401,9 +1415,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
         // 1つ目の頂点追加
         ctu->node1->triangle_index = t1_idx;
-        ctu->node1->code_length = code_length1;
+        ctu->node1->code_length = code_length_tmp[0];
         ctu->node1->translation_flag = split_mv_result[0].translation_flag;
-        ctu->node1->method = method_flag1;
+        ctu->node1->method = methods[0];
 
         int next_step = steps - 2;
         if(ctu->node1->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
@@ -1413,9 +1427,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
         // 2つ目の三角形
         ctu->node2->triangle_index = t2_idx;
-        ctu->node2->code_length = code_length2;
+        ctu->node2->code_length = code_length_tmp[1];
         ctu->node2->translation_flag = split_mv_result[1].translation_flag;
-        ctu->node2->method = method_flag2;
+        ctu->node2->method = methods[1];
 
         next_step = steps - 2;
         if(ctu->node2->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
@@ -1425,9 +1439,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
         // 3つ目の三角形
         ctu->node3->triangle_index = t3_idx;
-        ctu->node3->code_length = code_length3;
+        ctu->node3->code_length = code_length_tmp[2];
         ctu->node3->translation_flag = split_mv_result[2].translation_flag;
-        ctu->node3->method = method_flag3;
+        ctu->node3->method = methods[2];
         next_step = steps - 2;
         if(ctu->node3->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
             next_step = 0;
@@ -1436,9 +1450,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
         // 4つ目の三角形
         ctu->node4->triangle_index = t4_idx;
-        ctu->node4->code_length = code_length4;
+        ctu->node4->code_length = code_length_tmp[3];
         ctu->node4->translation_flag = split_mv_result[3].translation_flag;
-        ctu->node4->method = method_flag4;
+        ctu->node4->method = methods[3];
         next_step = steps - 2;
         if(ctu->node4->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
             next_step = 0;
