@@ -1321,7 +1321,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             error_translation_tmp = tmp_bm_errors[2];
             triangle_size_tmp = (double)1e6;
 
-            split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_translation_tmp, triangle_size_tmp, true, tmp_bm_errors[2], tmp_error_newton);
+            split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, 1e9, error_translation_tmp, triangle_size_tmp, true, tmp_bm_errors[2], tmp_error_newton);
 
             triangle_gauss_results[triangle_indexes[j]].translation_flag = true;
             triangle_gauss_results[triangle_indexes[j]].original_mv_translation = mv_translation_tmp;
