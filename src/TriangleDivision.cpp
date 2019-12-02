@@ -951,8 +951,8 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
 bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point3Vec triangle, int triangle_index, int type, int steps, std::vector<std::vector<int>> &diagonal_line_area_flag) {
 
 
-    double RMSE_before_subdiv = 0.0;
-    double error_warping, error_translation;
+    double SSE_before_subdiv_warping = 0.0;
+    double SSE_before_subdiv_traslation = 0.0;
     cv::Point2f p1 = triangle.p1;
     cv::Point2f p2 = triangle.p2;
     cv::Point2f p3 = triangle.p3;
@@ -976,7 +976,8 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         GaussResult result_before = triangle_gauss_results[triangle_index];
         gauss_result_warping = result_before.original_mv_warping;
         gauss_result_translation = result_before.original_mv_translation;
-        RMSE_before_subdiv = result_before.residual;
+        SSE_before_subdiv_traslation = result_before.residual_translation;
+        SSE_before_subdiv_warping = result_before.residual_warping;
         triangle_size = result_before.triangle_size;
         translation_flag = result_before.translation_flag;
         if(translation_flag){
@@ -993,7 +994,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 std::vector<double> tmp_bm_errors;
                 std::tie(tmp_bm_mv, tmp_bm_errors) = fullpellBlockMatching(triangle, target_image, expansion_ref,
                                                                    diagonal_line_area_flag, triangle_index, ctu);
-                std::tie(gauss_result_warping, gauss_result_translation, error_warping, error_translation, triangle_size) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
+                std::tie(gauss_result_warping, gauss_result_translation, SSE_before_subdiv_warping, SSE_before_subdiv_traslation, triangle_size) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
                                                       diagonal_line_area_flag, triangle_index, ctu, block_size_x,
                                                       block_size_y, tmp_bm_mv[2], ref_hevc);
 #if USE_BM_TRANSLATION_MV
@@ -1001,7 +1002,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 error_translation = tmp_bm_errors[2];
 #endif
             }else{
-                std::tie(gauss_result_warping, gauss_result_translation, error_warping, error_translation, triangle_size) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
+                std::tie(gauss_result_warping, gauss_result_translation, SSE_before_subdiv_warping, SSE_before_subdiv_traslation, triangle_size) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
                                                       diagonal_line_area_flag, triangle_index, ctu, block_size_x,
                                                       block_size_y, cv::Point2f(-1000, -1000), ref_hevc);
             }
@@ -1011,27 +1012,26 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             triangle_gauss_results[triangle_index].original_mv_warping = gauss_result_warping;
             triangle_gauss_results[triangle_index].original_mv_translation = gauss_result_translation;
             triangle_gauss_results[triangle_index].triangle_size = triangle_size;
-            triangle_gauss_results[triangle_index].residual = RMSE_before_subdiv;
+            triangle_gauss_results[triangle_index].residual_warping = SSE_before_subdiv_warping;
+            triangle_gauss_results[triangle_index].residual_translation = SSE_before_subdiv_traslation;
 
             int cost_warping, cost_translation;
             MV_CODE_METHOD method_warping, method_translation;
             std::tie(cost_translation, std::ignore, std::ignore, std::ignore, method_translation) = getMVD(
-                    {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
+                    {gauss_result_translation, gauss_result_translation, gauss_result_translation}, SSE_before_subdiv_traslation,
                     triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, true, dummy);
 #if !GAUSS_NEWTON_TRANSLATION_ONLY
             std::tie(cost_warping, std::ignore, std::ignore, std::ignore, method_warping) = getMVD(
-                    triangle_gauss_results[triangle_index].mv_warping, error_warping,
+                    triangle_gauss_results[triangle_index].mv_warping, SSE_before_subdiv_warping,
                     triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, false, dummy);
 #endif
             if(cost_translation < cost_warping || (steps <= warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
                 triangle_gauss_results[triangle_index].translation_flag = true;
-                triangle_gauss_results[triangle_index].residual = error_translation;
-                triangle_gauss_results[triangle_index].method = method_translation;
+                triangle_gauss_results[triangle_index].method_translation = method_translation;
                 translation_flag = true;
             }else{
                 triangle_gauss_results[triangle_index].translation_flag = false;
-                triangle_gauss_results[triangle_index].residual = error_warping;
-                triangle_gauss_results[triangle_index].method = method_warping;
+                triangle_gauss_results[triangle_index].method_warping = method_warping;
                 translation_flag = false;
             }
 
@@ -1044,12 +1044,12 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             ctu->error_bm = tmp_bm_errors[2];
             gauss_result_warping = tmp_bm_mv;
             gauss_result_translation = tmp_bm_mv[2];
-            RMSE_before_subdiv = tmp_bm_errors[2];
-            error_translation = tmp_bm_errors[2];
+            SSE_before_subdiv_traslation = tmp_bm_errors[2];
+            SSE_before_subdiv_traslation = tmp_bm_errors[2];
             triangle_gauss_results[triangle_index].mv_warping = gauss_result_warping;
             triangle_gauss_results[triangle_index].mv_translation = gauss_result_translation;
             triangle_gauss_results[triangle_index].triangle_size = triangle_size;
-            triangle_gauss_results[triangle_index].residual = RMSE_before_subdiv;
+            triangle_gauss_results[triangle_index].residual_translation = SSE_before_subdiv_traslation;
             triangle_gauss_results[triangle_index].translation_flag = true;
             translation_flag = true;
         }
