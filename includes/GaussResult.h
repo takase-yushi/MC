@@ -17,12 +17,12 @@ public:
                 int triangleSize, bool translationFlag, double residual_bm, double residual_newton);
     std::vector<cv::Point2f> mv_warping, original_mv_warping;
     cv::Point2f mv_translation, original_mv_translation;
-    double residual;
+    double residual_warping, residual_translation;
     int triangle_size;
     bool translation_flag;
     double residual_bm;
     double residual_newton;
-    MV_CODE_METHOD method;
+    MV_CODE_METHOD method_warping, method_translation;
 };
 
 #endif //ENCODER_GAUSSRESULT_H
