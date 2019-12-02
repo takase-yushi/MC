@@ -1328,7 +1328,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         isCodedTriangle[triangle_indexes[i]] = false;
     }
 
-    double cost_after_subdiv1;
     int code_length1;
     CollocatedMvTree *cmt_left_left, *cmt_left_right, *cmt_right_left, *cmt_right_right;
 
@@ -1336,59 +1335,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     cmt_left_right   = (cmt->node2 == nullptr ? cmt : cmt->node2);
     cmt_right_left   = (cmt->node3 == nullptr ? cmt : cmt->node3);
     cmt_right_right  = (cmt->node4 == nullptr ? cmt : cmt->node4);
-
-    MV_CODE_METHOD method_flag1, method_flag2, method_flag3, method_flag4;
-    if(split_mv_result[0].translation_flag) {
-        std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag1) = getMVD(
-                {split_mv_result[0].mv_translation, split_mv_result[0].mv_translation, split_mv_result[0].mv_translation},
-                split_mv_result[0].residual,
-                triangle_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->node1, true, dummy);
-    }else{
-        std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag1) = getMVD(
-                split_mv_result[0].mv_warping, split_mv_result[0].residual,
-                triangle_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->node1, false, dummy);
-    }
-    isCodedTriangle[triangle_indexes[0]] = true;
-
-    double cost_after_subdiv2;
-    int code_length2;
-    if(split_mv_result[1].translation_flag){
-        std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
-                {split_mv_result[1].mv_translation, split_mv_result[1].mv_translation, split_mv_result[1].mv_translation}, split_mv_result[1].residual,
-                triangle_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->node2, true, dummy);
-    }else{
-        std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
-                split_mv_result[1].mv_warping, split_mv_result[1].residual,
-                triangle_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->node2, false, dummy);
-    }
-    isCodedTriangle[triangle_indexes[1]] = true;
-
-    double cost_after_subdiv3;
-    int code_length3;
-    if(split_mv_result[2].translation_flag) {
-        std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag3) = getMVD(
-                {split_mv_result[2].mv_translation, split_mv_result[2].mv_translation, split_mv_result[2].mv_translation},
-                split_mv_result[2].residual,
-                triangle_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->node3, true, dummy);
-    }else{
-        std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag3) = getMVD(
-                split_mv_result[2].mv_warping, split_mv_result[2].residual,
-                triangle_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->node3, false, dummy);
-    }
-    isCodedTriangle[triangle_indexes[2]] = true;
-
-    double cost_after_subdiv4;
-    int code_length4;
-    if(split_mv_result[3].translation_flag){
-        std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
-                {split_mv_result[3].mv_translation, split_mv_result[3].mv_translation, split_mv_result[3].mv_translation}, split_mv_result[3].residual,
-                triangle_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->node4, true, dummy);
-    }else{
-        std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
-                split_mv_result[3].mv_warping, split_mv_result[3].residual,
-                triangle_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->node4, false, dummy);
-    }
-    isCodedTriangle[triangle_indexes[3]] = true;
 
     double alpha = 1;
 
