@@ -1055,39 +1055,44 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         }
     }
 
-    std::vector<cv::Point2f> mvd;
-    int selected_index;
-    MV_CODE_METHOD method_flag;
-    double cost_before_subdiv;
-    int code_length;
+    std::vector<cv::Point2f> mvd_translation, mvd_warping;
+    int selected_index_translation, selected_index_warping;
+    MV_CODE_METHOD method_flag_translation, method_flag_warping;
+    double cost_before_subdiv_translation, cost_before_subdiv_warping;
+    int code_length_translation, code_length_warping;
 
-    if(triangle_gauss_results[triangle_index].translation_flag) {
-        std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
-                {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
-                triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, true, dummy);
-    }else{
-        std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
-                gauss_result_warping, error_warping,
-                triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, false, dummy);
-    }
+    std::tie(cost_before_subdiv_translation, code_length_translation, mvd_translation, selected_index_translation, method_flag_translation) = getMVD(
+           {gauss_result_translation, gauss_result_translation, gauss_result_translation}, SSE_before_subdiv_traslation,
+           triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, true, dummy);
+
+    std::tie(cost_before_subdiv_warping, code_length_warping, mvd_warping, selected_index_warping, method_flag_warping) = getMVD(
+            gauss_result_warping, SSE_before_subdiv_warping,
+            triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, false, dummy);
 
     std::vector<cv::Point2i> ret_gauss2;
 
-    if(method_flag == MV_CODE_METHOD::MERGE || method_flag == MV_CODE_METHOD::MERGE2) {
-        if(triangle_gauss_results[triangle_index].translation_flag) {
-            ctu->original_mv1 = triangle_gauss_results[triangle_index].original_mv_translation;
-            ctu->original_mv2 = triangle_gauss_results[triangle_index].original_mv_translation;
-            ctu->original_mv3 = triangle_gauss_results[triangle_index].original_mv_translation;
-        }else{
-            ctu->original_mv1 = triangle_gauss_results[triangle_index].original_mv_warping[0];
-            ctu->original_mv2 = triangle_gauss_results[triangle_index].original_mv_warping[1];
-            ctu->original_mv3 = triangle_gauss_results[triangle_index].original_mv_warping[2];
-        }
 
-        triangle_gauss_results[triangle_index].mv_translation = mvd[0];
-        triangle_gauss_results[triangle_index].mv_warping = mvd;
-        gauss_result_translation = mvd[0];
-        gauss_result_warping = mvd;
+    MV_CODE_METHOD method_flag;
+    int code_length;
+    int selected_index;
+    std::vector<cv::Point2f> mvd;
+    double cost_before_subdiv;
+    if(cost_before_subdiv_translation <= cost_before_subdiv_warping){
+        triangle_gauss_results[triangle_index].translation_flag = true;
+        method_flag        = method_flag_translation;
+        code_length        = code_length_translation;
+        selected_index     = selected_index_translation;
+        mvd                = mvd_translation;
+        cost_before_subdiv = cost_before_subdiv_translation;
+        translation_flag   = true;
+    }else{
+        triangle_gauss_results[triangle_index].translation_flag = false;
+        method_flag        = method_flag_warping;
+        code_length        = code_length_warping;
+        selected_index     = selected_index_warping;
+        mvd                = mvd_warping;
+        cost_before_subdiv = cost_before_subdiv_warping;
+        translation_flag   = false;
     }
 
     std::vector<cv::Point2f> mv;
