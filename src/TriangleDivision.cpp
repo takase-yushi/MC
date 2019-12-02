@@ -1270,14 +1270,15 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                         cv::Point2f(-1000, -1000), ref_hevc);
             }
 
-            std::vector<cv::Point2f> mvd_translation, mvd_warping;
+            std::vector<cv::Point2f> mvd_translation_tmp, mvd_warping_tmp;
+            double code_length_translation_tmp, code_length_warping_tmp;
             // TODO: cmt直す
-            std::tie(cost_translation_tmp,std::ignore, mvd_translation, std::ignore, method_translation_tmp) = getMVD(
+            std::tie(cost_translation_tmp, code_length_translation_tmp, mvd_translation_tmp, std::ignore, method_translation_tmp) = getMVD(
                     {mv_translation_tmp, mv_translation_tmp, mv_translation_tmp}, error_translation_tmp,
                     triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], true, dummy);
 #if !GAUSS_NEWTON_TRANSLATION_ONLY
 
-            std::tie(cost_warping_tmp, std::ignore, mvd_warping, std::ignore, method_warping_tmp) = getMVD(
+            std::tie(cost_warping_tmp, code_length_warping_tmp, mvd_warping_tmp, std::ignore, method_warping_tmp) = getMVD(
                     mv_warping_tmp, error_warping_tmp,
                     triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], false, dummy);
 #endif
