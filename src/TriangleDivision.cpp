@@ -391,7 +391,8 @@ int TriangleDivision::insertTriangle(int p1_idx, int p2_idx, int p3_idx, int typ
     triangles.emplace_back(triangle, type);
     isCodedTriangle.emplace_back(false);
     triangle_gauss_results.emplace_back();
-    triangle_gauss_results[triangle_gauss_results.size() - 1].residual = -1.0;
+    triangle_gauss_results[triangle_gauss_results.size() - 1].residual_warping = -1.0;
+    triangle_gauss_results[triangle_gauss_results.size() - 1].residual_translation = -1.0;
     delete_flag.emplace_back(false);
 
     return static_cast<int>(triangles.size() - 1);
