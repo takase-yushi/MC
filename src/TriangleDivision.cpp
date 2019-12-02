@@ -1177,11 +1177,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
     std::vector<GaussResult> split_mv_result(subdiv_target_triangles.size());
 
-//    int p1_idx = getCornerIndex(p1);
-//    int p2_idx = getCornerIndex(p2);
-//    int p3_idx = getCornerIndex(p3);
-//    addCornerAndTriangle(Triangle(p1_idx, p2_idx, p3_idx), triangle_index, type);
-
     int t1_p1_idx = getCornerIndex(split_triangles.t1.p1);
     int t1_p2_idx = getCornerIndex(split_triangles.t1.p2);
     int t1_p3_idx = getCornerIndex(split_triangles.t1.p3);
