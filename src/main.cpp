@@ -58,7 +58,7 @@ int main(int argc, char *argv[]){
 
     std::string config_name;
     if(argc == 1) {
-        config_name = "config.json";
+        config_name = "config-cactus.json";
     }else{
         config_name = std::string(argv[1]);
     }
