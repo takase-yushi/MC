@@ -509,6 +509,8 @@ void run_square(std::string config_name) {
         }
         std::cout << "split finished" << std::endl;
 
+        qp -= qp_offset;
+
         // TODO: ログだすやつ書く
         // ===========================================================
         // ログ出力
