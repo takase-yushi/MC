@@ -168,7 +168,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
     // この1bitは手法フラグ(warpingかtranslation),もう1bitはマージフラグ分です
     if(PRED_MODE == NEWTON && !GAUSS_NEWTON_TRANSLATION_ONLY) flags_code++;
     if (MERGE_MODE) flags_code++;
-    if(PRED_MODE == BM)flags_code += 2;  //PU分割のフラグ、イントラのフラグ
 
     int expansion_size = SEARCH_RANGE;
     int scaled_expansion_size = expansion_size + 2;
@@ -2055,10 +2054,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
     std::cout << corners[squares[square_idx].p1_idx] << " " << corners[squares[square_idx].p2_idx] << " " << corners[squares[square_idx].p3_idx] << " " << corners[squares[square_idx].p4_idx] << std::endl;
 #endif
 
-    int diff_HEVC_BM_flag = 0;
-
-//    if(PRED_MODE == BM) diff_HEVC_BM_flag++;
-
     if(translation_flag) {
         if(!isMvExists(vectors, collocated_mv)) {
             vectors.emplace_back(collocated_mv, Collocated);
@@ -2180,11 +2175,11 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             int reference_index_code_length = getUnaryCodeLength(reference_index);
 
             // 各種フラグ分を(3*2)bit足してます
-            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code + diff_HEVC_BM_flag);
+            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code);
 
             std::vector<cv::Point2f> mvds{mvd};
             // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length + flags_code + diff_HEVC_BM_flag, mvds, i, vector.second, flag_code_sum, flags);
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length + flags_code, mvds, i, vector.second, flag_code_sum, flags);
         }
     }else{
         for (int i = 0; i < warping_vectors.size(); i++) {
