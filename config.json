@@ -46,7 +46,7 @@
       "QP_offset"      : 8
     },
     {
-      "enable"         : false,
+      "enable"         : true,
       "img_directory"  : "/img/minato",
       "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_mirai_I32.png",
@@ -91,7 +91,7 @@
       "QP_offset"      : 7
     },
     {
-      "enable"         : false,
+      "enable"         : true,
       "img_directory"  : "/img/minato",
       "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_mirai_I27.png",
@@ -136,7 +136,7 @@
       "QP_offset"      : 6
     },
     {
-      "enable"         : false,
+      "enable"         : true,
       "img_directory"  : "/img/minato",
       "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_mirai_I22.png",
