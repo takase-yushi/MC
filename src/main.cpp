@@ -47,7 +47,7 @@ int division_steps;
 double injected_lambda;
 bool lambda_inject_flag;
 
-std::string out_file_suffix = "_enable_merge";
+std::string out_file_suffix = "_rd_";
 
 std::vector<std::vector<double>> freq_newton_warping, freq_newton_translation;
 std::vector<std::vector<std::vector<cv::Point2f>>> mv_newton_translation, coordinate_newton_translation1, coordinate_newton_translation2, coordinate_newton_translation3;
@@ -95,12 +95,16 @@ void run(std::string config_name) {
     std::vector<cv::Point2f> corners, corners_org;
     std::vector<cv::Point2f> ref_corners, ref_corners_org;
 
+    std::string config_file_name = config_name.substr(config_name.rfind("/")+ 1, config_name.size());
+    config_file_name = config_file_name.substr(0, config_file_name.rfind("."));
+
     // 各タスクの情報が入ったvector
     std::vector<Config> tasks = readTasks(std::move(config_name));
 
     std::ofstream ofs;
-    ofs.open(getProjectDirectory(OS) + tasks[0].getLogDirectory() + "/" + getCurrentTimestamp() + out_file_suffix + ".csv");
 
+    ofs.open(getProjectDirectory(OS) + tasks[0].getLogDirectory() + "/" + "code_amount" + out_file_suffix + config_file_name + "_" + getCurrentTimestamp() + ".csv");
+    
     std::map<int, std::vector<std::vector<cv::Mat>>> ref_images_with_qp, target_images_with_qp;
     std::map<int, EXPAND_ARRAY_TYPE> expand_images_with_qp;
 
