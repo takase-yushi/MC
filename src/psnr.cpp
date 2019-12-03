@@ -22,8 +22,11 @@ double getMSE(const cv::Mat& in1, const cv::Mat& in2, cv::Rect rect ){
 
   assert(in1.size == in2.size); // sizeが同じかどうかチェック
 
-  for(int j = 0 ; j < rect.height ; j++){
-    for(int i = 0 ; i < rect.width ; i++){
+  int width = std::min(rect.width, in1.cols);
+  int height = std::min(rect.height, in1.rows);
+
+  for(int j = 0 ; j < height ; j++){
+    for(int i = 0 ; i < width ; i++){
       sum += (R(in1, rect.x + i, rect.y + j) - R(in2, rect.x + i, rect.y + j)) * (R(in1, rect.x + i, rect.y + j) - R(in2, rect.x + i, rect.y + j));
       sum += (G(in1, rect.x + i, rect.y + j) - G(in2, rect.x + i, rect.y + j)) * (G(in1, rect.x + i, rect.y + j) - G(in2, rect.x + i, rect.y + j));
       sum += (B(in1, rect.x + i, rect.y + j) - B(in2, rect.x + i, rect.y + j)) * (B(in1, rect.x + i, rect.y + j) - B(in2, rect.x + i, rect.y + j));
