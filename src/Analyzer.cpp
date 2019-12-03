@@ -90,7 +90,32 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr){
         code_sum += (ctu->code_length);
 
-        if(ctu->method != MV_CODE_METHOD::MERGE){
+        if(ctu->method == MV_CODE_METHOD::MERGE2) {
+            int x_ = (int)abs(((ctu->mv1).x * 4));
+            int y_ = (int)abs(((ctu->mv1).y * 4));
+            MV_counter[x_]++;
+            MV_counter[y_]++;
+            int x = (ctu->mvds_x)[0];
+            mvd_counter_x[x]++;
+            int y = (ctu->mvds_y)[0];
+            mvd_counter_y[y]++;
+
+            mvd_counter[x]++;
+            mvd_counter[y]++;
+
+            greater_0_flag_counter[(int)(ctu->flags_code_sum.getXGreater0Flag()[0])]++;
+            greater_0_flag_counter[(int)(ctu->flags_code_sum.getYGreater0Flag()[0])]++;
+
+            if(ctu->flags_code_sum.getXGreater0Flag()[0]) {
+                greater_1_flag_counter[(int)(ctu->flags_code_sum.getXGreater1Flag()[0])]++;
+            }
+            if(ctu->flags_code_sum.getYGreater0Flag()[0]) {
+                greater_1_flag_counter[(int)(ctu->flags_code_sum.getYGreater1Flag()[0])]++;
+            }
+
+            mvd_translation_code_sum += ctu->flags_code_sum.getMvdCodeLength();
+            merge_counter++;
+        } else if(ctu->method != MV_CODE_METHOD::MERGE){
             if(ctu->translation_flag){
                 int x_ = (int)abs(((ctu->mv1).x * 4));
                 int y_ = (int)abs(((ctu->mv1).y * 4));

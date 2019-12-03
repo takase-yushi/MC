@@ -645,6 +645,8 @@ void run_square(std::string config_name) {
         std::cout << img_directory + "/p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png" << std::endl;
         std::cout << "squares_size:" << square_division.getSquareCoordinateList().size() << std::endl;
 
+        qp += qp_offset;
+
 //        Decoder decoder(ref_image, target_image);
 //        decoder.initSquare(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);
 //        decoder.reconstructionSquare(foo);
@@ -662,9 +664,9 @@ void run_square(std::string config_name) {
 
 #else
         Analyzer analayzer(log_file_suffix);
-//        analayzer.storeDistributionOfMv(foo, log_directory);
-//        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
-//        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image));
+        analayzer.storeDistributionOfMv(foo, log_directory);
+        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
+        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image));
 #endif
 #endif
 #endif
