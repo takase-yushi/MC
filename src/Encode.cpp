@@ -81,6 +81,7 @@ double getLambdaMode(int qp){
 double getLambdaPred(int qp, double k){
     extern bool lambda_inject_flag;
     extern double injected_lambda;
+    k = 2.1;
 
     if(lambda_inject_flag) return injected_lambda;
 
