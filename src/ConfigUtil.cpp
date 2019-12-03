@@ -34,6 +34,7 @@ std::vector<Config> readTasks(std::string config_name) {
 
     fs.open(getProjectDirectory(OS) + "/" + config_name, std::ios::binary);
 
+    std::cout << getProjectDirectory(OS) + "/" + config_name << std::endl;
     if(fs.fail()){
         std::cerr << "Failed to open config.json" << std::endl;
         exit(-1);

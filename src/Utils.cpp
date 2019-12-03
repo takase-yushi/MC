@@ -161,6 +161,9 @@ std::string getProjectDirectory(std::string os){
   char cwd[1024];
   getcwd(cwd, sizeof(cwd));
   std::string current_directory = std::string(cwd);
+
+  if(current_directory.find("cmake") == std::string::npos) return current_directory;
+
   if(OS == "Win") {
       return current_directory.substr(0, current_directory.rfind('\\'));
   }else{

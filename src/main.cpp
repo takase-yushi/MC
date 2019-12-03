@@ -64,13 +64,6 @@ void storeNewtonLogs(std::string logDirectoryPath);
 
 int main(int argc, char *argv[]){
     // Write test codes below
-//    std::string basePath = getProjectDirectory(OS);
-//
-//    appendConfigItem(basePath + "/config-minato.json", basePath + "/config-minato-tmp.json");
-//    appendConfigItem(basePath + "/config-fungus.json", basePath + "/config-fungus-tmp.json");
-//    appendConfigItem(basePath + "/config-sunflower.json", basePath + "/config-sunflower-tmp.json");
-//    appendConfigItem(basePath + "/config-in-to-tree.json", basePath + "/config-in-to-tree-tmp.json");
-//    exit(0);
 
 #if TEST_MODE
     tests();
@@ -137,7 +130,7 @@ void run(std::string config_name) {
         division_steps                          = task.getDivisionStep();
 
         lambda_inject_flag                      = task.isLambdaEnable();
-        injected_lambda                         = task.getLambda();
+        injected_lambda                         = task.getLambda() * task.getLambda();
 
         std::cout << "img_directory          : " << img_directory << std::endl;
         std::cout << "log_directory          : " << log_directory << std::endl;

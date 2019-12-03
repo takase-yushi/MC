@@ -1,0 +1,19 @@
+{
+  "tasks":[
+        {
+            "enable"         : true,
+            "img_directory"  : "/img/cactus",
+            "log_directory"  : "/log/cactus",
+            "gauss_ref_image": "/HM14_cactus_I_qp22.png",
+            "ref_image"      : "/HM14_cactus_I_qp22.png",
+            "target_image"   : "/cactus_target_limit.png",
+            "QP"             : 22,
+            "ctu_width"      : 128,
+            "ctu_height"     : 128,
+            "division_step"  : 8,
+            "lambda_enable"  : true,
+            "lambda"         : 9,
+            "QP_offset"      : 0
+        }
+    ]
+}
