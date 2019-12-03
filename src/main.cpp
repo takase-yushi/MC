@@ -27,6 +27,7 @@
 #include "../includes/tests.h"
 #include "../includes/Decoder.h"
 #include "../includes/ConfigUtil.h"
+#include "../includes/MELog.h"
 #include "../includes/SquareDivision.h"
 
 void run(std::string config_name);
@@ -50,15 +51,36 @@ bool lambda_inject_flag;
 
 std::string out_file_suffix = "_square";
 
+std::vector<std::vector<double>> freq_newton_warping, freq_newton_translation;
+std::vector<std::vector<std::vector<cv::Point2f>>> mv_newton_translation, coordinate_newton_translation1, coordinate_newton_translation2, coordinate_newton_translation3;
+std::vector<std::vector<std::vector<cv::Point2f>>> coordinate_newton_warping1, coordinate_newton_warping2, coordinate_newton_warping3;
+std::vector<std::vector<std::vector<std::vector<cv::Point2f>>>> mv_newton_warping;
+std::vector<std::vector<std::vector<double>>> slow_newton_warping, slow_newton_translation;
+
+std::vector<MELog> ME_log_translation_0;
+std::vector<MELog> ME_log_translation_1;
+std::vector<MELog> ME_log_warping_0;
+std::vector<MELog> ME_log_warping_1;
+
+void storeNewtonLogs(std::string logDirectoryPath);
+
 int main(int argc, char *argv[]){
     // Write test codes below
+//    std::string basePath = getProjectDirectory(OS);
+//
+//    appendConfigItem(basePath + "/config-minato.json", basePath + "/config-minato-tmp.json");
+//    appendConfigItem(basePath + "/config-fungus.json", basePath + "/config-fungus-tmp.json");
+//    appendConfigItem(basePath + "/config-sunflower.json", basePath + "/config-sunflower-tmp.json");
+//    appendConfigItem(basePath + "/config-in-to-tree.json", basePath + "/config-in-to-tree-tmp.json");
+//    exit(0);
+
 #if TEST_MODE
     tests();
 #else
 
     std::string config_name;
     if(argc == 1) {
-        config_name = "config-cactus.json";
+        config_name = "config.json";
     }else{
         config_name = std::string(argv[1]);
     }
@@ -239,17 +261,61 @@ void run(std::string config_name) {
             target_images = target_images_with_qp[qp];
         }
 
-        std::vector<std::vector<std::vector<unsigned char **>>> expand_images;
-        int expand = SERACH_RANGE;
+        std::vector<std::vector<std::vector<unsigned char *>>> expand_images;
+        int expand = SEARCH_RANGE;
         if(expand_images_with_qp.count(qp) == 0) {
             expand_images = getExpandImages(ref_images, target_images, expand);
             expand_images_with_qp[qp] = expand_images;
         }else{
             expand_images = expand_images_with_qp[qp];
         }
+
+        if(qp != previous_qp){
+            std::cout << "--------------------- free ---------------------" << std::endl;
+
+            freeHEVCExpandImage(expand_images_with_qp[previous_qp], 22, 2, 4, 1920, 1024);
+            expand_images_with_qp.erase(previous_qp);
+            for(int i = 0 ; i < target_images_with_qp[previous_qp].size() ; i++){
+                for(int j = 0 ; j < target_images_with_qp[previous_qp][i].size() ; j++){
+                    target_images_with_qp[previous_qp][i][j].release();
+                }
+            }
+            target_images_with_qp.erase(previous_qp);
+            for(int i = 0 ; i < ref_images_with_qp[previous_qp].size() ; i++){
+                for(int j = 0 ; j < ref_images_with_qp[previous_qp][i].size() ; j++){
+                    ref_images_with_qp[previous_qp][i][j].release();
+                }
+            }
+            ref_images_with_qp.erase(previous_qp);
+
+        }
+
         triangle_division.constructPreviousCodingTree(foo, 0);
 
         std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_triangles.size(), std::vector< std::vector<int> >(block_size_x, std::vector<int>(block_size_y, -1)) );
+
+        freq_newton_warping.resize(2);
+        freq_newton_translation.resize(2);
+        freq_newton_warping[0].resize(21);
+        freq_newton_warping[1].resize(21);
+        freq_newton_translation[0].resize(21);
+        freq_newton_translation[1].resize(21);
+        slow_newton_translation.resize(2);
+        slow_newton_warping.resize(2);
+        mv_newton_translation.resize(2);
+        mv_newton_warping.resize(2);
+        coordinate_newton_translation1.resize(2);
+        coordinate_newton_translation2.resize(2);
+        coordinate_newton_translation3.resize(2);
+        coordinate_newton_warping1.resize(2);
+        coordinate_newton_warping2.resize(2);
+        coordinate_newton_warping3.resize(2);
+        for(int i = 0 ; i < freq_newton_warping.size() ; i++) {
+            for(int j = 0 ; j < freq_newton_warping[i].size() ; j++){
+                freq_newton_warping[i][j]     = 0;
+                freq_newton_translation[i][j] = 0;
+            }
+        }
 
         for (int i = 0; i < init_triangles.size(); i++) {
             if(i % 2 == 0){
@@ -276,9 +342,8 @@ void run(std::string config_name) {
         // ===========================================================
         cv::Mat recon = getReconstructionDivisionImage(gaussRefImage, foo, block_size_x, block_size_y);
         cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo, diagonal_line_area_flag);
-//        cv::Mat color = triangle_division.getPredictedColorImageFromCtu(foo, diagonal_line_area_flag, getPSNR(target_image, p_image));
-
-        cv::imwrite(img_directory + "/p_recon_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", recon);
+        cv::Mat color = triangle_division.getPredictedColorImageFromCtu(foo, diagonal_line_area_flag, getPSNR(target_image, p_image));
+        cv::Mat merge_color = triangle_division.getMergeModeColorImageFromCtu(foo, diagonal_line_area_flag);
 
         int code_length = triangle_division.getCtuCodeLength(foo);
         std::string log_file_suffix = out_file_suffix + std::to_string(qp) + "_";
@@ -286,6 +351,10 @@ void run(std::string config_name) {
         std::cout << "PSNR:" << getPSNR(target_image, p_image) << " code_length:" << code_length << std::endl;
         std::cout << log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png" << std::endl;
 
+        time_t end = clock();
+
+//        const double time = static_cast<double>(end - start) / CLOCKS_PER_SEC;
+//        printf("time %d[m]%d[sec]\n", (int)time/60, (int)time%60);
 //        Decoder decoder(ref_image, target_image);
 //        decoder.initTriangle(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);
 //        decoder.reconstructionTriangle(foo);
@@ -296,20 +365,21 @@ void run(std::string config_name) {
 
 #if STORE_DISTRIBUTION_LOG
 #if STORE_MVD_DISTRIBUTION_LOG
-#if GAUSS_NEWTON_PARALLEL_ONLY
-        Analyzer analayzer("_parallel_only_" + std::to_string(qp) + "_";
+#if GAUSS_NEWTON_TRANSLATION_ONLY
+        Analyzer analayzer(log_file_suffix);
         analayzer.storeDistributionOfMv(foo, log_directory);
         analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
+//        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image));
 
 #else
         Analyzer analayzer(log_file_suffix);
         analayzer.storeDistributionOfMv(foo, log_directory);
         analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
         analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image));
+//        analayzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
 #endif
 #endif
 #endif
-
 
         if(STORE_IMG_LOG) {
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
@@ -462,7 +532,7 @@ void run_square(std::string config_name) {
         cv::Mat spatialMvTestImage;
         cv::Mat new_gauss_output_image = cv::Mat::zeros(gaussRefImage.rows, gaussRefImage.cols, CV_8UC3);
 
-        std::vector<Square> tt = square_division.getSquareIndexList();
+        std::vector<Square> st = square_division.getSquareIndexList();
         corners = square_division.getCorners();
 
         std::vector<cv::Point2f> tmp_ref_corners(corners.size()), add_corners;
@@ -485,18 +555,60 @@ void run_square(std::string config_name) {
             target_images = target_images_with_qp[qp];
         }
 
-        std::vector<std::vector<std::vector<unsigned char **>>> expand_images;
-        int expand = SERACH_RANGE;
+        std::vector<std::vector<std::vector<unsigned char *>>> expand_images;
+        int expand = SEARCH_RANGE;
         if(expand_images_with_qp.count(qp) == 0) {
             expand_images = getExpandImages(ref_images, target_images, expand);
             expand_images_with_qp[qp] = expand_images;
         }else{
             expand_images = expand_images_with_qp[qp];
         }
+
+//        if(qp != previous_qp){
+//            std::cout << "--------------------- free ---------------------" << std::endl;
+//            freeHEVCExpandImage(expand_images_with_qp[previous_qp], 22, 2, 4, 1920, 1024);
+//            expand_images_with_qp.erase(previous_qp);
+//            for(int i = 0 ; i < target_images_with_qp[previous_qp].size() ; i++){
+//                for(int j = 0 ; j < target_images_with_qp[previous_qp][i].size() ; j++){
+//                    target_images_with_qp[previous_qp][i][j].release();
+//                }
+//            }
+//            target_images_with_qp.erase(previous_qp);
+//            for(int i = 0 ; i < ref_images_with_qp[previous_qp].size() ; i++){
+//                for(int j = 0 ; j < ref_images_with_qp[previous_qp][i].size() ; j++){
+//                    ref_images_with_qp[previous_qp][i][j].release();
+//                }
+//            }
+//            ref_images_with_qp.erase(previous_qp);
+//
+//        }
+
         square_division.constructPreviousCodingTree(foo, 0);
 
         std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_squares.size(), std::vector< std::vector<int> >(block_size_x, std::vector<int>(block_size_y, -1)) );
 
+        freq_newton_warping.resize(2);
+        freq_newton_translation.resize(2);
+        freq_newton_warping[0].resize(21);
+        freq_newton_warping[1].resize(21);
+        freq_newton_translation[0].resize(21);
+        freq_newton_translation[1].resize(21);
+        slow_newton_translation.resize(2);
+        slow_newton_warping.resize(2);
+        mv_newton_translation.resize(2);
+        mv_newton_warping.resize(2);
+        coordinate_newton_translation1.resize(2);
+        coordinate_newton_translation2.resize(2);
+        coordinate_newton_translation3.resize(2);
+        coordinate_newton_warping1.resize(2);
+        coordinate_newton_warping2.resize(2);
+        coordinate_newton_warping3.resize(2);
+        for(int i = 0 ; i < freq_newton_warping.size() ; i++) {
+            for(int j = 0 ; j < freq_newton_warping[i].size() ; j++){
+                freq_newton_warping[i][j]     = 0;
+                freq_newton_translation[i][j] = 0;
+            }
+        }
         for (int i = 0; i < init_squares.size(); i++) {
 
             Point4Vec square = init_squares[i];
@@ -519,7 +631,7 @@ void run_square(std::string config_name) {
         cv::Mat color_line   = square_division.getPredictedColorImageFromCtu(foo, getPSNR(target_image, p_image), 0);
         cv::Mat color_vertex = square_division.getPredictedColorImageFromCtu(foo, getPSNR(target_image, p_image), 1);
 
-//        cv::imwrite(img_directory + "_p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
+        cv::imwrite(img_directory + "_p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
         cv::imwrite(img_directory + "_p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", square_division.getMvImage(foo));
         cv::imwrite(img_directory + "_p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
         cv::imwrite(img_directory + "_p_color_image_line_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color_line);
@@ -550,9 +662,9 @@ void run_square(std::string config_name) {
 
 #else
         Analyzer analayzer(log_file_suffix);
-        analayzer.storeDistributionOfMv(foo, log_directory);
-        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
-        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image));
+//        analayzer.storeDistributionOfMv(foo, log_directory);
+//        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
+//        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image));
 #endif
 #endif
 #endif
@@ -570,6 +682,113 @@ void run_square(std::string config_name) {
         }
         std::vector<CodingTreeUnit *>().swap(foo);
 
+        previous_qp = qp;
+
+#if STORE_NEWTON_LOG
+        storeNewtonLogs(getProjectDirectory(OS) + tasks[0].getLogDirectory());
+#endif
     }
     ofs.close();
+}
+
+void storeNewtonLogs(std::string logDirectoryPath){
+//    std::ofstream ofs_newton_0;
+//    ofs_newton_0.open(logDirectoryPath + "/Newton_freq_ref_0_" + getCurrentTimestamp() + "_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".csv");
+
+    /**
+     *
+     * イテレーション回数の頻度をCSVに吐き出す
+     *
+     */
+//    ofs_newton_0 << "translation" << std::endl;
+//    for(int i = 1 ; i < freq_newton_translation[0].size() ; i++) {
+//        ofs_newton_0 << i << "," << freq_newton_translation[0][i] << std::endl;
+//    }
+//    ofs_newton_0 << "warping" << std::endl;
+//    for(int i = 1 ; i < freq_newton_warping[0].size() ; i++) {
+//        ofs_newton_0 << i << "," << freq_newton_warping[0][i] << std::endl;
+//    }
+//
+//    ofs_newton_0.close();
+//
+//    std::ofstream ofs_newton_1;
+//    ofs_newton_1.open(logDirectoryPath + "/Newton_freq_ref_1_" + getCurrentTimestamp() + "_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".csv");
+//
+//    ofs_newton_1 << "translation" << std::endl;
+//    for(int i = 1 ; i < freq_newton_translation[1].size() ; i++) {
+//        ofs_newton_1 << i << "," << freq_newton_translation[1][i] << std::endl;
+//    }
+//    ofs_newton_1 << "warping" << std::endl;
+//    for(int i = 1 ; i < freq_newton_warping[1].size() ; i++) {
+//        ofs_newton_1 << i << "," << freq_newton_warping[1][i] << std::endl;
+//    }
+//
+//    ofs_newton_1.close();
+
+    /**
+     *
+     * 残差減少の過程をCSVファイルに書き出す
+     *
+     */
+    std::ofstream ofs_newton2_0;
+    ofs_newton2_0.open(logDirectoryPath + "/Slowlog_ref_0_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".csv");
+
+    ofs_newton2_0 << "translation" << std::endl;
+    for(auto & m : ME_log_translation_0){
+        if(m.residual.back() - m.residual.front() > 0.0 && m.percentage > 2.0) {
+            ofs_newton2_0 << "increase distortion," << m.percentage << ",%" << std::endl;
+
+            ofs_newton2_0 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_translation[0] << std::endl;
+            for(int j = 1 ; j < (int)m.residual.size() ; j++){
+                ofs_newton2_0 << j << "," << m.residual[j] << "," << m.mv_newton_translation[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
+            }
+            ofs_newton2_0 << std::endl;
+        }
+    }
+
+    ofs_newton2_0 << "warping" << std::endl;
+    for(auto & m : ME_log_warping_0){
+        if(m.residual.back() - m.residual.front() > 0.0 && m.percentage > 2.0) {
+            ofs_newton2_0 << "increase distortion," << m.percentage << ",%" << std::endl;
+
+            ofs_newton2_0 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_warping[0] << std::endl;
+            for(int j = 1 ; j < (int)m.residual.size() ; j++){
+                ofs_newton2_0 << j << "," << m.residual[j] << "," << m.mv_newton_warping[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
+            }
+            ofs_newton2_0 << std::endl;
+        }
+    }
+
+    ofs_newton2_0.close();
+
+    std::ofstream ofs_newton2_1;
+    ofs_newton2_1.open(logDirectoryPath + "/Slowlog_ref_1_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".csv");
+    ofs_newton2_1 << "translation" << std::endl;
+    for(auto & m : ME_log_translation_0){
+        if(m.residual.back() - m.residual.front() > 0.0 && m.percentage > 2.0) {
+            ofs_newton2_1 << "increase distortion," << m.percentage << ",%" << std::endl;
+
+            ofs_newton2_1 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_translation[0] << std::endl;
+            for(int j = 1 ; j < (int)m.residual.size() ; j++){
+                ofs_newton2_1 << j << "," << m.residual[j] << "," << m.mv_newton_translation[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
+            }
+            ofs_newton2_1 << std::endl;
+        }
+    }
+
+    ofs_newton2_1 << "warping" << std::endl;
+    for(auto & m : ME_log_warping_0){
+        if(m.residual.back() - m.residual.front() > 0.0 && m.percentage > 2.0) {
+            ofs_newton2_1 << "increase distortion," << m.percentage << ",%" << std::endl;
+
+            ofs_newton2_1 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_warping[0] << std::endl;
+            for(int j = 1 ; j < (int)m.residual.size() ; j++){
+                ofs_newton2_1 << j << "," << m.residual[j] << "," << m.mv_newton_warping[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
+            }
+            ofs_newton2_1 << std::endl;
+        }
+    }
+
+    ofs_newton2_1.close();
+
 }

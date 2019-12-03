@@ -101,7 +101,7 @@ public:
 
     static SplitResult getSplitSquare(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, const cv::Point2f& p4, int type);
     void addReferenceBlock(Point4Vec subdiv_target_square, int square_index);
-    bool split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point4Vec square, int square_index, int square_number, int steps);
+    bool split(std::vector<std::vector<std::vector<unsigned char *>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point4Vec square, int square_index, int square_number, int steps);
     std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> > getSpatialSquareList(int s_idx, bool translation_flag);
     std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> > getMergeSquareList(int s_idx, bool translation_flag, Point4Vec coordinate);
     std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> getMerge2SquareList(int square_idx, Point4Vec coordinate);
@@ -142,7 +142,7 @@ private:
     int qp;
     int flags_code = 0;
     cv::Mat expansion_ref;
-    unsigned char **ref_hevc;
+    unsigned char *ref_hevc;
     unsigned char **expansion_ref_uchar;
 
     void getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, double original_psnr, std::vector<cv::Scalar> &colors);

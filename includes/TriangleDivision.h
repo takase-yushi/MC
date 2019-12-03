@@ -125,7 +125,7 @@ public:
     void constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num = 0);
 
     static SplitResult getSplitTriangle(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, int type);
-    bool split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point3Vec triangle, int triangle_index, int type, int steps, std::vector<std::vector<int>> &diagonal_line_area_flag);
+    bool split(std::vector<std::vector<std::vector<unsigned char *>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point3Vec triangle, int triangle_index, int type, int steps, std::vector<std::vector<int>> &diagonal_line_area_flag);
     std::vector<int> getSpatialTriangleList(int t_idx);
     cv::Point2f getCollocatedTriangleList(CodingTreeUnit* unit);
     int getCtuCodeLength(std::vector<CodingTreeUnit*> ctus);
@@ -140,10 +140,13 @@ public:
 
     cv::Mat getPredictedDiagonalImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag);
     cv::Mat getPredictedColorImageFromCtu(std::vector<CodingTreeUnit*> ctus,std::vector<std::vector<std::vector<int>>> &area_flag, double original_psnr);
+    void storeIntraImage();
     std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels);
+    cv::Mat getMergeModeColorImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag);
+    void getMergeModeColorImageFromCtu(CodingTreeUnit* ctu, cv::Mat &out, std::vector<std::vector<int>> &area_flag);
 
     virtual ~TriangleDivision();
-//    std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> getMVD(std::vector<cv::Point2f> mv, double residual, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> &vectors, cv::Point2f &collocated_mv, const CodingTreeUnit *ctu, bool translation_flag);
+//    std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> getMVD(std::vector<cv::Point2f> mv, double residual, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> &vectors, cv::Point2f &collocated_mv, const CodingTreeUnit *ctu, bool parallel_flag);
 
 private:
     std::vector<cv::Point2f> corners;
@@ -164,8 +167,10 @@ private:
     std::vector<std::vector<cv::Mat>> target_images;
     int qp;
     cv::Mat expansion_ref;
-    unsigned char **ref_hevc;
+    unsigned char *ref_hevc;
     unsigned char **expansion_ref_uchar;
+    std::vector<std::vector<bool>> intra_flag;
+    cv::Mat intra_tmp_image;
 
     void getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, std::vector<std::vector<int>> &area_flag, double original_psnr, std::vector<cv::Scalar> &colors);
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
@@ -184,6 +189,9 @@ private:
     int getCtuCodeLength(CodingTreeUnit *ctu);
     void drawMvImage(cv::Mat &out, CodingTreeUnit *ctu);
     void getPredictedDiagonalImageFromCtu(CodingTreeUnit* ctu, std::vector<std::vector<int>> &area_flag, const cv::Mat &out);
+    void setIntraImage(std::vector<cv::Point2f> pixels, Point3Vec triangle);
+    bool isIntraAvailable(Point3Vec triangle);
+
 };
 
 #endif //ENCODER_TRIANGLEDIVISION_H

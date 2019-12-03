@@ -168,9 +168,7 @@ void Decoder::initTriangle(int _block_size_x, int _block_size_y, int _divide_ste
         delete_flag[i] = false;
     }
 
-    int expansion_size = 16;
-    int scaled_expansion_size = expansion_size + 2;
-    hevc_expansion_ref = getExpansionMatHEVCImage(ref_image, 4, scaled_expansion_size);
+    int expansion_size = SEARCH_RANGE;
 
     // 0行目
     for(int block_x = 1 ; block_x < (block_num_x * 2) - 1; block_x+=2){
@@ -316,13 +314,13 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
                 cv::Point2f p3 = spatial_triangle_info.mv_warping[2];
 #if MVD_DEBUG_LOG
                 std::cout << "target_triangle_coordinate:";
-            std::cout << corners[triangles[triangle_index].first.p1_idx] << " ";
-            std::cout << corners[triangles[triangle_index].first.p2_idx] << " ";
-            std::cout << corners[triangles[triangle_index].first.p3_idx] << std::endl;
+            std::cout << corners[triangles[triangle_idx].first.p1_idx] << " ";
+            std::cout << corners[triangles[triangle_idx].first.p2_idx] << " ";
+            std::cout << corners[triangles[triangle_idx].first.p3_idx] << std::endl;
             std::cout << "ref_triangle_coordinate:";
-            std::cout << corners[triangles[spatial_triangle_list[i]].first.p1_idx] << " ";
-            std::cout << corners[triangles[spatial_triangle_list[i]].first.p2_idx] << " ";
-            std::cout << corners[triangles[spatial_triangle_list[i]].first.p3_idx] << std::endl;
+            std::cout << corners[triangles[spatial_triangle_index].first.p1_idx] << " ";
+            std::cout << corners[triangles[spatial_triangle_index].first.p2_idx] << " ";
+            std::cout << corners[triangles[spatial_triangle_index].first.p3_idx] << std::endl;
             std::cout << "ref_triangle_mvs:";
             std::cout << p1 << " " << p2 << " " << p3 << std::endl;
 #endif
@@ -475,7 +473,7 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
                     GaussResult spatial_triangle = triangle_info[spatial_triangle_list[i]];
 
                     if(spatial_triangle.translation_flag){
-                        if(spatial_triangle.mv_translation.x + sx < -16 || spatial_triangle.mv_translation.y + sy < -16 || spatial_triangle.mv_translation.x + lx >= target_image.cols + 16 || spatial_triangle.mv_translation.y + ly >= target_image.rows + 16) continue;
+                        if(spatial_triangle.mv_translation.x + sx < -SEARCH_RANGE || spatial_triangle.mv_translation.y + sy < -SEARCH_RANGE || spatial_triangle.mv_translation.x + lx >= target_image.cols + SEARCH_RANGE || spatial_triangle.mv_translation.y + ly >= target_image.rows + SEARCH_RANGE) continue;
 
                         if(!isMvExists(merge_list, spatial_triangle.mv_translation) && merge_list.size() < MV_LIST_MAX_NUM) {
                             merge_list.emplace_back(spatial_triangle.mv_translation, MERGE);
@@ -483,7 +481,7 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
                         }
 
                     }else{
-                        if (spatial_triangle.mv_warping[0].x + sx < -16 || spatial_triangle.mv_warping[0].y + sy < -16 || spatial_triangle.mv_warping[0].x + lx >= target_image.cols + 16 || spatial_triangle.mv_warping[0].y + ly >= target_image.rows + 16) continue;
+                        if (spatial_triangle.mv_warping[0].x + sx < -SEARCH_RANGE || spatial_triangle.mv_warping[0].y + sy < -SEARCH_RANGE || spatial_triangle.mv_warping[0].x + lx >= target_image.cols + SEARCH_RANGE || spatial_triangle.mv_warping[0].y + ly >= target_image.rows + SEARCH_RANGE) continue;
 
                         if(!isMvExists(merge_list, spatial_triangle.mv_warping[0]) && merge_list.size() < MV_LIST_MAX_NUM) {
                             merge_list.emplace_back(spatial_triangle.mv_warping[0], MERGE);
@@ -517,9 +515,9 @@ void Decoder::reconstructionTriangle(CodingTreeUnit *ctu, CodingTreeUnit *decode
                     if(warping_vector_list[i].empty()) continue;
                     std::vector<cv::Point2f> mvs = warping_vector_list[i];
 
-                    if(mvs[0].x + sx < -16 || mvs[0].y + sy < -16 || mvs[0].x + lx >= target_image.cols + 16  || mvs[0].y + ly>=target_image.rows + 16 ) continue;
-                    if(mvs[1].x + sx < -16 || mvs[1].y + sy < -16 || mvs[1].x + lx >= target_image.cols + 16  || mvs[1].y + ly>=target_image.rows + 16 ) continue;
-                    if(mvs[2].x + sx < -16 || mvs[2].y + sy < -16 || mvs[2].x + lx >= target_image.cols + 16  || mvs[2].y + ly>=target_image.rows + 16 ) continue;
+                    if(mvs[0].x + sx < -SEARCH_RANGE || mvs[0].y + sy < -SEARCH_RANGE || mvs[0].x + lx >= target_image.cols + SEARCH_RANGE  || mvs[0].y + ly>=target_image.rows + SEARCH_RANGE ) continue;
+                    if(mvs[1].x + sx < -SEARCH_RANGE || mvs[1].y + sy < -SEARCH_RANGE || mvs[1].x + lx >= target_image.cols + SEARCH_RANGE  || mvs[1].y + ly>=target_image.rows + SEARCH_RANGE ) continue;
+                    if(mvs[2].x + sx < -SEARCH_RANGE || mvs[2].y + sy < -SEARCH_RANGE || mvs[2].x + lx >= target_image.cols + SEARCH_RANGE  || mvs[2].y + ly>=target_image.rows + SEARCH_RANGE ) continue;
 
                     if(!isMvExists(merge_mv_list, warping_vector_list[i]) && merge_mv_list.size() < MV_LIST_MAX_NUM){
                         merge_mv_list.emplace_back(warping_vector_list[i]);
@@ -711,23 +709,23 @@ std::vector<int> Decoder::getSpatialTriangleList(int triangle_index) {
     std::set<int> mutualIndexSet1, mutualIndexSet2, mutualIndexSet3;
 
 #if MVD_DEBUG_LOG
-    std::cout << "p1:" << triangles[triangle_index].first.p1_idx << std::endl;
+    std::cout << "p1:" << triangles[t_idx].first.p1_idx << std::endl;
     for(auto item : list1){
         std::cout << item << std::endl;
     }
     puts("");
 
-    std::cout << "p2:" << triangles[triangle_index].first.p2_idx << std::endl;
+    std::cout << "p2:" << triangles[t_idx].first.p2_idx << std::endl;
     for(auto item : list2){
         std::cout << item << std::endl;
     }
     puts("");
-    std::cout << "p3:" << triangles[triangle_index].first.p3_idx << std::endl;
+    std::cout << "p3:" << triangles[t_idx].first.p3_idx << std::endl;
 
     for(auto item : list3){
         std::cout << item << std::endl;
     }
-    std::cout << "t_idx:" << triangle_index << std::endl;
+    std::cout << "t_idx:" << t_idx << std::endl;
     puts("");
 
 #endif

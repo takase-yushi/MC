@@ -170,7 +170,7 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
     if (MERGE_MODE) flags_code++;
     if(PRED_MODE == BM)flags_code += 2;  //PU分割のフラグ、イントラのフラグ
 
-    int expansion_size = SERACH_RANGE;
+    int expansion_size = SEARCH_RANGE;
     int scaled_expansion_size = expansion_size + 2;
     if(HEVC_REF_IMAGE) expansion_ref = getExpansionMatHEVCImage(ref_image, 4, expansion_size);
     else expansion_ref = getExpansionMatImage(ref_image, 4, scaled_expansion_size);
@@ -592,7 +592,7 @@ void SquareDivision::addCornerAndSquare(Square square){
  * @param steps 分割回数
  * @return 分割した場合はtrue, そうでない場合falseを返す
  */
-bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point4Vec square, int square_index, int square_number, int steps) {
+bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point4Vec square, int square_index, int square_number, int steps) {
 
 
     double RMSE_before_subdiv = 0.0;
@@ -1445,16 +1445,16 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
             cv::Point2f current_mv = square_gauss_results[reference_block_index].mv_translation;
             if(translation_flag) {
                 //画像の外に出てしまう場合は候補に入れない
-                if(current_mv.x + coordinate.p1.x < -SERACH_RANGE || current_mv.y + coordinate.p1.y < -SERACH_RANGE || current_mv.x + coordinate.p4.x >= target_image.cols + SERACH_RANGE || current_mv.y + coordinate.p4.y >= target_image.rows + SERACH_RANGE) {
+                if(current_mv.x + coordinate.p1.x < -SEARCH_RANGE || current_mv.y + coordinate.p1.y < -SEARCH_RANGE || current_mv.x + coordinate.p4.x >= target_image.cols + SEARCH_RANGE || current_mv.y + coordinate.p4.y >= target_image.rows + SEARCH_RANGE) {
                     tmp_merge_vectors.emplace_back();
                     is_in_flag[i] = false;
                 }
                 else tmp_merge_vectors.emplace_back(current_mv);
             } else {
-                if ((current_mv.x + coordinate.p1.x < -SERACH_RANGE || current_mv.y + coordinate.p1.y < -SERACH_RANGE || current_mv.x + coordinate.p1.x >= target_image.cols + SERACH_RANGE || current_mv.y + coordinate.p1.y >= target_image.rows + SERACH_RANGE) ||
-                    (current_mv.x + coordinate.p2.x < -SERACH_RANGE || current_mv.y + coordinate.p2.y < -SERACH_RANGE || current_mv.x + coordinate.p2.x >= target_image.cols + SERACH_RANGE || current_mv.y + coordinate.p2.y >= target_image.rows + SERACH_RANGE) ||
-                    (current_mv.x + coordinate.p3.x < -SERACH_RANGE || current_mv.y + coordinate.p3.y < -SERACH_RANGE || current_mv.x + coordinate.p3.x >= target_image.cols + SERACH_RANGE || current_mv.y + coordinate.p3.y >= target_image.rows + SERACH_RANGE) ||
-                    (current_mv.x + coordinate.p4.x < -SERACH_RANGE || current_mv.y + coordinate.p4.y < -SERACH_RANGE || current_mv.x + coordinate.p4.x >= target_image.cols + SERACH_RANGE || current_mv.y + coordinate.p4.y >= target_image.rows + SERACH_RANGE)) {
+                if ((current_mv.x + coordinate.p1.x < -SEARCH_RANGE || current_mv.y + coordinate.p1.y < -SEARCH_RANGE || current_mv.x + coordinate.p1.x >= target_image.cols + SEARCH_RANGE || current_mv.y + coordinate.p1.y >= target_image.rows + SEARCH_RANGE) ||
+                    (current_mv.x + coordinate.p2.x < -SEARCH_RANGE || current_mv.y + coordinate.p2.y < -SEARCH_RANGE || current_mv.x + coordinate.p2.x >= target_image.cols + SEARCH_RANGE || current_mv.y + coordinate.p2.y >= target_image.rows + SEARCH_RANGE) ||
+                    (current_mv.x + coordinate.p3.x < -SEARCH_RANGE || current_mv.y + coordinate.p3.y < -SEARCH_RANGE || current_mv.x + coordinate.p3.x >= target_image.cols + SEARCH_RANGE || current_mv.y + coordinate.p3.y >= target_image.rows + SEARCH_RANGE) ||
+                    (current_mv.x + coordinate.p4.x < -SEARCH_RANGE || current_mv.y + coordinate.p4.y < -SEARCH_RANGE || current_mv.x + coordinate.p4.x >= target_image.cols + SEARCH_RANGE || current_mv.y + coordinate.p4.y >= target_image.rows + SEARCH_RANGE)) {
                     tmp_warping_merge_vectors.emplace_back();
                     is_in_flag[i] = false;
                 }
@@ -1490,7 +1490,7 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
             if(translation_flag) {
                 std::vector<cv::Point2f> target_square_coordinates{cv::Point2f((pp1 + pp2 + pp3 + pp4) / 4.0)};
                 std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_square_coordinates, ref_mvs, target_square_coordinates);
-                if(mvs[0].x + coordinate.p1.x < -SERACH_RANGE || mvs[0].y + coordinate.p1.y < -SERACH_RANGE || mvs[0].x + coordinate.p4.x >= target_image.cols + SERACH_RANGE || mvs[0].y + coordinate.p4.y >= target_image.rows + SERACH_RANGE) {
+                if(mvs[0].x + coordinate.p1.x < -SEARCH_RANGE || mvs[0].y + coordinate.p1.y < -SEARCH_RANGE || mvs[0].x + coordinate.p4.x >= target_image.cols + SEARCH_RANGE || mvs[0].y + coordinate.p4.y >= target_image.rows + SEARCH_RANGE) {
                     tmp_merge_vectors.emplace_back();
                     is_in_flag[i] = false;
                 }
@@ -1502,10 +1502,10 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
                 target_square_coordinates.emplace_back(pp3);
                 std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_square_coordinates, ref_mvs, target_square_coordinates);
                 cv::Point2f p4 = pp3 + mvs[2] + pp2 + mvs[1] - pp1 - mvs[0]; //右下の頂点の変形後の座標
-                if ((mvs[0].x + coordinate.p1.x < -SERACH_RANGE || mvs[0].y + coordinate.p1.y < -SERACH_RANGE || mvs[0].x + coordinate.p1.x >= target_image.cols + SERACH_RANGE || mvs[0].y + coordinate.p1.y >= target_image.rows + SERACH_RANGE) ||
-                    (mvs[1].x + coordinate.p2.x < -SERACH_RANGE || mvs[1].y + coordinate.p2.y < -SERACH_RANGE || mvs[1].x + coordinate.p2.x >= target_image.cols + SERACH_RANGE || mvs[1].y + coordinate.p2.y >= target_image.rows + SERACH_RANGE) ||
-                    (mvs[2].x + coordinate.p3.x < -SERACH_RANGE || mvs[2].y + coordinate.p3.y < -SERACH_RANGE || mvs[2].x + coordinate.p3.x >= target_image.cols + SERACH_RANGE || mvs[2].y + coordinate.p3.y >= target_image.rows + SERACH_RANGE) ||
-                    (p4.x < -SERACH_RANGE || p4.y < -SERACH_RANGE || p4.x >= target_image.cols + SERACH_RANGE || p4.y >= target_image.rows + SERACH_RANGE)) {
+                if ((mvs[0].x + coordinate.p1.x < -SEARCH_RANGE || mvs[0].y + coordinate.p1.y < -SEARCH_RANGE || mvs[0].x + coordinate.p1.x >= target_image.cols + SEARCH_RANGE || mvs[0].y + coordinate.p1.y >= target_image.rows + SEARCH_RANGE) ||
+                    (mvs[1].x + coordinate.p2.x < -SEARCH_RANGE || mvs[1].y + coordinate.p2.y < -SEARCH_RANGE || mvs[1].x + coordinate.p2.x >= target_image.cols + SEARCH_RANGE || mvs[1].y + coordinate.p2.y >= target_image.rows + SEARCH_RANGE) ||
+                    (mvs[2].x + coordinate.p3.x < -SEARCH_RANGE || mvs[2].y + coordinate.p3.y < -SEARCH_RANGE || mvs[2].x + coordinate.p3.x >= target_image.cols + SEARCH_RANGE || mvs[2].y + coordinate.p3.y >= target_image.rows + SEARCH_RANGE) ||
+                    (p4.x < -SEARCH_RANGE || p4.y < -SEARCH_RANGE || p4.x >= target_image.cols + SEARCH_RANGE || p4.y >= target_image.rows + SEARCH_RANGE)) {
                     tmp_warping_merge_vectors.emplace_back();
                     is_in_flag[i] = false;
                 }
@@ -1714,10 +1714,10 @@ std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> SquareDivision
         }
         if(square_gauss_results[reference_block_index].translation_flag) { //参照候補ブロックが平行移動の場合
             cv::Point2f current_mv = square_gauss_results[reference_block_index].mv_translation;
-            if ((current_mv.x + coordinate.p1.x < -SERACH_RANGE || current_mv.y + coordinate.p1.y < -SERACH_RANGE || current_mv.x + coordinate.p1.x >= target_image.cols + SERACH_RANGE || current_mv.y + coordinate.p1.y >= target_image.rows + SERACH_RANGE) ||
-                (current_mv.x + coordinate.p2.x < -SERACH_RANGE || current_mv.y + coordinate.p2.y < -SERACH_RANGE || current_mv.x + coordinate.p2.x >= target_image.cols + SERACH_RANGE || current_mv.y + coordinate.p2.y >= target_image.rows + SERACH_RANGE) ||
-                (current_mv.x + coordinate.p3.x < -SERACH_RANGE || current_mv.y + coordinate.p3.y < -SERACH_RANGE || current_mv.x + coordinate.p3.x >= target_image.cols + SERACH_RANGE || current_mv.y + coordinate.p3.y >= target_image.rows + SERACH_RANGE) ||
-                (current_mv.x + coordinate.p4.x < -SERACH_RANGE || current_mv.y + coordinate.p4.y < -SERACH_RANGE || current_mv.x + coordinate.p4.x >= target_image.cols + SERACH_RANGE || current_mv.y + coordinate.p4.y >= target_image.rows + SERACH_RANGE)) {
+            if ((current_mv.x + coordinate.p1.x < -SEARCH_RANGE || current_mv.y + coordinate.p1.y < -SEARCH_RANGE || current_mv.x + coordinate.p1.x >= target_image.cols + SEARCH_RANGE || current_mv.y + coordinate.p1.y >= target_image.rows + SEARCH_RANGE) ||
+                (current_mv.x + coordinate.p2.x < -SEARCH_RANGE || current_mv.y + coordinate.p2.y < -SEARCH_RANGE || current_mv.x + coordinate.p2.x >= target_image.cols + SEARCH_RANGE || current_mv.y + coordinate.p2.y >= target_image.rows + SEARCH_RANGE) ||
+                (current_mv.x + coordinate.p3.x < -SEARCH_RANGE || current_mv.y + coordinate.p3.y < -SEARCH_RANGE || current_mv.x + coordinate.p3.x >= target_image.cols + SEARCH_RANGE || current_mv.y + coordinate.p3.y >= target_image.rows + SEARCH_RANGE) ||
+                (current_mv.x + coordinate.p4.x < -SEARCH_RANGE || current_mv.y + coordinate.p4.y < -SEARCH_RANGE || current_mv.x + coordinate.p4.x >= target_image.cols + SEARCH_RANGE || current_mv.y + coordinate.p4.y >= target_image.rows + SEARCH_RANGE)) {
                 tmp_warping_merge_vectors.emplace_back();
                 is_in_flag[i] = false;
             }
@@ -1758,10 +1758,10 @@ std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> SquareDivision
             mvs.emplace_back(mvs[2]); //
             mvs[2] = square_gauss_results[square_idx].mv_warping[2];
             cv::Point2f p4 = pp3 + mvs[2] + pp2 + mvs[1] - pp1 - mvs[0]; //右下の頂点の変形後の座標
-            if ((mvs[0].x + coordinate.p1.x < -SERACH_RANGE || mvs[0].y + coordinate.p1.y < -SERACH_RANGE || mvs[0].x + coordinate.p1.x >= target_image.cols + SERACH_RANGE || mvs[0].y + coordinate.p1.y >= target_image.rows + SERACH_RANGE) ||
-                (mvs[1].x + coordinate.p2.x < -SERACH_RANGE || mvs[1].y + coordinate.p2.y < -SERACH_RANGE || mvs[1].x + coordinate.p2.x >= target_image.cols + SERACH_RANGE || mvs[1].y + coordinate.p2.y >= target_image.rows + SERACH_RANGE) ||
-                (mvs[2].x + coordinate.p3.x < -SERACH_RANGE || mvs[2].y + coordinate.p3.y < -SERACH_RANGE || mvs[2].x + coordinate.p3.x >= target_image.cols + SERACH_RANGE || mvs[2].y + coordinate.p3.y >= target_image.rows + SERACH_RANGE) ||
-                (p4.x < -SERACH_RANGE || p4.y < -SERACH_RANGE || p4.x >= target_image.cols + SERACH_RANGE || p4.y >= target_image.rows + SERACH_RANGE)) {
+            if ((mvs[0].x + coordinate.p1.x < -SEARCH_RANGE || mvs[0].y + coordinate.p1.y < -SEARCH_RANGE || mvs[0].x + coordinate.p1.x >= target_image.cols + SEARCH_RANGE || mvs[0].y + coordinate.p1.y >= target_image.rows + SEARCH_RANGE) ||
+                (mvs[1].x + coordinate.p2.x < -SEARCH_RANGE || mvs[1].y + coordinate.p2.y < -SEARCH_RANGE || mvs[1].x + coordinate.p2.x >= target_image.cols + SEARCH_RANGE || mvs[1].y + coordinate.p2.y >= target_image.rows + SEARCH_RANGE) ||
+                (mvs[2].x + coordinate.p3.x < -SEARCH_RANGE || mvs[2].y + coordinate.p3.y < -SEARCH_RANGE || mvs[2].x + coordinate.p3.x >= target_image.cols + SEARCH_RANGE || mvs[2].y + coordinate.p3.y >= target_image.rows + SEARCH_RANGE) ||
+                (p4.x < -SEARCH_RANGE || p4.y < -SEARCH_RANGE || p4.x >= target_image.cols + SEARCH_RANGE || p4.y >= target_image.rows + SEARCH_RANGE)) {
                 tmp_warping_merge_vectors.emplace_back();
                 is_in_flag[i] = false;
             }
@@ -2340,9 +2340,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
     int merge_count = 0;
     int merge2_flags_code = 0;
 
-#if MERGE2_ENABLE
-    merge2_flags_code++;
-#endif
+    if(PRED_MODE == NEWTON && MERGE2_ENABLE) merge2_flags_code++;
+
+    cv::Rect rect(-SEARCH_RANGE * 4, -SEARCH_RANGE * 4, 4 * (target_image.cols + 2 * SEARCH_RANGE), 4 * (target_image.rows + 2 * SEARCH_RANGE));
 
     if(translation_flag) {
         for (int i = 0; i < vectors.size(); i++) {
@@ -2355,7 +2355,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             mvs.emplace_back(current_mv);
             mvs.emplace_back(current_mv);
 
-            double ret_residual = getSquareResidual_Pred(target_image, coordinate, mvs, pixels_in_square, ref_hevc);
+            double ret_residual;
+            if(PRED_MODE == BM) ret_residual = getSquareResidual_Pred(target_image, coordinate, mvs, pixels_in_square, ref_hevc, rect);
+            else ret_residual = getSquareResidual_Mode(target_image, coordinate, mvs, pixels_in_square, ref_hevc, rect);
             double rd = (ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code + merge2_flags_code)) * MERGE_ALPHA;
             results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code, mvs, merge_count, merge_vector.second, FlagsCodeSum(0, 0, 0, 0), Flags());
             merge_count++;
@@ -2368,7 +2370,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             mvs.emplace_back(warping_vectors[i][1].first);
             mvs.emplace_back(warping_vectors[i][2].first);
 
-            double ret_residual = getSquareResidual_Pred(target_image, coordinate, mvs, pixels_in_square, ref_hevc);
+            double ret_residual = getSquareResidual_Mode(target_image, coordinate, mvs, pixels_in_square, ref_hevc, rect);
             double rd = (ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code + merge2_flags_code)) * MERGE_ALPHA;
             results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code, mvs, merge_count, warping_vectors[i][0].second, FlagsCodeSum(0, 0, 0, 0), Flags());
             merge_count++;
@@ -2478,7 +2480,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             int reference_index_code_length = getUnaryCodeLength(reference_index);
 
             // 各種フラグ分を(3*2)bit足してます
-            double ret_residual = getSquareResidual_Pred(target_image, coordinate, mvs, pixels_in_square, ref_hevc);
+            double ret_residual = getSquareResidual_Mode(target_image, coordinate, mvs, pixels_in_square, ref_hevc, rect);
             double rd = ret_residual + lambda * (mvd_code_length + reference_index_code_length + flags_code + merge2_flags_code);
 
             std::vector<cv::Point2f> mvds{mvs[0], mvs[1], mvd};
@@ -2925,15 +2927,15 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
     ly = 4 * sp4.y + 3;
 
     cv::Point2f mv_tmp(0.0, 0.0); //ブロックの動きベクトル
-    int SX = SERACH_RANGE;                 // ブロックマッチングの探索範囲(X)
-    int SY = SERACH_RANGE;                 // ブロックマッチングの探索範囲(Y)
+    int SX = SEARCH_RANGE;                 // ブロックマッチングの探索範囲(X)
+    int SY = SEARCH_RANGE;                 // ブロックマッチングの探索範囲(Y)
     int neighbor_pixels = BLOCKMATCHING_NEIGHBOR_PIXELS;     //1 : 近傍 1 画素,  2 : 近傍 2 画素,   n : 近傍 n 画素
 
     double rd, sad;
     double rd_min = 1e9, sad_min = 1e9;
 
     cv::Point2f mv_min;
-    int spread_quarter = 4 * SERACH_RANGE;
+    int spread_quarter = 4 * SEARCH_RANGE;
     int s = 4;                   //4 : Full-pel, 2 : Half-pel, 1 : Quarter-pel
     std::vector<cv::Point2f> pixels = getPixelsInSquare(square);
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors;
@@ -3058,7 +3060,7 @@ SquareDivision::~SquareDivision() {
     std::vector<std::vector<cv::Mat>>().swap(ref_images);
     std::vector<std::vector<cv::Mat>>().swap(target_images);
 
-    int scaled_expansion_size = SERACH_RANGE + 2;
+    int scaled_expansion_size = SEARCH_RANGE + 2;
     for(int i = -scaled_expansion_size ; i < target_image.cols + scaled_expansion_size ; i++){
         expansion_ref_uchar[i] -= scaled_expansion_size;
         free(expansion_ref_uchar[i]);
@@ -3066,11 +3068,7 @@ SquareDivision::~SquareDivision() {
     expansion_ref_uchar -= scaled_expansion_size;
     free(expansion_ref_uchar);
 
-    for(int i = 4 * (4 + SERACH_RANGE) ; i < 4 * (ref_image.cols + (4 + SERACH_RANGE)) ; i++) {
-        ref_hevc[i] -= 4 * (4 + SERACH_RANGE);
-        free(ref_hevc[i]);
-    }
-    ref_hevc -= 4 * (4 + SERACH_RANGE);
     free(ref_hevc);
 
+    expansion_ref.release();
 }

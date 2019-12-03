@@ -5,14 +5,15 @@
             "img_directory"  : "/img/old_town_cross",
             "log_directory"  : "/log/old_town_cross",
             "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp27.png",
+            "ref_image"      : "/old_town_cross_I_qp22.png",
             "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 27,
+            "QP"             : 22,
             "ctu_width"      : 128,
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 0
+            "lambda"         : 9,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -26,7 +27,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 0.5
+            "lambda"         : 9,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -40,7 +42,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 1
+            "lambda"         : 12,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -54,7 +57,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 2
+            "lambda"         : 18,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -68,7 +72,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 3
+            "lambda"         : 26,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -82,7 +87,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 4
+            "lambda"         : 37,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -96,7 +102,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 5
+            "lambda"         : 46,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -110,7 +117,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 6
+            "lambda"         : 57,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -124,7 +132,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 7
+            "lambda"         : 90,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -138,175 +147,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 8
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp27.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 27,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 9
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp27.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 27,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 10
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp27.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 27,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 12
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp27.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 27,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 14
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp27.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 27,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 16
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp27.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 27,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 18
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp27.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 27,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 20
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp27.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 27,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 25
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp27.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 27,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 30
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp27.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 27,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 40
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp27.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 27,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 50
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp27.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 27,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 60
+            "lambda"         : 135,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -320,301 +162,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 0
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp32.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 32,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 0.5
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp32.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 32,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 1
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp32.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 32,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 2
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp32.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 32,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 3
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp32.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 32,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 4
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp32.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 32,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 5
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp32.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 32,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 6
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp32.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 32,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 7
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp32.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 32,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 8
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp32.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 32,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 9
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp32.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 32,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 10
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp32.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 32,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 12
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp32.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 32,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 14
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp32.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 32,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 16
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp32.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 32,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 18
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp32.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 32,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 20
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp32.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 32,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 25
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp32.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 32,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 30
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp32.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 32,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 40
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp32.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 32,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 50
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp32.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 32,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 60
+            "lambda"         : 46,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -628,7 +177,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 0
+            "lambda"         : 9,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -642,7 +192,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 0.5
+            "lambda"         : 12,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -656,7 +207,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 1
+            "lambda"         : 18,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -670,7 +222,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 2
+            "lambda"         : 26,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -684,7 +237,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 3
+            "lambda"         : 37,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -698,7 +252,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 4
+            "lambda"         : 46,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -712,7 +267,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 5
+            "lambda"         : 57,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -726,7 +282,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 6
+            "lambda"         : 90,
+            "QP_offset"      : 0
         },
         {
             "enable"         : true,
@@ -740,189 +297,8 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 7
+            "lambda"         : 135,
+            "QP_offset"      : 0
         },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp37.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 37,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 8
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp37.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 37,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 9
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp37.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 37,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 10
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp37.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 37,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 12
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp37.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 37,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 14
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp37.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 37,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 16
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp37.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 37,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 18
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp37.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 37,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 20
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp37.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 37,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 25
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp37.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 37,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 30
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp37.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 37,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 40
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp37.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 37,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 50
-        },
-        {
-            "enable"         : true,
-            "img_directory"  : "/img/old_town_cross",
-            "log_directory"  : "/log/old_town_cross",
-            "gauss_ref_image": "/old_town_cross_I_qp22.png",
-            "ref_image"      : "/old_town_cross_I_qp37.png",
-            "target_image"   : "/old_town_cross_281_crop.png",
-            "QP"             : 37,
-            "ctu_width"      : 128,
-            "ctu_height"     : 128,
-            "division_step"  : 8,
-            "lambda_enable"  : true,
-            "lambda"         : 60
-        }
     ]
 }
