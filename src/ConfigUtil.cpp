@@ -314,7 +314,8 @@ void generateConfigForTestSequence(){
 }
 
 /**
- *
+ * @fn void generateChunkedConfigForTestSequence
+ * @brief テストシーケンスに使いそうなやつのgenerateChunkedConfigItem呼び出しをまとめた．ハードコードしている
  */
 void generateChunkedConfigForTestSequence(){
 
