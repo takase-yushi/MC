@@ -145,6 +145,24 @@ private:
     unsigned char *ref_hevc;
     unsigned char **expansion_ref_uchar;
 
+    int translation_block_num = 0;
+    int translation_merge_block_num = 0;
+    int warping_block_num = 0;
+    int warping_merge_block_num = 0;
+    int warping_merge2_block_num = 0;
+
+    double sse_translation_block = 0.0;
+    double sse_translation_merge_block = 0.0;
+    double sse_warping_block = 0.0;
+    double sse_warping_merge_block = 0.0;
+    double sse_warping_merge2_block = 0.0;
+
+    int size_translation_block = 0;
+    int size_translation_merge_block = 0;
+    int size_warping_block = 0;
+    int size_warping_merge_block = 0;
+    int size_warping_merge2_block = 0;
+
     void getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, double original_psnr, std::vector<cv::Scalar> &colors);
     int insertSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx);
     void addNeighborVertex(int p1_idx, int p2_idx, int p3_idx, int p4_idx);

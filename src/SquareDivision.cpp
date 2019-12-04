@@ -2782,6 +2782,24 @@ cv::Mat SquareDivision::getPredictedColorImageFromCtu(std::vector<CodingTreeUnit
         drawSquare(out, t.p1, t.p2, t.p3, t.p4, cv::Scalar(255, 255, 255), select);
     }
 
+//    std::cout << "translation_block_num : " << translation_block_num << std::endl;
+//    std::cout << "translation__merge_block_num : " << translation_merge_block_num << std::endl;
+//    std::cout << "warping_block_num : " << warping_block_num << std::endl;
+//    std::cout << "warping__merge_block_num : " << warping_merge_block_num << std::endl;
+//    std::cout << "warping__merge2_block_num : " << warping_merge2_block_num << std::endl;
+//
+//    std::cout << "translation_block_pixels : " << size_translation_block << std::endl;
+//    std::cout << "translation__merge_block_pixels : " << size_translation_merge_block << std::endl;
+//    std::cout << "warping_block_pixels : " << size_warping_block << std::endl;
+//    std::cout << "warping__merge_block_pixels : " << size_warping_merge_block << std::endl;
+//    std::cout << "warping__merge2_block_pixels : " << size_warping_merge2_block << std::endl;
+//
+//    std::cout << "psnr_translation_block : " << 10 * std::log10(255.0 * 255.0 / (sse_translation_block / size_translation_block)) << std::endl;
+//    std::cout << "psnr_translation__merge_block : " << 10 * std::log10(255.0 * 255.0 / (sse_translation_merge_block / size_translation_merge_block)) << std::endl;
+//    std::cout << "psnr_warping_block : " << 10 * std::log10(255.0 * 255.0 / (sse_warping_block / size_warping_block)) << std::endl;
+//    std::cout << "psnr_warping__merge_block : " << 10 * std::log10(255.0 * 255.0 / (sse_warping_merge_block / size_warping_merge_block)) << std::endl;
+//    std::cout << "psnr_warping__merge2_block : " << 10 * std::log10(255.0 * 255.0 / (sse_warping_merge2_block / size_warping_merge2_block)) << std::endl;
+
     return out;
 }
 
@@ -2792,17 +2810,34 @@ void SquareDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat 
         Square square_corner_idx = squares[square_index];
         Point4Vec square(corners[square_corner_idx.p1_idx], corners[square_corner_idx.p2_idx], corners[square_corner_idx.p3_idx], corners[square_corner_idx.p4_idx]);
 
-        std::vector<cv::Point2f> mvs{mv, mv, mv};
+        std::vector<cv::Point2f> mvs;
+//        if(ctu->translation_flag){
+//            mvs.emplace_back(mv);
+//            mvs.emplace_back(mv);
+//            mvs.emplace_back(mv);
+//        }else{
+//            mvs.emplace_back(ctu->mv1);
+//            mvs.emplace_back(ctu->mv2);
+//            mvs.emplace_back(ctu->mv3);
+//        }
+        cv::Rect rect(-SEARCH_RANGE * 4, -SEARCH_RANGE * 4, 4 * (target_image.cols + 2 * SEARCH_RANGE), 4 * (target_image.rows + 2 * SEARCH_RANGE));
+
         std::vector<cv::Point2f> pixels = getPixelsInSquare(square);
 
         if(ctu->translation_flag) {
             if(ctu->method == MV_CODE_METHOD::MERGE){
+//                translation_merge_block_num++;
+//                sse_translation_merge_block += getSquareResidual_Mode(target_image, square, mvs, pixels, ref_hevc, rect);
+//                size_translation_merge_block += pixels.size();
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     G(out, (int)pixel.x, (int)pixel.y) = 0;
                     B(out, (int)pixel.x, (int)pixel.y) = 0;
                 }
             } else{
+//                translation_block_num++;
+//                sse_translation_block += getSquareResidual_Mode(target_image, square, mvs, pixels, ref_hevc, rect);
+//                size_translation_block += pixels.size();
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = 0;
                     G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
@@ -2812,18 +2847,27 @@ void SquareDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat 
 
         } else{
             if(ctu->method == MV_CODE_METHOD::MERGE){
+//                warping_merge_block_num++;
+//                sse_warping_merge_block += getSquareResidual_Mode(target_image, square, mvs, pixels, ref_hevc, rect);
+//                size_warping_merge_block += pixels.size();
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     B(out, (int)pixel.x, (int)pixel.y) = 0;
                 }
             } else if(ctu->method == MV_CODE_METHOD::MERGE2) {
+//                warping_merge2_block_num++;
+//                sse_warping_merge2_block += getSquareResidual_Mode(target_image, square, mvs, pixels, ref_hevc, rect);
+//                size_warping_merge2_block += pixels.size();
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     G(out, (int)pixel.x, (int)pixel.y) = 0;
                     B(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                 }
             } else{
+//                warping_block_num++;
+//                sse_warping_block += getSquareResidual_Mode(target_image, square, mvs, pixels, ref_hevc, rect);
+//                size_warping_block += pixels.size();
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = 0;
                     G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
