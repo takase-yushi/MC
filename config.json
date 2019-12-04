@@ -2,7 +2,7 @@
   "tasks":[
     {
       "enable"         : false,
-      "img_directory"  : "/img/minato",
+      "img_directory"  : "/img/minato/old",
       "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_mirai_I37.png",
       "ref_image"      : "/minato_mirai_I37.png",
@@ -17,7 +17,7 @@
     },
     {
       "enable"         : false,
-      "img_directory"  : "/img/minato",
+      "img_directory"  : "/img/minato/old",
       "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_mirai_I36.png",
       "ref_image"      : "/minato_mirai_I36.png",
@@ -32,7 +32,7 @@
     },
     {
       "enable"         : false,
-      "img_directory"  : "/img/minato",
+      "img_directory"  : "/img/minato/old",
       "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_mirai_I34.png",
       "ref_image"      : "/minato_mirai_I34.png",
@@ -47,7 +47,7 @@
     },
     {
       "enable"         : false,
-      "img_directory"  : "/img/minato",
+      "img_directory"  : "/img/minato/old",
       "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_mirai_I32.png",
       "ref_image"      : "/minato_mirai_I32.png",
@@ -62,7 +62,7 @@
     },
     {
       "enable"         : false,
-      "img_directory"  : "/img/minato",
+      "img_directory"  : "/img/minato/old",
       "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_mirai_I30.png",
       "ref_image"      : "/minato_mirai_I30.png",
@@ -77,7 +77,7 @@
     },
     {
       "enable"         : false,
-      "img_directory"  : "/img/minato",
+      "img_directory"  : "/img/minato/old",
       "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_mirai_I28.png",
       "ref_image"      : "/minato_mirai_I28.png",
@@ -92,7 +92,7 @@
     },
     {
       "enable"         : false,
-      "img_directory"  : "/img/minato",
+      "img_directory"  : "/img/minato/old",
       "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_mirai_I27.png",
       "ref_image"      : "/minato_mirai_I27.png",
@@ -107,7 +107,7 @@
     },
     {
       "enable"         : false,
-      "img_directory"  : "/img/minato",
+      "img_directory"  : "/img/minato/old",
       "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_mirai_I26.png",
       "ref_image"      : "/minato_mirai_I26.png",
@@ -122,7 +122,7 @@
     },
     {
       "enable"         : false,
-      "img_directory"  : "/img/minato",
+      "img_directory"  : "/img/minato/old",
       "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_mirai_I24.png",
       "ref_image"      : "/minato_mirai_I24.png",
@@ -137,7 +137,7 @@
     },
     {
       "enable"         : true,
-      "img_directory"  : "/img/minato",
+      "img_directory"  : "/img/minato/old",
       "log_directory"  : "/log/minato",
       "gauss_ref_image": "/minato_mirai_I22.png",
       "ref_image"      : "/minato_mirai_I22.png",
