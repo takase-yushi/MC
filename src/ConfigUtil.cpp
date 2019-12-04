@@ -18,7 +18,7 @@ std::vector<double> lambdas{
         25.0, 30.0, 40.0, 50.0, 60.0,
         70, 80, 90, 100, 110, 120, 130,
         140, 150, 160, 170, 180, 190,
-        200, 250, 300, 350, 400
+        200
 };
 
 /**
@@ -34,6 +34,7 @@ std::vector<Config> readTasks(std::string config_name) {
 
     fs.open(getProjectDirectory(OS) + "/" + config_name, std::ios::binary);
 
+    std::cout << getProjectDirectory(OS) + "/" + config_name << std::endl;
     if(fs.fail()){
         std::cerr << "Failed to open config.json" << std::endl;
         exit(-1);
@@ -291,6 +292,42 @@ void generateChunkedConfigItem(std::string input_file_path, std::string output_f
         ofs << "}" << std::endl;
         ofs.close();
     }
+
+}
+
+/**
+ * @fn void generateConfigForTestSequence
+ * @brief テストシーケンスに使いそうなやつのgenerateConfigItem呼び出しをまとめた．ハードコードしている
+ */
+void generateConfigForTestSequence(){
+
+    std::string base_path = getProjectDirectory(OS);
+    generateConfigItem(base_path + "/config/cactus/cactus.json", base_path + "/config/cactus/cactus-tmp.json");
+    generateConfigItem(base_path + "/config/drone2/drone2.json", base_path + "/config/drone2/drone2-tmp.json");
+    generateConfigItem(base_path + "/config/fungus/fungus.json", base_path + "/config/fungus/fungus-tmp.json");
+    generateConfigItem(base_path + "/config/in_to_tree_1280_640/in-to-tree-1280-640.json", base_path + "/config/in_to_tree_1280_640/in-to-tree-1280-640-tmp.json");
+    generateConfigItem(base_path + "/config/kimono1/kimono1.json", base_path + "/config/kimono1/kimono1-tmp.json");
+    generateConfigItem(base_path + "/config/minato/minato.json", base_path + "/config/minato/minato-tmp.json");
+    generateConfigItem(base_path + "/config/park_scene/park-scene.json", base_path + "/config/park_scene/park-scene-tmp.json");
+    generateConfigItem(base_path + "/config/station2/station2.json", base_path + "/config/station2/station2-tmp.json");
+
+}
+
+/**
+ * @fn void generateChunkedConfigForTestSequence
+ * @brief テストシーケンスに使いそうなやつのgenerateChunkedConfigItem呼び出しをまとめた．ハードコードしている
+ */
+void generateChunkedConfigForTestSequence(){
+
+    std::string base_path = getProjectDirectory(OS);
+    generateChunkedConfigItem(base_path + "/config/cactus/cactus.json", base_path + "/config/cactus/cactus-tmp.json", 34);
+    generateChunkedConfigItem(base_path + "/config/drone2/drone2.json", base_path + "/config/drone2/drone2-tmp.json", 34);
+    generateChunkedConfigItem(base_path + "/config/fungus/fungus.json", base_path + "/config/fungus/fungus-tmp.json", 34);
+    generateChunkedConfigItem(base_path + "/config/in_to_tree_1280_640/in-to-tree-1280-640.json", base_path + "/config/in_to_tree_1280_640/in-to-tree-1280-640-tmp.json", 34);
+    generateChunkedConfigItem(base_path + "/config/kimono1/kimono1.json", base_path + "/config/kimono1/kimono1-tmp.json", 34);
+    generateChunkedConfigItem(base_path + "/config/minato/minato.json", base_path + "/config/minato/minato-tmp.json", 34);
+    generateChunkedConfigItem(base_path + "/config/park_scene/park-scene.json", base_path + "/config/park_scene/park-scene-tmp.json", 34);
+    generateChunkedConfigItem(base_path + "/config/station2/station2.json", base_path + "/config/station2/station2-tmp.json", 34);
 
 }
 
