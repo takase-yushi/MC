@@ -391,7 +391,8 @@ int TriangleDivision::insertTriangle(int p1_idx, int p2_idx, int p3_idx, int typ
     triangles.emplace_back(triangle, type);
     isCodedTriangle.emplace_back(false);
     triangle_gauss_results.emplace_back();
-    triangle_gauss_results[triangle_gauss_results.size() - 1].residual = -1.0;
+    triangle_gauss_results[triangle_gauss_results.size() - 1].residual_warping = -1.0;
+    triangle_gauss_results[triangle_gauss_results.size() - 1].residual_translation = -1.0;
     delete_flag.emplace_back(false);
 
     return static_cast<int>(triangles.size() - 1);
@@ -951,8 +952,8 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
 bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point3Vec triangle, int triangle_index, int type, int steps, std::vector<std::vector<int>> &diagonal_line_area_flag) {
 
 
-    double RMSE_before_subdiv = 0.0;
-    double error_warping, error_translation;
+    double SSE_before_subdiv_warping = 0.0;
+    double SSE_before_subdiv_traslation = 0.0;
     cv::Point2f p1 = triangle.p1;
     cv::Point2f p2 = triangle.p2;
     cv::Point2f p3 = triangle.p3;
@@ -960,7 +961,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     Point3Vec targetTriangle(p1, p2, p3);
     int triangle_size = 0;
     bool translation_flag;
-    int num;
 
     std::vector<cv::Point2f> dummy;
     std::vector<cv::Point2f> gauss_result_warping;
@@ -972,18 +972,14 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         cmt = previousMvList[0][triangle_index];
     }
 
-    if(triangle_gauss_results[triangle_index].residual > 0) {
+    if(triangle_gauss_results[triangle_index].residual_translation > 0 || triangle_gauss_results[triangle_index].residual_warping > 0) {
         GaussResult result_before = triangle_gauss_results[triangle_index];
         gauss_result_warping = result_before.original_mv_warping;
         gauss_result_translation = result_before.original_mv_translation;
-        RMSE_before_subdiv = result_before.residual;
+        SSE_before_subdiv_traslation = result_before.residual_translation;
+        SSE_before_subdiv_warping = result_before.residual_warping;
         triangle_size = result_before.triangle_size;
-        translation_flag = result_before.translation_flag;
-        if(translation_flag){
-            error_translation = result_before.residual;
-        }else{
-            error_warping = result_before.residual;
-        }
+
         ctu->error_bm = result_before.residual_bm;
         ctu->error_newton = result_before.residual_newton;
     }else {
@@ -993,7 +989,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 std::vector<double> tmp_bm_errors;
                 std::tie(tmp_bm_mv, tmp_bm_errors) = fullpellBlockMatching(triangle, target_image, expansion_ref,
                                                                    diagonal_line_area_flag, triangle_index, ctu);
-                std::tie(gauss_result_warping, gauss_result_translation, error_warping, error_translation, triangle_size) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
+                std::tie(gauss_result_warping, gauss_result_translation, SSE_before_subdiv_warping, SSE_before_subdiv_traslation, triangle_size) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
                                                       diagonal_line_area_flag, triangle_index, ctu, block_size_x,
                                                       block_size_y, tmp_bm_mv[2], ref_hevc);
 #if USE_BM_TRANSLATION_MV
@@ -1001,7 +997,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 error_translation = tmp_bm_errors[2];
 #endif
             }else{
-                std::tie(gauss_result_warping, gauss_result_translation, error_warping, error_translation, triangle_size) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
+                std::tie(gauss_result_warping, gauss_result_translation, SSE_before_subdiv_warping, SSE_before_subdiv_traslation, triangle_size) = GaussNewton(ref_images, target_images, expand_images, targetTriangle,
                                                       diagonal_line_area_flag, triangle_index, ctu, block_size_x,
                                                       block_size_y, cv::Point2f(-1000, -1000), ref_hevc);
             }
@@ -1011,27 +1007,26 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             triangle_gauss_results[triangle_index].original_mv_warping = gauss_result_warping;
             triangle_gauss_results[triangle_index].original_mv_translation = gauss_result_translation;
             triangle_gauss_results[triangle_index].triangle_size = triangle_size;
-            triangle_gauss_results[triangle_index].residual = RMSE_before_subdiv;
+            triangle_gauss_results[triangle_index].residual_warping = SSE_before_subdiv_warping;
+            triangle_gauss_results[triangle_index].residual_translation = SSE_before_subdiv_traslation;
 
             int cost_warping, cost_translation;
             MV_CODE_METHOD method_warping, method_translation;
             std::tie(cost_translation, std::ignore, std::ignore, std::ignore, method_translation) = getMVD(
-                    {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
+                    {gauss_result_translation, gauss_result_translation, gauss_result_translation}, SSE_before_subdiv_traslation,
                     triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, true, dummy);
 #if !GAUSS_NEWTON_TRANSLATION_ONLY
             std::tie(cost_warping, std::ignore, std::ignore, std::ignore, method_warping) = getMVD(
-                    triangle_gauss_results[triangle_index].mv_warping, error_warping,
+                    triangle_gauss_results[triangle_index].mv_warping, SSE_before_subdiv_warping,
                     triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, false, dummy);
 #endif
             if(cost_translation < cost_warping || (steps <= warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
                 triangle_gauss_results[triangle_index].translation_flag = true;
-                triangle_gauss_results[triangle_index].residual = error_translation;
-                triangle_gauss_results[triangle_index].method = method_translation;
+                triangle_gauss_results[triangle_index].method_translation = method_translation;
                 translation_flag = true;
             }else{
                 triangle_gauss_results[triangle_index].translation_flag = false;
-                triangle_gauss_results[triangle_index].residual = error_warping;
-                triangle_gauss_results[triangle_index].method = method_warping;
+                triangle_gauss_results[triangle_index].method_warping = method_warping;
                 translation_flag = false;
             }
 
@@ -1044,50 +1039,67 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             ctu->error_bm = tmp_bm_errors[2];
             gauss_result_warping = tmp_bm_mv;
             gauss_result_translation = tmp_bm_mv[2];
-            RMSE_before_subdiv = tmp_bm_errors[2];
-            error_translation = tmp_bm_errors[2];
+            SSE_before_subdiv_traslation = tmp_bm_errors[2];
+            SSE_before_subdiv_traslation = tmp_bm_errors[2];
             triangle_gauss_results[triangle_index].mv_warping = gauss_result_warping;
             triangle_gauss_results[triangle_index].mv_translation = gauss_result_translation;
             triangle_gauss_results[triangle_index].triangle_size = triangle_size;
-            triangle_gauss_results[triangle_index].residual = RMSE_before_subdiv;
+            triangle_gauss_results[triangle_index].residual_translation = SSE_before_subdiv_traslation;
             triangle_gauss_results[triangle_index].translation_flag = true;
             translation_flag = true;
         }
     }
 
-    std::vector<cv::Point2f> mvd;
-    int selected_index;
-    MV_CODE_METHOD method_flag;
-    double cost_before_subdiv;
-    int code_length;
+    std::vector<cv::Point2f> mvd_translation, mvd_warping;
+    int selected_index_translation, selected_index_warping;
+    MV_CODE_METHOD method_flag_translation, method_flag_warping;
+    double cost_before_subdiv_translation, cost_before_subdiv_warping;
+    int code_length_translation, code_length_warping;
 
-    if(triangle_gauss_results[triangle_index].translation_flag) {
-        std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
-                {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
-                triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, true, dummy);
-    }else{
-        std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag) = getMVD(
-                gauss_result_warping, error_warping,
-                triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, false, dummy);
-    }
+    std::tie(cost_before_subdiv_translation, code_length_translation, mvd_translation, selected_index_translation, method_flag_translation) = getMVD(
+           {gauss_result_translation, gauss_result_translation, gauss_result_translation}, SSE_before_subdiv_traslation,
+           triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, true, dummy);
+
+    std::tie(cost_before_subdiv_warping, code_length_warping, mvd_warping, selected_index_warping, method_flag_warping) = getMVD(
+            gauss_result_warping, SSE_before_subdiv_warping,
+            triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, false, dummy);
 
     std::vector<cv::Point2i> ret_gauss2;
 
-    if(method_flag == MV_CODE_METHOD::MERGE || method_flag == MV_CODE_METHOD::MERGE2) {
-        if(triangle_gauss_results[triangle_index].translation_flag) {
-            ctu->original_mv1 = triangle_gauss_results[triangle_index].original_mv_translation;
-            ctu->original_mv2 = triangle_gauss_results[triangle_index].original_mv_translation;
-            ctu->original_mv3 = triangle_gauss_results[triangle_index].original_mv_translation;
-        }else{
-            ctu->original_mv1 = triangle_gauss_results[triangle_index].original_mv_warping[0];
-            ctu->original_mv2 = triangle_gauss_results[triangle_index].original_mv_warping[1];
-            ctu->original_mv3 = triangle_gauss_results[triangle_index].original_mv_warping[2];
-        }
 
-        triangle_gauss_results[triangle_index].mv_translation = mvd[0];
-        triangle_gauss_results[triangle_index].mv_warping = mvd;
-        gauss_result_translation = mvd[0];
-        gauss_result_warping = mvd;
+    MV_CODE_METHOD method_flag;
+    int code_length;
+    int selected_index;
+    std::vector<cv::Point2f> mvd;
+    double cost_before_subdiv;
+    if(cost_before_subdiv_translation <= cost_before_subdiv_warping){
+        triangle_gauss_results[triangle_index].translation_flag = true;
+        method_flag        = method_flag_translation;
+        code_length        = code_length_translation;
+        selected_index     = selected_index_translation;
+        mvd                = mvd_translation;
+        cost_before_subdiv = cost_before_subdiv_translation;
+        translation_flag   = true;
+    }else{
+        triangle_gauss_results[triangle_index].translation_flag = false;
+        method_flag        = method_flag_warping;
+        code_length        = code_length_warping;
+        selected_index     = selected_index_warping;
+        mvd                = mvd_warping;
+        cost_before_subdiv = cost_before_subdiv_warping;
+        translation_flag   = false;
+    }
+
+    if(method_flag == MV_CODE_METHOD::SPATIAL){
+        triangle_gauss_results[triangle_index].mv_translation = triangle_gauss_results[triangle_index].mv_translation;
+        triangle_gauss_results[triangle_index].mv_warping = triangle_gauss_results[triangle_index].mv_warping;
+        gauss_result_translation = triangle_gauss_results[triangle_index].mv_translation;
+        gauss_result_warping = triangle_gauss_results[triangle_index].mv_warping;
+    }else if(method_flag == MV_CODE_METHOD::MERGE || method_flag == MV_CODE_METHOD::MERGE2) {
+        triangle_gauss_results[triangle_index].mv_translation = mvd_translation[0];
+        triangle_gauss_results[triangle_index].mv_warping = mvd_warping;
+        gauss_result_translation = mvd_translation[0];
+        gauss_result_warping = mvd_warping;
     }
 
     std::vector<cv::Point2f> mv;
@@ -1163,13 +1175,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     subdiv_target_triangles.emplace_back(split_sub_triangles2.t1);
     subdiv_target_triangles.emplace_back(split_sub_triangles2.t2);
 
-    double RMSE_after_subdiv = 0.0;
     std::vector<GaussResult> split_mv_result(subdiv_target_triangles.size());
-
-//    int p1_idx = getCornerIndex(p1);
-//    int p2_idx = getCornerIndex(p2);
-//    int p3_idx = getCornerIndex(p3);
-//    addCornerAndTriangle(Triangle(p1_idx, p2_idx, p3_idx), triangle_index, type);
 
     int t1_p1_idx = getCornerIndex(split_triangles.t1.p1);
     int t1_p2_idx = getCornerIndex(split_triangles.t1.p2);
@@ -1233,6 +1239,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     ctu->node4->parentNode = ctu;
 
     std::vector<CodingTreeUnit*> ctus{ctu->node1, ctu->node2, ctu->node3, ctu->node4};
+    std::vector<double> costs(4);
+    std::vector<MV_CODE_METHOD> methods(4);
+    std::vector<double> code_length_tmp(4);
 #if !MVD_DEBUG_LOG
 //    #pragma omp parallel for
 #endif
@@ -1267,38 +1276,48 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                         cv::Point2f(-1000, -1000), ref_hevc);
             }
 
-            std::vector<cv::Point2f> mvd_translation, mvd_warping;
+            std::vector<cv::Point2f> mvd_translation_tmp, mvd_warping_tmp;
+            double code_length_translation_tmp, code_length_warping_tmp;
             // TODO: cmt直す
-            std::tie(cost_translation_tmp,std::ignore, mvd_translation, std::ignore, method_translation_tmp) = getMVD(
+            std::tie(cost_translation_tmp, code_length_translation_tmp, mvd_translation_tmp, std::ignore, method_translation_tmp) = getMVD(
                     {mv_translation_tmp, mv_translation_tmp, mv_translation_tmp}, error_translation_tmp,
                     triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], true, dummy);
 #if !GAUSS_NEWTON_TRANSLATION_ONLY
 
-            std::tie(cost_warping_tmp, std::ignore, mvd_warping, std::ignore, method_warping_tmp) = getMVD(
+            std::tie(cost_warping_tmp, code_length_warping_tmp, mvd_warping_tmp, std::ignore, method_warping_tmp) = getMVD(
                     mv_warping_tmp, error_warping_tmp,
                     triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], false, dummy);
 #endif
             if(cost_translation_tmp < cost_warping_tmp || (steps - 2 <= warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY){
                 triangle_gauss_results[triangle_indexes[j]].translation_flag = true;
-                triangle_gauss_results[triangle_indexes[j]].mv_translation = mv_translation_tmp;
-                triangle_gauss_results[triangle_indexes[j]].original_mv_translation = mv_translation_tmp;
-                triangle_gauss_results[triangle_indexes[j]].method = method_translation_tmp;
-                split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_translation_tmp, triangle_size_tmp, true, error_translation_tmp, error_warping_tmp);
+                triangle_gauss_results[triangle_indexes[j]].method_warping = method_translation_tmp;
+                split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_warping_tmp, error_translation_tmp, triangle_size_tmp, true, error_translation_tmp, error_warping_tmp);
 
+                costs[j] = cost_translation_tmp;
+                methods[j] = method_translation_tmp;
+                code_length_tmp[j] = code_length_translation_tmp;
                 if(method_translation_tmp == MV_CODE_METHOD::MERGE || method_translation_tmp == MV_CODE_METHOD::MERGE2){
-                    triangle_gauss_results[triangle_indexes[j]].mv_translation = mvd_translation[0];
+                    triangle_gauss_results[triangle_indexes[j]].mv_translation = mvd_translation_tmp[0];
                 }
             }else{
                 triangle_gauss_results[triangle_indexes[j]].translation_flag = false;
-                triangle_gauss_results[triangle_indexes[j]].mv_warping = mv_warping_tmp;
-                triangle_gauss_results[triangle_indexes[j]].original_mv_warping = mv_warping_tmp;
-                triangle_gauss_results[triangle_indexes[j]].method = method_warping_tmp;
-                split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_warping_tmp, triangle_size_tmp, false, error_translation_tmp, error_warping_tmp);
+                triangle_gauss_results[triangle_indexes[j]].method_translation = method_warping_tmp;
+                split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_warping_tmp, error_translation_tmp, triangle_size_tmp, false, error_translation_tmp, error_warping_tmp);
 
+                costs[j] = cost_warping_tmp;
+                methods[j] = method_warping_tmp;
+                code_length_tmp[j] = code_length_warping_tmp;
                 if(method_warping_tmp == MV_CODE_METHOD::MERGE || method_warping_tmp == MV_CODE_METHOD::MERGE2){
-                    triangle_gauss_results[triangle_indexes[j]].mv_warping = mvd_warping;
+                    triangle_gauss_results[triangle_indexes[j]].mv_warping = mvd_warping_tmp;
                 }
             }
+            triangle_gauss_results[triangle_indexes[j]].mv_translation = mv_translation_tmp;
+            triangle_gauss_results[triangle_indexes[j]].original_mv_translation = mv_translation_tmp;
+            triangle_gauss_results[triangle_indexes[j]].mv_warping = mv_warping_tmp;
+            triangle_gauss_results[triangle_indexes[j]].original_mv_warping = mv_warping_tmp;
+            triangle_gauss_results[triangle_indexes[j]].residual_translation = error_translation_tmp;
+            triangle_gauss_results[triangle_indexes[j]].residual_warping = error_warping_tmp;
+
         }else if(PRED_MODE == BM){
             std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_triangles[j], target_image, expansion_ref, diagonal_line_area_flag, triangle_indexes[j], ctus[j]);
             mv_warping_tmp = tmp_bm_mv;
@@ -1306,7 +1325,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             error_translation_tmp = tmp_bm_errors[2];
             triangle_size_tmp = (double)1e6;
 
-            split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_translation_tmp, triangle_size_tmp, true, tmp_bm_errors[2], tmp_error_newton);
+            split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, 1e9, error_translation_tmp, triangle_size_tmp, true, tmp_bm_errors[2], tmp_error_newton);
 
             triangle_gauss_results[triangle_indexes[j]].translation_flag = true;
             triangle_gauss_results[triangle_indexes[j]].original_mv_translation = mv_translation_tmp;
@@ -1319,7 +1338,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         isCodedTriangle[triangle_indexes[i]] = false;
     }
 
-    double cost_after_subdiv1;
     int code_length1;
     CollocatedMvTree *cmt_left_left, *cmt_left_right, *cmt_right_left, *cmt_right_right;
 
@@ -1328,69 +1346,19 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     cmt_right_left   = (cmt->node3 == nullptr ? cmt : cmt->node3);
     cmt_right_right  = (cmt->node4 == nullptr ? cmt : cmt->node4);
 
-    MV_CODE_METHOD method_flag1, method_flag2, method_flag3, method_flag4;
-    if(split_mv_result[0].translation_flag) {
-        std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag1) = getMVD(
-                {split_mv_result[0].mv_translation, split_mv_result[0].mv_translation, split_mv_result[0].mv_translation},
-                split_mv_result[0].residual,
-                triangle_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->node1, true, dummy);
-    }else{
-        std::tie(cost_after_subdiv1, code_length1, mvd, selected_index, method_flag1) = getMVD(
-                split_mv_result[0].mv_warping, split_mv_result[0].residual,
-                triangle_indexes[0], cmt_left_left->mv1, diagonal_line_area_flag, ctu->node1, false, dummy);
-    }
-    isCodedTriangle[triangle_indexes[0]] = true;
-
-    double cost_after_subdiv2;
-    int code_length2;
-    if(split_mv_result[1].translation_flag){
-        std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
-                {split_mv_result[1].mv_translation, split_mv_result[1].mv_translation, split_mv_result[1].mv_translation}, split_mv_result[1].residual,
-                triangle_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->node2, true, dummy);
-    }else{
-        std::tie(cost_after_subdiv2, code_length2, mvd, selected_index, method_flag2) = getMVD(
-                split_mv_result[1].mv_warping, split_mv_result[1].residual,
-                triangle_indexes[1], cmt_left_right->mv1, diagonal_line_area_flag, ctu->node2, false, dummy);
-    }
-    isCodedTriangle[triangle_indexes[1]] = true;
-
-    double cost_after_subdiv3;
-    int code_length3;
-    if(split_mv_result[2].translation_flag) {
-        std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag3) = getMVD(
-                {split_mv_result[2].mv_translation, split_mv_result[2].mv_translation, split_mv_result[2].mv_translation},
-                split_mv_result[2].residual,
-                triangle_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->node3, true, dummy);
-    }else{
-        std::tie(cost_after_subdiv3, code_length3, mvd, selected_index, method_flag3) = getMVD(
-                split_mv_result[2].mv_warping, split_mv_result[2].residual,
-                triangle_indexes[2], cmt_right_left->mv1, diagonal_line_area_flag, ctu->node3, false, dummy);
-    }
-    isCodedTriangle[triangle_indexes[2]] = true;
-
-    double cost_after_subdiv4;
-    int code_length4;
-    if(split_mv_result[3].translation_flag){
-        std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
-                {split_mv_result[3].mv_translation, split_mv_result[3].mv_translation, split_mv_result[3].mv_translation}, split_mv_result[3].residual,
-                triangle_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->node4, true, dummy);
-    }else{
-        std::tie(cost_after_subdiv4, code_length4, mvd, selected_index, method_flag4) = getMVD(
-                split_mv_result[3].mv_warping, split_mv_result[3].residual,
-                triangle_indexes[3], cmt_right_right->mv1, diagonal_line_area_flag, ctu->node4, false, dummy);
-    }
-    isCodedTriangle[triangle_indexes[3]] = true;
-
-    double alpha = 1;
-
 #if DISPLAY_RD_COST
     std::cout << "before:" << cost_before_subdiv << " after:" << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4) << std::endl;
 #endif
 
-    if(cost_before_subdiv >= alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4)) {
+    double cost_after_subdiv1 = costs[0];
+    double cost_after_subdiv2 = costs[1];
+    double cost_after_subdiv3 = costs[2];
+    double cost_after_subdiv4 = costs[3];
 
-        for(int i = 0 ; i < 4 ; i++){
-            isCodedTriangle[triangle_indexes[i]] = false;
+    if(cost_before_subdiv >= (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4)) {
+
+        for(int triangle_indexe : triangle_indexes){
+            isCodedTriangle[triangle_indexe] = false;
         }
         ctu->split_cu_flag = true;
 
@@ -1401,49 +1369,49 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
         // 1つ目の頂点追加
         ctu->node1->triangle_index = t1_idx;
-        ctu->node1->code_length = code_length1;
+        ctu->node1->code_length = code_length_tmp[0];
         ctu->node1->translation_flag = split_mv_result[0].translation_flag;
-        ctu->node1->method = method_flag1;
+        ctu->node1->method = methods[0];
 
         int next_step = steps - 2;
         if(ctu->node1->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
             next_step = 0;
         }
-        bool result = split(expand_images, ctu->node1, cmt_left_left, split_sub_triangles1.t1, t1_idx,split_sub_triangles1.t1_type, next_step, diagonal_line_area_flag);
+        split(expand_images, ctu->node1, cmt_left_left, split_sub_triangles1.t1, t1_idx,split_sub_triangles1.t1_type, next_step, diagonal_line_area_flag);
 
         // 2つ目の三角形
         ctu->node2->triangle_index = t2_idx;
-        ctu->node2->code_length = code_length2;
+        ctu->node2->code_length = code_length_tmp[1];
         ctu->node2->translation_flag = split_mv_result[1].translation_flag;
-        ctu->node2->method = method_flag2;
+        ctu->node2->method = methods[1];
 
         next_step = steps - 2;
         if(ctu->node2->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
             next_step = 0;
         }
-        result = split(expand_images, ctu->node2, cmt_left_right, split_sub_triangles1.t2, t2_idx, split_sub_triangles1.t2_type, next_step, diagonal_line_area_flag);
+        split(expand_images, ctu->node2, cmt_left_right, split_sub_triangles1.t2, t2_idx, split_sub_triangles1.t2_type, next_step, diagonal_line_area_flag);
 
         // 3つ目の三角形
         ctu->node3->triangle_index = t3_idx;
-        ctu->node3->code_length = code_length3;
+        ctu->node3->code_length = code_length_tmp[2];
         ctu->node3->translation_flag = split_mv_result[2].translation_flag;
-        ctu->node3->method = method_flag3;
+        ctu->node3->method = methods[2];
         next_step = steps - 2;
         if(ctu->node3->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
             next_step = 0;
         }
-        result = split(expand_images, ctu->node3, cmt_right_left, split_sub_triangles2.t1, t3_idx, split_sub_triangles2.t1_type, next_step, diagonal_line_area_flag);
+        split(expand_images, ctu->node3, cmt_right_left, split_sub_triangles2.t1, t3_idx, split_sub_triangles2.t1_type, next_step, diagonal_line_area_flag);
 
         // 4つ目の三角形
         ctu->node4->triangle_index = t4_idx;
-        ctu->node4->code_length = code_length4;
+        ctu->node4->code_length = code_length_tmp[3];
         ctu->node4->translation_flag = split_mv_result[3].translation_flag;
-        ctu->node4->method = method_flag4;
+        ctu->node4->method = methods[3];
         next_step = steps - 2;
         if(ctu->node4->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
             next_step = 0;
         }
-        result = split(expand_images, ctu->node4, cmt_right_right, split_sub_triangles2.t2, t4_idx, split_sub_triangles2.t2_type, next_step, diagonal_line_area_flag);
+        split(expand_images, ctu->node4, cmt_right_right, split_sub_triangles2.t2, t4_idx, split_sub_triangles2.t2_type, next_step, diagonal_line_area_flag);
 
         return true;
     }else{
