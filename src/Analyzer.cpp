@@ -19,6 +19,11 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     mvd_warping_code_sum = mvd_translation_code_sum = 0;
     merge_counter = spatial_counter = 0;
     code_sum = 0;
+    intra_counter = 0;
+    patch_num = 0;
+    max_merge_mv_diff_x = 0;
+    max_merge_mv_diff_y = 0;
+    merge2_counter = 0;
 
     for(auto ctu : ctus){
         storeDistributionOfMv(ctu);
@@ -167,8 +172,42 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
             sign_flag_sum += ctu->flags_code_sum.getSignFlagCodeLength();
             mvd_code_sum += ctu->flags_code_sum.getMvdCodeLength();
             spatial_counter++;
-        }else{
+
+            merge_flag_counter[0]++;
+            intra_flag_counter[0]++;
+        }else if(ctu->method == MV_CODE_METHOD::MERGE2) {
+            for(int i = 0 ; i < 3 ; i++) {
+                int x = (ctu->mvds_x)[i];
+                mvd_counter_x[x]++;
+                int y = (ctu->mvds_y)[i];
+                mvd_counter_y[y]++;
+                mvd_counter[x]++;
+                mvd_counter[y]++;
+
+                if(ctu->flags_code_sum.getXGreater0Flag()[i]) {
+                    greater_1_flag_counter[(int)(ctu->flags_code_sum.getXGreater1Flag()[i])]++;
+                }
+                if(ctu->flags_code_sum.getYGreater0Flag()[i]) {
+                    greater_1_flag_counter[(int)(ctu->flags_code_sum.getYGreater1Flag()[i])]++;
+                }
+
+                greater_0_flag_counter[(int)(ctu->flags_code_sum.getXGreater0Flag()[i])]++;
+                greater_0_flag_counter[(int)(ctu->flags_code_sum.getYGreater0Flag()[i])]++;
+            }
+            merge2_counter++;
+            greater_0_flag_sum += ctu->flags_code_sum.getGreater0FlagCodeLength();
+            greater_1_flag_sum += ctu->flags_code_sum.getGreaterThanOneCodeLength();
+            sign_flag_sum += ctu->flags_code_sum.getSignFlagCodeLength();
+            mvd_code_sum += ctu->flags_code_sum.getMvdCodeLength();
+
+        }else if(ctu->method == MV_CODE_METHOD::MERGE){
             merge_counter++;
+            merge_flag_counter[1]++;
+            intra_flag_counter[0]++;
+        }else if(ctu->method == MV_CODE_METHOD::INTRA){
+            intra_counter++;
+            merge_flag_counter[0]++;
+            intra_flag_counter[1]++;
         }
 
         if(ctu->translation_flag) translation_patch_num++;
@@ -207,8 +246,71 @@ void Analyzer::storeMarkdownFile(double psnr, std::string log_path) {
  * @param ofs OutputStream
  * @param psnr PSNR値
  */
-void Analyzer::storeCsvFileWithStream(std::ofstream &ofs, double psnr) {
+void Analyzer::storeCsvFileWithStream(std::ofstream &ofs, double psnr, double time) {
     extern int qp;
+    int tmp_code_sum = code_sum - (int)ceil(greater_0_flag_sum * (1.0-getEntropy({greater_0_flag_counter[0], greater_0_flag_counter[1]})));
+    std::cout << (int)ceil(greater_0_flag_sum * (1.0 - getEntropy({greater_0_flag_counter[0], greater_0_flag_counter[1]})))<< std::endl;
+    std::cout << "tmp_code_sum:" << tmp_code_sum << std::endl;
+    tmp_code_sum = tmp_code_sum - (int)ceil(greater_1_flag_sum * (1.0 - getEntropy({greater_1_flag_counter[0], greater_1_flag_counter[1]})));
 
-    ofs << qp << "," << getLambdaPred(qp, 1.0) << "," << code_sum << "," << psnr << std::endl;
+#if MERGE_MODE
+    std::cout << (int)ceil(patch_num * (1.0 - getEntropy({merge_flag_counter[0], merge_flag_counter[1]}))) << std::endl;
+    std::cout << "tmp_code_sum:" << tmp_code_sum << std::endl;
+    tmp_code_sum = tmp_code_sum - (int)ceil(patch_num * (1.0 - getEntropy({merge_flag_counter[0], merge_flag_counter[1]})));
+#endif
+
+#if INTRA_MODE
+    std::cout << "tmp_code_sum:" << tmp_code_sum << std::endl;
+    if(INTRA_MODE) tmp_code_sum = tmp_code_sum - (int)ceil(intra_counter * getEntropy({intra_flag_counter[0], intra_flag_counter[1]}));
+#endif
+
+    ofs << qp << "," << getLambdaPred(qp, 1.0) << "," << code_sum << "," << tmp_code_sum << "," << psnr << "," << patch_num << "," << spatial_counter << "," << merge_counter << "," << merge2_counter << "," << intra_counter << "," << time << std::endl;
+}
+
+void Analyzer::storeMergeMvLog(std::vector<CodingTreeUnit*> ctus, std::string log_path) {
+    std::ofstream ofs;
+    ofs.open(log_path);
+
+    for(const auto ctu : ctus) {
+        storeMergeMvLog(ctu, ofs);
+    }
+
+    ofs << std::endl;
+    ofs << "max_diff(x):" << max_merge_mv_diff_x << " max_diff(y):" << max_merge_mv_diff_y << std::endl;
+
+    ofs.close();
+}
+
+void Analyzer::storeMergeMvLog(CodingTreeUnit *ctu, std::ofstream &ofs) {
+    if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
+        if(ctu->method != MV_CODE_METHOD::MERGE) return;
+
+        if(ctu->translation_flag) {
+            ofs << "merge(transaltion)" << std::endl;
+            ofs << "original:" << ctu->original_mv1 << " merged_mv:" << ctu->mv1 << std::endl;
+            ofs << std::endl;
+
+            max_merge_mv_diff_x = std::max(max_merge_mv_diff_x, std::fabs(ctu->original_mv1.x - ctu->mv1.x));
+            max_merge_mv_diff_y = std::max(max_merge_mv_diff_y, std::fabs(ctu->original_mv1.y - ctu->mv1.y));
+        } else {
+            ofs << "merge(warping)" << std::endl;
+            ofs << "original(1):" << ctu->original_mv1 << " merged_mv(1):" << ctu->mv1 << std::endl;
+            ofs << "original(2):" << ctu->original_mv2 << " merged_mv(2):" << ctu->mv2 << std::endl;
+            ofs << "original(3):" << ctu->original_mv3 << " merged_mv(3):" << ctu->mv3 << std::endl;
+            ofs << std::endl;
+
+            max_merge_mv_diff_x = std::max(max_merge_mv_diff_x, std::fabs(ctu->original_mv1.x - ctu->mv1.x));
+            max_merge_mv_diff_x = std::max(max_merge_mv_diff_x, std::fabs(ctu->original_mv2.x - ctu->mv2.x));
+            max_merge_mv_diff_x = std::max(max_merge_mv_diff_x, std::fabs(ctu->original_mv3.x - ctu->mv3.x));
+            max_merge_mv_diff_y = std::max(max_merge_mv_diff_y, std::fabs(ctu->original_mv1.y - ctu->mv1.y));
+            max_merge_mv_diff_y = std::max(max_merge_mv_diff_y, std::fabs(ctu->original_mv2.y - ctu->mv2.y));
+            max_merge_mv_diff_y = std::max(max_merge_mv_diff_y, std::fabs(ctu->original_mv3.y - ctu->mv3.y));
+        }
+        return;
+    }
+
+    storeMergeMvLog(ctu->node1, ofs);
+    storeMergeMvLog(ctu->node2, ofs);
+    storeMergeMvLog(ctu->node3, ofs);
+    storeMergeMvLog(ctu->node4, ofs);
 }

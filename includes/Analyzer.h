@@ -17,10 +17,13 @@ public:
     void storeDistributionOfMv(std::vector<CodingTreeUnit*> ctus, std::string log_path);
     void storeMarkdownFile(double psnr, std::string log_path);
     Analyzer(const std::string &fileSuffix);
-    void storeCsvFileWithStream(std::ofstream &ofs, double psnr);
+    void storeCsvFileWithStream(std::ofstream &ofs, double psnr, double time);
+    void storeMergeMvLog(std::vector<CodingTreeUnit*> ctus, std::string log_path);
+
 
 private:
     void storeDistributionOfMv(CodingTreeUnit *ctu);
+    void storeMergeMvLog(CodingTreeUnit* ctu, std::ofstream &ofs);
 
     // mvdのカウンター
     std::map<int, int> mvd_counter;
@@ -40,6 +43,12 @@ private:
     std::map<int, int> sign_flag_counter;
     int sign_flag_sum;
 
+    // マージの分布
+    std::map<int, int> merge_flag_counter;
+
+    // イントラの分布
+    std::map<int, int> intra_flag_counter;
+
     // 符号量関連
     int mvd_code_sum;
     int mvd_warping_code_sum;
@@ -50,11 +59,18 @@ private:
     std::string file_suffix;
 
     int warping_patch_num;
+    int merge2_counter;
     int translation_patch_num;
 
     int merge_counter;
     int spatial_counter;
 
+    int intra_counter;
+
+    int patch_num;
+
+    float max_merge_mv_diff_x;
+    float max_merge_mv_diff_y;
 };
 
 
