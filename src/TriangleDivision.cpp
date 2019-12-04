@@ -966,7 +966,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     std::vector<cv::Point2f> gauss_result_warping;
     cv::Point2f gauss_result_translation;
 
-    int warping_limit = 4;
+    int warping_limit = 2;
 
     if(cmt == nullptr) {
         cmt = previousMvList[0][triangle_index];
