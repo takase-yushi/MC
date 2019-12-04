@@ -10,9 +10,9 @@
       "lambda_enable"  : true,
       "lambda"         : 0.0,
       "QP"             : 22,
-      "ctu_width"      : 128,
-      "ctu_height"     : 128,
-      "division_step"  : 10
+      "ctu_width"      : 64,
+      "ctu_height"     : 64,
+      "division_step"  : 6
     },
     {
       "enable"         : true,
@@ -24,9 +24,9 @@
       "lambda_enable"  : true,
       "lambda"         : 0.0,
       "QP"             : 24,
-      "ctu_width"      : 128,
-      "ctu_height"     : 128,
-      "division_step"  : 10
+      "ctu_width"      : 64,
+      "ctu_height"     : 64,
+      "division_step"  : 6
     },
     {
       "enable"         : true,
@@ -38,9 +38,9 @@
       "lambda_enable"  : true,
       "lambda"         : 0.0,
       "QP"             : 26,
-      "ctu_width"      : 128,
-      "ctu_height"     : 128,
-      "division_step"  : 10
+      "ctu_width"      : 64,
+      "ctu_height"     : 64,
+      "division_step"  : 6
     },
     {
       "enable"         : true,
@@ -52,9 +52,9 @@
       "lambda_enable"  : true,
       "lambda"         : 0.0,
       "QP"             : 28,
-      "ctu_width"      : 128,
-      "ctu_height"     : 128,
-      "division_step"  : 10
+      "ctu_width"      : 64,
+      "ctu_height"     : 64,
+      "division_step"  : 6
     },
     {
       "enable"         : true,
@@ -66,9 +66,9 @@
       "lambda_enable"  : true,
       "lambda"         : 0.0,
       "QP"             : 30,
-      "ctu_width"      : 128,
-      "ctu_height"     : 128,
-      "division_step"  : 10
+      "ctu_width"      : 64,
+      "ctu_height"     : 64,
+      "division_step"  : 6
     },
     {
       "enable"         : true,
@@ -80,9 +80,9 @@
       "lambda_enable"  : true,
       "lambda"         : 0.0,
       "QP"             : 32,
-      "ctu_width"      : 128,
-      "ctu_height"     : 128,
-      "division_step"  : 10
+      "ctu_width"      : 64,
+      "ctu_height"     : 64,
+      "division_step"  : 6
     },
     {
       "enable"         : true,
@@ -94,9 +94,9 @@
       "lambda_enable"  : true,
       "lambda"         : 0.0,
       "QP"             : 34,
-      "ctu_width"      : 128,
-      "ctu_height"     : 128,
-      "division_step"  : 10
+      "ctu_width"      : 64,
+      "ctu_height"     : 64,
+      "division_step"  : 6
     },
     {
       "enable"         : true,
@@ -108,9 +108,9 @@
       "lambda_enable"  : true,
       "lambda"         : 0.0,
       "QP"             : 36,
-      "ctu_width"      : 128,
-      "ctu_height"     : 128,
-      "division_step"  : 10
+      "ctu_width"      : 64,
+      "ctu_height"     : 64,
+      "division_step"  : 6
     },
     {
       "enable"         : true,
@@ -122,9 +122,9 @@
       "lambda_enable"  : true,
       "lambda"         : 0.0,
       "QP"             : 37,
-      "ctu_width"      : 128,
-      "ctu_height"     : 128,
-      "division_step"  : 10
+      "ctu_width"      : 64,
+      "ctu_height"     : 64,
+      "division_step"  : 6
     }
   ]
 }
