@@ -15,6 +15,7 @@
 #include <fstream>
 #include <tuple>
 #include <iostream>
+#include <ctime>
 
 /**
  * @fn void drawPoint(cv::Mat &img, const cv::Point2f p, const cv::Scalar color, int size)
@@ -365,13 +366,13 @@ cv::Mat mv_filter(cv::Mat &in,int k){
  * @brief 現在のタイムスタンプをすべてつなげた文字列を返す
  * @return タイムスタンプ文字列
  */
-//std::string getCurrentTimestamp(){
-//    time_t timer;
-//    struct tm* tm;
-//    char datetime[30];
-//    timer = time(NULL);
-//    tm = localtime(&timer);
-//    strftime(datetime, 30, "%Y%m%d%H%M%S",tm );
-//
-//    return std::string(datetime);
-//}
+std::string getCurrentTimestamp(){
+    time_t timer;
+    struct tm* tm;
+    char datetime[30];
+    timer = time(NULL);
+    tm = localtime(&timer);
+    strftime(datetime, 30, "%Y%m%d%H%M%S",tm );
+
+    return std::string(datetime);
+}
