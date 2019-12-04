@@ -43,13 +43,9 @@ void drawPoint(cv::Mat &img, const cv::Point2f p, const cv::Scalar color, int si
  */
 void drawTriangle(cv::Mat &img, const cv::Point2f p1, const cv::Point2f p2, const cv::Point2f p3, const cv::Scalar color){
 
-  drawPoint(img, p1, RED, 4);
-  drawPoint(img, p2, RED, 4);
-  drawPoint(img, p3, RED, 4);
-
-  cv::line(img, p1, p2, color, 2);
-  cv::line(img, p2, p3, color, 2);
-  cv::line(img, p3, p1, color, 2);
+  cv::line(img, p1, p2, color, 1);
+  cv::line(img, p2, p3, color, 1);
+  cv::line(img, p3, p1, color, 1);
 
 }
 
