@@ -308,3 +308,31 @@ void Analyzer::storeMergeMvLog(CodingTreeUnit *ctu, std::ofstream &ofs) {
     storeMergeMvLog(ctu->node3, ofs);
     storeMergeMvLog(ctu->node4, ofs);
 }
+
+/**
+ * @fn int Analyzer::getEntropyCodingCode()
+ * @brief 出現確率をもとにエントロピーを計算し，擬似的な圧縮を施した符号量を求める
+ * @return int 符号量
+ * @attention これを使う前にstoreDistributionOfMvを呼ぶこと
+ * @deprecated これを使う前にstoreDistributionOfMvを呼ぶこと
+ */
+int Analyzer::getEntropyCodingCode() {
+    extern int qp;
+    int tmp_code_sum = code_sum - (int)ceil(greater_0_flag_sum * (1.0-getEntropy({greater_0_flag_counter[0], greater_0_flag_counter[1]})));
+    std::cout << (int)ceil(greater_0_flag_sum * (1.0 - getEntropy({greater_0_flag_counter[0], greater_0_flag_counter[1]})))<< std::endl;
+    std::cout << "tmp_code_sum:" << tmp_code_sum << std::endl;
+    tmp_code_sum = tmp_code_sum - (int)ceil(greater_1_flag_sum * (1.0 - getEntropy({greater_1_flag_counter[0], greater_1_flag_counter[1]})));
+
+#if MERGE_MODE
+    std::cout << (int)ceil(patch_num * (1.0 - getEntropy({merge_flag_counter[0], merge_flag_counter[1]}))) << std::endl;
+    std::cout << "tmp_code_sum:" << tmp_code_sum << std::endl;
+    tmp_code_sum = tmp_code_sum - (int)ceil(patch_num * (1.0 - getEntropy({merge_flag_counter[0], merge_flag_counter[1]})));
+#endif
+
+#if INTRA_MODE
+    std::cout << "tmp_code_sum:" << tmp_code_sum << std::endl;
+    if(INTRA_MODE) tmp_code_sum = tmp_code_sum - (int)ceil(intra_counter * getEntropy({intra_flag_counter[0], intra_flag_counter[1]}));
+#endif
+
+    return tmp_code_sum;
+}

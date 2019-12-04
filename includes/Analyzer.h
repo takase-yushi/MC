@@ -24,6 +24,7 @@ public:
 private:
     void storeDistributionOfMv(CodingTreeUnit *ctu);
     void storeMergeMvLog(CodingTreeUnit* ctu, std::ofstream &ofs);
+    int getEntropyCodingCode();
 
     // mvdのカウンター
     std::map<int, int> mvd_counter;
