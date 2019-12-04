@@ -64,7 +64,7 @@ private:
     int translation_patch_num;
 
     int merge_counter;
-    int spatial_counter;
+    int differential_counter;
 
     int intra_counter;
 
@@ -72,6 +72,13 @@ private:
 
     float max_merge_mv_diff_x;
     float max_merge_mv_diff_y;
+
+    int translation_diff;
+    int translation_merge;
+    int affine_diff;
+    int affine_merge;
+    int affine_new_merge;
+
 };
 
 

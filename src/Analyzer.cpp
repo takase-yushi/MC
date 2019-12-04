@@ -18,13 +18,15 @@
 void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::string log_path, std::vector<int> pells, std::vector<double> residuals) {
     greater_0_flag_sum = greater_1_flag_sum = sign_flag_sum = mvd_code_sum = warping_patch_num = translation_patch_num = 0;
     mvd_warping_code_sum = mvd_translation_code_sum = 0;
-    merge_counter = spatial_counter = 0;
+    merge_counter = differential_counter = 0;
     code_sum = 0;
     intra_counter = 0;
     patch_num = 0;
     max_merge_mv_diff_x = 0;
     max_merge_mv_diff_y = 0;
     merge2_counter = 0;
+    translation_diff = translation_merge = 0;
+    affine_diff = affine_merge = affine_new_merge = 0;
 
     for(auto ctu : ctus){
         storeDistributionOfMv(ctu);
@@ -70,27 +72,32 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     fclose(fp);
 
     fp = std::fopen((log_path + "/mvd_result" + file_suffix + ".txt").c_str(), "w");
-    fprintf(fp, "code_sum              :%d\n", code_sum);
-    fprintf(fp, "patch num             :%d\n", patch_num);
-    fprintf(fp, "greater_0_flag        :%d\n", greater_0_flag_sum);
-    fprintf(fp, "greater_0_flag entropy:%f\n", getEntropy({greater_0_flag_counter[0], greater_0_flag_counter[1]}));
-    fprintf(fp, "greater_1_flag        :%d\n", greater_1_flag_sum);
-    fprintf(fp, "greater_1_flag entropy:%f\n", getEntropy({greater_1_flag_counter[0], greater_1_flag_counter[1]}));
-    fprintf(fp, "sign_flag             :%d\n", sign_flag_sum);
-    fprintf(fp, "mvd_code              :%d\n", mvd_code_sum);
-    fprintf(fp, "warping_code          :%d\n", mvd_warping_code_sum);
-    fprintf(fp, "warping_patch         :%d\n", warping_patch_num);
-    fprintf(fp, "translation_code      :%d\n", mvd_translation_code_sum);
-    fprintf(fp, "translation_patch     :%d\n", translation_patch_num);
-    fprintf(fp, "Spatial_patch         :%d\n", spatial_counter);
-    fprintf(fp, "merge_patch           :%d\n", merge_counter);
-    fprintf(fp, "merge_flag_entropy    :%f\n", getEntropy({merge_flag_counter[0], merge_flag_counter[1]}));
-
-    fprintf(fp, "TRANSLATION_DIFF PSNR :%f\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::TRANSLATION_DIFF] / pells[PATCH_CODING_MODE::TRANSLATION_DIFF])));
-    fprintf(fp, "TRANSLATION_MERGE PSNR:%f\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::TRANSLATION_MERGE] / pells[PATCH_CODING_MODE::TRANSLATION_MERGE])));
-    fprintf(fp, "AFFINE_DIFF PSNR      :%f\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::AFFINE_DIFF] / pells[PATCH_CODING_MODE::AFFINE_DIFF])));
-    fprintf(fp, "AFFINE_MERGE PSNR     :%f\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::AFFINE_MERGE] / pells[PATCH_CODING_MODE::AFFINE_MERGE])));
-    fprintf(fp, "AFFINE_NEW_MERGE PSNR :%f\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::AFFINE_NEW_MERGE] / pells[PATCH_CODING_MODE::AFFINE_NEW_MERGE])));
+    fprintf(fp, "code_sum                             :%d\n", code_sum);
+    fprintf(fp, "code_sum(entropy coding)             :%d\n", getEntropyCodingCode());
+    fprintf(fp, "patch num                            :%d\n", patch_num);
+    fprintf(fp, "greater_0_flag                       :%d\n", greater_0_flag_sum);
+    fprintf(fp, "greater_0_flag entropy               :%f\n", getEntropy({greater_0_flag_counter[0], greater_0_flag_counter[1]}));
+    fprintf(fp, "greater_1_flag                       :%d\n", greater_1_flag_sum);
+    fprintf(fp, "greater_1_flag entropy               :%f\n", getEntropy({greater_1_flag_counter[0], greater_1_flag_counter[1]}));
+    fprintf(fp, "sign_flag                            :%d\n", sign_flag_sum);
+    fprintf(fp, "mvd_code                             :%d\n", mvd_code_sum);
+    fprintf(fp, "warping_code                         :%d\n", mvd_warping_code_sum);
+    fprintf(fp, "warping_patch                        :%d\n", warping_patch_num);
+    fprintf(fp, "translation_code                     :%d\n", mvd_translation_code_sum);
+    fprintf(fp, "translation_patch                    :%d\n", translation_patch_num);
+    fprintf(fp, "Differential_patch                   :%d\n", differential_counter);
+    fprintf(fp, "merge_patch                          :%d\n", merge_counter);
+    fprintf(fp, "merge_flag_entropy                   :%f\n", getEntropy({merge_flag_counter[0], merge_flag_counter[1]}));
+    fprintf(fp, "translation differential coding patch:%d\n", translation_diff);
+    fprintf(fp, "translation merge coding patch       :%d\n", translation_merge);
+    fprintf(fp, "Affine differential coding patch     :%d\n", affine_diff);
+    fprintf(fp, "Affine merge coding patch            :%d\n", affine_merge);
+    fprintf(fp, "Affine new merge coding patch        :%d\n", affine_new_merge);
+    fprintf(fp, "TRANSLATION_DIFF PSNR                :%f\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::TRANSLATION_DIFF] / pells[PATCH_CODING_MODE::TRANSLATION_DIFF])));
+    fprintf(fp, "TRANSLATION_MERGE PSNR               :%f\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::TRANSLATION_MERGE] / pells[PATCH_CODING_MODE::TRANSLATION_MERGE])));
+    fprintf(fp, "AFFINE_DIFF PSNR                     :%f\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::AFFINE_DIFF] / pells[PATCH_CODING_MODE::AFFINE_DIFF])));
+    fprintf(fp, "AFFINE_MERGE PSNR                    :%f\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::AFFINE_MERGE] / pells[PATCH_CODING_MODE::AFFINE_MERGE])));
+    fprintf(fp, "AFFINE_NEW_MERGE PSNR                :%f\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::AFFINE_NEW_MERGE] / pells[PATCH_CODING_MODE::AFFINE_NEW_MERGE])));
 
     if(INTRA_MODE) {
         fprintf(fp, "intra_patch           :%d\n", intra_counter);
@@ -139,6 +146,8 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
                 }
 
                 mvd_translation_code_sum += ctu->flags_code_sum.getMvdCodeLength();
+
+                translation_diff++;
             }else{
                 for(int i = 0 ; i < 3 ; i++) {
                     int x = (ctu->mvds_x)[i];
@@ -159,13 +168,14 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
                     greater_0_flag_counter[(int)(ctu->flags_code_sum.getYGreater0Flag()[i])]++;
                 }
                 mvd_warping_code_sum += ctu->flags_code_sum.getMvdCodeLength();
+                affine_diff++;
             }
 
             greater_0_flag_sum += ctu->flags_code_sum.getGreater0FlagCodeLength();
             greater_1_flag_sum += ctu->flags_code_sum.getGreaterThanOneCodeLength();
             sign_flag_sum += ctu->flags_code_sum.getSignFlagCodeLength();
             mvd_code_sum += ctu->flags_code_sum.getMvdCodeLength();
-            spatial_counter++;
+            differential_counter++;
 
             merge_flag_counter[0]++;
             intra_flag_counter[0]++;
@@ -194,10 +204,17 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
             sign_flag_sum += ctu->flags_code_sum.getSignFlagCodeLength();
             mvd_code_sum += ctu->flags_code_sum.getMvdCodeLength();
 
+            affine_new_merge++;
         }else if(ctu->method == MV_CODE_METHOD::MERGE){
             merge_counter++;
             merge_flag_counter[1]++;
             intra_flag_counter[0]++;
+
+            if(ctu->translation_flag){
+                translation_merge++;
+            }else{
+                affine_merge++;
+            }
         }else if(ctu->method == MV_CODE_METHOD::INTRA){
             intra_counter++;
             merge_flag_counter[0]++;
@@ -258,7 +275,7 @@ void Analyzer::storeCsvFileWithStream(std::ofstream &ofs, double psnr, double ti
     if(INTRA_MODE) tmp_code_sum = tmp_code_sum - (int)ceil(intra_counter * getEntropy({intra_flag_counter[0], intra_flag_counter[1]}));
 #endif
 
-    ofs << qp << "," << getLambdaPred(qp, 1.0) << "," << code_sum << "," << tmp_code_sum << "," << psnr << "," << patch_num << "," << spatial_counter << "," << merge_counter << "," << merge2_counter << "," << intra_counter << "," << time << std::endl;
+    ofs << qp << "," << getLambdaPred(qp, 1.0) << "," << code_sum << "," << tmp_code_sum << "," << psnr << "," << patch_num << "," << differential_counter << "," << merge_counter << "," << merge2_counter << "," << intra_counter << "," << time << std::endl;
 }
 
 void Analyzer::storeMergeMvLog(std::vector<CodingTreeUnit*> ctus, std::string log_path) {
