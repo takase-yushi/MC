@@ -2563,8 +2563,25 @@ void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &ou
             }
 
         }else {
-            getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, SEARCH_RANGE, area_flag, ctu->triangle_index,
+            double ret = getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, SEARCH_RANGE, area_flag, ctu->triangle_index,
                               ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
+
+            extern std::vector<double> residuals;
+            if(ctu->translation_flag){
+                if(ctu->method == MV_CODE_METHOD::SPATIAL){
+                    residuals[PATCH_CODING_MODE::TRANSLATION_DIFF] += ret;
+                }else if(ctu->method == MV_CODE_METHOD::MERGE){
+                    residuals[PATCH_CODING_MODE::TRANSLATION_MERGE] += ret;
+                }
+            }else{
+                if(ctu->method == MV_CODE_METHOD::SPATIAL){
+                    residuals[PATCH_CODING_MODE::AFFINE_DIFF] += ret;
+                }else if(ctu->method == MV_CODE_METHOD::MERGE){
+                    residuals[PATCH_CODING_MODE::AFFINE_MERGE] += ret;
+                }else if(ctu->method == MV_CODE_METHOD::MERGE2){
+                    residuals[PATCH_CODING_MODE::AFFINE_NEW_MERGE] += ret;
+                }
+            }
         }
         return;
     }
@@ -2672,6 +2689,7 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
         std::vector<cv::Point2f> mvs{mv, mv, mv};
         std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, block_size_x, block_size_y);
 
+        extern std::vector<int> pells;
         if(ctu->translation_flag) {
             if(ctu->method == MV_CODE_METHOD::MERGE){
                 for(auto pixel : pixels) {
@@ -2679,12 +2697,14 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
                     G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     B(out, (int)pixel.x, (int)pixel.y) = 0;
                 }
+                pells[PATCH_CODING_MODE::TRANSLATION_MERGE] += pixels.size();
             }else if(ctu->method == MV_CODE_METHOD::SPATIAL){
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     B(out, (int)pixel.x, (int)pixel.y) = 0;
                 }
+                pells[PATCH_CODING_MODE::TRANSLATION_DIFF] += pixels.size();
             }else if(ctu->method == MV_CODE_METHOD::INTRA){
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
@@ -2700,13 +2720,14 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
                     G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     B(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                 }
+                pells[PATCH_CODING_MODE::AFFINE_MERGE] += pixels.size();
             }else if(ctu->method == MV_CODE_METHOD::MERGE2){
 
                 int share_count = 0;
                 for(auto f : ctu->share_flag) {
                     if(f) share_count++;
                 }
-
+                pells[PATCH_CODING_MODE::AFFINE_NEW_MERGE] += pixels.size();
                 if(share_count == 1){
                     for(auto pixel : pixels) {
                         R(out, (int)pixel.x, (int)pixel.y) = 54;
@@ -2727,6 +2748,7 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
                     G(out, (int)pixel.x, (int)pixel.y) = 0;
                     B(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                 }
+                pells[PATCH_CODING_MODE::AFFINE_DIFF] += pixels.size();
             }else if(ctu->method == MV_CODE_METHOD::INTRA){
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);

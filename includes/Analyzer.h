@@ -14,7 +14,7 @@ class CodingTreeUnit;
 
 class Analyzer {
 public:
-    void storeDistributionOfMv(std::vector<CodingTreeUnit*> ctus, std::string log_path);
+    void storeDistributionOfMv(std::vector<CodingTreeUnit*> ctus, std::string log_path, std::vector<int> pells, std::vector<double> residuals);
     void storeMarkdownFile(double psnr, std::string log_path);
     Analyzer(const std::string &fileSuffix);
     void storeCsvFileWithStream(std::ofstream &ofs, double psnr, double time);

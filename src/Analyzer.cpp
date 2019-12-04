@@ -15,7 +15,7 @@
  *
  * @param ctus
  */
-void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::string log_path) {
+void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::string log_path, std::vector<int> pells, std::vector<double> residuals) {
     greater_0_flag_sum = greater_1_flag_sum = sign_flag_sum = mvd_code_sum = warping_patch_num = translation_patch_num = 0;
     mvd_warping_code_sum = mvd_translation_code_sum = 0;
     merge_counter = spatial_counter = 0;
@@ -85,6 +85,12 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     fprintf(fp, "Spatial_patch         :%d\n", spatial_counter);
     fprintf(fp, "merge_patch           :%d\n", merge_counter);
     fprintf(fp, "merge_flag_entropy    :%f\n", getEntropy({merge_flag_counter[0], merge_flag_counter[1]}));
+
+    fprintf(fp, "TRANSLATION_DIFF PSNR :%f\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::TRANSLATION_DIFF] / pells[PATCH_CODING_MODE::TRANSLATION_DIFF])));
+    fprintf(fp, "TRANSLATION_MERGE PSNR:%f\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::TRANSLATION_MERGE] / pells[PATCH_CODING_MODE::TRANSLATION_MERGE])));
+    fprintf(fp, "AFFINE_DIFF PSNR      :%f\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::AFFINE_DIFF] / pells[PATCH_CODING_MODE::AFFINE_DIFF])));
+    fprintf(fp, "AFFINE_MERGE PSNR     :%f\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::AFFINE_MERGE] / pells[PATCH_CODING_MODE::AFFINE_MERGE])));
+    fprintf(fp, "AFFINE_NEW_MERGE PSNR :%f\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::AFFINE_NEW_MERGE] / pells[PATCH_CODING_MODE::AFFINE_NEW_MERGE])));
 
     if(INTRA_MODE) {
         fprintf(fp, "intra_patch           :%d\n", intra_counter);

@@ -60,6 +60,9 @@ std::vector<MELog> ME_log_translation_1;
 std::vector<MELog> ME_log_warping_0;
 std::vector<MELog> ME_log_warping_1;
 
+std::vector<int> pells;
+std::vector<double> residuals;
+
 void storeNewtonLogs(std::string logDirectoryPath);
 
 int main(int argc, char *argv[]){
@@ -304,6 +307,9 @@ void run(std::string config_name) {
             }
         }
 
+        pells.resize(5);
+        residuals.resize(5);
+
         for (int i = 0; i < init_triangles.size(); i++) {
             if(i % 2 == 0){
                 bool flag = false;
@@ -356,11 +362,11 @@ void run(std::string config_name) {
         Analyzer analayzer(log_file_suffix);
         analayzer.storeDistributionOfMv(foo, log_directory);
         analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
-        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image));
-
+        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time);
+        analayzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
 #else
         Analyzer analayzer(log_file_suffix);
-        analayzer.storeDistributionOfMv(foo, log_directory);
+        analayzer.storeDistributionOfMv(foo, log_directory, pells, residuals);
         analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
         analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time);
         analayzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
