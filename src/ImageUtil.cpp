@@ -712,12 +712,15 @@ double img_ip(unsigned char *img, cv::Rect rect, double x, double y, int offset,
     dy = y - (double) y0;
 
     if(x0 == (rect.width + rect.x)) x0 = (rect.width + rect.x);
-    if(y0 == (rect.height + rect.y)) x0 = (rect.height + rect.y);
+    if(y0 == (rect.height + rect.y)) y0 = (rect.height + rect.y);
 
-    double val = F(img, x0    , y0    , k * offset, rect.width - 2 * k * offset) * (1.0 - dx) * (1.0 - dy) +
-                 F(img, x0 + 1, y0    , k * offset, rect.width - 2 * k * offset) * dx         * (1.0 - dy) +
-                 F(img, x0    , y0 + 1, k * offset, rect.width - 2 * k * offset) * (1.0 - dx) * dy         +
-                 F(img, x0 + 1, y0 + 1, k * offset, rect.width - 2 * k * offset) * dx         * dy;
+    int x0_plus_1 = std::min(x0 + 1, (rect.width + rect.x) - 1);
+    int y0_plus_1 = std::min(y0 + 1, (rect.height + rect.y) - 1);
+
+    double val = F(img, x0       , y0       , k * offset, rect.width - 2 * k * offset) * (1.0 - dx) * (1.0 - dy) +
+                 F(img, x0_plus_1, y0       , k * offset, rect.width - 2 * k * offset) * dx         * (1.0 - dy) +
+                 F(img, x0       , y0_plus_1, k * offset, rect.width - 2 * k * offset) * (1.0 - dx) * dy         +
+                 F(img, x0_plus_1, y0_plus_1, k * offset, rect.width - 2 * k * offset) * dx         * dy;
 
     return val;
 }
