@@ -116,7 +116,7 @@ void run(std::string config_name) {
     std::vector<Config> tasks = readTasks(std::move(config_name));
 
     std::ofstream ofs;
-    ofs.open(getProjectDirectory(OS) + tasks[0].getLogDirectory() + "/triangle.csv");
+    ofs.open(getProjectDirectory(OS) + tasks[0].getLogDirectory() + "/" + getCurrentTimestamp() + out_file_suffix + ".csv");
 
     std::map<int, std::vector<std::vector<cv::Mat>>> ref_images_with_qp, target_images_with_qp;
     std::map<int, EXPAND_ARRAY_TYPE> expand_images_with_qp;
@@ -147,7 +147,7 @@ void run(std::string config_name) {
         division_steps                          = task.getDivisionStep();
 
         lambda_inject_flag                      = task.isLambdaEnable();
-        injected_lambda                         = task.getLambda();
+        injected_lambda                         = task.getLambda() * task.getLambda();
 
         std::cout << "img_directory          : " << img_directory << std::endl;
         std::cout << "log_directory          : " << log_directory << std::endl;
@@ -346,15 +346,15 @@ void run(std::string config_name) {
         cv::Mat merge_color = triangle_division.getMergeModeColorImageFromCtu(foo, diagonal_line_area_flag);
 
         int code_length = triangle_division.getCtuCodeLength(foo);
-        std::string log_file_suffix = out_file_suffix + std::to_string(qp) + "_";
+        std::string log_file_suffix = out_file_suffix + std::to_string(qp) + "_" + getCurrentTimestamp();
         std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
         std::cout << "PSNR:" << getPSNR(target_image, p_image) << " code_length:" << code_length << std::endl;
         std::cout << log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png" << std::endl;
 
         time_t end = clock();
 
-//        const double time = static_cast<double>(end - start) / CLOCKS_PER_SEC;
-//        printf("time %d[m]%d[sec]\n", (int)time/60, (int)time%60);
+        const double time = static_cast<double>(end - start) / CLOCKS_PER_SEC;
+        printf("time %d[m]%d[sec]\n", (int)time/60, (int)time%60);
 //        Decoder decoder(ref_image, target_image);
 //        decoder.initTriangle(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);
 //        decoder.reconstructionTriangle(foo);
@@ -369,14 +369,14 @@ void run(std::string config_name) {
         Analyzer analayzer(log_file_suffix);
         analayzer.storeDistributionOfMv(foo, log_directory);
         analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
-//        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image));
+        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image));
 
 #else
         Analyzer analayzer(log_file_suffix);
         analayzer.storeDistributionOfMv(foo, log_directory);
         analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
-        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image));
-//        analayzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
+        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time);
+        analayzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
 #endif
 #endif
 #endif
@@ -385,7 +385,9 @@ void run(std::string config_name) {
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", triangle_division.getMvImage(foo));
-//            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mode_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
+            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mode_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
+            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_patch_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", recon);
+            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_merge_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", merge_color);
         }
 
         for(int i = 0 ; i < foo.size() ; i++) {
@@ -393,6 +395,11 @@ void run(std::string config_name) {
         }
         std::vector<CodingTreeUnit *>().swap(foo);
 
+        previous_qp = qp;
+
+#if STORE_NEWTON_LOG
+        storeNewtonLogs(getProjectDirectory(OS) + tasks[0].getLogDirectory());
+#endif
     }
     ofs.close();
 }
@@ -410,7 +417,7 @@ void run_square(std::string config_name) {
     std::vector<Config> tasks = readTasks(std::move(config_name));
 
     std::ofstream ofs;
-    ofs.open(getProjectDirectory(OS) + tasks[0].getLogDirectory() + "/square.csv");
+    ofs.open(getProjectDirectory(OS) + tasks[0].getLogDirectory() + "/" + getCurrentTimestamp() + out_file_suffix + ".csv");
 
     std::map<int, std::vector<std::vector<cv::Mat>>> ref_images_with_qp, target_images_with_qp;
     std::map<int, EXPAND_ARRAY_TYPE> expand_images_with_qp;
@@ -441,7 +448,7 @@ void run_square(std::string config_name) {
         division_steps                          = task.getDivisionStep();
 
         lambda_inject_flag                      = task.isLambdaEnable();
-        injected_lambda                         = task.getLambda();
+        injected_lambda                         = task.getLambda() * task.getLambda();
 
         std::cout << "img_directory          : " << img_directory << std::endl;
         std::cout << "log_directory          : " << log_directory << std::endl;
@@ -566,6 +573,7 @@ void run_square(std::string config_name) {
 
 //        if(qp != previous_qp){
 //            std::cout << "--------------------- free ---------------------" << std::endl;
+//
 //            freeHEVCExpandImage(expand_images_with_qp[previous_qp], 22, 2, 4, 1920, 1024);
 //            expand_images_with_qp.erase(previous_qp);
 //            for(int i = 0 ; i < target_images_with_qp[previous_qp].size() ; i++){
@@ -631,14 +639,14 @@ void run_square(std::string config_name) {
         cv::Mat color_line   = square_division.getPredictedColorImageFromCtu(foo, getPSNR(target_image, p_image), 0);
         cv::Mat color_vertex = square_division.getPredictedColorImageFromCtu(foo, getPSNR(target_image, p_image), 1);
 
-        cv::imwrite(img_directory + "_p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
-        cv::imwrite(img_directory + "_p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", square_division.getMvImage(foo));
-        cv::imwrite(img_directory + "_p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
-        cv::imwrite(img_directory + "_p_color_image_line_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color_line);
-        cv::imwrite(img_directory + "_p_color_image_vertex_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color_vertex);
+//        cv::imwrite(img_directory + "_p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
+//        cv::imwrite(img_directory + "_p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", square_division.getMvImage(foo));
+//        cv::imwrite(img_directory + "_p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
+//        cv::imwrite(img_directory + "_p_color_image_line_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color_line);
+//        cv::imwrite(img_directory + "_p_color_image_vertex_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color_vertex);
 
         int code_length = square_division.getCtuCodeLength(foo);
-        std::string log_file_suffix = out_file_suffix + std::to_string(qp) + "_";
+        std::string log_file_suffix = out_file_suffix + std::to_string(qp) + "_" + getCurrentTimestamp();
         std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
         std::cout << "PSNR:" << getPSNR(target_image, p_image) << " code_length:" << code_length << std::endl;
         std::cout << log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png" << std::endl;
@@ -647,36 +655,42 @@ void run_square(std::string config_name) {
 
         qp += qp_offset;
 
+        time_t end = clock();
+
+        const double time = static_cast<double>(end - start) / CLOCKS_PER_SEC;
+        printf("time %d[m]%d[sec]\n", (int)time/60, (int)time%60);
 //        Decoder decoder(ref_image, target_image);
-//        decoder.initSquare(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);
-//        decoder.reconstructionSquare(foo);
-//        cv::imwrite(img_directory + "/p_recon_decoder_test.png", decoder.getReconstructionSquareImage());
+//        decoder.initTriangle(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);
+//        decoder.reconstructionTriangle(foo);
+//        cv::imwrite(img_directory + "/p_recon_decoder_test.png", decoder.getReconstructionTriangleImage());
 //        cv::imwrite(img_directory + "/p_recon_mode_image_test.png", decoder.getModeImage(foo, diagonal_line_area_flag));
 //
 //        cv::imwrite(img_directory + "/p_mv_image_test.png", decoder.getMvImage(color));
 
 #if STORE_DISTRIBUTION_LOG
 #if STORE_MVD_DISTRIBUTION_LOG
-#if GAUSS_NEWTON_PARALLEL_ONLY
-        Analyzer analayzer("_parallel_only_" + std::to_string(qp) + "_";
+#if GAUSS_NEWTON_TRANSLATION_ONLY
+        Analyzer analayzer(log_file_suffix);
         analayzer.storeDistributionOfMv(foo, log_directory);
         analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
+        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image));
 
 #else
         Analyzer analayzer(log_file_suffix);
         analayzer.storeDistributionOfMv(foo, log_directory);
         analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
-        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image));
+        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time);
+        analayzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
 #endif
 #endif
 #endif
-
 
         if(STORE_IMG_LOG) {
-            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
-            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
-            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", square_division.getMvImage(foo));
-//            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mode_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
+            cv::imwrite(img_directory + "_p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
+            cv::imwrite(img_directory + "_p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", square_division.getMvImage(foo));
+            cv::imwrite(img_directory + "_p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
+            cv::imwrite(img_directory + "_p_color_image_line_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color_line);
+            cv::imwrite(img_directory + "_p_color_image_vertex_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color_vertex);
         }
 
         for(int i = 0 ; i < foo.size() ; i++) {
@@ -733,7 +747,7 @@ void storeNewtonLogs(std::string logDirectoryPath){
      *
      */
     std::ofstream ofs_newton2_0;
-    ofs_newton2_0.open(logDirectoryPath + "/Slowlog_ref_0_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".csv");
+    ofs_newton2_0.open(logDirectoryPath + "/Slowlog_ref_0_" + getCurrentTimestamp() + "_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".csv");
 
     ofs_newton2_0 << "translation" << std::endl;
     for(auto & m : ME_log_translation_0){
@@ -764,7 +778,7 @@ void storeNewtonLogs(std::string logDirectoryPath){
     ofs_newton2_0.close();
 
     std::ofstream ofs_newton2_1;
-    ofs_newton2_1.open(logDirectoryPath + "/Slowlog_ref_1_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".csv");
+    ofs_newton2_1.open(logDirectoryPath + "/Slowlog_ref_1_" + getCurrentTimestamp() + "_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".csv");
     ofs_newton2_1 << "translation" << std::endl;
     for(auto & m : ME_log_translation_0){
         if(m.residual.back() - m.residual.front() > 0.0 && m.percentage > 2.0) {
