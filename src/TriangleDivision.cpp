@@ -1072,7 +1072,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     int selected_index;
     std::vector<cv::Point2f> mvd;
     double cost_before_subdiv;
-    if(cost_before_subdiv_translation <= cost_before_subdiv_warping){
+    if(cost_before_subdiv_translation <= cost_before_subdiv_warping || (steps <= warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
         triangle_gauss_results[triangle_index].translation_flag = true;
         method_flag        = method_flag_translation;
         code_length        = code_length_translation;
