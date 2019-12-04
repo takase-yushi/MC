@@ -2966,8 +2966,8 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
     ly = 4 * sp4.y + 3;
 
     cv::Point2f mv_tmp(0.0, 0.0); //ブロックの動きベクトル
-    int SX = SEARCH_RANGE;                 // ブロックマッチングの探索範囲(X)
-    int SY = SEARCH_RANGE;                 // ブロックマッチングの探索範囲(Y)
+    int SX = 32;                 // ブロックマッチングの探索範囲(X)
+    int SY = 32;                 // ブロックマッチングの探索範囲(Y)
     int neighbor_pixels = BLOCKMATCHING_NEIGHBOR_PIXELS;     //1 : 近傍 1 画素,  2 : 近傍 2 画素,   n : 近傍 n 画素
 
     double rd, sad;
