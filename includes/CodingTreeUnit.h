@@ -18,6 +18,13 @@ enum MV_CODE_METHOD {
     MERGE2
 };
 
+enum PATCH_CODING_MODE {
+    TRANSLATION_DIFF = 0,
+    TRANSLATION_MERGE,
+    AFFINE_DIFF,
+    AFFINE_MERGE,
+    AFFINE_NEW_MERGE
+};
 
 class CodingTreeUnit {
 public:
