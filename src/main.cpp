@@ -368,7 +368,7 @@ void run(std::string config_name) {
         Analyzer analayzer(log_file_suffix);
         analayzer.storeDistributionOfMv(foo, log_directory, pells, residuals);
         analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
-        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time);
+        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time); // WARNING: こいつはstoreDistributionOfMv以降で呼ばないといけない
         analayzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
 #endif
 #endif
