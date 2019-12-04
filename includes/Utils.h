@@ -111,8 +111,8 @@ enum {
  * 各種モードのON/OFF
  */
 #define MERGE_MODE true
-#define MERGE2_ENABLE true
 #define INTRA_MODE false
+#define MERGE2_ENABLE true
 #define COLLOCATED_ENABLE false
 #define INTRA_LIMIT_MODE false // イントラが選択されたらそれ以降は割らないモード
 #define RD_BLOCK_MATCHING true
