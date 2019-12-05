@@ -14,15 +14,15 @@ class CodingTreeUnit;
 
 class Analyzer {
 public:
-    void storeDistributionOfMv(std::vector<CodingTreeUnit*> ctus, std::string log_path, std::vector<int> pells, std::vector<double> residuals);
     void storeMarkdownFile(double psnr, std::string log_path);
-    Analyzer(const std::string &fileSuffix);
+    Analyzer(std::vector<CodingTreeUnit *> ctus, std::string _log_path, const std::string &fileSuffix, std::vector<int> _pells, std::vector<double> _residuals);
     void storeCsvFileWithStream(std::ofstream &ofs, double psnr, double time);
     void storeMergeMvLog(std::vector<CodingTreeUnit*> ctus, std::string log_path);
-
+    void storeDistributionOfMv();
+    void storeLog();
 
 private:
-    void storeDistributionOfMv(CodingTreeUnit *ctu);
+    void collectResults(CodingTreeUnit *ctu);
     void storeMergeMvLog(CodingTreeUnit* ctu, std::ofstream &ofs);
     int getEntropyCodingCode();
 
@@ -79,6 +79,10 @@ private:
     int affine_merge;
     int affine_new_merge;
 
+    std::vector<int> pells;
+    std::vector<double> residuals;
+
+    std::string log_path;
 };
 
 

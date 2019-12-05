@@ -12,29 +12,11 @@
 #include <algorithm>
 
 /**
- *
+ * @fn void Analyzer::storeDistributionOfMv()
+ * @brief MVの分布を見る
  * @param ctus
  */
-void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::string log_path, std::vector<int> pells, std::vector<double> residuals) {
-    greater_0_flag_sum = greater_1_flag_sum = sign_flag_sum = mvd_code_sum = affine_patch_num = translation_patch_num = 0;
-    mvd_affine_code_sum = mvd_translation_code_sum = 0;
-    merge_counter = differential_counter = 0;
-    code_sum = 0;
-    intra_counter = 0;
-    patch_num = 0;
-    max_merge_mv_diff_x = 0;
-    max_merge_mv_diff_y = 0;
-    merge2_counter = 0;
-    translation_diff = translation_merge = 0;
-    affine_diff = affine_merge = affine_new_merge = 0;
-
-    for(auto ctu : ctus){
-        storeDistributionOfMv(ctu);
-    }
-
-    log_path = log_path + "/log" + file_suffix;
-    mkdir((log_path).c_str(), 0744);
-
+void Analyzer::storeDistributionOfMv() {
     FILE *fp = std::fopen((log_path + "/mvd_distribution" + file_suffix + ".csv").c_str(), "w");
     for(auto x : mvd_counter){
         fprintf(fp, "%d,%d\n", x.first, x.second);
@@ -71,45 +53,6 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
     }
     fclose(fp);
 
-    fp = std::fopen((log_path + "/mvd_result" + file_suffix + ".txt").c_str(), "w");
-    fprintf(fp, "summary =======================================================\n");
-    fprintf(fp, "code_sum                              :%d\n", code_sum);
-    fprintf(fp, "code_sum(entropy coding)              :%d\n", getEntropyCodingCode());
-    fprintf(fp, "greater_0_flag                        :%d\n", greater_0_flag_sum);
-    fprintf(fp, "greater_1_flag                        :%d\n", greater_1_flag_sum);
-    fprintf(fp, "sign_flag                             :%d\n", sign_flag_sum);
-    fprintf(fp, "mvd_code                              :%d\n\n", mvd_code_sum);
-    fprintf(fp, "Number of patches ==============================================\n");
-    fprintf(fp, "patch num(all)                        :%d\n", patch_num);
-    fprintf(fp, "Translation patch num                 :%d\n", translation_patch_num);
-    fprintf(fp, "Affine patch Num                      :%d\n\n", affine_patch_num);
-    fprintf(fp, "Code amount of patches =========================================\n");
-    fprintf(fp, "Translation's code                    :%d\n", mvd_translation_code_sum);
-    fprintf(fp, "Affine patch's code                   :%d\n\n", mvd_affine_code_sum);
-    fprintf(fp, "Breakdown of coding methods ====================================\n");
-    fprintf(fp, "Differential_patch                    :%d\n", differential_counter);
-    fprintf(fp, "merge_patch                           :%d\n\n", merge_counter);
-
-    int max_number_of_digits = std::max({getNumberOfDigits(translation_diff), getNumberOfDigits(translation_merge), getNumberOfDigits(affine_diff), getNumberOfDigits(affine_merge), getNumberOfDigits(affine_new_merge)});
-    fprintf(fp, "Number of patches by coding methods ============================\n");
-    fprintf(fp, "translation differential coding patch :%*d(%2.0f[%%])\n", max_number_of_digits, translation_diff, (double)translation_diff / patch_num * 100);
-    fprintf(fp, "translation merge coding patch        :%*d(%2.0f[%%])\n", max_number_of_digits, translation_merge, (double)translation_merge / patch_num * 100);
-    fprintf(fp, "Affine differential coding patch      :%*d(%2.0f[%%])\n", max_number_of_digits, affine_diff, (double)affine_diff / patch_num * 100);
-    fprintf(fp, "Affine merge coding patch             :%*d(%2.0f[%%])\n", max_number_of_digits, affine_merge, (double)affine_merge / patch_num * 100);
-    fprintf(fp, "Affine new merge coding patch         :%*d(%2.0f[%%])\n\n", max_number_of_digits, affine_new_merge, (double)affine_new_merge / patch_num * 100);
-    fprintf(fp, "PSNR by coding methods =========================================\n");
-    fprintf(fp, "TRANSLATION_DIFF PSNR                 :%.2f[dB]\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::TRANSLATION_DIFF] / pells[PATCH_CODING_MODE::TRANSLATION_DIFF])));
-    fprintf(fp, "TRANSLATION_MERGE PSNR                :%.2f[dB]\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::TRANSLATION_MERGE] / pells[PATCH_CODING_MODE::TRANSLATION_MERGE])));
-    fprintf(fp, "AFFINE_DIFF PSNR                      :%.2f[dB]\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::AFFINE_DIFF] / pells[PATCH_CODING_MODE::AFFINE_DIFF])));
-    fprintf(fp, "AFFINE_MERGE PSNR                     :%.2f[dB]\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::AFFINE_MERGE] / pells[PATCH_CODING_MODE::AFFINE_MERGE])));
-    fprintf(fp, "AFFINE_NEW_MERGE PSNR                 :%.2f[dB]\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::AFFINE_NEW_MERGE] / pells[PATCH_CODING_MODE::AFFINE_NEW_MERGE])));
-
-    if(INTRA_MODE) {
-        fprintf(fp, "intra_patch           :%d\n", intra_counter);
-        fprintf(fp, "intra_flag_entropy    :%f\n", getEntropy({intra_flag_counter[0], intra_flag_counter[1]}));
-    }
-
-    fclose(fp);
 }
 
 
@@ -117,7 +60,7 @@ void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::st
  *
  * @param ctu
  */
-void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
+void Analyzer::collectResults(CodingTreeUnit *ctu) {
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr){
         int flags_code = 1;
         if (INTRA_MODE) flags_code++;
@@ -232,14 +175,12 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
         return;
     }
 
-    if(ctu->node1 != nullptr) storeDistributionOfMv(ctu->node1);
-    if(ctu->node2 != nullptr) storeDistributionOfMv(ctu->node2);
-    if(ctu->node3 != nullptr) storeDistributionOfMv(ctu->node3);
-    if(ctu->node4 != nullptr) storeDistributionOfMv(ctu->node4);
+    if(ctu->node1 != nullptr) collectResults(ctu->node1);
+    if(ctu->node2 != nullptr) collectResults(ctu->node2);
+    if(ctu->node3 != nullptr) collectResults(ctu->node3);
+    if(ctu->node4 != nullptr) collectResults(ctu->node4);
     code_sum += 1;
 }
-
-Analyzer::Analyzer(const std::string &fileSuffix) : file_suffix(fileSuffix) {}
 
 /**
  * @fn void Analyzer::storeMarkdownFile(double psnr, std::string log_path)
@@ -358,3 +299,76 @@ int Analyzer::getEntropyCodingCode() {
 
     return tmp_code_sum;
 }
+
+Analyzer::Analyzer(std::vector<CodingTreeUnit *> ctus, std::string _log_path, const std::string &fileSuffix, std::vector<int> _pells, std::vector<double> _residuals) {
+    greater_0_flag_sum = greater_1_flag_sum = sign_flag_sum = mvd_code_sum = affine_patch_num = translation_patch_num = 0;
+    mvd_affine_code_sum = mvd_translation_code_sum = 0;
+    merge_counter = differential_counter = 0;
+    code_sum = 0;
+    intra_counter = 0;
+    patch_num = 0;
+    max_merge_mv_diff_x = 0;
+    max_merge_mv_diff_y = 0;
+    merge2_counter = 0;
+    translation_diff = translation_merge = 0;
+    affine_diff = affine_merge = affine_new_merge = 0;
+    pells = _pells;
+    residuals = _residuals;
+    log_path = _log_path;
+    file_suffix = fileSuffix;
+
+    for(auto ctu : ctus){
+        collectResults(ctu);
+    }
+
+    log_path = log_path + "/log" + file_suffix;
+    mkdir((log_path).c_str(), 0744);
+}
+
+/**
+ * @fn void Analyzer::storeLog()
+ * @brief ログを吐き出す
+ */
+void Analyzer::storeLog() {
+    FILE *fp = std::fopen((log_path + "/mvd_result" + file_suffix + ".txt").c_str(), "w");
+
+    fprintf(fp, "summary =======================================================\n");
+    fprintf(fp, "code_sum                              :%d\n", code_sum);
+    fprintf(fp, "code_sum(entropy coding)              :%d\n", getEntropyCodingCode());
+    fprintf(fp, "greater_0_flag                        :%d\n", greater_0_flag_sum);
+    fprintf(fp, "greater_1_flag                        :%d\n", greater_1_flag_sum);
+    fprintf(fp, "sign_flag                             :%d\n", sign_flag_sum);
+    fprintf(fp, "mvd_code                              :%d\n\n", mvd_code_sum);
+    fprintf(fp, "Number of patches ==============================================\n");
+    fprintf(fp, "patch num(all)                        :%d\n", patch_num);
+    fprintf(fp, "Translation patch num                 :%d\n", translation_patch_num);
+    fprintf(fp, "Affine patch Num                      :%d\n\n", affine_patch_num);
+    fprintf(fp, "Code amount of patches =========================================\n");
+    fprintf(fp, "Translation's code                    :%d\n", mvd_translation_code_sum);
+    fprintf(fp, "Affine patch's code                   :%d\n\n", mvd_affine_code_sum);
+    fprintf(fp, "Breakdown of coding methods ====================================\n");
+    fprintf(fp, "Differential_patch                    :%d\n", differential_counter);
+    fprintf(fp, "merge_patch                           :%d\n\n", merge_counter);
+
+    int max_number_of_digits = std::max({getNumberOfDigits(translation_diff), getNumberOfDigits(translation_merge), getNumberOfDigits(affine_diff), getNumberOfDigits(affine_merge), getNumberOfDigits(affine_new_merge)});
+    fprintf(fp, "Number of patches by coding methods ============================\n");
+    fprintf(fp, "translation differential coding patch :%*d(%2.0f[%%])\n", max_number_of_digits, translation_diff, (double)translation_diff / patch_num * 100);
+    fprintf(fp, "translation merge coding patch        :%*d(%2.0f[%%])\n", max_number_of_digits, translation_merge, (double)translation_merge / patch_num * 100);
+    fprintf(fp, "Affine differential coding patch      :%*d(%2.0f[%%])\n", max_number_of_digits, affine_diff, (double)affine_diff / patch_num * 100);
+    fprintf(fp, "Affine merge coding patch             :%*d(%2.0f[%%])\n", max_number_of_digits, affine_merge, (double)affine_merge / patch_num * 100);
+    fprintf(fp, "Affine new merge coding patch         :%*d(%2.0f[%%])\n\n", max_number_of_digits, affine_new_merge, (double)affine_new_merge / patch_num * 100);
+    fprintf(fp, "PSNR by coding methods =========================================\n");
+    fprintf(fp, "TRANSLATION_DIFF PSNR                 :%.2f[dB]\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::TRANSLATION_DIFF] / pells[PATCH_CODING_MODE::TRANSLATION_DIFF])));
+    fprintf(fp, "TRANSLATION_MERGE PSNR                :%.2f[dB]\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::TRANSLATION_MERGE] / pells[PATCH_CODING_MODE::TRANSLATION_MERGE])));
+    fprintf(fp, "AFFINE_DIFF PSNR                      :%.2f[dB]\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::AFFINE_DIFF] / pells[PATCH_CODING_MODE::AFFINE_DIFF])));
+    fprintf(fp, "AFFINE_MERGE PSNR                     :%.2f[dB]\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::AFFINE_MERGE] / pells[PATCH_CODING_MODE::AFFINE_MERGE])));
+    fprintf(fp, "AFFINE_NEW_MERGE PSNR                 :%.2f[dB]\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::AFFINE_NEW_MERGE] / pells[PATCH_CODING_MODE::AFFINE_NEW_MERGE])));
+
+    if(INTRA_MODE) {
+        fprintf(fp, "intra_patch           :%d\n", intra_counter);
+        fprintf(fp, "intra_flag_entropy    :%f\n", getEntropy({intra_flag_counter[0], intra_flag_counter[1]}));
+    }
+
+    fclose(fp);
+}
+
