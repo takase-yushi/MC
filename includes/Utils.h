@@ -230,4 +230,6 @@ cv::Mat half(cv::Mat &in,int k);
 
 std::string getCurrentTimestamp();
 
+int getNumberOfDigits(int num);
+
 #endif //ENCODER_UTILS_H

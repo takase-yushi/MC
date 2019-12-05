@@ -339,3 +339,19 @@ std::string getCurrentTimestamp(){
 
     return std::string(datetime);
 }
+
+/**
+ * @fn int getNumberOfDigits(int num)
+ * @brief numの桁数を求める
+ * @param num 桁数を求めたい値
+ * @return 桁数
+ */
+int getNumberOfDigits(int num){
+    int cnt = 0;
+    while(num > 0) {
+        num /= 10;
+        cnt++;
+    }
+
+    return cnt;
+}
