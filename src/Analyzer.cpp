@@ -5,6 +5,7 @@
 #include "../includes/Analyzer.h"
 #include "../includes/Utils.h"
 #include "../includes/Encode.h"
+#include "../includes/psnr.h"
 #include <cstdio>
 #include <iostream>
 #include <sys/stat.h>
@@ -300,7 +301,7 @@ int Analyzer::getEntropyCodingCode() {
     return tmp_code_sum;
 }
 
-Analyzer::Analyzer(std::vector<CodingTreeUnit *> ctus, std::string _log_path, const std::string &fileSuffix, std::vector<int> _pells, std::vector<double> _residuals) {
+Analyzer::Analyzer(std::vector<CodingTreeUnit *> ctus, std::string _log_path, const std::string &fileSuffix, cv::Mat targetImage, cv::Mat pImage, std::vector<int> _pells, std::vector<double> _residuals) {
     greater_0_flag_sum = greater_1_flag_sum = sign_flag_sum = mvd_code_sum = affine_patch_num = translation_patch_num = 0;
     mvd_affine_code_sum = mvd_translation_code_sum = 0;
     merge_counter = differential_counter = 0;
@@ -316,6 +317,8 @@ Analyzer::Analyzer(std::vector<CodingTreeUnit *> ctus, std::string _log_path, co
     residuals = _residuals;
     log_path = _log_path;
     file_suffix = fileSuffix;
+    target_image = targetImage;
+    p_image = pImage;
 
     for(auto ctu : ctus){
         collectResults(ctu);
@@ -335,6 +338,7 @@ void Analyzer::storeLog() {
     fprintf(fp, "summary =======================================================\n");
     fprintf(fp, "code_sum                              :%d\n", code_sum);
     fprintf(fp, "code_sum(entropy coding)              :%d\n", getEntropyCodingCode());
+    fprintf(fp, "PSNR[dB]                              :%.2f[dB]\n", getPSNR(target_image, p_image));
     fprintf(fp, "greater_0_flag                        :%d\n", greater_0_flag_sum);
     fprintf(fp, "greater_1_flag                        :%d\n", greater_1_flag_sum);
     fprintf(fp, "sign_flag                             :%d\n", sign_flag_sum);
