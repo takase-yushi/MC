@@ -357,24 +357,27 @@ void run(std::string config_name) {
 //        cv::imwrite(img_directory + "/p_mv_image_test.png", decoder.getMvImage(color));
 
 #if STORE_DISTRIBUTION_LOG
-#if STORE_MVD_DISTRIBUTION_LOG
 #if GAUSS_NEWTON_TRANSLATION_ONLY
-        Analyzer analayzer(log_file_suffix);
-        analayzer.storeDistributionOfMv(foo, log_directory);
-        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
-        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time);
-        analayzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
+        Analyzer analyzer(log_file_suffix);
+        #if STORE_MVD_DISTRIBUTION_LOG
+        analyzer.storeDistributionOfMv(foo, log_directory);
+        analyzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
+        #endif
+        analyzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time);
+        analyzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
 #else
-        Analyzer analayzer(log_file_suffix);
-        analayzer.storeDistributionOfMv(foo, log_directory, pells, residuals);
-        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
-        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time); // WARNING: こいつはstoreDistributionOfMv以降で呼ばないといけない
-        analayzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
+        Analyzer analyzer(foo, log_directory, log_file_suffix, pells, residuals);
+#if STORE_MVD_DISTRIBUTION_LOG
+        analyzer.storeDistributionOfMv();
+        analyzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
 #endif
+        analyzer.storeLog();
+        analyzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time); // WARNING: こいつはstoreDistributionOfMv以降で呼ばないといけない
+        analyzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
 #endif
 #endif
 
-        if(STORE_IMG_LOG) {
+#if STORE_IMG_LOG
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", triangle_division.getMvImage(foo));
@@ -382,6 +385,7 @@ void run(std::string config_name) {
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_patch_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", recon);
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_merge_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", merge_color);
         }
+#endif
 
         for(int i = 0 ; i < foo.size() ; i++) {
             delete foo[i];
