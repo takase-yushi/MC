@@ -124,7 +124,7 @@ enum {
  * ログファイル書き出し関連
  */
 #define STORE_DISTRIBUTION_LOG true
-#define STORE_MVD_DISTRIBUTION_LOG true
+#define STORE_MVD_DISTRIBUTION_LOG false
 #define STORE_IMG_LOG false
 #define STORE_NEWTON_LOG false
 
