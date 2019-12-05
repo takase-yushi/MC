@@ -8,22 +8,24 @@
 
 #include <vector>
 #include <map>
+#include <opencv2/core/mat.hpp>
 #include "CodingTreeUnit.h"
 
 class CodingTreeUnit;
 
 class Analyzer {
 public:
-    void storeDistributionOfMv(std::vector<CodingTreeUnit*> ctus, std::string log_path);
     void storeMarkdownFile(double psnr, std::string log_path);
-    Analyzer(const std::string &fileSuffix);
+    Analyzer(std::vector<CodingTreeUnit *> ctus, std::string _log_path, const std::string &fileSuffix, cv::Mat targetImage, cv::Mat pImage, std::vector<int> _pells, std::vector<double> _residuals);
     void storeCsvFileWithStream(std::ofstream &ofs, double psnr, double time);
     void storeMergeMvLog(std::vector<CodingTreeUnit*> ctus, std::string log_path);
-
+    void storeDistributionOfMv();
+    void storeLog();
 
 private:
-    void storeDistributionOfMv(CodingTreeUnit *ctu);
+    void collectResults(CodingTreeUnit *ctu);
     void storeMergeMvLog(CodingTreeUnit* ctu, std::ofstream &ofs);
+    int getEntropyCodingCode();
 
     // mvdのカウンター
     std::map<int, int> mvd_counter;
@@ -51,19 +53,19 @@ private:
 
     // 符号量関連
     int mvd_code_sum;
-    int mvd_warping_code_sum;
+    int mvd_affine_code_sum;
     int mvd_translation_code_sum;
     int code_sum;
 
     // ファイルの最後につける値
     std::string file_suffix;
 
-    int warping_patch_num;
+    int affine_patch_num;
     int merge2_counter;
     int translation_patch_num;
 
     int merge_counter;
-    int spatial_counter;
+    int differential_counter;
 
     int intra_counter;
 
@@ -71,6 +73,20 @@ private:
 
     float max_merge_mv_diff_x;
     float max_merge_mv_diff_y;
+
+    int translation_diff;
+    int translation_merge;
+    int affine_diff;
+    int affine_merge;
+    int affine_new_merge;
+
+    std::vector<int> pells;
+    std::vector<double> residuals;
+
+    std::string log_path;
+
+    cv::Mat target_image, p_image;
+
 };
 
 

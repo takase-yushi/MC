@@ -102,6 +102,8 @@ enum {
 #define USE_BM_TRANSLATION_MV false
 #define MV_LIST_MAX_NUM 5
 #define SEARCH_RANGE 16
+#define TRANSLATION_COST_RATIO 1.0
+#define WARPING_COST_RATIO 1.0
 
 /**
  * 各種モードのON/OFF
@@ -122,10 +124,10 @@ enum {
  * ログファイル書き出し関連
  */
 #define STORE_DISTRIBUTION_LOG true
-#define STORE_MVD_DISTRIBUTION_LOG true
+#define STORE_MVD_DISTRIBUTION_LOG false
 #define STORE_IMG_LOG false
 #define STORE_NEWTON_LOG false
-
+#define STORE_MERGE_LOG false
 
 // 2画素以上のアップデートが来たら打ち切る
 #define DELTA_UV_THRESHOLD 2
@@ -229,5 +231,7 @@ std::vector<std::string> splitString(const std::string &s, char delim);
 cv::Mat half(cv::Mat &in,int k);
 
 std::string getCurrentTimestamp();
+
+int getNumberOfDigits(int num);
 
 #endif //ENCODER_UTILS_H

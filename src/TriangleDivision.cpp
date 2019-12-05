@@ -966,7 +966,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     std::vector<cv::Point2f> gauss_result_warping;
     cv::Point2f gauss_result_translation;
 
-    int warping_limit = 4;
+    int warping_limit = 2;
 
     if(cmt == nullptr) {
         cmt = previousMvList[0][triangle_index];
@@ -1020,7 +1020,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                     triangle_gauss_results[triangle_index].mv_warping, SSE_before_subdiv_warping,
                     triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, false, dummy);
 #endif
-            if(cost_translation < cost_warping || (steps <= warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
+            if(TRANSLATION_COST_RATIO * cost_translation < WARPING_COST_RATIO * cost_warping || (steps <= warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
                 triangle_gauss_results[triangle_index].translation_flag = true;
                 triangle_gauss_results[triangle_index].method_translation = method_translation;
                 translation_flag = true;
@@ -1072,13 +1072,13 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     int selected_index;
     std::vector<cv::Point2f> mvd;
     double cost_before_subdiv;
-    if(cost_before_subdiv_translation <= cost_before_subdiv_warping){
+    if(TRANSLATION_COST_RATIO * cost_before_subdiv_translation <= WARPING_COST_RATIO * cost_before_subdiv_warping || (steps <= warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
         triangle_gauss_results[triangle_index].translation_flag = true;
         method_flag        = method_flag_translation;
         code_length        = code_length_translation;
         selected_index     = selected_index_translation;
         mvd                = mvd_translation;
-        cost_before_subdiv = cost_before_subdiv_translation;
+        cost_before_subdiv = TRANSLATION_COST_RATIO * cost_before_subdiv_translation;
         translation_flag   = true;
     }else{
         triangle_gauss_results[triangle_index].translation_flag = false;
@@ -1086,7 +1086,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         code_length        = code_length_warping;
         selected_index     = selected_index_warping;
         mvd                = mvd_warping;
-        cost_before_subdiv = cost_before_subdiv_warping;
+        cost_before_subdiv = WARPING_COST_RATIO * cost_before_subdiv_warping;
         translation_flag   = false;
     }
 
@@ -1288,12 +1288,12 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                     mv_warping_tmp, error_warping_tmp,
                     triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], false, dummy);
 #endif
-            if(cost_translation_tmp < cost_warping_tmp || (steps - 2 <= warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY){
+            if(TRANSLATION_COST_RATIO * cost_translation_tmp < WARPING_COST_RATIO * cost_warping_tmp || (steps - 2 <= warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY){
                 triangle_gauss_results[triangle_indexes[j]].translation_flag = true;
                 triangle_gauss_results[triangle_indexes[j]].method_warping = method_translation_tmp;
                 split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_warping_tmp, error_translation_tmp, triangle_size_tmp, true, error_translation_tmp, error_warping_tmp);
 
-                costs[j] = cost_translation_tmp;
+                costs[j] = TRANSLATION_COST_RATIO * cost_translation_tmp;
                 methods[j] = method_translation_tmp;
                 code_length_tmp[j] = code_length_translation_tmp;
                 if(method_translation_tmp == MV_CODE_METHOD::MERGE || method_translation_tmp == MV_CODE_METHOD::MERGE2){
@@ -1304,7 +1304,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 triangle_gauss_results[triangle_indexes[j]].method_translation = method_warping_tmp;
                 split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_warping_tmp, error_translation_tmp, triangle_size_tmp, false, error_translation_tmp, error_warping_tmp);
 
-                costs[j] = cost_warping_tmp;
+                costs[j] = WARPING_COST_RATIO * cost_warping_tmp;
                 methods[j] = method_warping_tmp;
                 code_length_tmp[j] = code_length_warping_tmp;
                 if(method_warping_tmp == MV_CODE_METHOD::MERGE || method_warping_tmp == MV_CODE_METHOD::MERGE2){
@@ -2563,8 +2563,25 @@ void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &ou
             }
 
         }else {
-            getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, SEARCH_RANGE, area_flag, ctu->triangle_index,
+            double ret = getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, SEARCH_RANGE, area_flag, ctu->triangle_index,
                               ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
+
+            extern std::vector<double> residuals;
+            if(ctu->translation_flag){
+                if(ctu->method == MV_CODE_METHOD::SPATIAL){
+                    residuals[PATCH_CODING_MODE::TRANSLATION_DIFF] += ret;
+                }else if(ctu->method == MV_CODE_METHOD::MERGE){
+                    residuals[PATCH_CODING_MODE::TRANSLATION_MERGE] += ret;
+                }
+            }else{
+                if(ctu->method == MV_CODE_METHOD::SPATIAL){
+                    residuals[PATCH_CODING_MODE::AFFINE_DIFF] += ret;
+                }else if(ctu->method == MV_CODE_METHOD::MERGE){
+                    residuals[PATCH_CODING_MODE::AFFINE_MERGE] += ret;
+                }else if(ctu->method == MV_CODE_METHOD::MERGE2){
+                    residuals[PATCH_CODING_MODE::AFFINE_NEW_MERGE] += ret;
+                }
+            }
         }
         return;
     }
@@ -2672,6 +2689,7 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
         std::vector<cv::Point2f> mvs{mv, mv, mv};
         std::vector<cv::Point2f> pixels = getPixelsInTriangle(triangle, area_flag, triangle_index, ctu, block_size_x, block_size_y);
 
+        extern std::vector<int> pells;
         if(ctu->translation_flag) {
             if(ctu->method == MV_CODE_METHOD::MERGE){
                 for(auto pixel : pixels) {
@@ -2679,12 +2697,14 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
                     G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     B(out, (int)pixel.x, (int)pixel.y) = 0;
                 }
+                pells[PATCH_CODING_MODE::TRANSLATION_MERGE] += pixels.size();
             }else if(ctu->method == MV_CODE_METHOD::SPATIAL){
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     B(out, (int)pixel.x, (int)pixel.y) = 0;
                 }
+                pells[PATCH_CODING_MODE::TRANSLATION_DIFF] += pixels.size();
             }else if(ctu->method == MV_CODE_METHOD::INTRA){
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
@@ -2700,13 +2720,14 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
                     G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     B(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                 }
+                pells[PATCH_CODING_MODE::AFFINE_MERGE] += pixels.size();
             }else if(ctu->method == MV_CODE_METHOD::MERGE2){
 
                 int share_count = 0;
                 for(auto f : ctu->share_flag) {
                     if(f) share_count++;
                 }
-
+                pells[PATCH_CODING_MODE::AFFINE_NEW_MERGE] += pixels.size();
                 if(share_count == 1){
                     for(auto pixel : pixels) {
                         R(out, (int)pixel.x, (int)pixel.y) = 54;
@@ -2727,6 +2748,7 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
                     G(out, (int)pixel.x, (int)pixel.y) = 0;
                     B(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                 }
+                pells[PATCH_CODING_MODE::AFFINE_DIFF] += pixels.size();
             }else if(ctu->method == MV_CODE_METHOD::INTRA){
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
