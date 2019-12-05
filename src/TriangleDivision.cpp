@@ -1665,6 +1665,73 @@ std::vector<int> TriangleDivision::getSpatialTriangleList(int t_idx){
 }
 
 /**
+ * @fn std::vector<int> TriangleDivision::getSpatialTriangleListWithParentNode(CodingTreeUnit *ctu)
+ * @brief 親ノードの隣接パッチも含めて取得する
+ * @param ctu 符号化対象のCodingTreeUnit
+ * @return 隣接パッチ候補のvector
+ */
+std::vector<int> TriangleDivision::getSpatialTriangleListWithParentNode(CodingTreeUnit *ctu){
+    int t_idx = ctu->triangle_index;
+    std::pair<Triangle, int> triangle = triangles[t_idx];
+    std::vector<int> list1 = getIdxCoveredTriangleIndexList(triangle.first.p1_idx);
+    std::vector<int> list2 = getIdxCoveredTriangleIndexList(triangle.first.p2_idx);
+    std::vector<int> list3 = getIdxCoveredTriangleIndexList(triangle.first.p3_idx);
+
+    std::set<int> spatialTriangles, mutualIndexSet1, mutualIndexSet2, mutualIndexSet3;
+
+#if MVD_DEBUG_LOG
+    std::cout << "p1:" << triangles[t_idx].first.p1_idx << std::endl;
+    for(auto item : list1){
+        std::cout << item << std::endl;
+    }
+    puts("");
+
+    std::cout << "p2:" << triangles[t_idx].first.p2_idx << std::endl;
+    for(auto item : list2){
+        std::cout << item << std::endl;
+    }
+    puts("");
+    std::cout << "p3:" << triangles[t_idx].first.p3_idx << std::endl;
+
+    for(auto item : list3){
+        std::cout << item << std::endl;
+    }
+    std::cout << "t_idx:" << t_idx << std::endl;
+    puts("");
+
+#endif
+
+    for(auto idx : list1) if(isCodedTriangle[idx] && idx != t_idx) spatialTriangles.emplace(idx);
+    for(auto idx : list2) if(isCodedTriangle[idx] && idx != t_idx) spatialTriangles.emplace(idx);
+    for(auto idx : list3) if(isCodedTriangle[idx] && idx != t_idx) spatialTriangles.emplace(idx);
+
+    std::vector<int> ret;
+
+    // 符号化対象パッチがルートノードの場合は親が存在しないのでリターンする
+    if(ctu->parentNode == nullptr){
+        for(auto idx : spatialTriangles) ret.emplace_back(idx);
+        return ret;
+    }
+
+    t_idx = ctu->parentNode->triangle_index;
+    triangle = triangles[t_idx];
+    list1 = getIdxCoveredTriangleIndexList(triangle.first.p1_idx);
+    list2 = getIdxCoveredTriangleIndexList(triangle.first.p2_idx);
+    list3 = getIdxCoveredTriangleIndexList(triangle.first.p3_idx);
+
+    for(auto idx : list1) if(isCodedTriangle[idx] && idx != t_idx) spatialTriangles.emplace(idx);
+    for(auto idx : list2) if(isCodedTriangle[idx] && idx != t_idx) spatialTriangles.emplace(idx);
+    for(auto idx : list3) if(isCodedTriangle[idx] && idx != t_idx) spatialTriangles.emplace(idx);
+
+    for(auto idx : spatialTriangles){
+        ret.emplace_back(idx);
+    }
+
+    return ret;
+}
+
+
+/**
  * @fn void TriangleDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num)
  * @brief 過去の動きベクトルを参照するためのTreeを構築する
  * @param trees 分割形状
@@ -1848,17 +1915,23 @@ bool TriangleDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CO
  */
 std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels){
     // 空間予測と時間予測の候補を取り出す
-    std::vector<int> spatial_triangles = getSpatialTriangleList(triangle_idx);
+    std::vector<int> spatial_triangles = getSpatialTriangleListWithParentNode(ctu);
     int spatial_triangle_size = static_cast<int>(spatial_triangles.size());
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors; // ベクトルとモードを表すフラグのペア
     std::vector<std::vector<cv::Point2f>> warping_vectors;
+
+//    std::cout << corners[triangles[triangle_idx].first.p1_idx] << " " << corners[triangles[triangle_idx].first.p2_idx] << " " << corners[triangles[triangle_idx].first.p3_idx] << std::endl;
 
     // すべてのベクトルを格納する．
     for(int i = 0 ; i < spatial_triangle_size ; i++) {
         int spatial_triangle_index = spatial_triangles[i];
         GaussResult spatial_triangle = triangle_gauss_results[spatial_triangle_index];
 
+//        std::cout << std::boolalpha << spatial_triangle.translation_flag << " ";
+
+
         if(spatial_triangle.translation_flag){
+//            std::cout << spatial_triangle.mv_translation << std::endl;
             if(!isMvExists(vectors, spatial_triangle.mv_translation) && vectors.size() <= MV_LIST_MAX_NUM) {
                 vectors.emplace_back(spatial_triangle.mv_translation, SPATIAL);
                 warping_vectors.emplace_back();
@@ -1904,6 +1977,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
             }
 
             mv_average = roundVecQuarter(mv_average);
+//            std::cout << mv_average << std::endl;
             if(!isMvExists(vectors, mv_average) && vectors.size() <= MV_LIST_MAX_NUM){
                 vectors.emplace_back(mv_average, SPATIAL);
             }
@@ -1921,6 +1995,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> TriangleD
     }
 #endif
 
+//    std::cout << vectors.size() << std::endl;
     if(vectors.size() < 2) {
         vectors.emplace_back(cv::Point2f(0.0, 0.0), SPATIAL);
         warping_vectors.emplace_back();

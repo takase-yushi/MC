@@ -127,6 +127,7 @@ public:
     static SplitResult getSplitTriangle(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, int type);
     bool split(std::vector<std::vector<std::vector<unsigned char *>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point3Vec triangle, int triangle_index, int type, int steps, std::vector<std::vector<int>> &diagonal_line_area_flag);
     std::vector<int> getSpatialTriangleList(int t_idx);
+    std::vector<int> getSpatialTriangleListWithParentNode(CodingTreeUnit *ctu);
     cv::Point2f getCollocatedTriangleList(CodingTreeUnit* unit);
     int getCtuCodeLength(std::vector<CodingTreeUnit*> ctus);
 
