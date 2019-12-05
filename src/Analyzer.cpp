@@ -353,7 +353,7 @@ void Analyzer::storeLog() {
         max_area_ratio_digits = 2;
     }
 
-    int max_patch_num_digits = std::max(translation_patch_num, affine_patch_num);
+    int max_patch_num_digits = std::max(getNumberOfDigits(translation_patch_num), getNumberOfDigits(affine_patch_num));
 
     fprintf(fp, "Number of patches ==============================================\n");
     fprintf(fp, "patch num(all)                        :%d\n", patch_num);
@@ -368,11 +368,11 @@ void Analyzer::storeLog() {
 
     int max_number_of_digits = std::max({getNumberOfDigits(translation_diff), getNumberOfDigits(translation_merge), getNumberOfDigits(affine_diff), getNumberOfDigits(affine_merge), getNumberOfDigits(affine_new_merge)});
     fprintf(fp, "Number of patches by coding methods ============================\n");
-    fprintf(fp, "translation differential coding patch :%*d(%2.0f[%%])\n", max_number_of_digits, translation_diff, (double)translation_diff / patch_num * 100);
-    fprintf(fp, "translation merge coding patch        :%*d(%2.0f[%%])\n", max_number_of_digits, translation_merge, (double)translation_merge / patch_num * 100);
-    fprintf(fp, "Affine differential coding patch      :%*d(%2.0f[%%])\n", max_number_of_digits, affine_diff, (double)affine_diff / patch_num * 100);
-    fprintf(fp, "Affine merge coding patch             :%*d(%2.0f[%%])\n", max_number_of_digits, affine_merge, (double)affine_merge / patch_num * 100);
-    fprintf(fp, "Affine new merge coding patch         :%*d(%2.0f[%%])\n\n", max_number_of_digits, affine_new_merge, (double)affine_new_merge / patch_num * 100);
+    fprintf(fp, "translation differential coding patch :%*d(%2.2f[%%])\n", max_number_of_digits, translation_diff, (double)translation_diff / patch_num * 100);
+    fprintf(fp, "translation merge coding patch        :%*d(%2.2f[%%])\n", max_number_of_digits, translation_merge, (double)translation_merge / patch_num * 100);
+    fprintf(fp, "Affine differential coding patch      :%*d(%2.2f[%%])\n", max_number_of_digits, affine_diff, (double)affine_diff / patch_num * 100);
+    fprintf(fp, "Affine merge coding patch             :%*d(%2.2f[%%])\n", max_number_of_digits, affine_merge, (double)affine_merge / patch_num * 100);
+    fprintf(fp, "Affine new merge coding patch         :%*d(%2.2f[%%])\n\n", max_number_of_digits, affine_new_merge, (double)affine_new_merge / patch_num * 100);
     fprintf(fp, "PSNR by coding methods =========================================\n");
     fprintf(fp, "TRANSLATION_DIFF PSNR                 :%.2f[dB]\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::TRANSLATION_DIFF] / pells[PATCH_CODING_MODE::TRANSLATION_DIFF])));
     fprintf(fp, "TRANSLATION_MERGE PSNR                :%.2f[dB]\n", 10 * std::log10(255.0 * 255.0 / (residuals[PATCH_CODING_MODE::TRANSLATION_MERGE] / pells[PATCH_CODING_MODE::TRANSLATION_MERGE])));
