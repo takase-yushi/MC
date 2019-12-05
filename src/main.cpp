@@ -364,7 +364,9 @@ void run(std::string config_name) {
         analyzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
         #endif
         analyzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time);
+#if STORE_MERGE_LOG
         analyzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
+#endif
 #else
         Analyzer analyzer(foo, log_directory, log_file_suffix, target_image, p_image, pells, residuals);
 #if STORE_MVD_DISTRIBUTION_LOG
@@ -373,7 +375,10 @@ void run(std::string config_name) {
 #endif
         analyzer.storeLog();
         analyzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time); // WARNING: こいつはstoreDistributionOfMv以降で呼ばないといけない
+#if STORE_MERGE_LOG
         analyzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
+#endif
+
 #endif
 #endif
 

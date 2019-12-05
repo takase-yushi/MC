@@ -127,7 +127,7 @@ enum {
 #define STORE_MVD_DISTRIBUTION_LOG false
 #define STORE_IMG_LOG false
 #define STORE_NEWTON_LOG false
-
+#define STORE_MERGE_LOG false
 
 // 2画素以上のアップデートが来たら打ち切る
 #define DELTA_UV_THRESHOLD 2
