@@ -1020,7 +1020,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                     triangle_gauss_results[triangle_index].mv_warping, SSE_before_subdiv_warping,
                     triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, false, dummy);
 #endif
-            if(cost_translation < cost_warping || (steps <= warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
+            if(TRANSLATION_COST_RATIO * cost_translation < WARPING_COST_RATIO * cost_warping || (steps <= warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
                 triangle_gauss_results[triangle_index].translation_flag = true;
                 triangle_gauss_results[triangle_index].method_translation = method_translation;
                 translation_flag = true;
@@ -1072,13 +1072,13 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     int selected_index;
     std::vector<cv::Point2f> mvd;
     double cost_before_subdiv;
-    if(cost_before_subdiv_translation <= cost_before_subdiv_warping || (steps <= warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
+    if(TRANSLATION_COST_RATIO * cost_before_subdiv_translation <= WARPING_COST_RATIO * cost_before_subdiv_warping || (steps <= warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
         triangle_gauss_results[triangle_index].translation_flag = true;
         method_flag        = method_flag_translation;
         code_length        = code_length_translation;
         selected_index     = selected_index_translation;
         mvd                = mvd_translation;
-        cost_before_subdiv = cost_before_subdiv_translation;
+        cost_before_subdiv = TRANSLATION_COST_RATIO * cost_before_subdiv_translation;
         translation_flag   = true;
     }else{
         triangle_gauss_results[triangle_index].translation_flag = false;
@@ -1086,7 +1086,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         code_length        = code_length_warping;
         selected_index     = selected_index_warping;
         mvd                = mvd_warping;
-        cost_before_subdiv = cost_before_subdiv_warping;
+        cost_before_subdiv = WARPING_COST_RATIO * cost_before_subdiv_warping;
         translation_flag   = false;
     }
 
@@ -1288,12 +1288,12 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                     mv_warping_tmp, error_warping_tmp,
                     triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], false, dummy);
 #endif
-            if(cost_translation_tmp < cost_warping_tmp || (steps - 2 <= warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY){
+            if(TRANSLATION_COST_RATIO * cost_translation_tmp < WARPING_COST_RATIO * cost_warping_tmp || (steps - 2 <= warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY){
                 triangle_gauss_results[triangle_indexes[j]].translation_flag = true;
                 triangle_gauss_results[triangle_indexes[j]].method_warping = method_translation_tmp;
                 split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_warping_tmp, error_translation_tmp, triangle_size_tmp, true, error_translation_tmp, error_warping_tmp);
 
-                costs[j] = cost_translation_tmp;
+                costs[j] = TRANSLATION_COST_RATIO * cost_translation_tmp;
                 methods[j] = method_translation_tmp;
                 code_length_tmp[j] = code_length_translation_tmp;
                 if(method_translation_tmp == MV_CODE_METHOD::MERGE || method_translation_tmp == MV_CODE_METHOD::MERGE2){
@@ -1304,7 +1304,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 triangle_gauss_results[triangle_indexes[j]].method_translation = method_warping_tmp;
                 split_mv_result[j] = GaussResult(mv_warping_tmp, mv_translation_tmp, error_warping_tmp, error_translation_tmp, triangle_size_tmp, false, error_translation_tmp, error_warping_tmp);
 
-                costs[j] = cost_warping_tmp;
+                costs[j] = WARPING_COST_RATIO * cost_warping_tmp;
                 methods[j] = method_warping_tmp;
                 code_length_tmp[j] = code_length_warping_tmp;
                 if(method_warping_tmp == MV_CODE_METHOD::MERGE || method_warping_tmp == MV_CODE_METHOD::MERGE2){
