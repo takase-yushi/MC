@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <map>
+#include <opencv2/core/mat.hpp>
 #include "CodingTreeUnit.h"
 
 class CodingTreeUnit;
