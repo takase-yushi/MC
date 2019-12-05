@@ -103,7 +103,7 @@ enum {
 #define MV_LIST_MAX_NUM 5
 #define SEARCH_RANGE 16
 #define TRANSLATION_COST_RATIO 1.0
-#define WARPING_COST_RATIO 0.8
+#define WARPING_COST_RATIO 1.0
 
 /**
  * 各種モードのON/OFF
