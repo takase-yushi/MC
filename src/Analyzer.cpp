@@ -343,10 +343,22 @@ void Analyzer::storeLog() {
     fprintf(fp, "greater_1_flag                        :%d\n", greater_1_flag_sum);
     fprintf(fp, "sign_flag                             :%d\n", sign_flag_sum);
     fprintf(fp, "mvd_code                              :%d\n\n", mvd_code_sum);
+
+    int max_area_ratio_digits;
+    int translation_pell_num = pells[PATCH_CODING_MODE::TRANSLATION_DIFF] + pells[PATCH_CODING_MODE::TRANSLATION_MERGE];
+    int affine_pell_num = pells[PATCH_CODING_MODE::AFFINE_DIFF] + pells[PATCH_CODING_MODE::AFFINE_MERGE] + pells[PATCH_CODING_MODE::AFFINE_NEW_MERGE];
+    if(translation_pell_num == 0 || affine_pell_num == 0){
+        max_area_ratio_digits = 3;
+    }else{
+        max_area_ratio_digits = 2;
+    }
+
+    int max_patch_num_digits = std::max(translation_patch_num, affine_patch_num);
+
     fprintf(fp, "Number of patches ==============================================\n");
     fprintf(fp, "patch num(all)                        :%d\n", patch_num);
-    fprintf(fp, "Translation patch num                 :%d\n", translation_patch_num);
-    fprintf(fp, "Affine patch Num                      :%d\n\n", affine_patch_num);
+    fprintf(fp, "Translation patch num                 :%*d(%*.2f[%%])\n",   max_patch_num_digits, translation_patch_num, max_area_ratio_digits, (double)translation_pell_num / (translation_pell_num + affine_pell_num) * 100);
+    fprintf(fp, "Affine patch Num                      :%*d(%*.2f[%%])\n\n", max_patch_num_digits, affine_patch_num,      max_area_ratio_digits, (double)affine_pell_num / (translation_pell_num + affine_pell_num) * 100);
     fprintf(fp, "Code amount of patches =========================================\n");
     fprintf(fp, "Translation's code                    :%d\n", mvd_translation_code_sum);
     fprintf(fp, "Affine patch's code                   :%d\n\n", mvd_affine_code_sum);
