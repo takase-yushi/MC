@@ -16,8 +16,8 @@
  * @param ctus
  */
 void Analyzer::storeDistributionOfMv(std::vector<CodingTreeUnit *> ctus, std::string log_path, std::vector<int> pells, std::vector<double> residuals) {
-    greater_0_flag_sum = greater_1_flag_sum = sign_flag_sum = mvd_code_sum = warping_patch_num = translation_patch_num = 0;
-    mvd_warping_code_sum = mvd_translation_code_sum = 0;
+    greater_0_flag_sum = greater_1_flag_sum = sign_flag_sum = mvd_code_sum = affine_patch_num = translation_patch_num = 0;
+    mvd_affine_code_sum = mvd_translation_code_sum = 0;
     merge_counter = differential_counter = 0;
     code_sum = 0;
     intra_counter = 0;
@@ -167,7 +167,7 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
                     greater_0_flag_counter[(int)(ctu->flags_code_sum.getXGreater0Flag()[i])]++;
                     greater_0_flag_counter[(int)(ctu->flags_code_sum.getYGreater0Flag()[i])]++;
                 }
-                mvd_warping_code_sum += ctu->flags_code_sum.getMvdCodeLength();
+                mvd_affine_code_sum += ctu->flags_code_sum.getMvdCodeLength();
                 affine_diff++;
             }
 
@@ -222,7 +222,7 @@ void Analyzer::storeDistributionOfMv(CodingTreeUnit *ctu) {
         }
 
         if(ctu->translation_flag) translation_patch_num++;
-        else warping_patch_num++;
+        else affine_patch_num++;
 
         return;
     }
@@ -247,7 +247,7 @@ void Analyzer::storeMarkdownFile(double psnr, std::string log_path) {
 
     extern int qp;
     FILE *fp = fopen((log_path + "/result.md").c_str(), "w");
-    fprintf(fp, "|%d|%f|%d|%f|%d|\n", qp, getLambdaPred(qp, 1.0), code_sum, psnr, warping_patch_num + translation_patch_num);
+    fprintf(fp, "|%d|%f|%d|%f|%d|\n", qp, getLambdaPred(qp, 1.0), code_sum, psnr, affine_patch_num + translation_patch_num);
     fclose(fp);
 }
 

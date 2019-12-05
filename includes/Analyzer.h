@@ -52,14 +52,14 @@ private:
 
     // 符号量関連
     int mvd_code_sum;
-    int mvd_warping_code_sum;
+    int mvd_affine_code_sum;
     int mvd_translation_code_sum;
     int code_sum;
 
     // ファイルの最後につける値
     std::string file_suffix;
 
-    int warping_patch_num;
+    int affine_patch_num;
     int merge2_counter;
     int translation_patch_num;
 
