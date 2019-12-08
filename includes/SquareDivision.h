@@ -118,6 +118,7 @@ public:
 
     cv::Mat getPredictedDiagonalImageFromCtu(std::vector<CodingTreeUnit*> ctus);
     cv::Mat getPredictedColorImageFromCtu(std::vector<CodingTreeUnit*> ctus, double original_psnr, int select);
+    cv::Mat getBlockInfoFromCtu(std::vector<CodingTreeUnit*> ctus, double original_psnr);
     std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, int square_number, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, int steps);
     double  getRDCost(std::vector<cv::Point2f> mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, std::vector<cv::Point2f> &pixels, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors);
 
@@ -151,6 +152,12 @@ private:
     int warping_merge_block_num = 0;
     int warping_merge2_block_num = 0;
 
+    int better_than_prediction_translation_block_num = 0;
+    int better_than_prediction_translation_merge_block_num = 0;
+    int better_than_prediction_warping_block_num = 0;
+    int better_than_prediction_warping_merge_block_num = 0;
+    int better_than_prediction_warping_merge2_block_num = 0;
+
     double sse_translation_block = 0.0;
     double sse_translation_merge_block = 0.0;
     double sse_warping_block = 0.0;
@@ -181,6 +188,7 @@ private:
     int getCtuCodeLength(CodingTreeUnit *ctu);
     void drawMvImage(cv::Mat &out, CodingTreeUnit *ctu);
     void getPredictedDiagonalImageFromCtu(CodingTreeUnit* ctu, const cv::Mat &out);
+    void getBlockInfoFromCtu(CodingTreeUnit *ctu, cv::Mat &out, double original_psnr, std::vector<cv::Scalar> &colors);
 
 };
 

@@ -2782,24 +2782,6 @@ cv::Mat SquareDivision::getPredictedColorImageFromCtu(std::vector<CodingTreeUnit
         drawSquare(out, t.p1, t.p2, t.p3, t.p4, cv::Scalar(255, 255, 255), select);
     }
 
-//    std::cout << "translation_block_num : " << translation_block_num << std::endl;
-//    std::cout << "translation__merge_block_num : " << translation_merge_block_num << std::endl;
-//    std::cout << "warping_block_num : " << warping_block_num << std::endl;
-//    std::cout << "warping__merge_block_num : " << warping_merge_block_num << std::endl;
-//    std::cout << "warping__merge2_block_num : " << warping_merge2_block_num << std::endl;
-//
-//    std::cout << "translation_block_pixels : " << size_translation_block << std::endl;
-//    std::cout << "translation__merge_block_pixels : " << size_translation_merge_block << std::endl;
-//    std::cout << "warping_block_pixels : " << size_warping_block << std::endl;
-//    std::cout << "warping__merge_block_pixels : " << size_warping_merge_block << std::endl;
-//    std::cout << "warping__merge2_block_pixels : " << size_warping_merge2_block << std::endl;
-//
-//    std::cout << "psnr_translation_block : " << 10 * std::log10(255.0 * 255.0 / (sse_translation_block / size_translation_block)) << std::endl;
-//    std::cout << "psnr_translation__merge_block : " << 10 * std::log10(255.0 * 255.0 / (sse_translation_merge_block / size_translation_merge_block)) << std::endl;
-//    std::cout << "psnr_warping_block : " << 10 * std::log10(255.0 * 255.0 / (sse_warping_block / size_warping_block)) << std::endl;
-//    std::cout << "psnr_warping__merge_block : " << 10 * std::log10(255.0 * 255.0 / (sse_warping_merge_block / size_warping_merge_block)) << std::endl;
-//    std::cout << "psnr_warping__merge2_block : " << 10 * std::log10(255.0 * 255.0 / (sse_warping_merge2_block / size_warping_merge2_block)) << std::endl;
-
     return out;
 }
 
@@ -2826,18 +2808,12 @@ void SquareDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat 
 
         if(ctu->translation_flag) {
             if(ctu->method == MV_CODE_METHOD::MERGE){
-//                translation_merge_block_num++;
-//                sse_translation_merge_block += getSquareResidual_Mode(target_image, square, mvs, pixels, ref_hevc, rect);
-//                size_translation_merge_block += pixels.size();
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     G(out, (int)pixel.x, (int)pixel.y) = 0;
                     B(out, (int)pixel.x, (int)pixel.y) = 0;
                 }
             } else{
-//                translation_block_num++;
-//                sse_translation_block += getSquareResidual_Mode(target_image, square, mvs, pixels, ref_hevc, rect);
-//                size_translation_block += pixels.size();
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = 0;
                     G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
@@ -2847,27 +2823,18 @@ void SquareDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat 
 
         } else{
             if(ctu->method == MV_CODE_METHOD::MERGE){
-//                warping_merge_block_num++;
-//                sse_warping_merge_block += getSquareResidual_Mode(target_image, square, mvs, pixels, ref_hevc, rect);
-//                size_warping_merge_block += pixels.size();
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     B(out, (int)pixel.x, (int)pixel.y) = 0;
                 }
             } else if(ctu->method == MV_CODE_METHOD::MERGE2) {
-//                warping_merge2_block_num++;
-//                sse_warping_merge2_block += getSquareResidual_Mode(target_image, square, mvs, pixels, ref_hevc, rect);
-//                size_warping_merge2_block += pixels.size();
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                     G(out, (int)pixel.x, (int)pixel.y) = 0;
                     B(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
                 }
             } else{
-//                warping_block_num++;
-//                sse_warping_block += getSquareResidual_Mode(target_image, square, mvs, pixels, ref_hevc, rect);
-//                size_warping_block += pixels.size();
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = 0;
                     G(out, (int)pixel.x, (int)pixel.y) = M(target_image, (int)pixel.x, (int)pixel.y);
@@ -2883,6 +2850,170 @@ void SquareDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat 
     if(ctu->node2 != nullptr) getPredictedColorImageFromCtu(ctu->node2, out, original_psnr, colors);
     if(ctu->node3 != nullptr) getPredictedColorImageFromCtu(ctu->node3, out, original_psnr, colors);
     if(ctu->node4 != nullptr) getPredictedColorImageFromCtu(ctu->node4, out, original_psnr, colors);
+}
+
+cv::Mat SquareDivision::getBlockInfoFromCtu(std::vector<CodingTreeUnit*> ctus, double original_psnr){
+    cv::Mat out = cv::Mat::zeros(ref_image.size(), CV_8UC3);
+
+    std::vector<cv::Scalar> colors;
+
+    colors.emplace_back(YELLOW);
+    colors.emplace_back(BLUE);
+    colors.emplace_back(GREEN);
+    colors.emplace_back(LIGHT_BLUE);
+    colors.emplace_back(RED);
+    colors.emplace_back(PURPLE);
+
+//#pragma omp parallel for
+    for(int i = 0 ; i < ctus.size() ; i++) {
+        getBlockInfoFromCtu(ctus[i], out, original_psnr, colors);
+    }
+    double block_num = translation_block_num + translation_merge_block_num + warping_block_num + warping_merge_block_num + warping_merge2_block_num;
+    double pixels = size_translation_block + size_translation_merge_block + size_warping_block + size_warping_merge_block + size_warping_merge2_block;
+
+    std::cout << std::endl << "----------------------------------------------block_info----------------------------------------------" << std::endl << std::endl;
+
+    std::cout << "block_mum : " << block_num << std::endl << "pixels : " << pixels << std::endl << std::endl;
+
+    std::cout << "                blocks_per_type                        Num    each / block_num * 100" << std::endl;
+    std::cout << "translation_diff_block_num                           : " << translation_block_num       << ",  " << translation_block_num       / block_num * 100.0 << "[%]" << std::endl;
+    std::cout << "translation__merge_block_num                         : " << translation_merge_block_num << ",  " << translation_merge_block_num / block_num * 100.0 << "[%]" << std::endl;
+    std::cout << "warping_diff_block_num                               : " << warping_block_num           << ",  " << warping_block_num           / block_num * 100.0 << "[%]" << std::endl;
+    std::cout << "warping__merge_block_num                             : " << warping_merge_block_num     << ",  " << warping_merge_block_num     / block_num * 100.0 << "[%]" << std::endl;
+    std::cout << "warping__merge2_block_num                            : " << warping_merge2_block_num    << ",  " << warping_merge2_block_num    / block_num * 100.0 << "[%]" << std::endl;
+    std::cout << "translation : warping = " << (translation_block_num + translation_merge_block_num) / block_num * 100.0 << " : " << (warping_block_num + warping_merge_block_num + warping_merge2_block_num) / block_num * 100.0 << std::endl << std::endl;
+
+    std::cout << "                 pixels_per_type                       pixels   each / pixels * 100" << std::endl;
+    std::cout << "translation_diff_block_pixels                        : " << size_translation_block       << ",  " << size_translation_block       / pixels * 100.0 << "[%]" << std::endl;
+    std::cout << "translation__merge_block_pixels                      : " << size_translation_merge_block << ",  " << size_translation_merge_block / pixels * 100.0 << "[%]" << std::endl;
+    std::cout << "warping_diff_block_pixels                            : " << size_warping_block           << ",  " << size_warping_block           / pixels * 100.0 << "[%]" << std::endl;
+    std::cout << "warping__merge_block_pixels                          : " << size_warping_merge_block     << ",  " << size_warping_merge_block     / pixels * 100.0 << "[%]" << std::endl;
+    std::cout << "warping__merge2_block_pixels                         : " << size_warping_merge2_block    << ",  " << size_warping_merge2_block    / pixels * 100.0 << "[%]" << std::endl;
+    std::cout << "translation : warping = " << (size_translation_block + size_translation_merge_block) / pixels * 100.0 << " : " << (size_warping_block + size_warping_merge_block + size_warping_merge2_block) / pixels * 100.0 << std::endl << std::endl;
+
+    std::cout << "                 PSNR_per_type                          PSNR" << std::endl;
+    std::cout << "PSNR_translation_block                               : " << 10 * std::log10(255.0 * 255.0 / (sse_translation_block       / size_translation_block       )) << std::endl;
+    std::cout << "PSNR_translation__merge_block                        : " << 10 * std::log10(255.0 * 255.0 / (sse_translation_merge_block / size_translation_merge_block )) << std::endl;
+    std::cout << "PSNR_warping_block                                   : " << 10 * std::log10(255.0 * 255.0 / (sse_warping_block           / size_warping_block           )) << std::endl;
+    std::cout << "PSNR_warping__merge_block                            : " << 10 * std::log10(255.0 * 255.0 / (sse_warping_merge_block     / size_warping_merge_block     )) << std::endl;
+    std::cout << "PSNR_warping__merge2_block                           : " << 10 * std::log10(255.0 * 255.0 / (sse_warping_merge2_block    / size_warping_merge2_block    )) << std::endl << std::endl << std::endl;
+
+    std::cout << "       better_than_prediction_blocks_per_type         Num    each / blocks_per_type * 100" << std::endl;
+    std::cout << "better_than_prediction_translation_block_num        : " << better_than_prediction_translation_block_num       << ",  " << (double)better_than_prediction_translation_block_num       / (double)translation_block_num       * 100.0 << "[%]  <- " << better_than_prediction_translation_block_num       << " / " << translation_block_num       << std::endl;
+    std::cout << "better_than_prediction_translation__merge_block_num : " << better_than_prediction_translation_merge_block_num << ",  " << (double)better_than_prediction_translation_merge_block_num / (double)translation_merge_block_num * 100.0 << "[%]  <- " << better_than_prediction_translation_merge_block_num << " / " << translation_merge_block_num << std::endl;
+    std::cout << "better_than_prediction_warping_block_num            : " << better_than_prediction_warping_block_num           << ",  " << (double)better_than_prediction_warping_block_num           / (double)warping_block_num           * 100.0 << "[%]  <- " << better_than_prediction_warping_block_num           << " / " << warping_block_num           << std::endl;
+    std::cout << "better_than_prediction_warping__merge_block_num     : " << better_than_prediction_warping_merge_block_num     << ",  " << (double)better_than_prediction_warping_merge_block_num     / (double)warping_merge_block_num     * 100.0 << "[%]  <- " << better_than_prediction_warping_merge_block_num     << " / " << warping_merge_block_num     << std::endl;
+    std::cout << "better_than_prediction_warping__merge2_block_num    : " << better_than_prediction_warping_merge2_block_num    << ",  " << (double)better_than_prediction_warping_merge2_block_num    / (double)warping_merge2_block_num    * 100.0 << "[%]  <- " << better_than_prediction_warping_merge2_block_num    << " / " << warping_merge2_block_num    << std::endl << std::endl;
+
+    return out;
+}
+
+void SquareDivision::getBlockInfoFromCtu(CodingTreeUnit *ctu, cv::Mat &out, double original_psnr, std::vector<cv::Scalar> &colors){
+    if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
+        int square_index = ctu->square_index;
+        cv::Point2f mv = ctu->mv1;
+        Square square_corner_idx = squares[square_index];
+        Point4Vec square(corners[square_corner_idx.p1_idx], corners[square_corner_idx.p2_idx], corners[square_corner_idx.p3_idx], corners[square_corner_idx.p4_idx]);
+
+        std::vector<cv::Point2f> mvs;
+        if(ctu->translation_flag){
+            mvs.emplace_back(mv);
+            mvs.emplace_back(mv);
+            mvs.emplace_back(mv);
+        }else{
+            mvs.emplace_back(ctu->mv1);
+            mvs.emplace_back(ctu->mv2);
+            mvs.emplace_back(ctu->mv3);
+        }
+        cv::Rect rect(-SEARCH_RANGE * 4, -SEARCH_RANGE * 4, 4 * (target_image.cols + 2 * SEARCH_RANGE), 4 * (target_image.rows + 2 * SEARCH_RANGE));
+
+        std::vector<cv::Point2f> pixels = getPixelsInSquare(square);
+
+        double psnr;
+
+        if(ctu->translation_flag) {
+            if(ctu->method == MV_CODE_METHOD::MERGE){
+                translation_merge_block_num++;
+                sse_translation_merge_block += getSquareResidual_Mode(target_image, square, mvs, pixels, ref_hevc, rect);
+                size_translation_merge_block += pixels.size();
+
+                psnr = 10 * std::log10(255.0 * 255.0 / (getSquareResidual_Mode(target_image, square, mvs, pixels, ref_hevc, rect) / pixels.size()));
+                if(psnr > original_psnr) {
+                    better_than_prediction_translation_merge_block_num++;
+//                    for (auto pixel : pixels) {
+//                        R(out, (int) pixel.x, (int) pixel.y) = R(target_image, (int) pixel.x, (int) pixel.y);
+//                        G(out, (int) pixel.x, (int) pixel.y) = G(target_image, (int) pixel.x, (int) pixel.y);
+//                        B(out, (int) pixel.x, (int) pixel.y) = B(target_image, (int) pixel.x, (int) pixel.y);
+//                    }
+                }
+            } else{
+                translation_block_num++;
+                sse_translation_block += getSquareResidual_Mode(target_image, square, mvs, pixels, ref_hevc, rect);
+                size_translation_block += pixels.size();
+
+                psnr = 10 * std::log10(255.0 * 255.0 / (getSquareResidual_Mode(target_image, square, mvs, pixels, ref_hevc, rect) / pixels.size()));
+                if(psnr > original_psnr) {
+                    better_than_prediction_translation_block_num++;
+                    for (auto pixel : pixels) {
+                        R(out, (int) pixel.x, (int) pixel.y) = R(target_image, (int) pixel.x, (int) pixel.y);
+                        G(out, (int) pixel.x, (int) pixel.y) = G(target_image, (int) pixel.x, (int) pixel.y);
+                        B(out, (int) pixel.x, (int) pixel.y) = B(target_image, (int) pixel.x, (int) pixel.y);
+                    }
+                }
+            }
+        } else{
+            if(ctu->method == MV_CODE_METHOD::MERGE){
+                warping_merge_block_num++;
+                sse_warping_merge_block += getSquareResidual_Mode(target_image, square, mvs, pixels, ref_hevc, rect);
+                size_warping_merge_block += pixels.size();
+
+                psnr = 10 * std::log10(255.0 * 255.0 / (getSquareResidual_Mode(target_image, square, mvs, pixels, ref_hevc, rect) / pixels.size()));
+                if(psnr > original_psnr) {
+                    better_than_prediction_warping_merge_block_num++;
+//                    for (auto pixel : pixels) {
+//                        R(out, (int) pixel.x, (int) pixel.y) = R(target_image, (int) pixel.x, (int) pixel.y);
+//                        G(out, (int) pixel.x, (int) pixel.y) = G(target_image, (int) pixel.x, (int) pixel.y);
+//                        B(out, (int) pixel.x, (int) pixel.y) = B(target_image, (int) pixel.x, (int) pixel.y);
+//                    }
+                }
+            } else if(ctu->method == MV_CODE_METHOD::MERGE2) {
+                warping_merge2_block_num++;
+                sse_warping_merge2_block += getSquareResidual_Mode(target_image, square, mvs, pixels, ref_hevc, rect);
+                size_warping_merge2_block += pixels.size();
+
+                psnr = 10 * std::log10(255.0 * 255.0 / (getSquareResidual_Mode(target_image, square, mvs, pixels, ref_hevc, rect) / pixels.size()));
+                if(psnr > original_psnr) {
+                    better_than_prediction_warping_merge2_block_num++;
+//                    for (auto pixel : pixels) {
+//                        R(out, (int) pixel.x, (int) pixel.y) = R(target_image, (int) pixel.x, (int) pixel.y);
+//                        G(out, (int) pixel.x, (int) pixel.y) = G(target_image, (int) pixel.x, (int) pixel.y);
+//                        B(out, (int) pixel.x, (int) pixel.y) = B(target_image, (int) pixel.x, (int) pixel.y);
+//                    }
+                }
+            } else{
+                warping_block_num++;
+                sse_warping_block += getSquareResidual_Mode(target_image, square, mvs, pixels, ref_hevc, rect);
+                size_warping_block += pixels.size();
+
+                psnr = 10 * std::log10(255.0 * 255.0 / (getSquareResidual_Mode(target_image, square, mvs, pixels, ref_hevc, rect) / pixels.size()));
+                if(psnr > original_psnr) {
+                    better_than_prediction_warping_block_num++;
+//                    for (auto pixel : pixels) {
+//                        R(out, (int) pixel.x, (int) pixel.y) = R(target_image, (int) pixel.x, (int) pixel.y);
+//                        G(out, (int) pixel.x, (int) pixel.y) = G(target_image, (int) pixel.x, (int) pixel.y);
+//                        B(out, (int) pixel.x, (int) pixel.y) = B(target_image, (int) pixel.x, (int) pixel.y);
+//                    }
+                }
+            }
+//            getPredictedImage(expansion_ref_uchar, target_image, out, square, mvs, ref_hevc);
+        }
+        return;
+    }
+
+    if(ctu->node1 != nullptr) getBlockInfoFromCtu(ctu->node1, out, original_psnr, colors);
+    if(ctu->node2 != nullptr) getBlockInfoFromCtu(ctu->node2, out, original_psnr, colors);
+    if(ctu->node3 != nullptr) getBlockInfoFromCtu(ctu->node3, out, original_psnr, colors);
+    if(ctu->node4 != nullptr) getBlockInfoFromCtu(ctu->node4, out, original_psnr, colors);
 }
 
 int SquareDivision::getCtuCodeLength(std::vector<CodingTreeUnit*> ctus) {
