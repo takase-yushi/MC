@@ -23,6 +23,7 @@
 #include "../includes/ImageUtil.h"
 #include "../includes/Analyzer.h"
 #include "../includes/Flags.h"
+#include <iomanip>
 
 SquareDivision::SquareDivision(const cv::Mat &refImage, const cv::Mat &targetImage, const cv::Mat &refGaussImage) : target_image(targetImage),
                                                                                                                     ref_image(refImage), ref_gauss_image(refGaussImage) {}
@@ -2875,30 +2876,30 @@ cv::Mat SquareDivision::getBlockInfoFromCtu(std::vector<CodingTreeUnit*> ctus, d
 
     std::cout << "block_mum : " << block_num << std::endl << "pixels : " << pixels << std::endl << std::endl;
 
-    std::cout << "                blocks_per_type                        Num    each / block_num * 100" << std::endl;
+    std::cout << "                blocks_per_type                        Num    each / block_num * 100" << std::setprecision(4) << std::endl;
     std::cout << "translation_diff_block_num                           : " << translation_block_num       << ",  " << translation_block_num       / block_num * 100.0 << "[%]" << std::endl;
     std::cout << "translation__merge_block_num                         : " << translation_merge_block_num << ",  " << translation_merge_block_num / block_num * 100.0 << "[%]" << std::endl;
     std::cout << "warping_diff_block_num                               : " << warping_block_num           << ",  " << warping_block_num           / block_num * 100.0 << "[%]" << std::endl;
     std::cout << "warping__merge_block_num                             : " << warping_merge_block_num     << ",  " << warping_merge_block_num     / block_num * 100.0 << "[%]" << std::endl;
     std::cout << "warping__merge2_block_num                            : " << warping_merge2_block_num    << ",  " << warping_merge2_block_num    / block_num * 100.0 << "[%]" << std::endl;
-    std::cout << "translation : warping = " << (translation_block_num + translation_merge_block_num) / block_num * 100.0 << " : " << (warping_block_num + warping_merge_block_num + warping_merge2_block_num) / block_num * 100.0 << std::endl << std::endl;
+    std::cout << "translation : warping = " << std::setprecision(2) << (translation_block_num + translation_merge_block_num) / block_num * 100.0 << " : " << (warping_block_num + warping_merge_block_num + warping_merge2_block_num) / block_num * 100.0 << std::endl << std::endl;
 
-    std::cout << "                 pixels_per_type                       pixels   each / pixels * 100" << std::endl;
+    std::cout << "                 pixels_per_type                       pixels   each / pixels * 100" << std::setprecision(4) << std::endl;
     std::cout << "translation_diff_block_pixels                        : " << size_translation_block       << ",  " << size_translation_block       / pixels * 100.0 << "[%]" << std::endl;
     std::cout << "translation__merge_block_pixels                      : " << size_translation_merge_block << ",  " << size_translation_merge_block / pixels * 100.0 << "[%]" << std::endl;
     std::cout << "warping_diff_block_pixels                            : " << size_warping_block           << ",  " << size_warping_block           / pixels * 100.0 << "[%]" << std::endl;
     std::cout << "warping__merge_block_pixels                          : " << size_warping_merge_block     << ",  " << size_warping_merge_block     / pixels * 100.0 << "[%]" << std::endl;
     std::cout << "warping__merge2_block_pixels                         : " << size_warping_merge2_block    << ",  " << size_warping_merge2_block    / pixels * 100.0 << "[%]" << std::endl;
-    std::cout << "translation : warping = " << (size_translation_block + size_translation_merge_block) / pixels * 100.0 << " : " << (size_warping_block + size_warping_merge_block + size_warping_merge2_block) / pixels * 100.0 << std::endl << std::endl;
+    std::cout << "translation : warping = " << std::setprecision(2) << (size_translation_block + size_translation_merge_block) / pixels * 100.0 << " : " << (size_warping_block + size_warping_merge_block + size_warping_merge2_block) / pixels * 100.0 << std::endl << std::endl;
 
-    std::cout << "                 PSNR_per_type                          PSNR" << std::endl;
+    std::cout << "                 PSNR_per_type                          PSNR" << std::setprecision(6) << std::endl;
     std::cout << "PSNR_translation_block                               : " << 10 * std::log10(255.0 * 255.0 / (sse_translation_block       / size_translation_block       )) << std::endl;
     std::cout << "PSNR_translation__merge_block                        : " << 10 * std::log10(255.0 * 255.0 / (sse_translation_merge_block / size_translation_merge_block )) << std::endl;
     std::cout << "PSNR_warping_block                                   : " << 10 * std::log10(255.0 * 255.0 / (sse_warping_block           / size_warping_block           )) << std::endl;
     std::cout << "PSNR_warping__merge_block                            : " << 10 * std::log10(255.0 * 255.0 / (sse_warping_merge_block     / size_warping_merge_block     )) << std::endl;
     std::cout << "PSNR_warping__merge2_block                           : " << 10 * std::log10(255.0 * 255.0 / (sse_warping_merge2_block    / size_warping_merge2_block    )) << std::endl << std::endl << std::endl;
 
-    std::cout << "       better_than_prediction_blocks_per_type         Num    each / blocks_per_type * 100" << std::endl;
+    std::cout << "       better_than_prediction_blocks_per_type         Num    each / blocks_per_type * 100" << std::setprecision(4) << std::endl;
     std::cout << "better_than_prediction_translation_block_num        : " << better_than_prediction_translation_block_num       << ",  " << (double)better_than_prediction_translation_block_num       / (double)translation_block_num       * 100.0 << "[%]  <- " << better_than_prediction_translation_block_num       << " / " << translation_block_num       << std::endl;
     std::cout << "better_than_prediction_translation__merge_block_num : " << better_than_prediction_translation_merge_block_num << ",  " << (double)better_than_prediction_translation_merge_block_num / (double)translation_merge_block_num * 100.0 << "[%]  <- " << better_than_prediction_translation_merge_block_num << " / " << translation_merge_block_num << std::endl;
     std::cout << "better_than_prediction_warping_block_num            : " << better_than_prediction_warping_block_num           << ",  " << (double)better_than_prediction_warping_block_num           / (double)warping_block_num           * 100.0 << "[%]  <- " << better_than_prediction_warping_block_num           << " / " << warping_block_num           << std::endl;
