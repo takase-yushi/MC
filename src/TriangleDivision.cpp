@@ -1091,8 +1091,8 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     }
 
     if(method_flag == MV_CODE_METHOD::SPATIAL){
-        triangle_gauss_results[triangle_index].mv_translation = triangle_gauss_results[triangle_index].mv_translation;
-        triangle_gauss_results[triangle_index].mv_warping = triangle_gauss_results[triangle_index].mv_warping;
+        triangle_gauss_results[triangle_index].mv_translation = triangle_gauss_results[triangle_index].original_mv_translation;
+        triangle_gauss_results[triangle_index].mv_warping = triangle_gauss_results[triangle_index].original_mv_warping;
         gauss_result_translation = triangle_gauss_results[triangle_index].mv_translation;
         gauss_result_warping = triangle_gauss_results[triangle_index].mv_warping;
     }else if(method_flag == MV_CODE_METHOD::MERGE || method_flag == MV_CODE_METHOD::MERGE2) {
@@ -1298,6 +1298,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 code_length_tmp[j] = code_length_translation_tmp;
                 if(method_translation_tmp == MV_CODE_METHOD::MERGE || method_translation_tmp == MV_CODE_METHOD::MERGE2){
                     triangle_gauss_results[triangle_indexes[j]].mv_translation = mvd_translation_tmp[0];
+                    mv_translation_tmp = mvd_translation_tmp[0];
                 }
             }else{
                 triangle_gauss_results[triangle_indexes[j]].translation_flag = false;
@@ -1309,6 +1310,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 code_length_tmp[j] = code_length_warping_tmp;
                 if(method_warping_tmp == MV_CODE_METHOD::MERGE || method_warping_tmp == MV_CODE_METHOD::MERGE2){
                     triangle_gauss_results[triangle_indexes[j]].mv_warping = mvd_warping_tmp;
+                    mv_warping_tmp = mvd_warping_tmp;
                 }
             }
             triangle_gauss_results[triangle_indexes[j]].mv_translation = mv_translation_tmp;
