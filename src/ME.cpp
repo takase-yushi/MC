@@ -744,28 +744,26 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     break;
                 }
 
-                if(translation_update_flag && prev_SSE_translation > SSE_translation) {
-                    for (int k = 0; k < 2; k++) {
-                        if (k % 2 == 0) {
-                            double translated_x = tmp_mv_translation.x + delta_u;
-                            if ((-scaled_spread <= scaled_coordinates[0].x + translated_x) &&
-                                (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[0].x + translated_x) &&
-                                (-scaled_spread <= scaled_coordinates[1].x + translated_x) &&
-                                (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[1].x + translated_x) &&
-                                (-scaled_spread <= scaled_coordinates[2].x + translated_x) &&
-                                (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[2].x + translated_x)) {
-                                tmp_mv_translation.x = translated_x;
-                            }
-                        } else {
-                            double translated_y = tmp_mv_translation.y + delta_v;
-                            if ((-scaled_spread <= scaled_coordinates[0].y + translated_y) &&
-                                (target_images[0][step].rows - 1 + scaled_spread >= scaled_coordinates[0].y + translated_y) &&
-                                (-scaled_spread <=scaled_coordinates[1].y + translated_y) &&
-                                (target_images[0][step].rows - 1 + scaled_spread >= scaled_coordinates[1].y + translated_y) &&
-                                (-scaled_spread <=scaled_coordinates[2].y + translated_y) &&
-                                (target_images[0][step].rows - 1 + scaled_spread >= scaled_coordinates[2].y + translated_y)) {
-                                tmp_mv_translation.y = translated_y;
-                            }
+                for (int k = 0; k < 2; k++) {
+                    if (k % 2 == 0) {
+                        double translated_x = tmp_mv_translation.x + delta_u;
+                        if ((-scaled_spread <= scaled_coordinates[0].x + translated_x) &&
+                        (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[0].x + translated_x) &&
+                        (-scaled_spread <= scaled_coordinates[1].x + translated_x) &&
+                        (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[1].x + translated_x) &&
+                        (-scaled_spread <= scaled_coordinates[2].x + translated_x) &&
+                        (target_images[0][step].cols - 1 + scaled_spread >= scaled_coordinates[2].x + translated_x)) {
+                            tmp_mv_translation.x = translated_x;
+                        }
+                    } else {
+                        double translated_y = tmp_mv_translation.y + delta_v;
+                        if ((-scaled_spread <= scaled_coordinates[0].y + translated_y) &&
+                        (target_images[0][step].rows - 1 + scaled_spread >= scaled_coordinates[0].y + translated_y) &&
+                        (-scaled_spread <=scaled_coordinates[1].y + translated_y) &&
+                        (target_images[0][step].rows - 1 + scaled_spread >= scaled_coordinates[1].y + translated_y) &&
+                        (-scaled_spread <=scaled_coordinates[2].y + translated_y) &&
+                        (target_images[0][step].rows - 1 + scaled_spread >= scaled_coordinates[2].y + translated_y)) {
+                            tmp_mv_translation.y = translated_y;
                         }
                     }
                 }
@@ -1137,31 +1135,27 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                 }
                 if(delta_uv_threshold_flag) break;
 
-                SSE_warping = getTriangleSSE(ref_hevc, current_target_org_expand, target_corners, tmp_mv_warping, pixels_in_triangle, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)));
-
-                if(warping_update_flag && prev_SSE_warping > SSE_warping) {
-                    for (int k = 0; k < 6; k++) {
-                        if (k % 2 == 0) {
-                            if ((-scaled_spread <=
-                                 scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x +
-                                 delta_uv_warping.at<double>(k, 0)) &&
-                                (target_images[0][step].cols - 1 + scaled_spread >=
-                                 scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x +
-                                 delta_uv_warping.at<double>(k, 0))) {
-                                tmp_mv_warping[(int) (k / 2)].x = tmp_mv_warping[(int) (k / 2)].x +
-                                                                  delta_uv_warping.at<double>(k,
-                                                                                              0);//動きベクトルを更新(画像の外に出ないように)
-                            }
-                        } else {
-                            if ((-scaled_spread <=
-                                 scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y +
-                                 delta_uv_warping.at<double>(k, 0)) &&
-                                (target_images[0][step].rows - 1 + scaled_spread >=
-                                 scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y +
-                                 delta_uv_warping.at<double>(k, 0))) {
-                                tmp_mv_warping[(int) (k / 2)].y =
-                                        tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0);
-                            }
+                for (int k = 0; k < 6; k++) {
+                    if (k % 2 == 0) {
+                        if ((-scaled_spread <=
+                             scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x +
+                             delta_uv_warping.at<double>(k, 0)) &&
+                            (target_images[0][step].cols - 1 + scaled_spread >=
+                             scaled_coordinates[(int) (k / 2)].x + tmp_mv_warping[(int) (k / 2)].x +
+                             delta_uv_warping.at<double>(k, 0))) {
+                            tmp_mv_warping[(int) (k / 2)].x = tmp_mv_warping[(int) (k / 2)].x +
+                                                              delta_uv_warping.at<double>(k,
+                                                                                          0);//動きベクトルを更新(画像の外に出ないように)
+                        }
+                    } else {
+                        if ((-scaled_spread <=
+                             scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y +
+                             delta_uv_warping.at<double>(k, 0)) &&
+                            (target_images[0][step].rows - 1 + scaled_spread >=
+                             scaled_coordinates[(int) (k / 2)].y + tmp_mv_warping[(int) (k / 2)].y +
+                             delta_uv_warping.at<double>(k, 0))) {
+                            tmp_mv_warping[(int) (k / 2)].y =
+                                    tmp_mv_warping[(int) (k / 2)].y + delta_uv_warping.at<double>(k, 0);
                         }
                     }
                 }
