@@ -2850,7 +2850,6 @@ void TriangleDivision::getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Ma
                         B(out, (int)pixel.x, (int)pixel.y) = 0;
                     }
                 }
-                std::cout << "------------------- MERGE2 -------------------" << std::endl;
             }else if(ctu->method == MV_CODE_METHOD::SPATIAL){
                 for(auto pixel : pixels) {
                     R(out, (int)pixel.x, (int)pixel.y) = 0;
