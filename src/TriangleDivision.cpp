@@ -1944,7 +1944,7 @@ bool TriangleDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CO
  */
 std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, std::vector<bool>> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels){
     // 空間予測と時間予測の候補を取り出す
-    std::vector<int> spatial_triangles = getSpatialTriangleListWithParentNode(ctu);
+    std::vector<int> spatial_triangles = getSpatialTriangleList(triangle_idx);
     int spatial_triangle_size = static_cast<int>(spatial_triangles.size());
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors; // ベクトルとモードを表すフラグのペア
     std::vector<std::vector<cv::Point2f>> warping_vectors;
