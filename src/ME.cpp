@@ -868,8 +868,10 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
     ME_log_warping_1.emplace_back();
 #endif
 
+    initial_vector.x = not_rounded_predicted_vector.x;
+    initial_vector.y = not_rounded_predicted_vector.y;
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
-        std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(not_rounded_predicted_vector.x, not_rounded_predicted_vector.y));
+        std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(initial_vector.x, initial_vector.y));
         bool warping_update_flag = true;
 
 #if STORE_NEWTON_LOG
@@ -938,7 +940,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
             }
             v_stack_warping.clear();
 
-            v_stack_warping.emplace_back(tmp_mv_warping, error_bm_min);
+            v_stack_warping.emplace_back(tmp_mv_warping, min_error_translation);
 
             double prev_SSE_warping = error_bm_min;
             std::vector<cv::Point2f> prev_mv_warping{initial_vector, initial_vector, initial_vector};
