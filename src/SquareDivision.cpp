@@ -2081,6 +2081,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 
     double lambda = getLambdaPred(qp, (translation_flag ? 1.0 : 1.0));
 
+    int merge2_flags_code = 0;
+    if(PRED_MODE == NEWTON && MERGE2_ENABLE) merge2_flags_code++;
+
     //                      コスト, 差分ベクトル, 番号, タイプ
     std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> > results;
     if(translation_flag) { // 平行移動成分に関してはこれまで通りにやる
@@ -2277,10 +2280,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             int reference_index_code_length = getUnaryCodeLength(reference_index);
 
             // 各種フラグ分を(3*2)bit足してます
-            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code);
+            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code + merge2_flags_code);
 
             // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length + flags_code, mvds, i, warping_vectors[i][0].second, flag_code_sum, flags);
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length + flags_code + merge2_flags_code, mvds, i, warping_vectors[i][0].second, flag_code_sum, flags);
         }
     }
 
@@ -2334,9 +2337,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 //    }
 
     int merge_count = 0;
-    int merge2_flags_code = 0;
-
-    if(PRED_MODE == NEWTON && MERGE2_ENABLE) merge2_flags_code++;
 
     cv::Rect rect(-SEARCH_RANGE * 4, -SEARCH_RANGE * 4, 4 * (target_image.cols + 2 * SEARCH_RANGE), 4 * (target_image.rows + 2 * SEARCH_RANGE));
 
@@ -2354,7 +2354,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             double ret_residual;
             if(PRED_MODE == BM) ret_residual = getSquareResidual_Pred(target_image, coordinate, mvs, pixels_in_square, ref_hevc, rect);
             else ret_residual = getSquareResidual_Mode(target_image, coordinate, mvs, pixels_in_square, ref_hevc, rect);
-            double rd = (ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code + merge2_flags_code)) * MERGE_ALPHA;
+            double rd = (ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code)) * MERGE_ALPHA;
             results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code, mvs, merge_count, merge_vector.second, FlagsCodeSum(0, 0, 0, 0), Flags());
             merge_count++;
         }
