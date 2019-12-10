@@ -1010,26 +1010,6 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             triangle_gauss_results[triangle_index].residual_warping = SSE_before_subdiv_warping;
             triangle_gauss_results[triangle_index].residual_translation = SSE_before_subdiv_traslation;
 
-            double cost_warping, cost_translation;
-            MV_CODE_METHOD method_warping, method_translation;
-            std::tie(cost_translation, std::ignore, std::ignore, std::ignore, method_translation, std::ignore) = getMVD(
-                    {gauss_result_translation, gauss_result_translation, gauss_result_translation}, SSE_before_subdiv_traslation,
-                    triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, true, dummy);
-#if !GAUSS_NEWTON_TRANSLATION_ONLY
-            std::tie(cost_warping, std::ignore, std::ignore, std::ignore, method_warping, std::ignore) = getMVD(
-                    triangle_gauss_results[triangle_index].mv_warping, SSE_before_subdiv_warping,
-                    triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, false, dummy);
-#endif
-            if(TRANSLATION_COST_RATIO * cost_translation < WARPING_COST_RATIO * cost_warping || (steps <= warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
-                triangle_gauss_results[triangle_index].translation_flag = true;
-                triangle_gauss_results[triangle_index].method_translation = method_translation;
-                translation_flag = true;
-            }else{
-                triangle_gauss_results[triangle_index].translation_flag = false;
-                triangle_gauss_results[triangle_index].method_warping = method_warping;
-                translation_flag = false;
-            }
-
         }else if(PRED_MODE == BM) {
             std::vector<cv::Point2f> tmp_bm_mv;
             std::vector<double> tmp_bm_errors;
