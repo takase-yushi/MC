@@ -1362,14 +1362,14 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     cmt_right_left   = (cmt->node3 == nullptr ? cmt : cmt->node3);
     cmt_right_right  = (cmt->node4 == nullptr ? cmt : cmt->node4);
 
-#if DISPLAY_RD_COST
-    std::cout << "before:" << cost_before_subdiv << " after:" << alpha * (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4) << std::endl;
-#endif
-
     double cost_after_subdiv1 = costs[0];
     double cost_after_subdiv2 = costs[1];
     double cost_after_subdiv3 = costs[2];
     double cost_after_subdiv4 = costs[3];
+
+#if DISPLAY_RD_COST
+    std::cout << "before:" << cost_before_subdiv << " after:" << (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4) << std::endl;
+#endif
 
     if(cost_before_subdiv >= (cost_after_subdiv1 + cost_after_subdiv2 + cost_after_subdiv3 + cost_after_subdiv4)) {
 
