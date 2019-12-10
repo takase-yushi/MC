@@ -2368,7 +2368,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 
             double ret_residual = getSquareResidual_Mode(target_image, coordinate, mvs, pixels_in_square, ref_hevc, rect);
             double rd = (ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code + merge2_flags_code)) * MERGE_ALPHA;
-            results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code, mvs, merge_count, warping_vectors[i][0].second, FlagsCodeSum(0, 0, 0, 0), Flags());
+            results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code + merge2_flags_code, mvs, merge_count, warping_vectors[i][0].second, FlagsCodeSum(0, 0, 0, 0), Flags());
             merge_count++;
         }
 #if MERGE2_ENABLE
