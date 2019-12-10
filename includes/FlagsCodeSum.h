@@ -7,6 +7,8 @@
 
 
 class FlagsCodeSum {
+public:
+
     // 動きベクトル差分の絶対値が0より大きいのか？
     int greater_0_flag_code_length;
 
@@ -21,7 +23,11 @@ class FlagsCodeSum {
     std::vector<bool> x_greater_0_flag;
     std::vector<bool> y_greater_0_flag;
     std::vector<bool> x_greater_1_flag;
-public:
+
+    std::vector<bool> y_greater_1_flag;
+    std::vector<bool> x_sign_flag;
+    std::vector<bool> y_sign_flag;
+
     const std::vector<bool> &getXGreater0Flag() const;
 
     const std::vector<bool> &getYGreater0Flag() const;
@@ -34,10 +40,6 @@ public:
 
     const std::vector<bool> &getYSignFlag() const;
 
-private:
-    std::vector<bool> y_greater_1_flag;
-    std::vector<bool> x_sign_flag;
-    std::vector<bool> y_sign_flag;
 public:
     void setXGreater0Flag(bool xGreater0Flag);
 
