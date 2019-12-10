@@ -449,28 +449,20 @@ void storeNewtonLogs(std::string logDirectoryPath){
 
     ofs_newton2_0 << "translation" << std::endl;
     for(auto & m : ME_log_translation_0){
-        if(m.residual.back() - m.residual.front() > 0.0 && m.percentage > 2.0) {
-            ofs_newton2_0 << "increase distortion," << m.percentage << ",%" << std::endl;
-
-            ofs_newton2_0 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_translation[0] << std::endl;
-            for(int j = 1 ; j < (int)m.residual.size() ; j++){
-                ofs_newton2_0 << j << "," << m.residual[j] << "," << m.mv_newton_translation[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
-            }
-            ofs_newton2_0 << std::endl;
+        ofs_newton2_0 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_translation[0] << std::endl;
+        for(int j = 1 ; j < (int)m.residual.size() ; j++){
+            ofs_newton2_0 << j << "," << m.residual[j] << "," << m.mv_newton_translation[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
         }
+        ofs_newton2_0 << std::endl;
     }
 
     ofs_newton2_0 << "warping" << std::endl;
     for(auto & m : ME_log_warping_0){
-        if(m.residual.back() - m.residual.front() > 0.0 && m.percentage > 2.0) {
-            ofs_newton2_0 << "increase distortion," << m.percentage << ",%" << std::endl;
-
-            ofs_newton2_0 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_warping[0] << std::endl;
-            for(int j = 1 ; j < (int)m.residual.size() ; j++){
-                ofs_newton2_0 << j << "," << m.residual[j] << "," << m.mv_newton_warping[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
-            }
-            ofs_newton2_0 << std::endl;
+        ofs_newton2_0 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_warping[0][0] << "," << m.mv_newton_warping[0][1] << "," << m.mv_newton_warping[0][2] << std::endl;
+        for(int j = 1 ; j < (int)m.residual.size() ; j++){
+            ofs_newton2_0 << j << "," << m.residual[j] << "," << m.mv_newton_warping[j][0] << "," << m.mv_newton_warping[j][1] << "," << m.mv_newton_warping[j][2] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
         }
+        ofs_newton2_0 << std::endl;
     }
 
     ofs_newton2_0.close();
@@ -479,28 +471,20 @@ void storeNewtonLogs(std::string logDirectoryPath){
     ofs_newton2_1.open(logDirectoryPath + "/Slowlog_ref_1_" + getCurrentTimestamp() + "_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".csv");
     ofs_newton2_1 << "translation" << std::endl;
     for(auto & m : ME_log_translation_0){
-        if(m.residual.back() - m.residual.front() > 0.0 && m.percentage > 2.0) {
-            ofs_newton2_1 << "increase distortion," << m.percentage << ",%" << std::endl;
-
-            ofs_newton2_1 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_translation[0] << std::endl;
-            for(int j = 1 ; j < (int)m.residual.size() ; j++){
-                ofs_newton2_1 << j << "," << m.residual[j] << "," << m.mv_newton_translation[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
-            }
-            ofs_newton2_1 << std::endl;
+        ofs_newton2_1 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_translation[0] << std::endl;
+        for(int j = 1 ; j < (int)m.residual.size() ; j++){
+            ofs_newton2_1 << j << "," << m.residual[j] << "," << m.mv_newton_translation[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
         }
+        ofs_newton2_1 << std::endl;
     }
 
     ofs_newton2_1 << "warping" << std::endl;
     for(auto & m : ME_log_warping_0){
-        if(m.residual.back() - m.residual.front() > 0.0 && m.percentage > 2.0) {
-            ofs_newton2_1 << "increase distortion," << m.percentage << ",%" << std::endl;
-
-            ofs_newton2_1 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_warping[0] << std::endl;
-            for(int j = 1 ; j < (int)m.residual.size() ; j++){
-                ofs_newton2_1 << j << "," << m.residual[j] << "," << m.mv_newton_warping[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
-            }
-            ofs_newton2_1 << std::endl;
+        ofs_newton2_1 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_warping[0][0] << "," << m.mv_newton_warping[0][1] << "," << m.mv_newton_warping[0][2] << std::endl;
+        for(int j = 1 ; j < (int)m.residual.size() ; j++){
+            ofs_newton2_1 << j << "," << m.residual[j] << "," << m.mv_newton_warping[j][0] << "," << m.mv_newton_warping[j][1] << "," << m.mv_newton_warping[j][2] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
         }
+        ofs_newton2_1 << std::endl;
     }
 
     ofs_newton2_1.close();
