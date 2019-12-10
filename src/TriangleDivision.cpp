@@ -1036,12 +1036,13 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     double cost_before_subdiv_translation, cost_before_subdiv_warping;
     int code_length_translation, code_length_warping;
     FlagsCodeSum translation_flags, warping_flags;
+    std::vector<bool> share_flag_translation, share_flag_warping;
 
-    std::tie(cost_before_subdiv_translation, code_length_translation, mvd_translation, selected_index_translation, method_flag_translation, translation_flags) = getMVD(
+    std::tie(cost_before_subdiv_translation, code_length_translation, mvd_translation, selected_index_translation, method_flag_translation, translation_flags, share_flag_translation) = getMVD(
            {gauss_result_translation, gauss_result_translation, gauss_result_translation}, SSE_before_subdiv_traslation,
            triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, true, dummy);
 
-    std::tie(cost_before_subdiv_warping, code_length_warping, mvd_warping, selected_index_warping, method_flag_warping, warping_flags) = getMVD(
+    std::tie(cost_before_subdiv_warping, code_length_warping, mvd_warping, selected_index_warping, method_flag_warping, warping_flags, share_flag_warping) = getMVD(
             gauss_result_warping, SSE_before_subdiv_warping,
             triangle_index, cmt->mv1, diagonal_line_area_flag, ctu, false, dummy);
 
@@ -1054,8 +1055,8 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     std::vector<cv::Point2f> mvd;
     double cost_before_subdiv;
     FlagsCodeSum flags;
-
-    std::cout << cost_before_subdiv_translation << " " << SSE_before_subdiv_traslation << " " << cost_before_subdiv_warping << " " << SSE_before_subdiv_warping << std::endl;
+    std::vector<bool> share_flags;
+//    std::cout << cost_before_subdiv_translation << " " << SSE_before_subdiv_traslation << " " << cost_before_subdiv_warping << " " << SSE_before_subdiv_warping << std::endl;
     if((TRANSLATION_COST_RATIO * cost_before_subdiv_translation < WARPING_COST_RATIO * cost_before_subdiv_warping) || (steps <= warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY){
         triangle_gauss_results[triangle_index].translation_flag = true;
         method_flag        = method_flag_translation;
@@ -1065,6 +1066,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         cost_before_subdiv = TRANSLATION_COST_RATIO * cost_before_subdiv_translation;
         translation_flag   = true;
         flags              = translation_flags;
+        share_flags        = share_flag_translation;
     }else{
         triangle_gauss_results[triangle_index].translation_flag = false;
         method_flag        = method_flag_warping;
@@ -1074,6 +1076,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         cost_before_subdiv = WARPING_COST_RATIO * cost_before_subdiv_warping;
         translation_flag   = false;
         flags              = warping_flags;
+        share_flags        = share_flag_warping;
     }
 
     if(method_flag == MV_CODE_METHOD::SPATIAL){
@@ -1107,6 +1110,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     ctu->method = method_flag;
     ctu->ref_triangle_idx = selected_index;
     ctu->flags_code_sum = flags;
+    ctu->share_flag[0] = share_flags[0];
+    ctu->share_flag[1] = share_flags[1];
+    ctu->share_flag[2] = share_flags[2];
 
     if(method_flag == SPATIAL) {
         ctu->mvds.clear();
@@ -1230,7 +1236,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     std::vector<MV_CODE_METHOD> methods(4);
     std::vector<double> code_length_tmp(4);
     std::vector<FlagsCodeSum> flags_code_sum_tmp(4);
-
+    std::vector<std::vector<bool>> share_flags_tmp(4, std::vector<bool>(4, false));
 #if !MVD_DEBUG_LOG
 //    #pragma omp parallel for
 #endif
@@ -1269,13 +1275,14 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             double code_length_translation_tmp, code_length_warping_tmp;
             FlagsCodeSum tmp_translation_flags;
             FlagsCodeSum tmp_warping_flags;
+            std::vector<bool> share_flags_warping, share_flags_translation;
             // TODO: cmt直す
-            std::tie(cost_translation_tmp, code_length_translation_tmp, mvd_translation_tmp, std::ignore, method_translation_tmp, tmp_translation_flags) = getMVD(
+            std::tie(cost_translation_tmp, code_length_translation_tmp, mvd_translation_tmp, std::ignore, method_translation_tmp, tmp_translation_flags, share_flags_translation) = getMVD(
                     {mv_translation_tmp, mv_translation_tmp, mv_translation_tmp}, error_translation_tmp,
                     triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], true, dummy);
 #if !GAUSS_NEWTON_TRANSLATION_ONLY
 
-            std::tie(cost_warping_tmp, code_length_warping_tmp, mvd_warping_tmp, std::ignore, method_warping_tmp, tmp_warping_flags) = getMVD(
+            std::tie(cost_warping_tmp, code_length_warping_tmp, mvd_warping_tmp, std::ignore, method_warping_tmp, tmp_warping_flags, share_flags_warping) = getMVD(
                     mv_warping_tmp, error_warping_tmp,
                     triangle_indexes[j], cmt->mv1, diagonal_line_area_flag, ctus[j], false, dummy);
 #endif
@@ -1289,6 +1296,12 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 methods[j] = method_translation_tmp;
                 code_length_tmp[j] = code_length_translation_tmp;
                 flags_code_sum_tmp[j] = (tmp_translation_flags);
+
+                if(!share_flags_translation.empty()) {
+                    share_flags_tmp[j][0] = share_flags_translation[0];
+                    share_flags_tmp[j][1] = share_flags_translation[1];
+                    share_flags_tmp[j][2] = share_flags_translation[2];
+                }
                 if(method_translation_tmp == MV_CODE_METHOD::MERGE || method_translation_tmp == MV_CODE_METHOD::MERGE2){
                     triangle_gauss_results[triangle_indexes[j]].mv_translation = mvd_translation_tmp[0];
                     mv_translation_tmp = mvd_translation_tmp[0];
@@ -1302,6 +1315,12 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 methods[j] = method_warping_tmp;
                 code_length_tmp[j] = code_length_warping_tmp;
                 flags_code_sum_tmp[j] = (tmp_warping_flags);
+
+                if(!share_flags_warping.empty()) {
+                    share_flags_tmp[j][0] = share_flags_warping[0];
+                    share_flags_tmp[j][1] = share_flags_warping[1];
+                    share_flags_tmp[j][2] = share_flags_warping[2];
+                }
                 if(method_warping_tmp == MV_CODE_METHOD::MERGE || method_warping_tmp == MV_CODE_METHOD::MERGE2){
                     triangle_gauss_results[triangle_indexes[j]].mv_warping = mvd_warping_tmp;
                     mv_warping_tmp = mvd_warping_tmp;
@@ -1369,6 +1388,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         ctu->node1->translation_flag = split_mv_result[0].translation_flag;
         ctu->node1->method = methods[0];
         ctu->node1->flags_code_sum = flags_code_sum_tmp[0];
+        ctu->node1->share_flag[0] = share_flags_tmp[0][0];
+        ctu->node1->share_flag[1] = share_flags_tmp[0][1];
+        ctu->node1->share_flag[2] = share_flags_tmp[0][2];
         int next_step = steps - 2;
         if(ctu->node1->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
             next_step = 0;
@@ -1381,6 +1403,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         ctu->node2->translation_flag = split_mv_result[1].translation_flag;
         ctu->node2->method = methods[1];
         ctu->node2->flags_code_sum = flags_code_sum_tmp[1];
+        ctu->node2->share_flag[0] = share_flags_tmp[1][0];
+        ctu->node2->share_flag[1] = share_flags_tmp[1][1];
+        ctu->node2->share_flag[2] = share_flags_tmp[1][2];
         next_step = steps - 2;
         if(ctu->node2->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
             next_step = 0;
@@ -1393,6 +1418,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         ctu->node3->translation_flag = split_mv_result[2].translation_flag;
         ctu->node3->method = methods[2];
         ctu->node3->flags_code_sum = flags_code_sum_tmp[2];
+        ctu->node3->share_flag[0] = share_flags_tmp[2][0];
+        ctu->node3->share_flag[1] = share_flags_tmp[2][1];
+        ctu->node3->share_flag[2] = share_flags_tmp[2][2];
         next_step = steps - 2;
         if(ctu->node3->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
             next_step = 0;
@@ -1405,6 +1433,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         ctu->node4->translation_flag = split_mv_result[3].translation_flag;
         ctu->node4->method = methods[3];
         ctu->node4->flags_code_sum = flags_code_sum_tmp[3];
+        ctu->node4->share_flag[0] = share_flags_tmp[3][0];
+        ctu->node4->share_flag[1] = share_flags_tmp[3][1];
+        ctu->node4->share_flag[2] = share_flags_tmp[3][2];
         next_step = steps - 2;
         if(ctu->node4->method == MV_CODE_METHOD::INTRA && INTRA_LIMIT_MODE){
             next_step = 0;
@@ -1911,7 +1942,7 @@ bool TriangleDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CO
  * @param[in] area_flag 含まれる画素のフラグ
  * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
  */
-std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels){
+std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, std::vector<bool>> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels){
     // 空間予測と時間予測の候補を取り出す
     std::vector<int> spatial_triangles = getSpatialTriangleListWithParentNode(ctu);
     int spatial_triangle_size = static_cast<int>(spatial_triangles.size());
@@ -2526,10 +2557,11 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
         ctu->share_flag[2] = share_flags[selected_idx][2];
     }
 
-    if(triangle_idx == 0) {
-        std::cout << ctu->flags_code_sum.getMvdCodeLength() << " " << code_length << std::endl;
+    if(method != MV_CODE_METHOD::MERGE2) {
+        return {cost, code_length, mvds, selected_idx, method, flag_code_sum, {false, false, false}};
     }
-    return {cost, code_length, mvds, selected_idx, method, flag_code_sum};
+
+    return {cost, code_length, mvds, selected_idx, method, flag_code_sum, share_flags[selected_idx]};
 }
 
 /**
@@ -3003,7 +3035,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> TriangleDivision::full
                 }
 
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
-                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore, std::ignore) = getMVD({cv::Point2f((double)i/4.0, (double)j/4.0), cv::Point2f((double)i/4.0, (double)j/4.0), cv::Point2f((double)i/4.0, (double)j/4.0)}, e, triangle_index, cmt, area_flag, ctu, true, pixels);
+                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore, std::ignore, std::ignore) = getMVD({cv::Point2f((double)i/4.0, (double)j/4.0), cv::Point2f((double)i/4.0, (double)j/4.0), cv::Point2f((double)i/4.0, (double)j/4.0)}, e, triangle_index, cmt, area_flag, ctu, true, pixels);
                 if(rd_min > rd){
                     error_min = e;
                     rd_min = rd;
