@@ -78,6 +78,9 @@ int main(int argc, char *argv[]){
     tests();
 #else
 
+//    generateChunkedConfigForTestSequence();
+//    exit(10);
+
     std::string config_name;
     if(argc == 1) {
         config_name = "config.json";
