@@ -276,7 +276,7 @@ void generateChunkedConfigItem(std::string input_file_path, std::string output_f
             ofs << "            \"ctu_height\"     : " << static_cast<int>(task["ctu_height"].get<double>()) << "," << std::endl;
             ofs << "            \"division_step\"  : " << static_cast<int>(task["division_step"].get<double>()) << "," << std::endl;
             ofs << "            \"lambda_enable\"  : " << std::boolalpha << task["lambda_enable"].get<bool>() << "," << std::endl;
-            ofs << "            \"lambda\"         : " << static_cast<int>(task["lambda"].get<double>()) << "," << std::endl;
+            ofs << "            \"lambda\"         : " << static_cast<double>(task["lambda"].get<double>()) << "," << std::endl;
             ofs << R"(            "QP_offset"      : 0)" << std::endl;
 
             if (i == array_size - 1) {
