@@ -111,9 +111,7 @@ void generateConfigItem(std::string input_file_path, std::string output_file_pat
 
     // iterate each-tasks
     int count = 0;
-    int array_size = ary.size() - 1;
-
-    array_size = lambdas.size() * ary.size();
+    int array_size = lambdas.size() * ary.size();
     for(auto& item : ary){
         picojson::object& task      = item.get<picojson::object>();
 
@@ -185,10 +183,7 @@ void generateChunkedConfigItem(std::string input_file_path, std::string output_f
 
     // iterate each-tasks
     int count = 0;
-    int array_size = ary.size() - 1;
-
-
-    array_size = lambdas.size() * ary.size();
+    int array_size = lambdas.size() * ary.size();
     for(auto& item : ary){
         picojson::object& task      = item.get<picojson::object>();
 
