@@ -17,7 +17,7 @@ directories = ["cactus/cactus-tmp",
                "drone2/drone2-tmp",
                "fungus/fungus-tmp",
                "in_to_tree_1280_640/in-to-tree-1280-640-tmp",
-               "kimono1/kimono1-tmp",
+               "express_way/express-way-tmp",
                "minato/minato-tmp",
                "park_scene/park-scene-tmp",
                "station2/station2-tmp"]
