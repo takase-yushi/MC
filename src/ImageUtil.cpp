@@ -207,8 +207,14 @@ double getSquareResidual_Pred(const cv::Mat &target_image, Point4Vec square, std
     return sad;
 }
 
-double getSquareSSE(unsigned char *target_image, Point4Vec square, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_square_pixels, unsigned char *ref_image, cv::Rect rect){
+double getSquareSSE(unsigned char *target_image, Point4Vec square, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_square_pixels, unsigned char *ref_image, cv::Rect rect, bool useRound){
     cv::Point2f pp0, pp1, pp2;
+
+    if(useRound) {
+        mv[0] = roundVecQuarter(mv[0]);
+        mv[1] = roundVecQuarter(mv[1]);
+        mv[2] = roundVecQuarter(mv[2]);
+    }
 
     pp0 = square.p1 + mv[0];
     pp1 = square.p2 + mv[1];
