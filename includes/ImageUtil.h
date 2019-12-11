@@ -41,7 +41,7 @@ double img_ip(unsigned char *img, cv::Rect rect, double x, double y, int offset 
 unsigned char* getExpansionHEVCImage(cv::Mat image, int k, int expansion_size);
 cv::Mat getExpansionMatHEVCImage(cv::Mat image, int k, int expansion_size);
 double getTriangleResidual(unsigned char *ref_image, const cv::Mat &target_image, Point3Vec &triangle, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_triangle_pixels, cv::Rect rect);
-double getTriangleSSE(unsigned char *ref_image, unsigned char *target_image, Point3Vec &triangle, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_triangle_pixels, cv::Rect rect);
+double getTriangleSSE(unsigned char *ref_image, unsigned char *target_image, Point3Vec &triangle, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_triangle_pixels, cv::Rect rect, bool useRound = false);
 cv::Mat getAppliedLPFImage(const cv::Mat &image);
 
 void store1DArrayImage(std::string output_path, unsigned char *array, int width, int height, int offset, int k);

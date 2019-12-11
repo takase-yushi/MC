@@ -301,8 +301,14 @@ double getTriangleResidual(unsigned char *ref_image, const cv::Mat &target_image
 }
 
 
-double getTriangleSSE(unsigned char *ref_image, unsigned char *target_image, Point3Vec &triangle, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_triangle_pixels, cv::Rect rect){
+double getTriangleSSE(unsigned char *ref_image, unsigned char *target_image, Point3Vec &triangle, std::vector<cv::Point2f> mv, const std::vector<cv::Point2f> &in_triangle_pixels, cv::Rect rect, bool useRound){
     cv::Point2f pp0, pp1, pp2;
+
+    if(useRound) {
+        mv[0] = roundVecQuarter(mv[0]);
+        mv[1] = roundVecQuarter(mv[1]);
+        mv[2] = roundVecQuarter(mv[2]);
+    }
 
     // 移動後の座標
     pp0.x = triangle.p1.x + mv[0].x;
