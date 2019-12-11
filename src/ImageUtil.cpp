@@ -959,7 +959,7 @@ unsigned char* getExpansionHEVCImage(cv::Mat image, int k, int expansion_size){
     expansion_image_tmp -= scaled_expansion_size;
     free(expansion_image_tmp);
 
-    std::cout << "scaled_expantion_size:" << k * scaled_expansion_size << std::endl;
+//    std::cout << "scaled_expantion_size:" << k * scaled_expansion_size << std::endl;
 
     return ret;
 }
