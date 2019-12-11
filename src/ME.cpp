@@ -699,7 +699,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
     ME_log_translation_1.emplace_back();
 #endif
 
-
+    cv::Point2f not_rounded_predicted_vector = initial_vector;
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
         cv::Point2f tmp_mv_translation(initial_vector.x, initial_vector.y);
         bool translation_update_flag = true;
@@ -1020,6 +1020,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
                     max_PSNR_translation = PSNR_translation;
                     min_error_translation = Error_translation;
                     max_v_translation = roundVecQuarter(tmp_mv_translation);
+                    not_rounded_predicted_vector = tmp_mv_translation;
                 }
             }
         }
@@ -1038,7 +1039,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
 #endif
 
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
-        std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(initial_vector.x, initial_vector.y));
+        std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(not_rounded_predicted_vector.x, not_rounded_predicted_vector.y));
         bool warping_update_flag = true;
 
 #if STORE_NEWTON_LOG
@@ -1523,7 +1524,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
     ME_log_translation_1.emplace_back();
 #endif
 
-
+    cv::Point2f not_rounded_predicted_vector = initial_vector;
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
         cv::Point2f tmp_mv_translation(initial_vector.x, initial_vector.y);
         bool translation_update_flag = true;
@@ -1846,6 +1847,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     max_PSNR_translation = PSNR_translation;
                     min_error_translation = Error_translation;
                     max_v_translation = roundVecQuarter(tmp_mv_translation);
+                    not_rounded_predicted_vector = tmp_mv_translation;
                 }
             }
         }
@@ -1864,7 +1866,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 #endif
 
     for(int filter_num = 0 ; filter_num < static_cast<int>(ref_images.size()) ; filter_num++){
-        std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(initial_vector.x, initial_vector.y));
+        std::vector<cv::Point2f> tmp_mv_warping(3, cv::Point2f(not_rounded_predicted_vector.x, not_rounded_predicted_vector.y));
         bool warping_update_flag = true;
 
 #if STORE_NEWTON_LOG
