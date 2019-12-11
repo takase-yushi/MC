@@ -942,7 +942,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
 
                 // 移動後のSSEを求める
                 std::vector<cv::Point2f> translation_mvs{tmp_mv_translation, tmp_mv_translation, tmp_mv_translation};
-                SSE_translation = getSquareSSE(current_target_org_expand, target_corners, translation_mvs, pixels_in_square, ref_hevc, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)));
+                SSE_translation = getSquareSSE(current_target_org_expand, target_corners, translation_mvs, pixels_in_square, ref_hevc, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), true);
 
 
                 double eps = 1e-3;
@@ -1324,7 +1324,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
                     }
                 }
 
-                SSE_warping = getSquareSSE(current_target_org_expand, target_corners, tmp_mv_warping, pixels_in_square, ref_hevc, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)));
+                SSE_warping = getSquareSSE(current_target_org_expand, target_corners, tmp_mv_warping, pixels_in_square, ref_hevc, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), true);
 
                 iterate_counter++;
                 double eps = 1e-3;
@@ -1769,7 +1769,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
                 // 移動後のSSEを求める
                 std::vector<cv::Point2f> translation_mvs{tmp_mv_translation, tmp_mv_translation, tmp_mv_translation};
-                SSE_translation = getTriangleSSE(ref_hevc, current_target_org_expand, target_corners, translation_mvs, pixels_in_triangle, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)));
+                SSE_translation = getTriangleSSE(ref_hevc, current_target_org_expand, target_corners, translation_mvs, pixels_in_triangle, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), true);
 
 
                 double eps = 1e-3;
@@ -2159,7 +2159,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     }
                 }
 
-                SSE_warping = getTriangleSSE(ref_hevc, current_target_org_expand, target_corners, tmp_mv_warping, pixels_in_triangle, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)));
+                SSE_warping = getTriangleSSE(ref_hevc, current_target_org_expand, target_corners, tmp_mv_warping, pixels_in_triangle, cv::Rect(-4 * spread, -4 * spread, 4 * (current_target_image.cols + 2 * spread), 4 * (current_target_image.rows + 2 * spread)), true);
 
                 iterate_counter++;
                 double eps = 1e-3;
