@@ -306,7 +306,7 @@ void generateConfigForTestSequence(){
     generateConfigItem(base_path + "/config/drone2/drone2.json", base_path + "/config/drone2/drone2-tmp.json");
     generateConfigItem(base_path + "/config/fungus/fungus.json", base_path + "/config/fungus/fungus-tmp.json");
     generateConfigItem(base_path + "/config/in_to_tree_1280_640/in-to-tree-1280-640.json", base_path + "/config/in_to_tree_1280_640/in-to-tree-1280-640-tmp.json");
-    generateConfigItem(base_path + "/config/kimono1/kimono1.json", base_path + "/config/kimono1/kimono1-tmp.json");
+    generateConfigItem(base_path + "/config/express_way/express_way.json", base_path + "/config/express_way/express_way-tmp.json");
     generateConfigItem(base_path + "/config/minato/minato.json", base_path + "/config/minato/minato-tmp.json");
     generateConfigItem(base_path + "/config/park_scene/park-scene.json", base_path + "/config/park_scene/park-scene-tmp.json");
     generateConfigItem(base_path + "/config/station2/station2.json", base_path + "/config/station2/station2-tmp.json");
@@ -324,7 +324,7 @@ void generateChunkedConfigForTestSequence(){
     generateChunkedConfigItem(base_path + "/config/drone2/drone2.json", base_path + "/config/drone2/drone2-tmp.json", 34);
     generateChunkedConfigItem(base_path + "/config/fungus/fungus.json", base_path + "/config/fungus/fungus-tmp.json", 34);
     generateChunkedConfigItem(base_path + "/config/in_to_tree_1280_640/in-to-tree-1280-640.json", base_path + "/config/in_to_tree_1280_640/in-to-tree-1280-640-tmp.json", 34);
-    generateChunkedConfigItem(base_path + "/config/kimono1/kimono1.json", base_path + "/config/kimono1/kimono1-tmp.json", 34);
+    generateChunkedConfigItem(base_path + "/config/express_way/express_way.json", base_path + "/config/express_way/express_way-tmp.json", 34);
     generateChunkedConfigItem(base_path + "/config/minato/minato.json", base_path + "/config/minato/minato-tmp.json", 34);
     generateChunkedConfigItem(base_path + "/config/park_scene/park-scene.json", base_path + "/config/park_scene/park-scene-tmp.json", 34);
     generateChunkedConfigItem(base_path + "/config/station2/station2.json", base_path + "/config/station2/station2-tmp.json", 34);
