@@ -374,7 +374,7 @@ void run(std::string config_name) {
         Analyzer analayzer(log_file_suffix);
         analayzer.storeDistributionOfMv(foo, log_directory);
         analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
-        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image));
+        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time);
 
 #else
         Analyzer analayzer(log_file_suffix);
@@ -683,7 +683,7 @@ void run_square(std::string config_name) {
         Analyzer analayzer(log_file_suffix);
         analayzer.storeDistributionOfMv(foo, log_directory);
         analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
-        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image));
+        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time);
 
 #else
         Analyzer analayzer(log_file_suffix);
