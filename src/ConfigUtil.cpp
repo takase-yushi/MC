@@ -290,6 +290,158 @@ void generateChunkedConfigItem(std::string input_file_path, std::string output_f
 
 }
 
+void generateChunkedRDConfigItem(std::string input_file_path, std::string output_file_path, int chunk_size) {
+    std::ifstream fs;
+
+    std::vector<double> lambdas_rd{
+        11.86, 19.43, 29.00, 40.57, 54.14, 69.71, 87.29, 113.43, 146.00
+    };
+
+    fs.open(input_file_path, std::ios::binary);
+
+    if(fs.fail()){
+        std::cerr << "Failed to open config.json" << std::endl;
+        exit(-1);
+    }
+
+    std::string json_string((std::istreambuf_iterator<char>(fs)), std::istreambuf_iterator<char>());
+    fs.close();
+
+    picojson::value val;
+    std::string err = picojson::parse(val, json_string);
+
+    if(!err.empty()){
+        std::cerr << "Failed to parse json string" << std::endl;
+        exit(-1);
+    }
+
+    picojson::object& obj = val.get<picojson::object>();
+    picojson::array& ary = obj["tasks"].get<picojson::array>();
+
+    std::ofstream ofs;
+    ofs.open(output_file_path);
+
+    ofs << "{" << std::endl;
+    ofs << "  \"tasks\":[" << std::endl;
+
+    // iterate each-tasks
+    int count = 0;
+    int array_size = 9;
+    for(auto& item : ary){
+        picojson::object& task      = item.get<picojson::object>();
+
+        for(int i = 0 ; i < lambdas_rd.size() ; i++) {
+            int qp = static_cast<int>(task["QP"].get<double>());
+            if(i == 0 && qp != 22) continue;
+            if(i == 1 && qp != 24) continue;
+            if(i == 2 && qp != 26) continue;
+            if(i == 3 && qp != 28) continue;
+            if(i == 4 && qp != 30) continue;
+            if(i == 5 && qp != 32) continue;
+            if(i == 6 && qp != 34) continue;
+            if(i == 7 && qp != 36) continue;
+            if(i == 8 && qp != 37) continue;
+
+            ofs << "        {" << std::endl;
+            ofs << R"(            "enable"         : )" << std::boolalpha << task["enable"].get<bool>() << "," << std::endl;
+            ofs << R"(            "img_directory"  : ")" << task["img_directory"].get<std::string>() << "\"," << std::endl;
+            ofs << R"(            "log_directory"  : ")" << task["log_directory"].get<std::string>() << "\"," << std::endl;
+            ofs << R"(            "gauss_ref_image": ")" << task["gauss_ref_image"].get<std::string>() << "\"," << std::endl;
+            ofs << R"(            "ref_image"      : ")" << task["ref_image"].get<std::string>() << "\"," << std::endl;
+            ofs << R"(            "target_image"   : ")" << task["target_image"].get<std::string>() << "\"," << std::endl;
+            ofs << "            \"QP\"             : " << qp << "," << std::endl;
+            ofs << "            \"ctu_width\"      : " << static_cast<int>(task["ctu_width"].get<double>()) << "," << std::endl;
+            ofs << "            \"ctu_height\"     : " << static_cast<int>(task["ctu_height"].get<double>()) << "," << std::endl;
+            ofs << "            \"division_step\"  : " << static_cast<int>(task["division_step"].get<double>()) << "," << std::endl;
+            ofs << "            \"lambda_enable\"  : true," << std::endl;
+            ofs << "            \"lambda\"         : " << lambdas_rd[i] << "," << std::endl;
+            ofs << R"(            "QP_offset"      : 0)" << std::endl;
+
+            if (count == array_size - 1) {
+                ofs << "        }" << std::endl;
+            } else {
+                ofs << "        }," << std::endl;
+            }
+            count++;
+        }
+    }
+
+    ofs << "    ]" << std::endl;
+    ofs << "}" << std::endl;
+
+    ofs.close();
+
+    fs.open(output_file_path, std::ios::binary);
+
+    if(fs.fail()){
+        std::cerr << "Failed to open config.json" << std::endl;
+        exit(-1);
+    }
+
+    std::string json_string2((std::istreambuf_iterator<char>(fs)), std::istreambuf_iterator<char>());
+    fs.close();
+
+    picojson::value val2;
+    err = picojson::parse(val2, json_string2);
+
+    if(!err.empty()){
+        std::cerr << "Failed to parse json string" << std::endl;
+        exit(-1);
+    }
+
+    obj = val2.get<picojson::object>();
+    ary = obj["tasks"].get<picojson::array>();
+
+    int chunked_array_size = ceil((double)ary.size() / chunk_size);
+
+    count = 0;
+    for(int chunked_array_index = 0 ; chunked_array_index < chunked_array_size ; chunked_array_index++) {
+        std::ofstream ofs;
+
+        // hoge.jsonをhoge1.jsonとかにして吐き出す
+        std::string file_name = output_file_path.substr(0, output_file_path.rfind('.'));
+        std::string tmp_output_file_path = file_name + std::to_string(chunked_array_index + 1) + ".json";
+        ofs.open(tmp_output_file_path);
+
+        ofs << "{" << std::endl;
+        ofs << "  \"tasks\":[" << std::endl;
+
+        array_size = (chunked_array_index == (chunked_array_size - 1) && (ary.size() % chunk_size) != 0 ? (ary.size() % chunk_size) : chunk_size);
+
+        for(int i = 0 ; i < array_size && count < (int)ary.size(); i++){
+            picojson::object& task      = ary[count].get<picojson::object>();
+
+            ofs << "        {" << std::endl;
+            ofs << R"(            "enable"         : )" << std::boolalpha << task["enable"].get<bool>() << "," << std::endl;
+            ofs << R"(            "img_directory"  : ")" << task["img_directory"].get<std::string>() << "\"," << std::endl;
+            ofs << R"(            "log_directory"  : ")" << task["log_directory"].get<std::string>() << "\"," << std::endl;
+            ofs << R"(            "gauss_ref_image": ")" << task["gauss_ref_image"].get<std::string>() << "\"," << std::endl;
+            ofs << R"(            "ref_image"      : ")" << task["ref_image"].get<std::string>() << "\"," << std::endl;
+            ofs << R"(            "target_image"   : ")" << task["target_image"].get<std::string>() << "\"," << std::endl;
+            ofs << "            \"QP\"             : " << static_cast<int>(task["QP"].get<double>()) << "," << std::endl;
+            ofs << "            \"ctu_width\"      : " << static_cast<int>(task["ctu_width"].get<double>()) << "," << std::endl;
+            ofs << "            \"ctu_height\"     : " << static_cast<int>(task["ctu_height"].get<double>()) << "," << std::endl;
+            ofs << "            \"division_step\"  : " << static_cast<int>(task["division_step"].get<double>()) << "," << std::endl;
+            ofs << "            \"lambda_enable\"  : " << std::boolalpha << task["lambda_enable"].get<bool>() << "," << std::endl;
+            ofs << "            \"lambda\"         : " << static_cast<double>(task["lambda"].get<double>()) << "," << std::endl;
+            ofs << R"(            "QP_offset"      : 0)" << std::endl;
+
+            if (i == array_size - 1) {
+                ofs << "        }" << std::endl;
+            } else {
+                ofs << "        }," << std::endl;
+            }
+
+            count++;
+        }
+
+        ofs << "    ]" << std::endl;
+        ofs << "}" << std::endl;
+        ofs.close();
+    }
+
+}
+
 /**
  * @fn void generateConfigForTestSequence
  * @brief テストシーケンスに使いそうなやつのgenerateConfigItem呼び出しをまとめた．ハードコードしている
@@ -326,3 +478,18 @@ void generateChunkedConfigForTestSequence(){
     generateChunkedConfigItem(base_path + "/config/express_way/express-way.json", base_path + "/config/express_way/express-way-tmp.json", 35);
 }
 
+/**
+ * @fn void generateRDCurveConfigForTestSequence()
+ * @brief RDカーブを描く用のConfigジェネレーター．並列に回せるよう，ChunkSize=1となっている
+ */
+void generateChunkedRDCurveConfigForTestSequence(){
+    std::string base_path = getProjectDirectory(OS);
+    generateChunkedRDConfigItem(base_path + "/config/cactus/cactus.json", base_path + "/config/cactus/cactus-rd.json", 1);
+    generateChunkedRDConfigItem(base_path + "/config/drone2/drone2.json", base_path + "/config/drone2/drone2-rd.json", 1);
+    generateChunkedRDConfigItem(base_path + "/config/fungus/fungus.json", base_path + "/config/fungus/fungus-rd.json", 1);
+    generateChunkedRDConfigItem(base_path + "/config/in_to_tree_1280_640/in-to-tree-1280-640.json", base_path + "/config/in_to_tree_1280_640/in-to-tree-1280-640-rd.json", 1);
+    generateChunkedRDConfigItem(base_path + "/config/minato/minato.json", base_path + "/config/minato/minato-rd.json", 1);
+    generateChunkedRDConfigItem(base_path + "/config/park_scene/park-scene.json", base_path + "/config/park_scene/park-scene-rd.json", 1);
+    generateChunkedRDConfigItem(base_path + "/config/station2/station2.json", base_path + "/config/station2/station2-rd.json", 1);
+    generateChunkedRDConfigItem(base_path + "/config/express_way/express-way.json", base_path + "/config/express_way/express-way-rd.json", 1);
+}
