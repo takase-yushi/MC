@@ -1084,7 +1084,14 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         triangle_gauss_results[triangle_index].mv_warping = triangle_gauss_results[triangle_index].original_mv_warping;
         gauss_result_translation = triangle_gauss_results[triangle_index].mv_translation;
         gauss_result_warping = triangle_gauss_results[triangle_index].mv_warping;
-    }else if(method_flag == MV_CODE_METHOD::MERGE || method_flag == MV_CODE_METHOD::MERGE2) {
+    }else if(method_flag == MV_CODE_METHOD::MERGE){
+        triangle_gauss_results[triangle_index].mv_translation = mvd_translation[0];
+        triangle_gauss_results[triangle_index].mv_warping = mvd_warping;
+        gauss_result_translation = mvd_translation[0];
+        gauss_result_warping = mvd_warping;
+        // マージのときは強制affineにするため，translation_flagを書き換える
+        translation_flag = false;
+    }else if(method_flag == MV_CODE_METHOD::MERGE2) {
         triangle_gauss_results[triangle_index].mv_translation = mvd_translation[0];
         triangle_gauss_results[triangle_index].mv_warping = mvd_warping;
         gauss_result_translation = mvd_translation[0];
@@ -2305,7 +2312,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
                     merge_count++;
                 }
             }
-
         }
     }else{
         std::vector<Point3Vec> warping_vector_history;
