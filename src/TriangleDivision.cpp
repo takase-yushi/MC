@@ -2279,33 +2279,17 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             cv::Rect rect(-SEARCH_RANGE * 4, -SEARCH_RANGE * 4, 4 * (target_image.cols + 2 * SEARCH_RANGE), 4 * (target_image.rows + 2 * SEARCH_RANGE));
             std::vector<cv::Point2f> mvs;
 
-            if (spatial_triangle.translation_flag) {
-                if(spatial_triangle.mv_translation.x + sx < -SEARCH_RANGE || spatial_triangle.mv_translation.y + sy < -SEARCH_RANGE || spatial_triangle.mv_translation.x + lx >= target_image.cols + SEARCH_RANGE || spatial_triangle.mv_translation.y + ly >= target_image.rows + SEARCH_RANGE) continue;
-                if (!isMvExists(merge_vectors, spatial_triangle.mv_translation) && merge_count < MV_LIST_MAX_NUM) {
-                    merge_vectors.emplace_back(spatial_triangle.mv_translation, MERGE);
-                    mvs.emplace_back(spatial_triangle.mv_translation);
-                    mvs.emplace_back(spatial_triangle.mv_translation);
-                    mvs.emplace_back(spatial_triangle.mv_translation);
-                    double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
-                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code);
-                    results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code, mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
-                    merge_count++;
-                }
-            } else {
-                if(spatial_triangle.mv_warping[0].x + sx < -SEARCH_RANGE || spatial_triangle.mv_warping[0].y + sy < -SEARCH_RANGE || spatial_triangle.mv_warping[0].x + lx >= target_image.cols + SEARCH_RANGE || spatial_triangle.mv_warping[0].y + ly >= target_image.rows + SEARCH_RANGE) continue;
-                if (!isMvExists(merge_vectors, spatial_triangle.mv_warping[0]) && merge_count < MV_LIST_MAX_NUM) {
-                    merge_vectors.emplace_back(spatial_triangle.mv_warping[0], MERGE);
-                    mvs.emplace_back(spatial_triangle.mv_warping[0]);
-                    mvs.emplace_back(spatial_triangle.mv_warping[0]);
-                    mvs.emplace_back(spatial_triangle.mv_warping[0]);
-                    double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs,
-                                                              pixels_in_triangle, rect);
-                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code);
-                    results.emplace_back(rd, getUnaryCodeLength(merge_count)  + flags_code, mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
-                    merge_count++;
-                }
+            if(vectors[i].first.x + sx < -SEARCH_RANGE || vectors[i].first.y + sy < -SEARCH_RANGE || vectors[i].first.x + lx >= target_image.cols + SEARCH_RANGE || vectors[i].first.y + ly >= target_image.rows + SEARCH_RANGE) continue;
+            if (!isMvExists(merge_vectors, vectors[i].first) && merge_count < MV_LIST_MAX_NUM) {
+                merge_vectors.emplace_back(vectors[i].first, MERGE);
+                mvs.emplace_back(vectors[i].first);
+                mvs.emplace_back(vectors[i].first);
+                mvs.emplace_back(vectors[i].first);
+                double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
+                double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code);
+                results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code, mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
+                merge_count++;
             }
-
         }
     }else{
         std::vector<Point3Vec> warping_vector_history;
