@@ -294,7 +294,7 @@ void generateChunkedRDConfigItem(std::string input_file_path, std::string output
     std::ifstream fs;
 
     std::vector<double> lambdas_rd{
-        11.86, 19.43, 29.00, 40.57, 54.14, 69.71, 87.29, 113.43, 146.00
+            27,44.25,82.25,152.125,261.75,528.75,906.25,2237.5,6550
     };
 
     fs.open(input_file_path, std::ios::binary);
