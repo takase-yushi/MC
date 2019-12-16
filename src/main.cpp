@@ -137,7 +137,7 @@ void run(std::string config_name) {
         division_steps                          = task.getDivisionStep();
 
         lambda_inject_flag                      = task.isLambdaEnable();
-        injected_lambda                         = task.getLambda() * task.getLambda();
+        injected_lambda                         = task.getLambda();
 
         std::cout << "img_directory          : " << img_directory << std::endl;
         std::cout << "log_directory          : " << log_directory << std::endl;
