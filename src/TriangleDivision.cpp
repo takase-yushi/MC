@@ -1949,18 +1949,12 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors; // ベクトルとモードを表すフラグのペア
     std::vector<std::vector<cv::Point2f>> warping_vectors;
 
-//    std::cout << corners[triangles[triangle_idx].first.p1_idx] << " " << corners[triangles[triangle_idx].first.p2_idx] << " " << corners[triangles[triangle_idx].first.p3_idx] << std::endl;
-
     // すべてのベクトルを格納する．
     for(int i = 0 ; i < spatial_triangle_size ; i++) {
         int spatial_triangle_index = spatial_triangles[i];
         GaussResult spatial_triangle = triangle_gauss_results[spatial_triangle_index];
 
-//        std::cout << std::boolalpha << spatial_triangle.translation_flag << " ";
-
-
         if(spatial_triangle.translation_flag){
-//            std::cout << spatial_triangle.mv_translation << std::endl;
             if(!isMvExists(vectors, spatial_triangle.mv_translation) && vectors.size() <= MV_LIST_MAX_NUM) {
                 vectors.emplace_back(spatial_triangle.mv_translation, SPATIAL);
                 warping_vectors.emplace_back();
