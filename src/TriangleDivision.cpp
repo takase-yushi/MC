@@ -1067,6 +1067,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         translation_flag   = true;
         flags              = translation_flags;
         share_flags        = share_flag_translation;
+        ctu->original_mv1  = triangle_gauss_results[triangle_index].mv_translation;
     }else{
         triangle_gauss_results[triangle_index].translation_flag = false;
         method_flag        = method_flag_warping;
@@ -1077,6 +1078,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         translation_flag   = false;
         flags              = warping_flags;
         share_flags        = share_flag_warping;
+        ctu->original_mv1  = triangle_gauss_results[triangle_index].mv_warping[0];
+        ctu->original_mv2  = triangle_gauss_results[triangle_index].mv_warping[1];
+        ctu->original_mv3  = triangle_gauss_results[triangle_index].mv_warping[2];
     }
 
     if(method_flag == MV_CODE_METHOD::SPATIAL){
