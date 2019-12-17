@@ -2272,10 +2272,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
     std::vector<std::vector<bool>> share_flags;
 #if MERGE_MODE
     if(translation_flag) {
-        for (int i = 0; i < spatial_triangle_size; i++) {
-            int spatial_triangle_index = spatial_triangles[i];
-            GaussResult spatial_triangle = triangle_gauss_results[spatial_triangle_index];
-            std::vector<cv::Point2f> mvds;
+        for (int i = 0; i < vectors.size(); i++) {
             cv::Rect rect(-SEARCH_RANGE * 4, -SEARCH_RANGE * 4, 4 * (target_image.cols + 2 * SEARCH_RANGE), 4 * (target_image.rows + 2 * SEARCH_RANGE));
             std::vector<cv::Point2f> mvs;
 
