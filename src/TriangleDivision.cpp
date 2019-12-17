@@ -2248,7 +2248,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
     cv::Point2f p2 = corners[current_triangle_coordinate.p2_idx];
     cv::Point2f p3 = corners[current_triangle_coordinate.p3_idx];
     Point3Vec coordinate = Point3Vec(p1, p2, p3);
-    vectors.clear();
 
     std::vector<cv::Point2f> pixels_in_triangle;
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> merge_vectors;
