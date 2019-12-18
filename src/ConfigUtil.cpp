@@ -464,32 +464,43 @@ void generateConfigForTestSequence(){
  * @fn void generateChunkedConfigForTestSequence
  * @brief テストシーケンスに使いそうなやつのgenerateChunkedConfigItem呼び出しをまとめた．ハードコードしている
  */
-void generateChunkedConfigForTestSequence(){
+void generateChunkedConfigForTestSequence(int ctu_size){
 
     std::string base_path = getProjectDirectory(OS);
-    generateChunkedConfigItem(base_path + "/config/cactus/cactus.json", base_path + "/config/cactus/cactus-tmp.json", 35);
-    generateChunkedConfigItem(base_path + "/config/drone2/drone2.json", base_path + "/config/drone2/drone2-tmp.json", 35);
-    generateChunkedConfigItem(base_path + "/config/fungus/fungus.json", base_path + "/config/fungus/fungus-tmp.json", 35);
-    generateChunkedConfigItem(base_path + "/config/in_to_tree_1280_640/in-to-tree-1280-640.json", base_path + "/config/in_to_tree_1280_640/in-to-tree-1280-640-tmp.json", 35);
-    generateChunkedConfigItem(base_path + "/config/kimono1/kimono1.json", base_path + "/config/kimono1/kimono1-tmp.json", 35);
-    generateChunkedConfigItem(base_path + "/config/minato/minato.json", base_path + "/config/minato/minato-tmp.json", 35);
-    generateChunkedConfigItem(base_path + "/config/park_scene/park-scene.json", base_path + "/config/park_scene/park-scene-tmp.json", 35);
-    generateChunkedConfigItem(base_path + "/config/station2/station2.json", base_path + "/config/station2/station2-tmp.json", 35);
-    generateChunkedConfigItem(base_path + "/config/express_way/express-way.json", base_path + "/config/express_way/express-way-tmp.json", 35);
+
+    std::string suffix;
+    if(ctu_size != -1) {
+        suffix = "-" + std::to_string(ctu_size);
+    }
+    generateChunkedConfigItem(base_path + "/config/cactus/cactus"                           + suffix + ".json", base_path + "/config/cactus/cactus"                           + suffix + "-tmp.json", 35);
+    generateChunkedConfigItem(base_path + "/config/drone2/drone2"                           + suffix + ".json", base_path + "/config/drone2/drone2"                           + suffix + "-tmp.json", 35);
+    generateChunkedConfigItem(base_path + "/config/fungus/fungus"                           + suffix + ".json", base_path + "/config/fungus/fungus"                           + suffix + "-tmp.json", 35);
+    generateChunkedConfigItem(base_path + "/config/in_to_tree_1280_640/in-to-tree-1280-640" + suffix + ".json", base_path + "/config/in_to_tree_1280_640/in-to-tree-1280-640" + suffix + "-tmp.json", 35);
+    generateChunkedConfigItem(base_path + "/config/kimono1/kimono1"                         + suffix + ".json", base_path + "/config/kimono1/kimono1"                         + suffix + "-tmp.json", 35);
+    generateChunkedConfigItem(base_path + "/config/minato/minato"                           + suffix + ".json", base_path + "/config/minato/minato"                           + suffix + "-tmp.json", 35);
+    generateChunkedConfigItem(base_path + "/config/park_scene/park-scene"                   + suffix + ".json", base_path + "/config/park_scene/park-scene"                   + suffix + "-tmp.json", 35);
+    generateChunkedConfigItem(base_path + "/config/station2/station2"                       + suffix + ".json", base_path + "/config/station2/station2"                       + suffix + "-tmp.json", 35);
+    generateChunkedConfigItem(base_path + "/config/express_way/express-way"                 + suffix + ".json", base_path + "/config/express_way/express-way"                 + suffix + "-tmp.json", 35);
 }
 
 /**
  * @fn void generateRDCurveConfigForTestSequence()
  * @brief RDカーブを描く用のConfigジェネレーター．並列に回せるよう，ChunkSize=1となっている
  */
-void generateChunkedRDCurveConfigForTestSequence(){
+void generateChunkedRDCurveConfigForTestSequence(int ctu_size){
     std::string base_path = getProjectDirectory(OS);
-    generateChunkedRDConfigItem(base_path + "/config/cactus/cactus.json", base_path + "/config/cactus/cactus-rd.json", 1);
-    generateChunkedRDConfigItem(base_path + "/config/drone2/drone2.json", base_path + "/config/drone2/drone2-rd.json", 1);
-    generateChunkedRDConfigItem(base_path + "/config/fungus/fungus.json", base_path + "/config/fungus/fungus-rd.json", 1);
-    generateChunkedRDConfigItem(base_path + "/config/in_to_tree_1280_640/in-to-tree-1280-640.json", base_path + "/config/in_to_tree_1280_640/in-to-tree-1280-640-rd.json", 1);
-    generateChunkedRDConfigItem(base_path + "/config/minato/minato.json", base_path + "/config/minato/minato-rd.json", 1);
-    generateChunkedRDConfigItem(base_path + "/config/park_scene/park-scene.json", base_path + "/config/park_scene/park-scene-rd.json", 1);
-    generateChunkedRDConfigItem(base_path + "/config/station2/station2.json", base_path + "/config/station2/station2-rd.json", 1);
-    generateChunkedRDConfigItem(base_path + "/config/express_way/express-way.json", base_path + "/config/express_way/express-way-rd.json", 1);
+
+    std::string suffix;
+    if(ctu_size != -1) {
+        suffix = "-" + std::to_string(ctu_size);
+    }
+
+    generateChunkedRDConfigItem(base_path + "/config/cactus/cactus"                           + suffix + ".json", base_path + "/config/cactus/cactus"                           + suffix + "-rd.json", 1);
+    generateChunkedRDConfigItem(base_path + "/config/drone2/drone2"                           + suffix + ".json", base_path + "/config/drone2/drone2"                           + suffix + "-rd.json", 1);
+    generateChunkedRDConfigItem(base_path + "/config/fungus/fungus"                           + suffix + ".json", base_path + "/config/fungus/fungus"                           + suffix + "-rd.json", 1);
+    generateChunkedRDConfigItem(base_path + "/config/in_to_tree_1280_640/in-to-tree-1280-640" + suffix + ".json", base_path + "/config/in_to_tree_1280_640/in-to-tree-1280-640" + suffix + "-rd.json", 1);
+    generateChunkedRDConfigItem(base_path + "/config/minato/minato"                           + suffix + ".json", base_path + "/config/minato/minato"                           + suffix + "-rd.json", 1);
+    generateChunkedRDConfigItem(base_path + "/config/park_scene/park-scene"                   + suffix + ".json", base_path + "/config/park_scene/park-scene"                   + suffix + "-rd.json", 1);
+    generateChunkedRDConfigItem(base_path + "/config/station2/station2"                       + suffix + ".json", base_path + "/config/station2/station2"                       + suffix + "-rd.json", 1);
+    generateChunkedRDConfigItem(base_path + "/config/express_way/express-way"                 + suffix + ".json", base_path + "/config/express_way/express-way"                 + suffix + "-rd.json", 1);
 }
