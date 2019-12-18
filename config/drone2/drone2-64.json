@@ -1,0 +1,112 @@
+{
+  "tasks":[
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/drone2",
+      "log_directory"  : "/log/drone2",
+      "gauss_ref_image": "/Drone2_limit_0_3_I_qp_22.png",
+      "ref_image"      : "/Drone2_limit_0_3_I_qp_22.png",
+      "target_image"   : "/Drone2_limit_000003.png",
+      "QP"             : 22,
+      "ctu_width"      : 64,
+      "ctu_height"     : 64,
+      "division_step"  : 8
+    },
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/drone2",
+      "log_directory"  : "/log/drone2",
+      "gauss_ref_image": "/Drone2_limit_0_3_I_qp_22.png",
+      "ref_image"      : "/Drone2_limit_0_3_I_qp_24.png",
+      "target_image"   : "/Drone2_limit_000003.png",
+      "QP"             : 24,
+      "ctu_width"      : 64,
+      "ctu_height"     : 64,
+      "division_step"  : 8
+    },
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/drone2",
+      "log_directory"  : "/log/drone2",
+      "gauss_ref_image": "/Drone2_limit_0_3_I_qp_22.png",
+      "ref_image"      : "/Drone2_limit_0_3_I_qp_26.png",
+      "target_image"   : "/Drone2_limit_000003.png",
+      "QP"             : 26,
+      "ctu_width"      : 64,
+      "ctu_height"     : 64,
+      "division_step"  : 8
+    },
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/drone2",
+      "log_directory"  : "/log/drone2",
+      "gauss_ref_image": "/Drone2_limit_0_3_I_qp_22.png",
+      "ref_image"      : "/Drone2_limit_0_3_I_qp_28.png",
+      "target_image"   : "/Drone2_limit_000003.png",
+      "QP"             : 28,
+      "ctu_width"      : 64,
+      "ctu_height"     : 64,
+      "division_step"  : 8
+    },
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/drone2",
+      "log_directory"  : "/log/drone2",
+      "gauss_ref_image": "/Drone2_limit_0_3_I_qp_22.png",
+      "ref_image"      : "/Drone2_limit_0_3_I_qp_30.png",
+      "target_image"   : "/Drone2_limit_000003.png",
+      "QP"             : 30,
+      "ctu_width"      : 64,
+      "ctu_height"     : 64,
+      "division_step"  : 8
+    },
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/drone2",
+      "log_directory"  : "/log/drone2",
+      "gauss_ref_image": "/Drone2_limit_0_3_I_qp_22.png",
+      "ref_image"      : "/Drone2_limit_0_3_I_qp_32.png",
+      "target_image"   : "/Drone2_limit_000003.png",
+      "QP"             : 32,
+      "ctu_width"      : 64,
+      "ctu_height"     : 64,
+      "division_step"  : 8
+    },
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/drone2",
+      "log_directory"  : "/log/drone2",
+      "gauss_ref_image": "/Drone2_limit_0_3_I_qp_22.png",
+      "ref_image"      : "/Drone2_limit_0_3_I_qp_34.png",
+      "target_image"   : "/Drone2_limit_000003.png",
+      "QP"             : 34,
+      "ctu_width"      : 64,
+      "ctu_height"     : 64,
+      "division_step"  : 8
+    },
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/drone2",
+      "log_directory"  : "/log/drone2",
+      "gauss_ref_image": "/Drone2_limit_0_3_I_qp_22.png",
+      "ref_image"      : "/Drone2_limit_0_3_I_qp_36.png",
+      "target_image"   : "/Drone2_limit_000003.png",
+      "QP"             : 36,
+      "ctu_width"      : 64,
+      "ctu_height"     : 64,
+      "division_step"  : 8
+    },
+    {
+      "enable"         : true,
+      "img_directory"  : "/img/drone2",
+      "log_directory"  : "/log/drone2",
+      "gauss_ref_image": "/Drone2_limit_0_3_I_qp_22.png",
+      "ref_image"      : "/Drone2_limit_0_3_I_qp_37.png",
+      "target_image"   : "/Drone2_limit_000003.png",
+      "QP"             : 37,
+      "ctu_width"      : 64,
+      "ctu_height"     : 64,
+      "division_step"  : 8
+    }
+  ]
+}
