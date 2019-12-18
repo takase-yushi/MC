@@ -691,7 +691,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
                     {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
                     square_index, square_number, cmt->mv1, ctu, true, dummy, steps);
             square_gauss_results[square_index].translation_flag = true;
-            square_gauss_results[square_index].method = method_translation;
+            square_gauss_results[square_index].method = method_flag;
             translation_flag = true;
         }
     }else {
