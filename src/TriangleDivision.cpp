@@ -2091,8 +2091,11 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             flags.x_greater_1_flag.emplace_back(is_x_greater_than_one);
             flags.y_greater_1_flag.emplace_back(is_y_greater_than_one);
 
+            // mvd_code_lengthは，x成分y成分両方の差分符号化に必要な符号量が足されます
+            // mvd_code_lengthの初期値が2なのは，両者確定でis_(x/y)_greater_than_zeroは必要なためです
             int mvd_code_length = 2;
             if(is_x_greater_than_zero){
+                // これは0より大きいことが確定したため，is_x_greater_than_oneのフラグを足しています
                 mvd_code_length += 1;
 
                 if(is_x_greater_than_one){
@@ -2107,6 +2110,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
                 flag_code_sum.countSignFlagCode();
             }
 
+            // y成分に関してもx成分と同様に処理を行う
             if(is_y_greater_than_zero){
                 mvd_code_length += 1;
 
@@ -2144,6 +2148,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
                 mvds.emplace_back(current_mv - mv[2]);
             }
 
+            // 3本 * (x,y)成分のis_(x/y)_greater_than_zeroフラグ分です
             int mvd_code_length = 6;
             FlagsCodeSum flag_code_sum(0, 0, 0, 0);
             Flags flags;
@@ -2197,6 +2202,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
                 flags.y_greater_1_flag.emplace_back(is_y_greater_than_one);
 
                 if(is_x_greater_than_zero){
+                    // is_x_greater_than_zeroの1[bit]
                     mvd_code_length += 1;
 
                     if(is_x_greater_than_one){
@@ -2212,6 +2218,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
                 }
 
                 if(is_y_greater_than_zero){
+                    // is_y_greater_than_zeroの1[bit]
                     mvd_code_length += 1;
 
                     if(is_y_greater_than_one){
