@@ -826,7 +826,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
         (ctu->mvds_x).emplace_back(mvd[2].x);
         (ctu->mvds_y).emplace_back(mvd[2].y);
 
-    } else if(method_flag == MV_CODE_METHOD::SPATIAL) {
+    } else if(method_flag == MV_CODE_METHOD::SPATIAL || method_flag == MV_CODE_METHOD::Collocated) {
         (ctu->mvds_x).clear();
         (ctu->mvds_y).clear();
         (ctu->original_mvds_x).clear();
@@ -843,7 +843,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
         }
     }
 
-    if(method_flag == SPATIAL) {
+    if(method_flag == MV_CODE_METHOD::SPATIAL) {
         ctu->mvds.clear();
         if(ctu->translation_flag) {
             ctu->mvds.emplace_back(mvd[0]);
@@ -852,6 +852,9 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
         }else{
             ctu->mvds = mvd;
         }
+    } else if(method_flag == MV_CODE_METHOD::MERGE2) {
+        ctu->mvds.clear();
+        ctu->mvds.emplace_back((mvd[2]));
     }
 
     if(steps <= 0){
