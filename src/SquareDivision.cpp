@@ -2578,8 +2578,12 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
 
 //    if(PRED_MODE == BM) diff_HEVC_BM_flag++;
 
+    if(!isMvExists(vectors, collocated_mv)) {
+        vectors.emplace_back(collocated_mv, Collocated);
+    }
+
     if(vectors.size() < 2) {
-        vectors.emplace_back(cv::Point2f(0.0, 0.0), Collocated);
+        vectors.emplace_back(cv::Point2f(0.0, 0.0), SPATIAL);
     }
 
     double lambda = getLambdaPred(qp, 1.0);
