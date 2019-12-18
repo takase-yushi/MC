@@ -1067,6 +1067,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         translation_flag   = true;
         flags              = translation_flags;
         share_flags        = share_flag_translation;
+        ctu->original_mv1  = triangle_gauss_results[triangle_index].mv_translation;
     }else{
         triangle_gauss_results[triangle_index].translation_flag = false;
         method_flag        = method_flag_warping;
@@ -1077,6 +1078,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         translation_flag   = false;
         flags              = warping_flags;
         share_flags        = share_flag_warping;
+        ctu->original_mv1  = triangle_gauss_results[triangle_index].mv_warping[0];
+        ctu->original_mv2  = triangle_gauss_results[triangle_index].mv_warping[1];
+        ctu->original_mv3  = triangle_gauss_results[triangle_index].mv_warping[2];
     }
 
     if(method_flag == MV_CODE_METHOD::SPATIAL){
@@ -1949,18 +1953,12 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors; // ベクトルとモードを表すフラグのペア
     std::vector<std::vector<cv::Point2f>> warping_vectors;
 
-//    std::cout << corners[triangles[triangle_idx].first.p1_idx] << " " << corners[triangles[triangle_idx].first.p2_idx] << " " << corners[triangles[triangle_idx].first.p3_idx] << std::endl;
-
     // すべてのベクトルを格納する．
     for(int i = 0 ; i < spatial_triangle_size ; i++) {
         int spatial_triangle_index = spatial_triangles[i];
         GaussResult spatial_triangle = triangle_gauss_results[spatial_triangle_index];
 
-//        std::cout << std::boolalpha << spatial_triangle.translation_flag << " ";
-
-
         if(spatial_triangle.translation_flag){
-//            std::cout << spatial_triangle.mv_translation << std::endl;
             if(!isMvExists(vectors, spatial_triangle.mv_translation) && vectors.size() <= MV_LIST_MAX_NUM) {
                 vectors.emplace_back(spatial_triangle.mv_translation, SPATIAL);
                 warping_vectors.emplace_back();
@@ -2250,7 +2248,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
     cv::Point2f p2 = corners[current_triangle_coordinate.p2_idx];
     cv::Point2f p3 = corners[current_triangle_coordinate.p3_idx];
     Point3Vec coordinate = Point3Vec(p1, p2, p3);
-    vectors.clear();
 
     std::vector<cv::Point2f> pixels_in_triangle;
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> merge_vectors;
@@ -2272,40 +2269,21 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
     std::vector<std::vector<bool>> share_flags;
 #if MERGE_MODE
     if(translation_flag) {
-        for (int i = 0; i < spatial_triangle_size; i++) {
-            int spatial_triangle_index = spatial_triangles[i];
-            GaussResult spatial_triangle = triangle_gauss_results[spatial_triangle_index];
-            std::vector<cv::Point2f> mvds;
+        for (int i = 0; i < vectors.size(); i++) {
             cv::Rect rect(-SEARCH_RANGE * 4, -SEARCH_RANGE * 4, 4 * (target_image.cols + 2 * SEARCH_RANGE), 4 * (target_image.rows + 2 * SEARCH_RANGE));
             std::vector<cv::Point2f> mvs;
 
-            if (spatial_triangle.translation_flag) {
-                if(spatial_triangle.mv_translation.x + sx < -SEARCH_RANGE || spatial_triangle.mv_translation.y + sy < -SEARCH_RANGE || spatial_triangle.mv_translation.x + lx >= target_image.cols + SEARCH_RANGE || spatial_triangle.mv_translation.y + ly >= target_image.rows + SEARCH_RANGE) continue;
-                if (!isMvExists(merge_vectors, spatial_triangle.mv_translation) && merge_count < MV_LIST_MAX_NUM) {
-                    merge_vectors.emplace_back(spatial_triangle.mv_translation, MERGE);
-                    mvs.emplace_back(spatial_triangle.mv_translation);
-                    mvs.emplace_back(spatial_triangle.mv_translation);
-                    mvs.emplace_back(spatial_triangle.mv_translation);
-                    double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
-                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code);
-                    results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code, mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
-                    merge_count++;
-                }
-            } else {
-                if(spatial_triangle.mv_warping[0].x + sx < -SEARCH_RANGE || spatial_triangle.mv_warping[0].y + sy < -SEARCH_RANGE || spatial_triangle.mv_warping[0].x + lx >= target_image.cols + SEARCH_RANGE || spatial_triangle.mv_warping[0].y + ly >= target_image.rows + SEARCH_RANGE) continue;
-                if (!isMvExists(merge_vectors, spatial_triangle.mv_warping[0]) && merge_count < MV_LIST_MAX_NUM) {
-                    merge_vectors.emplace_back(spatial_triangle.mv_warping[0], MERGE);
-                    mvs.emplace_back(spatial_triangle.mv_warping[0]);
-                    mvs.emplace_back(spatial_triangle.mv_warping[0]);
-                    mvs.emplace_back(spatial_triangle.mv_warping[0]);
-                    double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs,
-                                                              pixels_in_triangle, rect);
-                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code);
-                    results.emplace_back(rd, getUnaryCodeLength(merge_count)  + flags_code, mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
-                    merge_count++;
-                }
+            if(vectors[i].first.x + sx < -SEARCH_RANGE || vectors[i].first.y + sy < -SEARCH_RANGE || vectors[i].first.x + lx >= target_image.cols + SEARCH_RANGE || vectors[i].first.y + ly >= target_image.rows + SEARCH_RANGE) continue;
+            if (!isMvExists(merge_vectors, vectors[i].first) && merge_count < MV_LIST_MAX_NUM) {
+                merge_vectors.emplace_back(vectors[i].first, MERGE);
+                mvs.emplace_back(vectors[i].first);
+                mvs.emplace_back(vectors[i].first);
+                mvs.emplace_back(vectors[i].first);
+                double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
+                double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code);
+                results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code, mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
+                merge_count++;
             }
-
         }
     }else{
         std::vector<Point3Vec> warping_vector_history;
