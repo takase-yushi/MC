@@ -355,8 +355,10 @@ void Analyzer::storeLog() {
 
     fprintf(fp, "Number of patches ==============================================\n");
     fprintf(fp, "patch num(all)                        :%d\n", patch_num);
-    fprintf(fp, "Translation patch num                 :%*d(%*.2f[%%])\n",   max_patch_num_digits, translation_patch_num, max_area_ratio_digits, (double)translation_pell_num / (translation_pell_num + affine_pell_num) * 100);
-    fprintf(fp, "Affine patch Num                      :%*d(%*.2f[%%])\n\n", max_patch_num_digits, affine_patch_num,      max_area_ratio_digits, (double)affine_pell_num / (translation_pell_num + affine_pell_num) * 100);
+    fprintf(fp, "Translation patch num                 :%*d(%*.2f[%%])\n",   max_patch_num_digits, translation_patch_num, max_area_ratio_digits, (double)translation_patch_num / (translation_patch_num + affine_patch_num) * 100);
+    fprintf(fp, "Affine patch Num                      :%*d(%*.2f[%%])\n", max_patch_num_digits, affine_patch_num,      max_area_ratio_digits, (double)affine_patch_num / (translation_patch_num + affine_patch_num) * 100);
+    fprintf(fp, "Translation area ratio                :%*.2f[%%]\n",   max_area_ratio_digits, (double)translation_pell_num / (translation_pell_num + affine_pell_num) * 100);
+    fprintf(fp, "Affine area ratio                     :%*.2f[%%]\n\n", max_area_ratio_digits, (double)affine_pell_num / (translation_pell_num + affine_pell_num) * 100);
     fprintf(fp, "Code amount of patches =========================================\n");
     fprintf(fp, "Translation's code                    :%d\n", mvd_translation_code_sum);
     fprintf(fp, "Affine patch's code                   :%d\n\n", mvd_affine_code_sum);
