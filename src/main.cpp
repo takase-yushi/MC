@@ -62,6 +62,9 @@ std::vector<MELog> ME_log_translation_1;
 std::vector<MELog> ME_log_warping_0;
 std::vector<MELog> ME_log_warping_1;
 
+std::vector<int> pells;
+std::vector<double> residuals;
+
 void storeNewtonLogs(std::string logDirectoryPath);
 
 int main(int argc, char *argv[]){
@@ -83,7 +86,7 @@ int main(int argc, char *argv[]){
 
     std::string config_name;
     if(argc == 1) {
-        config_name = "config.json";
+        config_name = "config/in_to_tree_1280_640/in_to_tree_1280_640_BM_128.json";
     }else{
         config_name = std::string(argv[1]);
     }
@@ -325,6 +328,9 @@ void run(std::string config_name) {
             }
         }
 
+        pells.resize(5);
+        residuals.resize(5);
+
         for (int i = 0; i < init_triangles.size(); i++) {
             if(i % 2 == 0){
                 bool flag = false;
@@ -372,31 +378,39 @@ void run(std::string config_name) {
 //        cv::imwrite(img_directory + "/p_mv_image_test.png", decoder.getMvImage(color));
 
 #if STORE_DISTRIBUTION_LOG
-#if STORE_MVD_DISTRIBUTION_LOG
 #if GAUSS_NEWTON_TRANSLATION_ONLY
-        Analyzer analayzer(log_file_suffix);
-        analayzer.storeDistributionOfMv(foo, log_directory);
-        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
-        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time);
-
+        Analyzer analyzer(log_file_suffix);
+        #if STORE_MVD_DISTRIBUTION_LOG
+        analyzer.storeDistributionOfMv(foo, log_directory);
+        analyzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
+        #endif
+        analyzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time);
+#if STORE_MERGE_LOG
+        analyzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
+#endif
 #else
-        Analyzer analayzer(log_file_suffix);
-        analayzer.storeDistributionOfMv(foo, log_directory);
-        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
-        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time);
-        analayzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
+        Analyzer analyzer(foo, log_directory, log_file_suffix, target_image, p_image, pells, residuals);
+#if STORE_MVD_DISTRIBUTION_LOG
+        analyzer.storeDistributionOfMv();
+        analyzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
 #endif
+        analyzer.storeLog();
+        analyzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time); // WARNING: こいつはstoreDistributionOfMv以降で呼ばないといけない
+#if STORE_MERGE_LOG
+        analyzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
+#endif
+
 #endif
 #endif
 
-        if(STORE_IMG_LOG) {
-            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
+#if STORE_IMG_LOG
+        cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", triangle_division.getMvImage(foo));
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mode_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_patch_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", recon);
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_merge_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", merge_color);
-        }
+#endif
 
         for(int i = 0 ; i < foo.size() ; i++) {
             delete foo[i];
@@ -630,6 +644,10 @@ void run_square(std::string config_name) {
                 freq_newton_translation[i][j] = 0;
             }
         }
+
+        pells.resize(5);
+        residuals.resize(5);
+
         for (int i = 0; i < init_squares.size(); i++) {
 
             Point4Vec square = init_squares[i];
@@ -649,8 +667,9 @@ void run_square(std::string config_name) {
         // ログ出力
         // ===========================================================
         cv::Mat p_image = square_division.getPredictedImageFromCtu(foo);                              // 0 : line,  1 : vertex
-        cv::Mat color_line   = square_division.getPredictedColorImageFromCtu(foo, getPSNR(target_image, p_image), 0);
-        cv::Mat color_vertex = square_division.getPredictedColorImageFromCtu(foo, getPSNR(target_image, p_image), 1);
+//        cv::Mat color_line   = square_division.getPredictedColorImageFromCtu(foo, getPSNR(target_image, p_image), 0);
+//        cv::Mat color_vertex = square_division.getPredictedColorImageFromCtu(foo, getPSNR(target_image, p_image), 1);
+//        cv::Mat merge_info = square_division.getBlockInfoFromCtu(foo, getPSNR(target_image, p_image));
 
 //        cv::imwrite(img_directory + "_p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
 //        cv::imwrite(img_directory + "_p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", square_division.getMvImage(foo));
@@ -680,31 +699,41 @@ void run_square(std::string config_name) {
 //
 //        cv::imwrite(img_directory + "/p_mv_image_test.png", decoder.getMvImage(color));
 
-#if STORE_DISTRIBUTION_LOG
 #if STORE_MVD_DISTRIBUTION_LOG
 #if GAUSS_NEWTON_TRANSLATION_ONLY
-        Analyzer analayzer(log_file_suffix);
-        analayzer.storeDistributionOfMv(foo, log_directory);
-        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
-        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time);
-
+        Analyzer analyzer(foo, log_directory, log_file_suffix, target_image, p_image, pells, residuals);
+#if STORE_MVD_DISTRIBUTION_LOG
+        analyzer.storeDistributionOfMv();
+        analyzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
+#endif
+        analyzer.storeLog();
+        analyzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time); // WARNING: こいつはstoreDistributionOfMv以降で呼ばないといけない
+#if STORE_MERGE_LOG
+        analyzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
+#endif
 #else
-        Analyzer analayzer(log_file_suffix);
-        analayzer.storeDistributionOfMv(foo, log_directory);
-        analayzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
-        analayzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time);
-        analayzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
+        Analyzer analyzer(foo, log_directory, log_file_suffix, target_image, p_image, pells, residuals);
+#if STORE_MVD_DISTRIBUTION_LOG
+        analyzer.storeDistributionOfMv();
+        analyzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
 #endif
+        analyzer.storeLog();
+        analyzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time); // WARNING: こいつはstoreDistributionOfMv以降で呼ばないといけない
+#if STORE_MERGE_LOG
+        analyzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
+#endif
+
 #endif
 #endif
 
-        if(STORE_IMG_LOG) {
-            cv::imwrite(img_directory + "_p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
-            cv::imwrite(img_directory + "_p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", square_division.getMvImage(foo));
-            cv::imwrite(img_directory + "_p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
-            cv::imwrite(img_directory + "_p_color_image_line_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color_line);
-            cv::imwrite(img_directory + "_p_color_image_vertex_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color_vertex);
-        }
+#if STORE_IMG_LOG
+        cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
+            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
+            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", triangle_division.getMvImage(foo));
+            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mode_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
+            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_patch_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", recon);
+            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_merge_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", merge_color);
+#endif
 
         for(int i = 0 ; i < foo.size() ; i++) {
             delete foo[i];
@@ -764,28 +793,20 @@ void storeNewtonLogs(std::string logDirectoryPath){
 
     ofs_newton2_0 << "translation" << std::endl;
     for(auto & m : ME_log_translation_0){
-        if(m.residual.back() - m.residual.front() > 0.0 && m.percentage > 2.0) {
-            ofs_newton2_0 << "increase distortion," << m.percentage << ",%" << std::endl;
-
-            ofs_newton2_0 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_translation[0] << std::endl;
-            for(int j = 1 ; j < (int)m.residual.size() ; j++){
-                ofs_newton2_0 << j << "," << m.residual[j] << "," << m.mv_newton_translation[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
-            }
-            ofs_newton2_0 << std::endl;
+        ofs_newton2_0 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_translation[0] << std::endl;
+        for(int j = 1 ; j < (int)m.residual.size() ; j++){
+            ofs_newton2_0 << j << "," << m.residual[j] << "," << m.mv_newton_translation[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
         }
+        ofs_newton2_0 << std::endl;
     }
 
     ofs_newton2_0 << "warping" << std::endl;
     for(auto & m : ME_log_warping_0){
-        if(m.residual.back() - m.residual.front() > 0.0 && m.percentage > 2.0) {
-            ofs_newton2_0 << "increase distortion," << m.percentage << ",%" << std::endl;
-
-            ofs_newton2_0 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_warping[0] << std::endl;
-            for(int j = 1 ; j < (int)m.residual.size() ; j++){
-                ofs_newton2_0 << j << "," << m.residual[j] << "," << m.mv_newton_warping[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
-            }
-            ofs_newton2_0 << std::endl;
+        ofs_newton2_0 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_warping[0][0] << "," << m.mv_newton_warping[0][1] << "," << m.mv_newton_warping[0][2] << std::endl;
+        for(int j = 1 ; j < (int)m.residual.size() ; j++){
+            ofs_newton2_0 << j << "," << m.residual[j] << "," << m.mv_newton_warping[j][0] << "," << m.mv_newton_warping[j][1] << "," << m.mv_newton_warping[j][2] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
         }
+        ofs_newton2_0 << std::endl;
     }
 
     ofs_newton2_0.close();
@@ -794,28 +815,20 @@ void storeNewtonLogs(std::string logDirectoryPath){
     ofs_newton2_1.open(logDirectoryPath + "/Slowlog_ref_1_" + getCurrentTimestamp() + "_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".csv");
     ofs_newton2_1 << "translation" << std::endl;
     for(auto & m : ME_log_translation_0){
-        if(m.residual.back() - m.residual.front() > 0.0 && m.percentage > 2.0) {
-            ofs_newton2_1 << "increase distortion," << m.percentage << ",%" << std::endl;
-
-            ofs_newton2_1 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_translation[0] << std::endl;
-            for(int j = 1 ; j < (int)m.residual.size() ; j++){
-                ofs_newton2_1 << j << "," << m.residual[j] << "," << m.mv_newton_translation[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
-            }
-            ofs_newton2_1 << std::endl;
+        ofs_newton2_1 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_translation[0] << std::endl;
+        for(int j = 1 ; j < (int)m.residual.size() ; j++){
+            ofs_newton2_1 << j << "," << m.residual[j] << "," << m.mv_newton_translation[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
         }
+        ofs_newton2_1 << std::endl;
     }
 
     ofs_newton2_1 << "warping" << std::endl;
     for(auto & m : ME_log_warping_0){
-        if(m.residual.back() - m.residual.front() > 0.0 && m.percentage > 2.0) {
-            ofs_newton2_1 << "increase distortion," << m.percentage << ",%" << std::endl;
-
-            ofs_newton2_1 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_warping[0] << std::endl;
-            for(int j = 1 ; j < (int)m.residual.size() ; j++){
-                ofs_newton2_1 << j << "," << m.residual[j] << "," << m.mv_newton_warping[j] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
-            }
-            ofs_newton2_1 << std::endl;
+        ofs_newton2_1 << "Initial Vector," << m.residual[0] << "," << m.mv_newton_warping[0][0] << "," << m.mv_newton_warping[0][1] << "," << m.mv_newton_warping[0][2] << std::endl;
+        for(int j = 1 ; j < (int)m.residual.size() ; j++){
+            ofs_newton2_1 << j << "," << m.residual[j] << "," << m.mv_newton_warping[j][0] << "," << m.mv_newton_warping[j][1] << "," << m.mv_newton_warping[j][2] << "," << m.coordinate_after_move1[j] << "," << m.coordinate_after_move2[j] << "," << m.coordinate_after_move3[j] << std::endl;
         }
+        ofs_newton2_1 << std::endl;
     }
 
     ofs_newton2_1.close();
