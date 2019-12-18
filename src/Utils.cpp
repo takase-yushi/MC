@@ -199,7 +199,11 @@ double intersectM(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, cv::Point2f p4
  */
 std::string getProjectDirectory(std::string os){
   char cwd[1024];
-  getcwd(cwd, sizeof(cwd));
+  if(getcwd(cwd, sizeof(cwd)) == nullptr) {
+      std::cerr << "Error: failed to get current working directory" << std::endl;
+      exit(1);
+  }
+
   std::string current_directory = std::string(cwd);
 
   if(current_directory.find("cmake") == std::string::npos) return current_directory;
@@ -378,4 +382,20 @@ std::string getCurrentTimestamp(){
     strftime(datetime, 30, "%Y%m%d%H%M%S",tm );
 
     return std::string(datetime);
+}
+
+/**
+ * @fn int getNumberOfDigits(int num)
+ * @brief numの桁数を求める
+ * @param num 桁数を求めたい値
+ * @return 桁数
+ */
+int getNumberOfDigits(int num){
+    int cnt = 0;
+    while(num > 0) {
+        num /= 10;
+        cnt++;
+    }
+
+    return cnt;
 }

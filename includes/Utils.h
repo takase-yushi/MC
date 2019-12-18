@@ -94,25 +94,26 @@ enum {
 /**
  * ガウス・ニュートン関連
  */
-#define PRED_MODE NEWTON
+#define PRED_MODE BM
 #define GAUSS_NEWTON_TRANSLATION_ONLY false
 #define GAUSS_NEWTON_INIT_VECTOR false
 #define GAUSS_NEWTON_HEVC_IMAGE true
 #define HEVC_REF_IMAGE true
-#define STORE_MVD_DISTRIBUTION_LOG true
 #define MVD_DEBUG_LOG false
 #define TEST_MODE false
 #define STORE_DISTRIBUTION_LOG true
 #define USE_BM_TRANSLATION_MV false
 #define MV_LIST_MAX_NUM 5
 #define SEARCH_RANGE 16
+#define TRANSLATION_COST_RATIO 1.0
+#define WARPING_COST_RATIO 1.0
 
 /**
  * 各種モードのON/OFF
  */
 #define MERGE_MODE true
 #define INTRA_MODE false
-#define MERGE2_ENABLE true
+#define MERGE2_ENABLE false
 #define COLLOCATED_ENABLE false
 #define INTRA_LIMIT_MODE false // イントラが選択されたらそれ以降は割らないモード
 #define RD_BLOCK_MATCHING true
@@ -323,5 +324,7 @@ std::vector<std::string> splitString(const std::string &s, char delim);
 cv::Mat half(cv::Mat &in,int k);
 
 std::string getCurrentTimestamp();
+
+int getNumberOfDigits(int num);
 
 #endif //ENCODER_UTILS_H
