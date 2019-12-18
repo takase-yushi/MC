@@ -817,7 +817,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
     ctu->x_sign_flag = flag_result.x_sign_flag;
     ctu->y_sign_flag = flag_result.y_sign_flag;
     ctu->flags_code_sum = flag_code_sum;
-    if(method_flag != MV_CODE_METHOD::MERGE2) {
+    if(method_flag == MV_CODE_METHOD::MERGE2) {
         (ctu->mvds_x).clear();
         (ctu->mvds_y).clear();
         (ctu->original_mvds_x).clear();
@@ -826,7 +826,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
         (ctu->mvds_x).emplace_back(mvd[2].x);
         (ctu->mvds_y).emplace_back(mvd[2].y);
 
-    } else if(method_flag != MV_CODE_METHOD::MERGE) {
+    } else if(method_flag == MV_CODE_METHOD::SPATIAL) {
         (ctu->mvds_x).clear();
         (ctu->mvds_y).clear();
         (ctu->original_mvds_x).clear();
