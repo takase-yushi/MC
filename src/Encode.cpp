@@ -49,6 +49,10 @@ bool isPowerOfTwo(int data){
  * @return ビット長
  */
 int getBinaryLength(int x){
+    assert(x >= 0);
+
+    if(x == 0) return 1;
+
     int cnt = 0;
     while(x > 0){
         cnt++;
