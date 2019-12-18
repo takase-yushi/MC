@@ -171,6 +171,8 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
     // この1bitは手法フラグ(warpingかtranslation),もう1bitはマージフラグ分です
     if(PRED_MODE == NEWTON && !GAUSS_NEWTON_TRANSLATION_ONLY) flags_code++;
     if (MERGE_MODE) flags_code++;
+    //NEWTONかつ新マージがonのときに、ワーピングに足す1bit
+    if(PRED_MODE == NEWTON && MERGE2_ENABLE) merge2_flags_code++;
 
     int expansion_size = SEARCH_RANGE;
     int scaled_expansion_size = expansion_size + 2;
@@ -2082,9 +2084,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
     }
 
     double lambda = getLambdaPred(qp, (translation_flag ? 1.0 : 1.0));
-
-    int merge2_flags_code = 0;
-    if(PRED_MODE == NEWTON && MERGE2_ENABLE) merge2_flags_code++;
 
     //                      コスト, 差分ベクトル, 番号, タイプ
     std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> > results;

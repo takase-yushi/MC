@@ -142,6 +142,7 @@ private:
     std::vector<std::vector<cv::Mat>> target_images;
     int qp;
     int flags_code = 0;
+    int merge2_flags_code = 0;
     cv::Mat expansion_ref;
     unsigned char *ref_hevc;
     unsigned char **expansion_ref_uchar;
