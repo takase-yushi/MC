@@ -2096,11 +2096,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             int mvd_code_length = 2;
             if(is_x_greater_than_zero){
                 // これは0より大きいことが確定したため，is_x_greater_than_oneのフラグを足しています
-                mvd_code_length += 1;
+                // 正負の符号が必要なのでさらに+1[bit]します
+                mvd_code_length += 2;
 
                 if(is_x_greater_than_one){
-                    // 正負の符号が必要なので+1[bit]します
-                    mvd_code_length += 1;
 
                     int mvd_x_minus_2 = mvd.x - 2.0;
                     mvd.x -= 2.0;
@@ -2115,10 +2114,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 
             // y成分に関してもx成分と同様に処理を行う
             if(is_y_greater_than_zero){
-                mvd_code_length += 1;
+                mvd_code_length += 2;
 
                 if(is_y_greater_than_one){
-                    mvd_code_length += 1;
                     int mvd_y_minus_2 = mvd.y - 2.0;
                     mvd.y -= 2.0;
                     mvd_code_length += getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
@@ -2207,11 +2205,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 
                 if(is_x_greater_than_zero){
                     // is_x_greater_than_zeroの1[bit]
-                    mvd_code_length += 1;
+                    // sign flag
+                    mvd_code_length += 2;
 
                     if(is_x_greater_than_one){
-                        // sign flag
-                        mvd_code_length += 1;
 
                         int mvd_x_minus_2 = mvd.x - 2.0;
                         mvd.x -= 2.0;
@@ -2226,11 +2223,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 
                 if(is_y_greater_than_zero){
                     // is_y_greater_than_zeroの1[bit]
-                    mvd_code_length += 1;
+                    // sign flag
+                    mvd_code_length += 2;
 
                     if(is_y_greater_than_one){
-                        // sign flag
-                        mvd_code_length += 1;
 
                         int mvd_y_minus_2 = mvd.y - 2.0;
                         mvd.y -= 2.0;
@@ -2422,12 +2418,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
                             flags.y_greater_1_flag.emplace_back(is_y_greater_than_one);
 
                             if (is_x_greater_than_zero) {
-                                mvd_code_length += 1;
+                                mvd_code_length += 2;
 
                                 if (is_x_greater_than_one) {
-                                    // sign flag
-                                    mvd_code_length += 1;
-
                                     int mvd_x_minus_2 = mvd.x - 2.0;
                                     mvd.x -= 2.0;
                                     mvd_code_length += getExponentialGolombCodeLength((int) mvd_x_minus_2, 0);
@@ -2440,11 +2433,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
                             }
 
                             if (is_y_greater_than_zero) {
-                                mvd_code_length += 1;
+                                mvd_code_length += 2;
 
                                 if (is_y_greater_than_one) {
-                                    // sign flag
-                                    mvd_code_length += 1;
 
                                     int mvd_y_minus_2 = mvd.y - 2.0;
                                     mvd.y -= 2.0;
