@@ -293,11 +293,12 @@ void testHevcPSNR(){
     cv::Mat qp37 = cv::imread(getProjectDirectory(OS) + "/img/minato/HM_37.png");
 
     cv::Mat target = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_000413_limit.bmp");
+    cv::Rect rect(0, 0, target.cols, target.rows);
 
-    std::cout << "QP22:" << getPSNR(target, qp22) << std::endl;
-    std::cout << "QP27:" << getPSNR(target, qp27) << std::endl;
-    std::cout << "QP32:" << getPSNR(target, qp32) << std::endl;
-    std::cout << "QP37:" << getPSNR(target, qp37) << std::endl;
+    std::cout << "QP22:" << getPSNR(target, qp22, rect) << std::endl;
+    std::cout << "QP27:" << getPSNR(target, qp27, rect) << std::endl;
+    std::cout << "QP32:" << getPSNR(target, qp32, rect) << std::endl;
+    std::cout << "QP37:" << getPSNR(target, qp37, rect) << std::endl;
 }
 
 std::vector<std::string> split(std::string str, char del) {
@@ -754,7 +755,8 @@ void getDiff_image(){
             B(diff,i,j) = (unsigned char)y;
         }
     }
-    std::cout << getPSNR(image1, image2) << std::endl;
+    cv::Rect rect(0, 0, image1.cols, image1.rows);
+    std::cout << getPSNR(image1, image2, rect) << std::endl;
 //    cv::imwrite(img_directory + "diff.bmp", diff);
 
 }
@@ -1026,10 +1028,11 @@ void filterTest(){
 //            std::cout << "dctfilter_image : " << std::to_string(R(dctfilter_image, 4 * x, 4 * y)) << std::endl;
         }
     }
+    cv::Rect rect(0, 0, target_image.cols, target_image.rows);
 
-    std::cout << "bilinear   PSNR:" << getPSNR(target_image, bilinear_image) << std::endl;
-    std::cout << "bicubic    PSNR:" << getPSNR(target_image, bicubic_image) << std::endl;
-    std::cout << "dctfilter PSNR:" << getPSNR(target_image, dctfilter_image) << std::endl;
+    std::cout << "bilinear   PSNR:" << getPSNR(target_image, bilinear_image, rect) << std::endl;
+    std::cout << "bicubic    PSNR:" << getPSNR(target_image, bicubic_image, rect) << std::endl;
+    std::cout << "dctfilter PSNR:" << getPSNR(target_image, dctfilter_image, rect) << std::endl;
     cv::imwrite(img_directory + "quarter_scaled_target_bilinear_image.bmp", bilinear_image);
     cv::imwrite(img_directory + "quarter_scaled_target_bicubic_image.bmp", bicubic_image);
     cv::imwrite(img_directory + "quarter_scaled_target_dctfilter_image.bmp", dctfilter_image);

@@ -332,11 +332,12 @@ Analyzer::Analyzer(std::vector<CodingTreeUnit *> ctus, std::string _log_path, co
  */
 void Analyzer::storeLog() {
     FILE *fp = std::fopen((log_path + "/mvd_result" + file_suffix + ".txt").c_str(), "w");
+    cv::Rect rect(0, 0, target_image.cols, target_image.rows);
 
     fprintf(fp, "summary =======================================================\n");
     fprintf(fp, "code_sum                              :%d\n", code_sum);
     fprintf(fp, "code_sum(entropy coding)              :%d\n", getEntropyCodingCode());
-    fprintf(fp, "PSNR[dB]                              :%.2f[dB]\n", getPSNR(target_image, p_image));
+    fprintf(fp, "PSNR[dB]                              :%.2f[dB]\n", getPSNR(target_image, p_image, rect));
     fprintf(fp, "greater_0_flag                        :%d\n", greater_0_flag_sum);
     fprintf(fp, "greater_1_flag                        :%d\n", greater_1_flag_sum);
     fprintf(fp, "sign_flag                             :%d\n", sign_flag_sum);
