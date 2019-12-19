@@ -1,7 +1,7 @@
 #include <cmath>
 
 //
-// Created by takahiro on 2019/07/19.
+// Created by takase yushi on 2019/07/19.
 //
 
 #include "../includes/SquareDivision.h"
@@ -245,6 +245,7 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
             if(sp5_idx != -1) {
                 reference_block_list[square_index].emplace_back(sp5_idx);
             }
+            //マージ参照ブロックのリストを作る
             if(sp2_idx != -1) {
                 merge_reference_block_list[square_index].emplace_back(sp2_idx);
             }
@@ -338,7 +339,11 @@ std::vector<Square> SquareDivision::getAllSquareIndexList() {
     return v;
 }
 
-
+/**
+ * @fn std::vector<Point4Vec> SquareDivision::getSquares()
+ * @brief 現在存在する四角形の集合(座標)を返す（※論理削除されたパッチも含まれています）
+ * @return 四角形の集合（座標）
+ */
 std::vector<Point4Vec> SquareDivision::getSquares() {
     std::vector<Point4Vec> ss;
 
@@ -365,7 +370,7 @@ std::vector<cv::Point2f> SquareDivision::getCorners() {
 
 /**
  * @fn int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx)
- * @brief 四角形を追加する
+ * @brief 四角形を追加する、四角形に関わる情報を追加する
  * @param[in] p1_idx 頂点1の座標のインデックス
  * @param[in] p2_idx 頂点2の座標のインデックス
  * @param[in] p3_idx 頂点3の座標のインデックス
@@ -387,8 +392,8 @@ int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx)
 
 /**
  * @fn void SquareDivision::eraseSquare(int t_idx)
- * @brief 四角パッチに関わる情報を削除する
- * @param t_idx 四角パッチの番号
+ * @brief 四角形を削除する、四角形に関わる情報を削除する
+ * @param[in] s_idx 四角パッチの番号
  */
 void SquareDivision::eraseSquare(int s_idx){
     Square square = squares[s_idx];
@@ -545,9 +550,8 @@ void SquareDivision::eraseCornerFlag(Point4Vec s1, Point4Vec s2, Point4Vec s3, P
 
 /**
  * @fn void SquareDivision::addCornerAndSquare(Square square, int square_index)
- * @brief 長方形を正方形に分割する
- * @param square
- * @param type
+ * @brief 長方形を正方形に分割する、頂点のインデックスを取得する
+ * @param[in] square
  * @return
  */
 void SquareDivision::addCornerAndSquare(Square square){
@@ -587,13 +591,13 @@ void SquareDivision::addCornerAndSquare(Square square){
  * @fn bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char **>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point4Vec square, int square_index, int type, int steps)
  * @brief 与えられた四角形を分割するか判定し，必要な場合は分割を行う
  * @details この関数は再帰的に呼び出され，そのたびに分割を行う
- * @param gaussRefImage ガウス・ニュートン法の参照画像
- * @param ctu CodingTreeUnitのrootノード
- * @oaran cmt 時間予測用のCollocatedMvTreeのノード(collocatedmvtree→cmt)
- * @param square 四角形の各点の座標
- * @param square_index 四角形のindex
- * @param square_number 4つに分割したときの四角形の番号　0:左上, 1:右上, 2:左下, 3:右下, 4:初期ブロック(ctu_width * ctu_height の四角形)
- * @param steps 分割回数
+ * @param[in] expand_images DCT補間され、引き伸ばしされた対象画像と参照画像
+ * @param[in] ctu CodingTreeUnitのrootノード
+ * @oaran[in] cmt 時間予測用のCollocatedMvTreeのノード(collocatedmvtree→cmt)
+ * @param[in] square 四角形の各点の座標
+ * @param[in] square_index 四角形のindex
+ * @param[in] square_number 4つに分割したときの四角形の番号　0:左上, 1:右上, 2:左下, 3:右下, 4:初期ブロック(ctu_width * ctu_height の四角形)
+ * @param[in] steps 分割回数
  * @return 分割した場合はtrue, そうでない場合falseを返す
  */
 bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point4Vec square, int square_index, int square_number, int steps) {
@@ -1072,11 +1076,11 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
 /**
  * @fn SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, const cv::Point2f& p4, int type)
  * @details ４点の座標とtypeを受け取り，分割した形状を返す
- * @param p1 頂点１の座標
- * @param p2 頂点２の座標
- * @param p3 頂点３の座標
- * @param p4 頂点4の座標
- * @param type 分割形状
+ * @param[in] p1 頂点１の座標
+ * @param[in] p2 頂点２の座標
+ * @param[in] p3 頂点３の座標
+ * @param[in] p4 頂点4の座標
+ * @param[in] type 分割形状
  * @return 分割結果
  */
 SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, const cv::Point2f& p4, int type){
@@ -1235,6 +1239,7 @@ void SquareDivision::addReferenceBlock(Point4Vec subdiv_target_square, int squar
             }
         }
     }
+    //マージ参照ブロックのリストを作る
     if(sp2_idx != -1) {
         merge_reference_block_list[square_index].emplace_back(sp2_idx);
     }
@@ -1415,7 +1420,6 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
  * @param[in] square_idx 符号化対照ブロックのインデックス
  * @param[in] translation_flag 符号化対照ブロックのflag
  * @param[in] coordinate 符号化対照ブロックの頂点の座標
- * @param[in] image_size 画像のサイズ
  * @return 候補ブロックの動きベクトルを返す
  */
 std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> > SquareDivision::getMergeSquareList(int square_idx, bool translation_flag, Point4Vec coordinate) {
@@ -1684,9 +1688,7 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
  * @fn std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> SquareDivision::getMerge2SquareList(int square_idx, Point4Vec coordinate)
  * @brief square_idx番目の四角形の参照候補ブロックの動きベクトルを返す
  * @param[in] square_idx 符号化対照ブロックのインデックス
- * @param[in] translation_flag 符号化対照ブロックのflag
  * @param[in] coordinate 符号化対照ブロックの頂点の座標
- * @param[in] image_size 画像のサイズ
  * @return 候補ブロックの動きベクトルを返す [0]:マージ先のmv[0], [1]:マージ先のmv[1], [2]:自分のmv[2], [3]:マージ先のmv[2]
  */
 std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> SquareDivision::getMerge2SquareList(int square_idx, Point4Vec coordinate) {
@@ -1874,8 +1876,8 @@ std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> SquareDivision
 /**
  * @fn void SquareDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num)
  * @brief 過去の動きベクトルを参照するためのTreeを構築する
- * @param trees 分割形状
- * @param pic_num 何枚目のPピクチャか
+ * @param[in] trees 分割形状
+ * @param[in] pic_num 何枚目のPピクチャか
  */
 void SquareDivision::constructPreviousCodingTree(std::vector<CodingTreeUnit*> trees, int pic_num) {
 
@@ -2030,8 +2032,8 @@ void SquareDivision::constructPreviousCodingTree(CodingTreeUnit* codingTree, Col
 /**
  * @fn bool isVectorExists(const std::vector<std::tuple<cv::Point2f, int, MV_CODE_METHOD>> &vectors, const cv::Point2f &mv)
  * @brief mvがvectorsに含まれるか判定する
- * @param vectors なんかやばめのtupleを持ってるvector
- * @param mv 動きベクトル
+ * @param[in] vectors なんかやばめのtupleを持ってるvector
+ * @param[in] mv 動きベクトル
  * @return vectorsにmvが含まれていればtrue, 存在しなければfalse
  */
 bool SquareDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE_METHOD>> &vectors, const cv::Point2f &mv){
@@ -2050,7 +2052,7 @@ bool SquareDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE
  * @param[in] square_idx 四角パッチの番号
  * @param[in] residual そのパッチの残差
  * @param[in] ctu CodingTreeUnit 符号木
- * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
+ * @return RDコスト，符号量，差分ベクトル(マージ先ベクトル)、参照ブロックインデックス、methoフラグ、flag_code_sum、result_flagsのtuple
  */
 std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> SquareDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, int square_number, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, int steps){
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors;
@@ -2565,11 +2567,14 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 
 /**
  * @fn double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, std::vector<int> spatial_squares)
- * @brief RDを行い，最適な差分ベクトルを返す
+ * @brief RDを行い，RDコストを返す
  * @param[in] mv 動きベクトル
+ * @param[in] residual そのブロックの残差(SAD)
  * @param[in] square_idx 四角パッチの番号
- * @param[in] residual そのパッチの残差
+ * @param[in] collocated_mv 時間予測候補の動きベクトル
  * @param[in] ctu CodingTreeUnit 符号木
+ * @param[in] pixel そのブロックの画素の集合
+ * @param[in] vectors そのブロックの参照ブロックの動きベクトル
  * @return RDコスト
  */
 double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, std::vector<cv::Point2f> &pixels, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors){
@@ -2693,7 +2698,7 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
 /**
  * @fn cv::Point2f SquareDivision::getQuantizedMv(cv::Point2f mv, int quantize_step)
  * @param mv 動きベクトル
- * @param quantize_step 量子化ステップ幅
+ * @param[in] quantize_step 量子化ステップ幅
  * @return 量子化済みの動きベクトル
  */
 cv::Point2f SquareDivision::getQuantizedMv(cv::Point2f &mv, double quantize_step){
