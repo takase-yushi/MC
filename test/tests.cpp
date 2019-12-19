@@ -543,8 +543,8 @@ void test_getPredictedWarpingMv(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv
     //三角形の
     //TODO 順番を変えたらref_mvs_tの順番も変える
     cv::Point2f tp1 = cv::Point2f(               32,                32);    //ref_mvs_tにmv1を入れる
-    cv::Point2f tp2 = cv::Point2f(p1.x + block_size,              p1.y);    //ref_mvs_tにmv2を入れる
-//    cv::Point2f tp3 = cv::Point2f(p1.x             , p1.y + block_size);    //ref_mvs_tにmv3を入れる
+//    cv::Point2f tp1 = cv::Point2f(p1.x + block_size,              p1.y);    //ref_mvs_tにmv2を入れる
+    cv::Point2f tp2 = cv::Point2f(p1.x             , p1.y + block_size);    //ref_mvs_tにmv3を入れる
     cv::Point2f tp3 = cv::Point2f(p1.x + block_size, p1.y + block_size);    //ref_mvs_tにmv4を入れる
 
     //対象パッチの頂点
@@ -570,7 +570,7 @@ void test_getPredictedWarpingMv(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv
     pp3 = p3 + ref_mvs[2];
     p12 = pp2 - pp1;   mv4 = pp3 + p12 - p4;
     pp4 = pp3 + p12;
-    std::vector<cv::Point2f> ref_mvs_t{mv1, mv2, mv4};
+    std::vector<cv::Point2f> ref_mvs_t{mv1, mv3, mv4};
     //三角形の変形後の座標
     ttpp1 = tp1 + ref_mvs_t[0];
     ttpp2 = tp2 + ref_mvs_t[1];
@@ -620,25 +620,28 @@ void test_getPredictedWarpingMv(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv
 //    drawSquare(out_image, pp1, pp2, pp3, pp4, cv::Scalar(11, 0, 199), 0);
     //動きベクトルを描く
     if(mode == 1 || mode == 3) {
+        //変形前
         cv::line(out_image, p1, p1 + ref_mvs[0], GREEN);
         cv::line(out_image, p2, p2 + ref_mvs[1], GREEN);
         cv::line(out_image, p3, p3 + ref_mvs[2], GREEN);
+        //変形後
         cv::line(out_image, sp1, tpp1, RED);
         cv::line(out_image, sp2, tpp2, RED);
         cv::line(out_image, sp3, tpp3, RED);
     }
     if(mode == 2 || mode == 3) {
-        cv::line(out_image, tp1, tp1 + ref_mvs_t[0], GREEN);
-        cv::line(out_image, tp2, tp2 + ref_mvs_t[1], GREEN);
-        cv::line(out_image, tp3, tp3 + ref_mvs_t[2], GREEN);
-        if(target_translation_flag) {
-            cv::line(out_image, ttp1, ttp1 + mvs_t[0], RED);
-            cv::line(out_image, ttp2, ttp2 + mvs_t[0], RED);
-            cv::line(out_image, ttp3, ttp3 + mvs_t[0], RED);
+        //変形前
+        cv::line(out_image, tp1, tp1 + ref_mvs_t[0], PURPLE);
+        cv::line(out_image, tp2, tp2 + ref_mvs_t[1], PURPLE);
+        cv::line(out_image, tp3, tp3 + ref_mvs_t[2], PURPLE);
+        if(target_translation_flag) {  //変形後
+            cv::line(out_image, ttp1, ttp1 + mvs_t[0], BLUE);
+            cv::line(out_image, ttp2, ttp2 + mvs_t[0], BLUE);
+            cv::line(out_image, ttp3, ttp3 + mvs_t[0], BLUE);
         } else {
-            cv::line(out_image, ttp1, ttp1 + mvs_t[0], RED);
-            cv::line(out_image, ttp2, ttp2 + mvs_t[1], RED);
-            cv::line(out_image, ttp3, ttp3 + mvs_t[2], RED);
+            cv::line(out_image, ttp1, ttp1 + mvs_t[0], BLUE);
+            cv::line(out_image, ttp2, ttp2 + mvs_t[1], BLUE);
+            cv::line(out_image, ttp3, ttp3 + mvs_t[2], BLUE);
         }
     }
     //変形前の四角形描く
@@ -685,7 +688,7 @@ void test_getPredictedWarpingMv(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv
 
 
 
-    cv::imwrite(getProjectDirectory(OS) + "\\img\\parallelogram.png", out_image);
+    cv::imwrite(getProjectDirectory(OS) + "\\img\\test_getPredictedWarpingMv.png", out_image);
 }
 
 void draw_mv(){
