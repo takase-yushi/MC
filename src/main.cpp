@@ -333,15 +333,16 @@ void run(std::string config_name) {
         // ===========================================================
         // ログ出力
         // ===========================================================
+        cv::Rect rect(0, 0, target_image.cols, target_image.rows);
         cv::Mat recon = getReconstructionDivisionImage(gaussRefImage, foo, block_size_x, block_size_y);
         cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo, diagonal_line_area_flag);
-        cv::Mat color = triangle_division.getPredictedColorImageFromCtu(foo, diagonal_line_area_flag, getPSNR(target_image, p_image));
+        cv::Mat color = triangle_division.getPredictedColorImageFromCtu(foo, diagonal_line_area_flag, getPSNR(target_image, p_image, rect));
         cv::Mat merge_color = triangle_division.getMergeModeColorImageFromCtu(foo, diagonal_line_area_flag);
 
         int code_length = triangle_division.getCtuCodeLength(foo);
         std::string log_file_suffix = out_file_suffix + std::to_string(qp) + "_" + getCurrentTimestamp();
         std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
-        std::cout << "PSNR:" << getPSNR(target_image, p_image) << " code_length:" << code_length << std::endl;
+        std::cout << "PSNR:" << getPSNR(target_image, p_image, rect) << " code_length:" << code_length << std::endl;
         std::cout << log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png" << std::endl;
 
         time_t end = clock();
@@ -374,7 +375,7 @@ void run(std::string config_name) {
         analyzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
 #endif
         analyzer.storeLog();
-        analyzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time); // WARNING: こいつはstoreDistributionOfMv以降で呼ばないといけない
+        analyzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image, rect), time); // WARNING: こいつはstoreDistributionOfMv以降で呼ばないといけない
 #if STORE_MERGE_LOG
         analyzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
 #endif

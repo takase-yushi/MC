@@ -294,10 +294,10 @@ void testHevcPSNR(){
 
     cv::Mat target = cv::imread(getProjectDirectory(OS) + "/img/minato/minato_000413_limit.bmp");
 
-    std::cout << "QP22:" << getPSNR(target, qp22) << std::endl;
-    std::cout << "QP27:" << getPSNR(target, qp27) << std::endl;
-    std::cout << "QP32:" << getPSNR(target, qp32) << std::endl;
-    std::cout << "QP37:" << getPSNR(target, qp37) << std::endl;
+//    std::cout << "QP22:" << getPSNR(target, qp22) << std::endl;
+//    std::cout << "QP27:" << getPSNR(target, qp27) << std::endl;
+//    std::cout << "QP32:" << getPSNR(target, qp32) << std::endl;
+//    std::cout << "QP37:" << getPSNR(target, qp37) << std::endl;
 }
 
 std::vector<std::string> split(std::string str, char del) {
@@ -813,9 +813,9 @@ void filterTest(){
         }
     }
 
-    std::cout << "bilinear   PSNR:" << getPSNR(target_image, bilinear_image) << std::endl;
-    std::cout << "bicubic    PSNR:" << getPSNR(target_image, bicubic_image) << std::endl;
-    std::cout << "dctfilter PSNR:" << getPSNR(target_image, dctfilter_image) << std::endl;
+//    std::cout << "bilinear   PSNR:" << getPSNR(target_image, bilinear_image) << std::endl;
+//    std::cout << "bicubic    PSNR:" << getPSNR(target_image, bicubic_image) << std::endl;
+//    std::cout << "dctfilter PSNR:" << getPSNR(target_image, dctfilter_image) << std::endl;
     cv::imwrite(img_directory + "quarter_scaled_target_bilinear_image.bmp", bilinear_image);
     cv::imwrite(img_directory + "quarter_scaled_target_bicubic_image.bmp", bicubic_image);
     cv::imwrite(img_directory + "quarter_scaled_target_dctfilter_image.bmp", dctfilter_image);
