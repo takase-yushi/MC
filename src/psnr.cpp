@@ -22,9 +22,10 @@ double getMSE(const cv::Mat& in1, const cv::Mat& in2, cv::Rect rect ){
 
   assert(in1.size == in2.size); // sizeが同じかどうかチェック
 
-  if(rect.width < in1.cols || rect.height < in1.rows)
+  if(rect.width < in1.cols || rect.height < in1.rows) {
       std::cout << std::endl << "!!!!!!!!!!!!!!!!!!!!    assert    !!!!!!!!!!!!!!!!!!!!" << std::endl;
       std::cout << std::endl << "at getMSE : rect.width < in1.cols || rect.height < in1.rows" << std::endl << std::endl;
+  }
 
   int width = std::min(rect.width, in1.cols);
   int height = std::min(rect.height, in1.rows);
