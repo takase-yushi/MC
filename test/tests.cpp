@@ -527,7 +527,7 @@ void draw_parallelogram(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv3) {
 void test_getPredictedWarpingMv(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv3) {
     const std::string img_directory = getProjectDirectory(OS) + "\\img\\minato\\";
 
-    int mode = 1;    //1 : 四角形,  2 : 三角形  3 : 両方
+    int mode = 3;    //1 : 四角形,  2 : 三角形  3 : 両方
     bool target_translation_flag = true;
 
     cv::Mat out_image(200, 300, CV_8UC3, cv::Scalar(255, 255, 255));
@@ -646,13 +646,17 @@ void test_getPredictedWarpingMv(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv
     }
     if(mode == 2 || mode == 3) {
         if(target_translation_flag) {
-            drawSquare(out_image, tp1 + mvs_t[0], tp2 + mvs_t[0], tp3 + mvs_t[0], tp3 + mvs_t[0], cv::Scalar(0, 255, 255), 0);
+            drawSquare(out_image, tp1 + mvs_t[0], tp2 + mvs_t[0], tp3 + mvs_t[0], tp3 + mvs_t[0], cv::Scalar(0, 192, 255), 0);
         } else {
-            drawSquare(out_image, tp1 + mvs_t[0], tp2 + mvs_t[1], tp3 + mvs_t[2], tp3 + mvs_t[2], cv::Scalar(0, 255, 255), 0);
+            drawSquare(out_image, tp1 + mvs_t[0], tp2 + mvs_t[1], tp3 + mvs_t[2], tp3 + mvs_t[2], cv::Scalar(0, 192, 255), 0);
         }
     }
 
-    std::cout << "mvs : " << mvs << ", mvs_t : " << mvs_t << std::endl;
+    if(target_translation_flag) {
+        std::cout << "mvs_square   : " << mvs << std::endl << "mvs_triangle : " << mvs_t << std::endl;
+    } else {
+        std::cout << "mvs_square   : " << mvs[0] << ", " << mvs[1] << ", " << mvs[2] << std::endl << "mvs_triangle : " << mvs_t[0] << ", " << mvs_t[1] << ", " << mvs_t[2] << std::endl;
+    }
 
 
 
