@@ -541,10 +541,11 @@ void test_getPredictedWarpingMv(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv
     cv::Point2f p3 = cv::Point2f(p1.x             , p1.y + block_size);
     cv::Point2f p4 = cv::Point2f(p1.x + block_size, p1.y + block_size);
     //三角形の
-    cv::Point2f tp1 = cv::Point2f(               32,                32);
-    cv::Point2f tp2 = cv::Point2f(p1.x + block_size,              p1.y);
-    cv::Point2f tp3 = cv::Point2f(p1.x             , p1.y + block_size);
-//    cv::Point2f tp3 = cv::Point2f(p1.x + block_size, p1.y + block_size);
+    //TODO 順番を変えたらref_mvs_tの順番も変える
+    cv::Point2f tp1 = cv::Point2f(               32,                32);    //ref_mvs_tにmv1を入れる
+    cv::Point2f tp2 = cv::Point2f(p1.x + block_size,              p1.y);    //ref_mvs_tにmv2を入れる
+//    cv::Point2f tp3 = cv::Point2f(p1.x             , p1.y + block_size);    //ref_mvs_tにmv3を入れる
+    cv::Point2f tp3 = cv::Point2f(p1.x + block_size, p1.y + block_size);    //ref_mvs_tにmv4を入れる
 
     //対象パッチの頂点
     cv::Point2f sp1 = cv::Point2f(p1.x + block_size + 1, p1.y + block_size + 1);
@@ -569,7 +570,7 @@ void test_getPredictedWarpingMv(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv
     pp3 = p3 + ref_mvs[2];
     p12 = pp2 - pp1;   mv4 = pp3 + p12 - p4;
     pp4 = pp3 + p12;
-    std::vector<cv::Point2f> ref_mvs_t{mv1, mv2, mv3};
+    std::vector<cv::Point2f> ref_mvs_t{mv1, mv2, mv4};
     //三角形の変形後の座標
     ttpp1 = tp1 + ref_mvs_t[0];
     ttpp2 = tp2 + ref_mvs_t[1];
