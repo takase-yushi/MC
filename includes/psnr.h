@@ -30,6 +30,6 @@ double getMSE(const cv::Mat& in1, const cv::Mat& in2, cv::Rect rect);
  * @details
  *  2つの画像のPSNR値(Peak Signal-to-Noise Ratio)を返す
  */
-double getPSNR(const cv::Mat& in1, const cv::Mat& in2, const cv::Rect& rect = cv::Rect(0, 0, 1920, 1024));
+double getPSNR(const cv::Mat& in1, const cv::Mat& in2, const cv::Rect& rect);
 
 #endif //DELAUNAY_PSNR_H
