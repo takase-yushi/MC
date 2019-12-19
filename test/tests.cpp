@@ -527,26 +527,52 @@ void draw_parallelogram(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv3) {
 void test_getPredictedWarpingMv(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv3) {
     const std::string img_directory = getProjectDirectory(OS) + "\\img\\minato\\";
 
+    int mode = 1;    //1 : 四角形,  2 : 三角形  3 : 両方
+    bool target_translation_flag = true;
+
     cv::Mat out_image(200, 300, CV_8UC3, cv::Scalar(255, 255, 255));
 
     int block_size = 64;
     block_size--;
 
+    //参照パッチの頂点
     cv::Point2f p1 = cv::Point2f(               32,                32);
     cv::Point2f p2 = cv::Point2f(p1.x + block_size,              p1.y);
     cv::Point2f p3 = cv::Point2f(p1.x             , p1.y + block_size);
     cv::Point2f p4 = cv::Point2f(p1.x + block_size, p1.y + block_size);
-    std::vector<cv::Point2f> ref_square_coordinates{p1, p2, p3};
 
+    //対象パッチの頂点
     cv::Point2f tp1 = cv::Point2f(p1.x + block_size + 1, p1.y + block_size + 1);
     cv::Point2f tp2 = cv::Point2f(tp1.x + block_size   , tp1.y                );
     cv::Point2f tp3 = cv::Point2f(tp1.x                , tp1.y + block_size   );
     cv::Point2f tp4 = cv::Point2f(tp1.x + block_size   , tp1.y + block_size   );
-    //符号化対照ブロックがワーピングの場合
-//    std::vector<cv::Point2f> target_square_coordinates{tp1, tp2, tp3};
-    //平行移動の場合
-    std::vector<cv::Point2f> target_square_coordinates{cv::Point2f((tp1 + tp2 + tp3 + tp4) / 4.0)};
+
+    std::vector<cv::Point2f> mvs;
+    std::vector<cv::Point2f> mvs_t;
     std::vector<cv::Point2f> ref_mvs{mv1, mv2, mv3};
+    if(target_translation_flag) { //符号化対照パッチが平行移動の場合
+        if (mode == 1 || mode == 3) {
+            std::vector<cv::Point2f> ref_square_coordinates{p1, p2, p3};
+            std::vector<cv::Point2f> target_square_coordinates{cv::Point2f((tp1 + tp2 + tp3 + tp4) / 4.0)};
+            mvs = getPredictedWarpingMv(ref_square_coordinates, ref_mvs, target_square_coordinates);
+        }
+        if (mode == 2 || mode == 3) {
+            std::vector<cv::Point2f> ref_triangle_coordinates{p1, p2, p3};
+            std::vector<cv::Point2f> target_triangle_coordinates{cv::Point2f((tp1 + tp2 + tp3) / 3.0)};
+            mvs_t = getPredictedWarpingMv(ref_triangle_coordinates, ref_mvs, target_triangle_coordinates);
+        }
+    } else {                     //ワーピングの場合
+        if (mode == 1 || mode == 3) {
+            std::vector<cv::Point2f> ref_square_coordinates{p1, p2, p3};
+            std::vector<cv::Point2f> target_square_coordinates{tp1, tp2, tp3};
+            mvs = getPredictedWarpingMv(ref_square_coordinates, ref_mvs, target_square_coordinates);
+        }
+        if (mode == 2 || mode == 3) {
+            std::vector<cv::Point2f> ref_triangle_coordinates{p1, p2, p3};
+            std::vector<cv::Point2f> target_triangle_coordinates{tp1, tp2, tp3};
+            mvs_t = getPredictedWarpingMv(ref_triangle_coordinates, ref_mvs, target_triangle_coordinates);
+        }
+    }
 
     cv::Point2f mv4;
 
@@ -559,35 +585,74 @@ void test_getPredictedWarpingMv(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv
     p12 = pp2 - pp1;   mv4 = pp3 + p12 - p4;
     pp4 = pp3 + p12;
 
-    std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_square_coordinates, ref_mvs, target_square_coordinates);
-    //符号化対照ブロックがワーピングの場合
-//    tpp1 = tp1 + mvs[0];
-//    tpp2 = tp2 + mvs[1];
-//    tpp3 = tp3 + mvs[2];
-//    tp12 = tpp2 - tpp1;
-//    tpp4 = tpp3 + tp12;
-    //平行移動の場合
-    tpp1 = tp1 + mvs[0];
-    tpp2 = tp2 + mvs[0];
-    tpp3 = tp3 + mvs[0];
-    tpp4 = tp4 + mvs[0];
+    if(mode == 1 || mode == 3) {
+        if (target_translation_flag) {  //符号化対照パッチが平行移動の場合
+            tpp1 = tp1 + mvs[0];
+            tpp2 = tp2 + mvs[0];
+            tpp3 = tp3 + mvs[0];
+            tpp4 = tp4 + mvs[0];
+        } else {                      //ワーピングの場合
+            tpp1 = tp1 + mvs[0];
+            tpp2 = tp2 + mvs[1];
+            tpp3 = tp3 + mvs[2];
+            tp12 = tpp2 - tpp1;
+            tpp4 = tpp3 + tp12;
+        }
+    }
     //変形後の四角形を変形前に被せて描く
 //    drawSquare(out_image, pp1, pp2, pp3, pp4, cv::Scalar(11, 0, 199), 0);
     //動きベクトルを描く
-    cv::line(out_image, p1, p1 + mv1, GREEN);
-    cv::line(out_image, p2, p2 + mv2, GREEN);
-    cv::line(out_image, p3, p3 + mv3, GREEN);
-    cv::line(out_image, tp1, tpp1, RED);
-    cv::line(out_image, tp2, tpp2, RED);
-    cv::line(out_image, tp3, tpp3, RED);
+    if(mode == 1 || mode == 3) {
+        cv::line(out_image, p1, p1 + mv1, GREEN);
+        cv::line(out_image, p2, p2 + mv2, GREEN);
+        cv::line(out_image, p3, p3 + mv3, GREEN);
+        cv::line(out_image, tp1, tpp1, RED);
+        cv::line(out_image, tp2, tpp2, RED);
+        cv::line(out_image, tp3, tpp3, RED);
+    }
+    if(mode == 2) {
+        cv::line(out_image, p1, p1 + mv1, GREEN);
+        cv::line(out_image, p2, p2 + mv2, GREEN);
+        cv::line(out_image, p3, p3 + mv3, GREEN);
+        if(target_translation_flag) {
+            cv::line(out_image, tp1, tp1 + mvs_t[0], RED);
+            cv::line(out_image, tp2, tp2 + mvs_t[0], RED);
+            cv::line(out_image, tp3, tp3 + mvs_t[0], RED);
+        } else {
+            cv::line(out_image, tp1, tp1 + mvs_t[0], RED);
+            cv::line(out_image, tp2, tp2 + mvs_t[1], RED);
+            cv::line(out_image, tp3, tp3 + mvs_t[2], RED);
+        }
+    }
     //変形前の四角形描く
-    drawSquare(out_image, p1, p2, p3, p4, cv::Scalar(0, 0, 0), 0);
-    drawSquare(out_image, tp1, tp2, tp3, tp4, cv::Scalar(0, 0, 0), 0);
+    if(mode == 1 || mode == 3) {
+        drawSquare(out_image, p1, p2, p3, p4, cv::Scalar(0, 0, 0), 0);
+        drawSquare(out_image, tp1, tp2, tp3, tp4, cv::Scalar(0, 0, 0), 0);
+    }
+    if(mode == 2 || mode == 3) {
+        drawSquare(out_image, p1, p2, p3, p3, cv::Scalar(0, 0, 0), 0);
+        drawSquare(out_image, tp1, tp2, tp3, tp3, cv::Scalar(0, 0, 0), 0);
+    }
     //変形後の四角形を描く
-    drawSquare(out_image, pp1, pp2, pp3, pp4, cv::Scalar(255, 255, 0), 0);
+    if(mode == 1 || mode == 3) {
+        drawSquare(out_image, pp1, pp2, pp3, pp4, cv::Scalar(255, 255, 0), 0);
+    }
+    if(mode == 2 || mode == 3) {
+        drawSquare(out_image, pp1, pp2, pp3, pp3, cv::Scalar(255, 255, 0), 0);
+    }
     //getPredictedWarpingMvで予測した動きベクトルで描く
-    drawSquare(out_image, tpp1, tpp2, tpp3, tpp4, cv::Scalar(0, 255, 0), 0);
+    if(mode == 1 || mode == 3) {
+        drawSquare(out_image, tpp1, tpp2, tpp3, tpp4, cv::Scalar(0, 255, 0), 0);
+    }
+    if(mode == 2 || mode == 3) {
+        if(target_translation_flag) {
+            drawSquare(out_image, tp1 + mvs_t[0], tp2 + mvs_t[0], tp3 + mvs_t[0], tp3 + mvs_t[0], cv::Scalar(0, 255, 255), 0);
+        } else {
+            drawSquare(out_image, tp1 + mvs_t[0], tp2 + mvs_t[1], tp3 + mvs_t[2], tp3 + mvs_t[2], cv::Scalar(0, 255, 255), 0);
+        }
+    }
 
+    std::cout << "mvs : " << mvs << ", mvs_t : " << mvs_t << std::endl;
 
 
 
