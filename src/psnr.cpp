@@ -33,7 +33,7 @@ double getMSE(const cv::Mat& in1, const cv::Mat& in2, cv::Rect rect ){
     }
   }
 
-  return sum / (3.0 * (rect.width) * (rect.height));
+  return sum / (3.0 * (width) * (height));
 }
 
 /**
