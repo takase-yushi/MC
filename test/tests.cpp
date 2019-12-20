@@ -581,7 +581,7 @@ void test_getPredictedWarpingMv(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv
     if(target_translation_flag) { //符号化対照パッチが平行移動の場合
         if (mode == 1 || mode == 3) {
             std::vector<cv::Point2f> ref_square_coordinates{p1, p2, p3};
-            std::vector<cv::Point2f> target_square_coordinates{cv::Point2f((sp1 + sp2 + sp3 + sp4) / 4.0)};
+            std::vector<cv::Point2f> target_square_coordinates{cv::Point2f((sp1 + sp4) / 2.0)};
             mvs = getPredictedWarpingMv(ref_square_coordinates, ref_mvs, target_square_coordinates);
         }
         if (mode == 2 || mode == 3) {
