@@ -528,7 +528,7 @@ void test_getPredictedWarpingMv(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv
     const std::string img_directory = getProjectDirectory(OS) + "\\img\\minato\\";
 
     int mode = 3;    //1 : 四角形,  2 : 三角形  3 : 両方
-    bool target_translation_flag = true;
+    bool target_translation_flag = true;  //true : 平行移動   false : ワーピング
 
     cv::Mat out_image(200, 300, CV_8UC3, cv::Scalar(255, 255, 255));
 
@@ -586,7 +586,7 @@ void test_getPredictedWarpingMv(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv
         }
         if (mode == 2 || mode == 3) {
             std::vector<cv::Point2f> ref_triangle_coordinates{tp1, tp2, tp3};
-            std::vector<cv::Point2f> target_triangle_coordinates{cv::Point2f((ttp1 + ttp2 + ttp3) / 3.0)};
+            std::vector<cv::Point2f> target_triangle_coordinates{cv::Point2f((ttp1 + ttp3) / 2.0)};
             mvs_t = getPredictedWarpingMv(ref_triangle_coordinates, ref_mvs_t, target_triangle_coordinates);
         }
     } else {                     //ワーピングの場合
@@ -631,9 +631,9 @@ void test_getPredictedWarpingMv(cv::Point2f mv1, cv::Point2f mv2, cv::Point2f mv
     }
     if(mode == 2 || mode == 3) {
         //変形前
-        cv::line(out_image, tp1, tp1 + ref_mvs_t[0], PURPLE);
-        cv::line(out_image, tp2, tp2 + ref_mvs_t[1], PURPLE);
-        cv::line(out_image, tp3, tp3 + ref_mvs_t[2], PURPLE);
+        cv::line(out_image, tp1, tp1 + ref_mvs_t[0], cv::Scalar(0, 192, 255));
+        cv::line(out_image, tp2, tp2 + ref_mvs_t[1], cv::Scalar(0, 192, 255));
+        cv::line(out_image, tp3, tp3 + ref_mvs_t[2], cv::Scalar(0, 192, 255));
         if(target_translation_flag) {  //変形後
             cv::line(out_image, ttp1, ttp1 + mvs_t[0], BLUE);
             cv::line(out_image, ttp2, ttp2 + mvs_t[0], BLUE);
