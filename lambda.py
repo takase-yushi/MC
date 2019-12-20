@@ -13,11 +13,11 @@ def func(config_file_name):
     subprocess.call(cmd, shell=True)
 
 
-directories_2k = ["cactus/cactus-tmp",
-               "drone2/drone2-tmp",
+directories_2k = ["in_to_tree_1280_640/in-to-tree-1280-640-tmp",
                "fungus/fungus-tmp",
-               "in_to_tree_1280_640/in-to-tree-1280-640-tmp",
                "minato/minato-tmp",
+               "cactus/cactus-tmp",
+               "drone2/drone2-tmp",
                "park_scene/park-scene-tmp",
                "station2/station2-tmp"]
 
