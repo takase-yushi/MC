@@ -1144,13 +1144,13 @@ void SquareDivision::addReferenceBlock(Point4Vec subdiv_target_square, int squar
     sp5.x--; sp5.y--;                                              //   |             |     |             |
     //頂点インデックスを取得                                       //   |        sp2●|     | p3          |
     int sp1_idx = getCornerIndex(sp1);                             //   ---------------     ---------------
-    int sp2_idx = getCornerIndex(sp2);                             //   ---------------
-    int sp3_idx = getCornerIndex(sp3);                             //   |        sp1●|
-    int sp4_idx = getCornerIndex(sp4);                             //   |             |
+    int sp2_idx = getCornerIndex(sp2);                             //
+    int sp3_idx = getCornerIndex(sp3);                             //   ---------------
+    int sp4_idx = getCornerIndex(sp4);                             //   |        sp1●|
     int sp5_idx = getCornerIndex(sp5);                             //   |             |
                                                                    //   |             |
-    if(sp1_idx != -1) {                                            //   ---------------
-        // 1の頂点を入れる
+    if(sp1_idx != -1) {                                            //   |             |
+        // 1の頂点を入れる                                         //   ---------------
         reference_block_list[square_index].emplace_back(sp1_idx);
     }
     else {
