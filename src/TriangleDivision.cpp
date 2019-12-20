@@ -1986,7 +1986,11 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             cv::Point2f pp1 = corners[target_triangle.first.p1_idx], pp2 = corners[target_triangle.first.p2_idx], pp3 = corners[target_triangle.first.p3_idx];
             std::pair<Triangle, int> ref_triangle = triangles[spatial_triangle_index];
             std::vector<cv::Point2f> ref_triangle_coordinates{corners[ref_triangle.first.p1_idx], corners[ref_triangle.first.p2_idx], corners[ref_triangle.first.p3_idx]};
-            std::vector<cv::Point2f> target_triangle_coordinates{cv::Point2f((pp1.x + pp2.x + pp3.x) / 3.0, (pp1.y + pp2.y + pp3.y) / 3.0)};
+
+            cv::Point2f g;
+            g.x = (std::max({pp1.x, pp2.x, pp3.x}) + std::min({pp1.x, pp2.x, pp3.x})) / 2.0;
+            g.y = (std::max({pp1.y, pp2.y, pp3.y}) + std::min({pp1.y, pp2.y, pp3.y})) / 2.0;
+            std::vector<cv::Point2f> target_triangle_coordinates{g};
             std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_triangle_coordinates, ref_mvs, target_triangle_coordinates);
             mv_average = mvs[0];
 
@@ -2004,7 +2008,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             }
 
             mv_average = roundVecQuarter(mv_average);
-//            std::cout << mv_average << std::endl;
             if(!isMvExists(vectors, mv_average) && vectors.size() <= MV_LIST_MAX_NUM){
                 vectors.emplace_back(mv_average, SPATIAL);
             }
