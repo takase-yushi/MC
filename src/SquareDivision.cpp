@@ -622,7 +622,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
     std::vector<cv::Point2f> gauss_result_warping;
     cv::Point2f gauss_result_translation;
 
-    int warping_limit = 2; // 6: 64×64まで  4:32×32まで  2:16×16まで  0:8×8まで
+    int warping_limit = WARPING_LIMIT; // 6: 64×64まで  4:32×32まで  2:16×16まで  0:8×8まで
 
     if(cmt == nullptr) {
         cmt = previousMvList[0][square_index];
@@ -2061,6 +2061,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
     //この1bitはマージフラグ分です
     if (MERGE_MODE) flags_code++;
 
+    //ワーピングを適用しないブロックについては手法フラグが不要
+    if((PRED_MODE == NEWTON) && (!GAUSS_NEWTON_TRANSLATION_ONLY) && (steps < WARPING_LIMIT)) {
+        flags_code--;
+    }
     //最も小さいCUにsplit_cu_flagは要らない
     if(steps == 0) {
         flags_code--;
