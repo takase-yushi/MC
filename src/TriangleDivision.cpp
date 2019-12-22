@@ -966,7 +966,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     std::vector<cv::Point2f> gauss_result_warping;
     cv::Point2f gauss_result_translation;
 
-    int warping_limit = 2;
+    int warping_limit = WARPING_LIMIT;
 
     if(cmt == nullptr) {
         cmt = previousMvList[0][triangle_index];
@@ -2033,7 +2033,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 
     double lambda = getLambdaPred(qp, (translation_flag ? 1.0 : 1.0));
 
-    int flags_code = 1;
+    // 手法のフラグ+split_cu_flag
+    int flags_code = 1 + 1;
     if (INTRA_MODE) flags_code++;
     if (MERGE_MODE) flags_code++;
 
@@ -2916,11 +2917,12 @@ int TriangleDivision::getCtuCodeLength(CodingTreeUnit *ctu){
 //        if (INTRA_MODE) flags_code++;
 //        if (MERGE_MODE) flags_code++;
 //
+
         return ctu->code_length;
     }
 
     // ここで足している1はsplit_cu_flag分です
-    return 1 + getCtuCodeLength(ctu->node1) + getCtuCodeLength(ctu->node2) + getCtuCodeLength(ctu->node3) + getCtuCodeLength(ctu->node4);
+    return getCtuCodeLength(ctu->node1) + getCtuCodeLength(ctu->node2) + getCtuCodeLength(ctu->node3) + getCtuCodeLength(ctu->node4);
 }
 
 
