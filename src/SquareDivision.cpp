@@ -168,9 +168,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
     ref_images = getRefImages(ref_image, ref_gauss_image);
     target_images = getTargetImages(target_image);
 
-    // この1bitは手法フラグ(warpingかtranslation),もう1bitはマージフラグ分です
-    if(PRED_MODE == NEWTON && !GAUSS_NEWTON_TRANSLATION_ONLY) flags_code++;
-    if (MERGE_MODE) flags_code++;
     //NEWTONかつ新マージがonのときに、ワーピングに足す1bit
     if(PRED_MODE == NEWTON && MERGE2_ENABLE) merge2_flags_code++;
 
@@ -2056,6 +2053,14 @@ bool SquareDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE
  * @return RDコスト，符号量，差分ベクトル(マージ先ベクトル)、参照ブロックインデックス、methoフラグ、flag_code_sum、result_flagsのtuple
  */
 std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> SquareDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, int square_number, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, int steps){
+    int flags_code = 0;
+    //この1bitはsplit_cu_flag
+    flags_code++;
+    // この1bitは手法フラグ(warpingかtranslation)
+    if(PRED_MODE == NEWTON && !GAUSS_NEWTON_TRANSLATION_ONLY) flags_code++;
+    //この1bitはマージフラグ分です
+    if (MERGE_MODE) flags_code++;
+
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors;
     std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> warping_vectors;   // ベクトルとモードを表すフラグのペア
     // 空間予測と時間予測の候補を取り出す
@@ -3101,8 +3106,7 @@ int SquareDivision::getCtuCodeLength(CodingTreeUnit *ctu){
         return ctu->code_length;
     }
 
-    // ここで足している1はsplit_cu_flag分です
-    return 1 + getCtuCodeLength(ctu->node1) + getCtuCodeLength(ctu->node2) + getCtuCodeLength(ctu->node3) + getCtuCodeLength(ctu->node4);
+    return getCtuCodeLength(ctu->node1) + getCtuCodeLength(ctu->node2) + getCtuCodeLength(ctu->node3) + getCtuCodeLength(ctu->node4);
 }
 
 
