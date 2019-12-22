@@ -2052,6 +2052,7 @@ bool SquareDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE
  * @param[in] square_idx 四角パッチの番号
  * @param[in] residual そのパッチの残差
  * @param[in] ctu CodingTreeUnit 符号木
+ * @param[in] steps
  * @return RDコスト，符号量，差分ベクトル(マージ先ベクトル)、参照ブロックインデックス、methoフラグ、flag_code_sum、result_flagsのtuple
  */
 std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> SquareDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, int square_number, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, int steps){
@@ -2575,9 +2576,21 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
  * @param[in] ctu CodingTreeUnit 符号木
  * @param[in] pixel そのブロックの画素の集合
  * @param[in] vectors そのブロックの参照ブロックの動きベクトル
+ * @param[in] steps
  * @return RDコスト
  */
-double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, std::vector<cv::Point2f> &pixels, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors){
+double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, std::vector<cv::Point2f> &pixels, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors, int steps){
+    int flags_code = 0;
+    //この1bitはsplit_cu_flag
+    flags_code++;
+    //この1bitはマージフラグ分です
+    if (MERGE_MODE) flags_code++;
+
+    //最も小さいCUにsplit_cu_flagは要らない
+    if(steps == 0) {
+        flags_code--;
+    }
+
     int diff_HEVC_BM_flag = 0;
 
 //    if(PRED_MODE == BM) diff_HEVC_BM_flag++;
@@ -3142,7 +3155,7 @@ SquareDivision::GaussResult::GaussResult(const std::vector<cv::Point2f> &mvWarpi
 
 SquareDivision::GaussResult::GaussResult() {}
 
-std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockMatching(Point4Vec square, const cv::Mat& target_image, cv::Mat expansion_ref_image, int square_index, CodingTreeUnit *ctu) {
+std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockMatching(Point4Vec square, const cv::Mat& target_image, cv::Mat expansion_ref_image, int square_index, CodingTreeUnit *ctu, int steps) {
     double sx, sy, lx, ly;
     cv::Point2f sp1, sp4;
 
