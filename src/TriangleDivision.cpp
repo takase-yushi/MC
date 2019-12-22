@@ -2038,6 +2038,22 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
     if (INTRA_MODE) flags_code++;
     if (MERGE_MODE) flags_code++;
 
+    cv::Point2f a = corners[triangles[triangle_idx].first.p1_idx];
+    cv::Point2f b = corners[triangles[triangle_idx].first.p2_idx];
+    cv::Point2f c = corners[triangles[triangle_idx].first.p3_idx];
+    extern int division_steps;
+    extern int block_size_x;
+
+    // 128 / 8 = 16
+    int warping_limit_x = block_size_x / std::pow(2, (division_steps - WARPING_LIMIT) / 2.0);
+    if((std::max({a.x, b.x, c.x}) - std::min({a.x, b.x, c.x})) < warping_limit_x){
+        flags_code-=1;
+    }
+
+    if((std::max({a.x, b.x, c.x}) - std::min({a.x, b.x, c.x})) <= MIN_CTU_SIZE){
+        flags_code-=1;
+    }
+
     //                      コスト, 差分ベクトル, 番号, タイプ
     std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> > results;
     for(int i = 0 ; i < vectors.size() ; i++) {
