@@ -759,7 +759,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
             std::vector<cv::Point2f> tmp_bm_mv;
             std::vector<double> tmp_bm_errors;
 #if RD_BLOCK_MATCHING
-            std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(square, target_image, expansion_ref, square_index, ctu);
+            std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(square, target_image, expansion_ref, square_index, ctu, steps);
 #else
             std::tie(tmp_bm_mv, tmp_bm_errors) = ::blockMatching(square, target_image, expansion_ref);
 #endif
@@ -980,7 +980,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
 
         }else if(PRED_MODE == BM){
 #if RD_BLOCK_MATCHING
-            std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_squares[j], target_image, expansion_ref, square_indexes[j], ctus[j]);
+            std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_squares[j], target_image, expansion_ref, square_indexes[j], ctus[j], steps - 2);
 #else
             std::tie(tmp_bm_mv, tmp_bm_errors) = ::blockMatching(subdiv_target_squares[j], target_image, expansion_ref);
 #endif
@@ -2060,6 +2060,11 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
     if(PRED_MODE == NEWTON && !GAUSS_NEWTON_TRANSLATION_ONLY) flags_code++;
     //この1bitはマージフラグ分です
     if (MERGE_MODE) flags_code++;
+
+    //最も小さいCUにsplit_cu_flagは要らない
+    if(steps == 0) {
+        flags_code--;
+    }
 
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors;
     std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> warping_vectors;   // ベクトルとモードを表すフラグのペア
@@ -3199,7 +3204,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
 //                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
-                rd = getRDCost({mv, mv, mv}, sad, square_index, cmt, ctu, pixels, vectors);
+                rd = getRDCost({mv, mv, mv}, sad, square_index, cmt, ctu, pixels, vectors, steps);
                 if(rd_min > rd){
                     sad_min = sad;
                     rd_min = rd;
@@ -3230,7 +3235,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
 //                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
-                rd = getRDCost({mv, mv, mv}, sad, square_index, cmt, ctu, pixels, vectors);
+                rd = getRDCost({mv, mv, mv}, sad, square_index, cmt, ctu, pixels, vectors, steps);
                 if(rd_min > rd){
                     sad_min = sad;
                     rd_min = rd;
@@ -3259,7 +3264,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
 //                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
-                rd = getRDCost({mv, mv, mv}, sad, square_index, cmt, ctu, pixels, vectors);
+                rd = getRDCost({mv, mv, mv}, sad, square_index, cmt, ctu, pixels, vectors, steps);
                 if(rd_min > rd){
                     sad_min = sad;
                     rd_min = rd;
