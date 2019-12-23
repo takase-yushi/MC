@@ -1725,6 +1725,8 @@ std::vector<int> TriangleDivision::getSpatialTriangleList(int t_idx){
         ret.emplace_back(idx);
     }
 
+    std::reverse(ret.begin(), ret.end());
+
     return ret;
 }
 
