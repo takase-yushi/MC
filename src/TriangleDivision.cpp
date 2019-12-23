@@ -1288,6 +1288,11 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                         cv::Point2f(-1000, -1000), ref_hevc);
             }
 
+            triangle_gauss_results[triangle_indexes[j]].mv_translation = mv_translation_tmp;
+            triangle_gauss_results[triangle_indexes[j]].mv_warping = mv_warping_tmp;
+            triangle_gauss_results[triangle_indexes[j]].original_mv_translation = mv_translation_tmp;
+            triangle_gauss_results[triangle_indexes[j]].original_mv_warping = mv_warping_tmp;
+
             std::vector<cv::Point2f> mvd_translation_tmp, mvd_warping_tmp;
             double code_length_translation_tmp, code_length_warping_tmp;
             FlagsCodeSum tmp_translation_flags;
