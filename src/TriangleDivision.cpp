@@ -2062,6 +2062,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 #endif
 
 //    std::cout << vectors.size() << std::endl;
+    vectors.emplace_back(cv::Point2f(0.0, 0.0), SPATIAL);
+    std::vector<cv::Point2f> zeros{cv::Point2f(0.0, 0.0),cv::Point2f(0.0, 0.0),cv::Point2f(0.0, 0.0)};
+    warping_vectors.emplace_back(zeros);
     if(vectors.size() < 2) {
         vectors.emplace_back(cv::Point2f(0.0, 0.0), SPATIAL);
         warping_vectors.emplace_back();
