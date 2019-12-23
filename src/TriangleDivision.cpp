@@ -1989,7 +1989,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
         GaussResult spatial_triangle = triangle_gauss_results[spatial_triangle_index];
 
         if(spatial_triangle.translation_flag){
-            if(!isMvExists(vectors, spatial_triangle.mv_translation) && vectors.size() <= MV_LIST_MAX_NUM) {
+            if(!isMvExists(vectors, spatial_triangle.mv_translation) && vectors.size() <= (MV_LIST_MAX_NUM - 1)) {
                 vectors.emplace_back(spatial_triangle.mv_translation, SPATIAL);
                 warping_vectors.emplace_back();
 #if DISPLAY_MERGE_LOG
@@ -2044,8 +2044,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             }
 
             mv_average = roundVecQuarter(mv_average);
-            if(!isMvExists(vectors, mv_average) && vectors.size() <= MV_LIST_MAX_NUM){
-                vectors.emplace_back(mv_average, SPATIAL);
+            if(!isMvExists(vectors, mv_average) && vectors.size() <= (MV_LIST_MAX_NUM - 1)){
+                vectors.insert(vectors.begin(), std::make_pair(mv_average, SPATIAL));
             }
         }
     }
