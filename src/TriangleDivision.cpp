@@ -2382,7 +2382,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
                     warping_vector_history.emplace_back(mvs[0], mvs[1], mvs[2]);
                 }
 
-                if(MERGE2_ENABLE){
+                if(MERGE2_ENABLE && i < spatial_triangle_size){
                     // 共有してる頂点を探す
                     Triangle tmp_target_t = triangles[triangle_idx].first;
                     std::set<int> p1_set = same_corner_list[tmp_target_t.p1_idx];
