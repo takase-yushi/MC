@@ -2343,7 +2343,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             std::vector<cv::Point2f> mvs;
 
             if(vectors[i].first.x + sx < -SEARCH_RANGE || vectors[i].first.y + sy < -SEARCH_RANGE || vectors[i].first.x + lx >= target_image.cols + SEARCH_RANGE || vectors[i].first.y + ly >= target_image.rows + SEARCH_RANGE) continue;
-            if (!isMvExists(merge_vectors, vectors[i].first) && merge_count < MV_LIST_MAX_NUM) {
+            if (!isMvExists(merge_vectors, vectors[i].first) && merge_count <= MV_LIST_MAX_NUM) {
 #if DISPLAY_MERGE_LOG
                 std::cout << "original_mv:" << mv[0] << " merged_mv:" << vectors[i].first << std::endl;
 #endif
