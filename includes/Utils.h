@@ -121,6 +121,7 @@ enum {
  */
 #define MVD_DEBUG_LOG false
 #define DISPLAY_RD_COST false
+#define DISPLAY_MERGE_LOG true
 
 /**
  * ログファイル書き出し関連

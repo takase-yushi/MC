@@ -1093,7 +1093,20 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         triangle_gauss_results[triangle_index].mv_warping = mvd_warping;
         gauss_result_translation = mvd_translation[0];
         gauss_result_warping = mvd_warping;
+#if DISPLAY_MERGE_LOG
+        if(translation_flag){
+            std::cout << "----- MERGE(translation) -----" << std::endl;
+            std::cout << "original_mv:" << triangle_gauss_results[triangle_index].mv_translation << " merged_mv:" << mvd_translation[0] << std::endl;
+        }else{
+            std::cout << "----- MERGE(warping) -----" << std::endl;
+            for(int nu = 0 ; nu < 3 ; nu++) {
+                std::cout << "original_mv:" << triangle_gauss_results[triangle_index].mv_warping[nu] << " merged_mv:" << mvd_warping[nu] << std::endl;
+            }
+        }
     }
+
+    std::cout << std::endl;
+#endif
 
     std::vector<cv::Point2f> mv;
     if (translation_flag) {
@@ -1309,6 +1322,10 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 if(method_translation_tmp == MV_CODE_METHOD::MERGE || method_translation_tmp == MV_CODE_METHOD::MERGE2){
                     triangle_gauss_results[triangle_indexes[j]].mv_translation = mvd_translation_tmp[0];
                     mv_translation_tmp = mvd_translation_tmp[0];
+#if DISPLAY_MERGE_LOG
+                    std::cout << "----- MERGE(subdiv, target:translation) -----" << std::endl;
+                    std::cout << "original_mv:" << triangle_gauss_results[triangle_indexes[j]].original_mv_translation << " merged_mv:" << mvd_translation_tmp[0] << std::endl;
+#endif
                 }
             }else{
                 triangle_gauss_results[triangle_indexes[j]].translation_flag = false;
@@ -1328,6 +1345,12 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 if(method_warping_tmp == MV_CODE_METHOD::MERGE || method_warping_tmp == MV_CODE_METHOD::MERGE2){
                     triangle_gauss_results[triangle_indexes[j]].mv_warping = mvd_warping_tmp;
                     mv_warping_tmp = mvd_warping_tmp;
+#if DISPLAY_MERGE_LOG
+                    std::cout << "----- MERGE(subdiv, target_warping) -----" << std::endl;
+                    for(int nu = 0 ; nu < 3 ; nu++) {
+                        std::cout << "original_mv:" << triangle_gauss_results[triangle_indexes[j]].original_mv_warping[nu] << " merged:" << mvd_warping[nu] << std::endl;
+                    }
+#endif
                 }
             }
             triangle_gauss_results[triangle_indexes[j]].mv_translation = mv_translation_tmp;
@@ -1351,6 +1374,9 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
         }
 
         isCodedTriangle[triangle_indexes[j]] = true;
+#if DISPLAY_MREGE_LOG
+        std::cout << std::endl;
+#endif
     }
 
     for(int i = 0 ; i < 4 ; i++){
@@ -1953,6 +1979,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors; // ベクトルとモードを表すフラグのペア
     std::vector<std::vector<cv::Point2f>> warping_vectors;
 
+#if DISPLAY_MERGE_LOG
+    std::cout << "triangle_index:" << triangle_idx << std::endl;
+#endif
+
     // すべてのベクトルを格納する．
     for(int i = 0 ; i < spatial_triangle_size ; i++) {
         int spatial_triangle_index = spatial_triangles[i];
@@ -1962,6 +1992,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             if(!isMvExists(vectors, spatial_triangle.mv_translation) && vectors.size() <= MV_LIST_MAX_NUM) {
                 vectors.emplace_back(spatial_triangle.mv_translation, SPATIAL);
                 warping_vectors.emplace_back();
+#if DISPLAY_MERGE_LOG
+                std::cout << "translation vectors(candidate, ref:translation):" << spatial_triangle.mv_translation << std::endl;
+#endif
             }
         }else{
             // 隣接パッチがワーピングで予想されている場合、そのパッチの0番の動きベクトルを候補とする
@@ -1994,6 +2027,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_triangle_coordinates, ref_mvs, target_triangle_coordinates);
             mv_average = mvs[0];
 
+#if DISPLAY_MERGE_LOG
+            if(translation_flag) std::cout << "translation vectors(candidate, ref:warping):" << ref_mvs[0] << " " << ref_mvs[1] << " " << ref_mvs[2] << " -> " << mv_average << std::endl;
+#endif
             if (!translation_flag) {
                 target_triangle_coordinates.clear();
                 target_triangle_coordinates.emplace_back(pp1);
@@ -2308,6 +2344,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 
             if(vectors[i].first.x + sx < -SEARCH_RANGE || vectors[i].first.y + sy < -SEARCH_RANGE || vectors[i].first.x + lx >= target_image.cols + SEARCH_RANGE || vectors[i].first.y + ly >= target_image.rows + SEARCH_RANGE) continue;
             if (!isMvExists(merge_vectors, vectors[i].first) && merge_count < MV_LIST_MAX_NUM) {
+#if DISPLAY_MERGE_LOG
+                std::cout << "original_mv:" << mv[0] << " merged_mv:" << vectors[i].first << std::endl;
+#endif
                 merge_vectors.emplace_back(vectors[i].first, MERGE);
                 mvs.emplace_back(vectors[i].first);
                 mvs.emplace_back(vectors[i].first);
