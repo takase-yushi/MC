@@ -13,5 +13,6 @@ void generateConfigItem(std::string input_file_path, std::string output_file_pat
 void generateChunkedConfigItem(std::string input_file_path, std::string output_file_path, int chunk_size);
 void generateConfigForTestSequence();
 void generateChunkedConfigForTestSequence();
+void generateChunkedRDCurveConfigForTestSequence(int ctu_size = -1);
 
 #endif //ENCODER_CONFIGUTIL_H

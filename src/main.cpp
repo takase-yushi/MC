@@ -82,6 +82,7 @@ int main(int argc, char *argv[]){
 #else
 
 //    generateChunkedConfigForTestSequence();
+//    generateChunkedRDCurveConfigForTestSequence(-1);
 //    exit(10);
 
     std::string config_name;
