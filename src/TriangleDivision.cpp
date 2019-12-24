@@ -1103,8 +1103,10 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 std::cout << "original_mv:" << triangle_gauss_results[triangle_index].mv_warping[nu] << " merged_mv:" << mvd_warping[nu] << std::endl;
             }
         }
+#endif
     }
 
+#if DISPLAY_MERGE_LOG
     std::cout << std::endl;
 #endif
 
