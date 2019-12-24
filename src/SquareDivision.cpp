@@ -783,6 +783,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
     }
 
     if(method_flag == MV_CODE_METHOD::MERGE) {
+#if MREGE_DEBUG_LOG
+        if(translation_flag) {
+            std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! select Merge !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+            std::cout << "square_index : " << square_index << ", selected_Merge_mv : " << mvd[0] << std::endl << std::endl;
+        }
+#endif
         //マージの時はマージ先のベクトルを入れる
         square_gauss_results[square_index].mv_translation = mvd[0];
         square_gauss_results[square_index].mv_warping = mvd;
@@ -1007,6 +1013,10 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
         //マージの時はマージ先のベクトルを入れる
         if(method_flags[j] == MV_CODE_METHOD::MERGE) {
             if(square_gauss_results[square_indexes[j]].translation_flag) {
+#if MREGE_DEBUG_LOG
+                std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! select Merge !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+                std::cout << "square_index : " << square_indexes[j] << ", selected_Merge_mv : " << mvd[0] << std::endl << std::endl;
+#endif
                 gauss_result_translation = mvd[0];
                 square_gauss_results[square_indexes[j]].mv_translation = gauss_result_translation;
             }else{
@@ -1502,7 +1512,12 @@ std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, s
                     tmp_merge_vectors.emplace_back();
                     is_in_flag[i] = false;
                 }
-                else tmp_merge_vectors.emplace_back(mvs[0]);
+                else {
+                    tmp_merge_vectors.emplace_back(mvs[0]);
+#if MREGE_DEBUG_LOG
+                    std::cout << "ref_block_index : " << reference_block_index << ", ref_mv : " << current_mv1 << ", " << current_mv2 << ", " << current_mv3 << ", P_mv : " << mvs[0] << std::endl;
+#endif
+                }
             } else {
                 std::vector<cv::Point2f> target_square_coordinates;
                 target_square_coordinates.emplace_back(pp1);
@@ -2379,6 +2394,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
         for (int i = 0; i < vectors.size(); i++) {
             std::pair<cv::Point2f, MV_CODE_METHOD> merge_vector = vectors[i];
             cv::Point2f current_mv = merge_vector.first;
+#if MREGE_DEBUG_LOG
+            std::cout << "target_index : " << square_idx << ", org_mv : " << mv[0] << ", mrege_mv : " << current_mv << std::endl;
+#endif
             std::vector<cv::Point2f> mvds;
             std::vector<cv::Point2f> mvs;
 
@@ -2406,6 +2424,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code + merge2_flags_code, mvs, merge_count, warping_vectors[i][0].second, FlagsCodeSum(0, 0, 0, 0), Flags());
             merge_count++;
         }
+#if MREGE_DEBUG_LOG
+//        std::cout << std::endl;
+#endif
 #if MERGE2_ENABLE
         warping_vectors = getMerge2SquareList(square_idx, coordinate);
         if(warping_vectors.size() < 5) {

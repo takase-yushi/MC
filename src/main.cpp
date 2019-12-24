@@ -87,7 +87,7 @@ int main(int argc, char *argv[]){
 
     std::string config_name;
     if(argc == 1) {
-        config_name = "config/in_to_tree_1280_640/in_to_tree_1280_640_BM_128.json";
+        config_name = "config/cactus/cactus_Square_Affine_128.json";
     }else{
         config_name = std::string(argv[1]);
     }
