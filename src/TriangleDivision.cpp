@@ -1358,10 +1358,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 #endif
                 }
             }
-            triangle_gauss_results[triangle_indexes[j]].mv_translation = mv_translation_tmp;
-            triangle_gauss_results[triangle_indexes[j]].original_mv_translation = mv_translation_tmp;
-            triangle_gauss_results[triangle_indexes[j]].mv_warping = mv_warping_tmp;
-            triangle_gauss_results[triangle_indexes[j]].original_mv_warping = mv_warping_tmp;
+
             triangle_gauss_results[triangle_indexes[j]].residual_translation = error_translation_tmp;
             triangle_gauss_results[triangle_indexes[j]].residual_warping = error_warping_tmp;
 
