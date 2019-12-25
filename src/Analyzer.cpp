@@ -322,7 +322,7 @@ Analyzer::Analyzer(std::vector<CodingTreeUnit *> ctus, std::string _log_path, co
     }
 
     log_path = log_path + "/log" + file_suffix;
-    mkdir((log_path).c_str());
+    mkdir((log_path).c_str(), 0774);
 }
 
 /**
