@@ -63,9 +63,6 @@ void Analyzer::storeDistributionOfMv() {
  */
 void Analyzer::collectResults(CodingTreeUnit *ctu) {
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr){
-        int flags_code = 1;
-        if (INTRA_MODE) flags_code++;
-        if (MERGE_MODE) flags_code++;
 
         code_sum += ctu->code_length;
         patch_num++;
