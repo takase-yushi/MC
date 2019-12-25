@@ -178,7 +178,6 @@ void Analyzer::collectResults(CodingTreeUnit *ctu) {
     if(ctu->node2 != nullptr) collectResults(ctu->node2);
     if(ctu->node3 != nullptr) collectResults(ctu->node3);
     if(ctu->node4 != nullptr) collectResults(ctu->node4);
-    code_sum += 1;
 }
 
 /**
