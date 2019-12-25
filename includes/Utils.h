@@ -141,7 +141,7 @@ enum {
 // 2画素以上のアップデートが来たら打ち切る
 #define DELTA_UV_THRESHOLD 2
 
-const std::string OS = "Win";
+const std::string OS = "Ubuntu";
 
 /**
  * @struct struct Point3Vec
