@@ -3,7 +3,7 @@
     {
       "enable"         : true,
       "img_directory"  : "/img/minato",
-      "log_directory"  : "/log/minato",
+      "log_directory"  : "/log/minato/takase/Affine/64",
       "gauss_ref_image": "/minato_limit_0_3_I_qp_22.png",
       "ref_image"      : "/minato_limit_0_3_I_qp_22.png",
       "target_image"   : "/minato_limit_000003.png",
@@ -18,7 +18,7 @@
     {
       "enable"         : true,
       "img_directory"  : "/img/minato",
-      "log_directory"  : "/log/minato",
+      "log_directory"  : "/log/minato/takase/Affine/64",
       "gauss_ref_image": "/minato_limit_0_3_I_qp_22.png",
       "ref_image"      : "/minato_limit_0_3_I_qp_24.png",
       "target_image"   : "/minato_limit_000003.png",
@@ -33,7 +33,7 @@
     {
       "enable"         : true,
       "img_directory"  : "/img/minato",
-      "log_directory"  : "/log/minato",
+      "log_directory"  : "/log/minato/takase/Affine/64",
       "gauss_ref_image": "/minato_limit_0_3_I_qp_22.png",
       "ref_image"      : "/minato_limit_0_3_I_qp_26.png",
       "target_image"   : "/minato_limit_000003.png",
@@ -48,7 +48,7 @@
     {
       "enable"         : true,
       "img_directory"  : "/img/minato",
-      "log_directory"  : "/log/minato",
+      "log_directory"  : "/log/minato/takase/Affine/64",
       "gauss_ref_image": "/minato_limit_0_3_I_qp_22.png",
       "ref_image"      : "/minato_limit_0_3_I_qp_28.png",
       "target_image"   : "/minato_limit_000003.png",
@@ -63,7 +63,7 @@
     {
       "enable"         : true,
       "img_directory"  : "/img/minato",
-      "log_directory"  : "/log/minato",
+      "log_directory"  : "/log/minato/takase/Affine/64",
       "gauss_ref_image": "/minato_limit_0_3_I_qp_22.png",
       "ref_image"      : "/minato_limit_0_3_I_qp_30.png",
       "target_image"   : "/minato_limit_000003.png",
@@ -78,7 +78,7 @@
     {
       "enable"         : true,
       "img_directory"  : "/img/minato",
-      "log_directory"  : "/log/minato",
+      "log_directory"  : "/log/minato/takase/Affine/64",
       "gauss_ref_image": "/minato_limit_0_3_I_qp_22.png",
       "ref_image"      : "/minato_limit_0_3_I_qp_32.png",
       "target_image"   : "/minato_limit_000003.png",
@@ -93,7 +93,7 @@
     {
       "enable"         : true,
       "img_directory"  : "/img/minato",
-      "log_directory"  : "/log/minato",
+      "log_directory"  : "/log/minato/takase/Affine/64",
       "gauss_ref_image": "/minato_limit_0_3_I_qp_22.png",
       "ref_image"      : "/minato_limit_0_3_I_qp_34.png",
       "target_image"   : "/minato_limit_000003.png",
@@ -108,7 +108,7 @@
     {
       "enable"         : true,
       "img_directory"  : "/img/minato",
-      "log_directory"  : "/log/minato",
+      "log_directory"  : "/log/minato/takase/Affine/64",
       "gauss_ref_image": "/minato_limit_0_3_I_qp_22.png",
       "ref_image"      : "/minato_limit_0_3_I_qp_36.png",
       "target_image"   : "/minato_limit_000003.png",
@@ -123,7 +123,7 @@
     {
       "enable"         : true,
       "img_directory"  : "/img/minato",
-      "log_directory"  : "/log/minato",
+      "log_directory"  : "/log/minato/takase/Affine/64",
       "gauss_ref_image": "/minato_limit_0_3_I_qp_22.png",
       "ref_image"      : "/minato_limit_0_3_I_qp_37.png",
       "target_image"   : "/minato_limit_000003.png",
