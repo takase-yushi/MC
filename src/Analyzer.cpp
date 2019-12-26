@@ -221,6 +221,8 @@ void Analyzer::square_CollectResults(CodingTreeUnit *ctu) {
             mvd_code_sum += ctu->flags_code_sum.getMvdCodeLength();
 
             affine_new_merge++;
+            merge_flag_counter[0]++;
+            intra_flag_counter[0]++;
         } else if(ctu->method != MV_CODE_METHOD::MERGE){
             if(ctu->translation_flag){
                 int x_ = (int)abs(((ctu->mv1).x * 4));
