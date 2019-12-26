@@ -301,10 +301,10 @@ void Analyzer::square_CollectResults(CodingTreeUnit *ctu) {
         return;
     }
 
-    if(ctu->node1 != nullptr) collectResults(ctu->node1);
-    if(ctu->node2 != nullptr) collectResults(ctu->node2);
-    if(ctu->node3 != nullptr) collectResults(ctu->node3);
-    if(ctu->node4 != nullptr) collectResults(ctu->node4);
+    if(ctu->node1 != nullptr) square_CollectResults(ctu->node1);
+    if(ctu->node2 != nullptr) square_CollectResults(ctu->node2);
+    if(ctu->node3 != nullptr) square_CollectResults(ctu->node3);
+    if(ctu->node4 != nullptr) square_CollectResults(ctu->node4);
 }
 
 /**
