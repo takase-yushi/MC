@@ -108,6 +108,7 @@ enum {
 #define TRANSLATION_COST_RATIO 1.0
 #define WARPING_COST_RATIO 1.0
 #define WARPING_LIMIT 2
+#define SPLIT_TO_USE 0    //0 : Triangle,    1: Square
 
 /**
  * 各種モードのON/OFF

@@ -48,6 +48,7 @@ int block_size_y;
 int division_steps;
 double injected_lambda;
 bool lambda_inject_flag;
+int split_to_use = SPLIT_TO_USE;    //0 : Triangle,    1: Square
 
 std::string out_file_suffix = "_square";
 
@@ -92,8 +93,12 @@ int main(int argc, char *argv[]){
         config_name = std::string(argv[1]);
     }
 
-//    run(config_name);
-    run_square(config_name);
+    if(split_to_use == 0) {
+        run(config_name);
+    }
+    if(split_to_use == 1) {
+        run_square(config_name);
+    }
 
 //getDiff_image();
 //    draw_HEVC_MergeMode("HM_minato_mirai_nointra_37.png", "result.txt");
