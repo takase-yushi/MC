@@ -88,7 +88,7 @@ int main(int argc, char *argv[]){
 
     std::string config_name;
     if(argc == 1) {
-        config_name = "config/cactus/cactus_Square_Affine_128.json";
+        config_name = "config/in_to_tree_1280_640/in_to_tree_1280_640_Square_Affine_128.json";
     }else{
         config_name = std::string(argv[1]);
     }
@@ -396,7 +396,7 @@ void run(std::string config_name) {
         analyzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
 #endif
 #else
-        Analyzer analyzer(foo, log_directory, log_file_suffix, target_image, p_image, pells, residuals);
+        Analyzer analyzer(foo, log_directory, log_file_suffix, target_image, p_image, pells, residuals, split_to_use);
 #if STORE_MVD_DISTRIBUTION_LOG
         analyzer.storeDistributionOfMv();
         analyzer.storeMarkdownFile(getPSNR(target_image, p_image, rect) , log_directory);
@@ -709,7 +709,7 @@ void run_square(std::string config_name) {
 
 #if STORE_MVD_DISTRIBUTION_LOG
 #if GAUSS_NEWTON_TRANSLATION_ONLY
-        Analyzer analyzer(foo, log_directory, log_file_suffix, target_image, p_image, pells, residuals);
+        Analyzer analyzer(foo, log_directory, log_file_suffix, target_image, p_image, pells, residuals, split_to_use);
 #if STORE_MVD_DISTRIBUTION_LOG
         analyzer.storeDistributionOfMv();
         analyzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
@@ -720,7 +720,7 @@ void run_square(std::string config_name) {
         analyzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
 #endif
 #else
-        Analyzer analyzer(foo, log_directory, log_file_suffix, target_image, p_image, pells, residuals);
+        Analyzer analyzer(foo, log_directory, log_file_suffix, target_image, p_image, pells, residuals, split_to_use);
 #if STORE_MVD_DISTRIBUTION_LOG
         analyzer.storeDistributionOfMv();
         analyzer.storeMarkdownFile(getPSNR(target_image, p_image, rect) , log_directory);
