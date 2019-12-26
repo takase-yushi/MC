@@ -91,12 +91,15 @@ int main(int argc, char *argv[]){
         config_name = "config/in_to_tree_1280_640/in_to_tree_1280_640_Square_Affine_128.json";
     }else{
         config_name = std::string(argv[1]);
+        split_to_use = atoi(argv[2]);
     }
 
     if(split_to_use == 0) {
+        std::cout << "Use Triangle." << std::endl;
         run(config_name);
     }
     if(split_to_use == 1) {
+        std::cout << "Use Square." << std::endl;
         run_square(config_name);
     }
 
