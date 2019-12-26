@@ -181,6 +181,130 @@ void Analyzer::collectResults(CodingTreeUnit *ctu) {
 }
 
 /**
+ *
+ * @param ctu
+ */
+void Analyzer::square_CollectResults(CodingTreeUnit *ctu) {
+    if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr){
+        code_sum += (ctu->code_length);
+        patch_num++;
+
+        if(ctu->method == MV_CODE_METHOD::MERGE2) {
+            int x_ = (int)abs(((ctu->mv1).x * 4));
+            int y_ = (int)abs(((ctu->mv1).y * 4));
+            MV_counter[x_]++;
+            MV_counter[y_]++;
+            int x = (ctu->mvds_x)[0];
+            mvd_counter_x[x]++;
+            int y = (ctu->mvds_y)[0];
+            mvd_counter_y[y]++;
+
+            mvd_counter[x]++;
+            mvd_counter[y]++;
+
+            greater_0_flag_counter[(int)(ctu->flags_code_sum.getXGreater0Flag()[0])]++;
+            greater_0_flag_counter[(int)(ctu->flags_code_sum.getYGreater0Flag()[0])]++;
+
+            if(ctu->flags_code_sum.getXGreater0Flag()[0]) {
+                greater_1_flag_counter[(int)(ctu->flags_code_sum.getXGreater1Flag()[0])]++;
+            }
+            if(ctu->flags_code_sum.getYGreater0Flag()[0]) {
+                greater_1_flag_counter[(int)(ctu->flags_code_sum.getYGreater1Flag()[0])]++;
+            }
+            merge2_counter++;
+            greater_0_flag_sum += ctu->flags_code_sum.getGreater0FlagCodeLength();
+            greater_1_flag_sum += ctu->flags_code_sum.getGreaterThanOneCodeLength();
+            sign_flag_sum += ctu->flags_code_sum.getSignFlagCodeLength();
+            mvd_code_sum += ctu->flags_code_sum.getMvdCodeLength();
+
+            affine_new_merge++;
+        } else if(ctu->method != MV_CODE_METHOD::MERGE){
+            if(ctu->translation_flag){
+                int x_ = (int)abs(((ctu->mv1).x * 4));
+                int y_ = (int)abs(((ctu->mv1).y * 4));
+                MV_counter[x_]++;
+                MV_counter[y_]++;
+                int x = (ctu->mvds_x)[0];
+                mvd_counter_x[x]++;
+                int y = (ctu->mvds_y)[0];
+                mvd_counter_y[y]++;
+
+                mvd_counter[x]++;
+                mvd_counter[y]++;
+
+                greater_0_flag_counter[(int)(ctu->flags_code_sum.getXGreater0Flag()[0])]++;
+                greater_0_flag_counter[(int)(ctu->flags_code_sum.getYGreater0Flag()[0])]++;
+
+                if(ctu->flags_code_sum.getXGreater0Flag()[0]) {
+                    greater_1_flag_counter[(int)(ctu->flags_code_sum.getXGreater1Flag()[0])]++;
+                }
+                if(ctu->flags_code_sum.getYGreater0Flag()[0]) {
+                    greater_1_flag_counter[(int)(ctu->flags_code_sum.getYGreater1Flag()[0])]++;
+                }
+
+                mvd_translation_code_sum += ctu->flags_code_sum.getMvdCodeLength();
+
+                translation_diff++;
+            }else{
+                for(int i = 0 ; i < 3 ; i++) {
+                    int x = (ctu->mvds_x)[i];
+                    mvd_counter_x[x]++;
+                    int y = (ctu->mvds_y)[i];
+                    mvd_counter_y[y]++;
+                    mvd_counter[x]++;
+                    mvd_counter[y]++;
+
+                    if(ctu->flags_code_sum.getXGreater0Flag()[i]) {
+                        greater_1_flag_counter[(int)(ctu->flags_code_sum.getXGreater1Flag()[i])]++;
+                    }
+                    if(ctu->flags_code_sum.getYGreater0Flag()[i]) {
+                        greater_1_flag_counter[(int)(ctu->flags_code_sum.getYGreater1Flag()[i])]++;
+                    }
+
+                    greater_0_flag_counter[(int)(ctu->flags_code_sum.getXGreater0Flag()[i])]++;
+                    greater_0_flag_counter[(int)(ctu->flags_code_sum.getYGreater0Flag()[i])]++;
+                }
+                mvd_affine_code_sum += ctu->flags_code_sum.getMvdCodeLength();
+                affine_diff++;
+            }
+
+            greater_0_flag_sum += ctu->flags_code_sum.getGreater0FlagCodeLength();
+            greater_1_flag_sum += ctu->flags_code_sum.getGreaterThanOneCodeLength();
+            sign_flag_sum += ctu->flags_code_sum.getSignFlagCodeLength();
+            mvd_code_sum += ctu->flags_code_sum.getMvdCodeLength();
+            differential_counter++;
+
+            merge_flag_counter[0]++;
+            intra_flag_counter[0]++;
+        }else if(ctu->method == MV_CODE_METHOD::MERGE){
+            merge_counter++;
+            merge_flag_counter[1]++;
+            intra_flag_counter[0]++;
+
+            if(ctu->translation_flag){
+                translation_merge++;
+            }else{
+                affine_merge++;
+            }
+        }else if(ctu->method == MV_CODE_METHOD::INTRA){
+            intra_counter++;
+            merge_flag_counter[0]++;
+            intra_flag_counter[1]++;
+        }
+
+        if(ctu->translation_flag) translation_patch_num++;
+        else affine_patch_num++;
+
+        return;
+    }
+
+    if(ctu->node1 != nullptr) collectResults(ctu->node1);
+    if(ctu->node2 != nullptr) collectResults(ctu->node2);
+    if(ctu->node3 != nullptr) collectResults(ctu->node3);
+    if(ctu->node4 != nullptr) collectResults(ctu->node4);
+}
+
+/**
  * @fn void Analyzer::storeMarkdownFile(double psnr, std::string log_path)
  * @brief Markdownとして結果を書き出す
  * @param psnr PSNR
@@ -318,7 +442,8 @@ Analyzer::Analyzer(std::vector<CodingTreeUnit *> ctus, std::string _log_path, co
     p_image = pImage;
 
     for(auto ctu : ctus){
-        collectResults(ctu);
+//        collectResults(ctu);
+        square_CollectResults(ctu);
     }
 
     log_path = log_path + "/log" + file_suffix;

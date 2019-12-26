@@ -24,6 +24,7 @@ public:
 
 private:
     void collectResults(CodingTreeUnit *ctu);
+    void square_CollectResults(CodingTreeUnit *ctu);
     void storeMergeMvLog(CodingTreeUnit* ctu, std::ofstream &ofs);
     int getEntropyCodingCode();
 
