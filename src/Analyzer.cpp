@@ -151,6 +151,9 @@ void Analyzer::collectResults(CodingTreeUnit *ctu) {
             mvd_code_sum += ctu->flags_code_sum.getMvdCodeLength();
 
             affine_new_merge++;
+
+            merge_flag_counter[0]++;
+            intra_flag_counter[0]++;
         }else if(ctu->method == MV_CODE_METHOD::MERGE){
             merge_counter++;
             merge_flag_counter[1]++;
