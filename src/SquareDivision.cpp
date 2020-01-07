@@ -1017,8 +1017,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
                 std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! select Merge !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
                 std::cout << "square_index : " << square_indexes[j] << ", selected_Merge_mv : " << mvd[0] << std::endl << std::endl;
 #endif
-                gauss_result_translation = mvd[0];
-                square_gauss_results[square_indexes[j]].mv_translation = gauss_result_translation;
+                square_gauss_results[square_indexes[j]].mv_translation = mvd[0];
             }else{
                 square_gauss_results[square_indexes[j]].mv_warping = mvd;
             }
