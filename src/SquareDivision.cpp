@@ -850,7 +850,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
         }
     }
 
-    if(method_flag == MV_CODE_METHOD::SPATIAL) {
+    if(method_flag == MV_CODE_METHOD::SPATIAL || method_flag == MV_CODE_METHOD::Collocated) {
         ctu->mvds.clear();
         if(ctu->translation_flag) {
             ctu->mvds.emplace_back(mvd[0]);
