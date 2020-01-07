@@ -1064,7 +1064,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
         eraseCornerFlag(split_sub_squares1.s1, split_sub_squares1.s2, split_sub_squares2.s1, split_sub_squares2.s2);
         isCodedSquare[square_index] = true;
         ctu->node1 = ctu->node2 = ctu->node3 = ctu->node4 = nullptr;
-        ctu->method = method_flag;
         eraseSquare(squares.size() - 1);
         eraseSquare(squares.size() - 1);
         eraseSquare(squares.size() - 1);
