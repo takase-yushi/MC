@@ -393,7 +393,6 @@ int SquareDivision::insertSquare(int p1_idx, int p2_idx, int p3_idx, int p4_idx)
  * @param[in] s_idx 四角パッチの番号
  */
 void SquareDivision::eraseSquare(int s_idx){
-    Square square = squares[s_idx];
     isCodedSquare.erase(isCodedSquare.begin() + s_idx);
     squares.erase(squares.begin() + s_idx);
     square_gauss_results.erase(square_gauss_results.begin() + s_idx);
