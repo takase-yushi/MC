@@ -2644,12 +2644,10 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
     double lambda = getLambdaPred(qp, 1.0);
 
     //                      コスト, 差分ベクトル, 番号, タイプ
-    std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> > results;
+    std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> > results;
     for (int i = 0; i < vectors.size(); i++) {
         std::pair<cv::Point2f, MV_CODE_METHOD> vector = vectors[i];
         cv::Point2f current_mv = vector.first;
-        FlagsCodeSum flag_code_sum(0, 0, 0, 0);
-        Flags flags;
 
         cv::Point2f mvd = current_mv - mv[0];
         mvd = getQuantizedMv(mvd, 4);
@@ -2657,9 +2655,6 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
         // 正負の判定(使ってません！！！)
         bool is_x_minus = mvd.x < 0;
         bool is_y_minus = mvd.y < 0;
-
-        flags.x_sign_flag.emplace_back(is_x_minus);
-        flags.y_sign_flag.emplace_back(is_y_minus);
 
         mvd.x = std::fabs(mvd.x);
         mvd.y = std::fabs(mvd.y);
@@ -2672,20 +2667,9 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
         bool is_x_greater_than_zero = abs_x > 0;
         bool is_y_greater_than_zero = abs_y > 0;
 
-        flags.x_greater_0_flag.emplace_back(is_x_greater_than_zero);
-        flags.y_greater_0_flag.emplace_back(is_y_greater_than_zero);
-
-        flag_code_sum.countGreater0Code();
-        flag_code_sum.countGreater0Code();
-        flag_code_sum.setXGreater0Flag(is_x_greater_than_zero);
-        flag_code_sum.setYGreater0Flag(is_y_greater_than_zero);
-
         // 動きベクトル差分の絶対値が1より大きいのか？
         bool is_x_greater_than_one = abs_x > 1;
         bool is_y_greater_than_one = abs_y > 1;
-
-        flags.x_greater_1_flag.emplace_back(is_x_greater_than_one);
-        flags.y_greater_1_flag.emplace_back(is_y_greater_than_one);
 
         //greater_than_zeroのフラグ
         int mvd_code_length = 2;
@@ -2699,12 +2683,7 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
                 int mvd_x_minus_2 = mvd.x - 2.0;
                 mvd.x -= 2.0;
                 mvd_code_length += getExponentialGolombCodeLength((int) mvd_x_minus_2, 0);
-                flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_x_minus_2, 0));
             }
-
-            flag_code_sum.countGreater1Code();
-            flag_code_sum.setXGreater1Flag(is_x_greater_than_one);
-            flag_code_sum.countSignFlagCode();
         }
 
         if (is_y_greater_than_zero) {
@@ -2717,12 +2696,7 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
                 int mvd_y_minus_2 = mvd.y - 2.0;
                 mvd.y -= 2.0;
                 mvd_code_length += getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
-                flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_y_minus_2, 0));
             }
-
-            flag_code_sum.countGreater1Code();
-            flag_code_sum.setYGreater1Flag(is_y_greater_than_one);
-            flag_code_sum.countSignFlagCode();
         }
 
         // 参照箇所符号化
@@ -2734,11 +2708,11 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
 
         std::vector<cv::Point2f> mvds{mvd};
         // 結果に入れる
-        results.emplace_back(rd, code_length, mvds, i, vector.second, flag_code_sum, flags);
+        results.emplace_back(rd, code_length, mvds, i, vector.second);
     }
 
     // RDしたスコアが小さい順にソート
-    std::sort(results.begin(), results.end(), [](const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags >& a, const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags>& b){
+    std::sort(results.begin(), results.end(), [](const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD >& a, const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD >& b){
         return std::get<0>(a) < std::get<0>(b);
     });
     double cost = std::get<0>(results[0]);
