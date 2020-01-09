@@ -93,7 +93,7 @@ int main(int argc, char *argv[]){
         config_name = std::string(argv[1]);
         split_to_use = atoi(argv[2]);
     }
-
+    split_to_use = 1;
     if(split_to_use == 0) {
         std::cout << "Use Triangle." << std::endl;
         run(config_name);
