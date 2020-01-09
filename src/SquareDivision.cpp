@@ -2221,13 +2221,14 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 
             // 参照箇所符号化
             int reference_index_code_length = getUnaryCodeLength(i);
+            int code_length = mvd_code_length + reference_index_code_length + flags_code + diff_HEVC_BM_flag;
 
             // 各種フラグ分を(3*2)bit足してます
-            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code + diff_HEVC_BM_flag);
+            double rd = residual + lambda * (code_length);
 
             std::vector<cv::Point2f> mvds{mvd};
             // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length + flags_code + diff_HEVC_BM_flag, mvds, i, vector.second, flag_code_sum, flags);
+            results.emplace_back(rd, code_length, mvds, i, vector.second, flag_code_sum, flags);
         }
     }else{
         for (int i = 0; i < warping_vectors.size(); i++) {
@@ -2328,12 +2329,13 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 
             // 参照箇所符号化
             int reference_index_code_length = getUnaryCodeLength(i);
+            int code_length = mvd_code_length + reference_index_code_length + flags_code + merge2_flags_code;
 
             // 各種フラグ分を(3*2)bit足してます
-            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code + merge2_flags_code);
+            double rd = residual + lambda * (code_length);
 
             // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length + flags_code + merge2_flags_code, mvds, i, warping_vectors[i][0].second, flag_code_sum, flags);
+            results.emplace_back(rd, code_length, mvds, i, warping_vectors[i][0].second, flag_code_sum, flags);
         }
     }
 
@@ -2407,8 +2409,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             double ret_residual;
             if(PRED_MODE == BM) ret_residual = getSquareResidual_Pred(target_image, coordinate, mvs, pixels_in_square, ref_hevc, rect);
             else ret_residual = getSquareResidual_Mode(target_image, coordinate, mvs, pixels_in_square, ref_hevc, rect);
-            double rd = (ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code)) * MERGE_ALPHA;
-            results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code, mvs, merge_count, merge_vector.second, FlagsCodeSum(0, 0, 0, 0), Flags());
+            int code_length = getUnaryCodeLength(merge_count) + flags_code;
+            double rd = (ret_residual + lambda * code_length) * MERGE_ALPHA;
+            results.emplace_back(rd, code_length, mvs, merge_count, merge_vector.second, FlagsCodeSum(0, 0, 0, 0), Flags());
             merge_count++;
         }
     }else {
@@ -2420,8 +2423,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             mvs.emplace_back(warping_vectors[i][2].first);
 
             double ret_residual = getSquareResidual_Mode(target_image, coordinate, mvs, pixels_in_square, ref_hevc, rect);
-            double rd = (ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code + merge2_flags_code)) * MERGE_ALPHA;
-            results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code + merge2_flags_code, mvs, merge_count, warping_vectors[i][0].second, FlagsCodeSum(0, 0, 0, 0), Flags());
+            int code_length = getUnaryCodeLength(merge_count) + flags_code + merge2_flags_code;
+            double rd = (ret_residual + lambda * code_length) * MERGE_ALPHA;
+            results.emplace_back(rd, code_length, mvs, merge_count, warping_vectors[i][0].second, FlagsCodeSum(0, 0, 0, 0), Flags());
             merge_count++;
         }
 #if MREGE_DEBUG_LOG
@@ -2536,14 +2540,15 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 
             // 参照箇所符号化
             int reference_index_code_length = getUnaryCodeLength(i);
+            int code_length = mvd_code_length + reference_index_code_length + flags_code + merge2_flags_code;
 
             // 各種フラグ分を(3*2)bit足してます
             double ret_residual = getSquareResidual_Mode(target_image, coordinate, mvs, pixels_in_square, ref_hevc, rect);
-            double rd = ret_residual + lambda * (mvd_code_length + reference_index_code_length + flags_code + merge2_flags_code);
+            double rd = ret_residual + lambda * code_length;
 
             std::vector<cv::Point2f> mvds{mvs[0], mvs[1], mvd};
             // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length + flags_code + merge2_flags_code, mvds, i, warping_vectors[i][0].second, flag_code_sum, flags);
+            results.emplace_back(rd, code_length, mvds, i, warping_vectors[i][0].second, flag_code_sum, flags);
         }
 #endif
     }
@@ -2723,13 +2728,14 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
 
         // 参照箇所符号化
         int reference_index_code_length = getUnaryCodeLength(i);
+        int code_length = mvd_code_length + reference_index_code_length + flags_code + diff_HEVC_BM_flag;
 
         // 各種フラグ分を(3*2)bit足してます
-        double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code + diff_HEVC_BM_flag);
+        double rd = residual + lambda * code_length;
 
         std::vector<cv::Point2f> mvds{mvd};
         // 結果に入れる
-        results.emplace_back(rd, mvd_code_length + reference_index_code_length + flags_code + diff_HEVC_BM_flag, mvds, i, vector.second, flag_code_sum, flags);
+        results.emplace_back(rd, code_length, mvds, i, vector.second, flag_code_sum, flags);
     }
 
     // RDしたスコアが小さい順にソート
