@@ -2399,7 +2399,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 #if MREGE_DEBUG_LOG
             std::cout << "target_index : " << square_idx << ", org_mv : " << mv[0] << ", mrege_mv : " << current_mv << std::endl;
 #endif
-            std::vector<cv::Point2f> mvds;
             std::vector<cv::Point2f> mvs;
 
             mvs.emplace_back(current_mv);
