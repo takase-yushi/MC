@@ -865,6 +865,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
 
     if(steps <= 0){
         isCodedSquare[square_index] = true;
+        ctu->node1 = ctu->node2 = ctu->node3 = ctu->node4 = nullptr;
         return false;
     }
 
