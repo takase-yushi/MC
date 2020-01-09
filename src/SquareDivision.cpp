@@ -2215,8 +2215,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 //            std::cout << "mvd_code_length" << mvd_code_length << std::endl;
 
             // 参照箇所符号化
-            int reference_index = i; //std::get<1>(vector);
-            int reference_index_code_length = getUnaryCodeLength(reference_index);
+            int reference_index_code_length = getUnaryCodeLength(i);
 
             // 各種フラグ分を(3*2)bit足してます
             double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code);
@@ -2323,8 +2322,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             }
 
             // 参照箇所符号化
-            int reference_index = i; //std::get<1>(vector);
-            int reference_index_code_length = getUnaryCodeLength(reference_index);
+            int reference_index_code_length = getUnaryCodeLength(i);
 
             // 各種フラグ分を(3*2)bit足してます
             double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code + merge2_flags_code);
@@ -2720,8 +2718,7 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
         }
 
         // 参照箇所符号化
-        int reference_index = i; //std::get<1>(vector);
-        int reference_index_code_length = getUnaryCodeLength(reference_index);
+        int reference_index_code_length = getUnaryCodeLength(i);
 
         // 各種フラグ分を(3*2)bit足してます
         double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code + diff_HEVC_BM_flag);
