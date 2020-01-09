@@ -94,7 +94,7 @@ enum {
 /**
  * ガウス・ニュートン関連
  */
-#define PRED_MODE BM
+#define PRED_MODE NEWTON
 #define GAUSS_NEWTON_TRANSLATION_ONLY false
 #define GAUSS_NEWTON_INIT_VECTOR false
 #define GAUSS_NEWTON_HEVC_IMAGE true
@@ -108,14 +108,15 @@ enum {
 #define TRANSLATION_COST_RATIO 1.0
 #define WARPING_COST_RATIO 1.0
 #define WARPING_LIMIT 2
-#define SPLIT_TO_USE 0    //0 : Triangle,    1: Square
+#define SPLIT_TO_USE 1    //0 : Triangle,    1: Square
+#define LESS_FLAGS 0
 
 /**
  * 各種モードのON/OFF
  */
 #define MERGE_MODE true
 #define INTRA_MODE false
-#define MERGE2_ENABLE false
+#define MERGE2_ENABLE true
 #define COLLOCATED_ENABLE false
 #define INTRA_LIMIT_MODE false // イントラが選択されたらそれ以降は割らないモード
 #define RD_BLOCK_MATCHING true

@@ -2083,6 +2083,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
         flags_code--;
     }
 
+    int diff_HEVC_BM_flag = 0;
+
+    if(PRED_MODE == BM) diff_HEVC_BM_flag = LESS_FLAGS;
+
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors;
     std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> warping_vectors;   // ベクトルとモードを表すフラグのペア
     // 空間予測と時間予測の候補を取り出す
@@ -2219,11 +2223,11 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             int reference_index_code_length = getUnaryCodeLength(i);
 
             // 各種フラグ分を(3*2)bit足してます
-            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code);
+            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code + diff_HEVC_BM_flag);
 
             std::vector<cv::Point2f> mvds{mvd};
             // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length + flags_code, mvds, i, vector.second, flag_code_sum, flags);
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length + flags_code + diff_HEVC_BM_flag, mvds, i, vector.second, flag_code_sum, flags);
         }
     }else{
         for (int i = 0; i < warping_vectors.size(); i++) {
@@ -2624,7 +2628,7 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
 
     int diff_HEVC_BM_flag = 0;
 
-//    if(PRED_MODE == BM) diff_HEVC_BM_flag++;
+    if(PRED_MODE == BM) diff_HEVC_BM_flag = LESS_FLAGS;
 
     if(!isMvExists(vectors, collocated_mv)) {
         vectors.emplace_back(collocated_mv, Collocated);
