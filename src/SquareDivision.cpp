@@ -647,11 +647,11 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
         if(PRED_MODE == NEWTON) {
             std::tie(cost_translation, code_length_translation, mvd_translation, selected_index_translation,method_translation, flag_code_sum_translation, flag_result_translation) = getMVD(
                     {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
-                    square_index, square_number, cmt->mv1, ctu, true, dummy, steps);
+                    square_index, square_number, cmt->mv1, true, dummy, steps);
 #if !GAUSS_NEWTON_TRANSLATION_ONLY
             std::tie(cost_warping, code_length_warping, mvd_warping, selected_index_warping, method_warping, flag_code_sum_warping, flag_result_warping) = getMVD(
                     gauss_result_warping, error_warping,
-                    square_index, square_number, cmt->mv1, ctu, false, dummy, steps);
+                    square_index, square_number, cmt->mv1, false, dummy, steps);
 #endif
             if (cost_translation < cost_warping || (steps < warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY) {
                 cost_before_subdiv = cost_translation;
@@ -689,7 +689,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
         } else if(PRED_MODE == BM) {
             std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag, flag_code_sum, flag_result) = getMVD(
                     {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
-                    square_index, square_number, cmt->mv1, ctu, true, dummy, steps);
+                    square_index, square_number, cmt->mv1, true, dummy, steps);
             square_gauss_results[square_index].translation_flag = true;
             square_gauss_results[square_index].method = method_flag;
             translation_flag = true;
@@ -721,11 +721,11 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
 
             std::tie(cost_translation, code_length_translation, mvd_translation, selected_index_translation, method_translation, flag_code_sum_translation, flag_result_translation) = getMVD(
                     {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
-                    square_index, square_number, cmt->mv1, ctu, true, dummy, steps);
+                    square_index, square_number, cmt->mv1, true, dummy, steps);
 #if !GAUSS_NEWTON_TRANSLATION_ONLY
             std::tie(cost_warping, code_length_warping, mvd_warping, selected_index_warping, method_warping, flag_code_sum_warping, flag_result_warping)= getMVD(
                     gauss_result_warping, error_warping,
-                    square_index, square_number, cmt->mv1, ctu, false, dummy, steps);
+                    square_index, square_number, cmt->mv1, false, dummy, steps);
 #endif
 //            std::cout << "cost_translation : " << cost_translation << ", cost_warping : " << cost_warping;
             if(cost_translation < cost_warping || (steps < warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
@@ -758,7 +758,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
             std::vector<cv::Point2f> tmp_bm_mv;
             std::vector<double> tmp_bm_errors;
 #if RD_BLOCK_MATCHING
-            std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(square, target_image, expansion_ref, square_index, ctu, steps);
+            std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(square, target_image, expansion_ref, square_index, steps);
 #else
             std::tie(tmp_bm_mv, tmp_bm_errors) = ::blockMatching(square, target_image, expansion_ref);
 #endif
@@ -776,7 +776,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
             translation_flag = true;
             std::tie(cost_before_subdiv, code_length, mvd, selected_index, method_flag, flag_code_sum, flag_result) = getMVD(
                     {gauss_result_translation, gauss_result_translation, gauss_result_translation}, error_translation,
-                    square_index, square_number, cmt->mv1, ctu, true, dummy, steps);
+                    square_index, square_number, cmt->mv1, true, dummy, steps);
             square_gauss_results[square_index].method = method_flag;
         }
     }
@@ -952,12 +952,12 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
 
             std::tie(cost_translation, code_length_translation, mvd_translation, std::ignore, method_translation, std::ignore, std::ignore) = getMVD(
                     {mv_translation, mv_translation, mv_translation}, error_translation,
-                    square_indexes[j], j, cmts[j]->mv1, ctus[j], true, dummy, steps - 2);
+                    square_indexes[j], j, cmts[j]->mv1, true, dummy, steps - 2);
 #if !GAUSS_NEWTON_TRANSLATION_ONLY
 
             std::tie(cost_warping, code_length_warping, mvd_warping, std::ignore, method_warping, std::ignore, std::ignore) = getMVD(
                     mv_warping, error_warping,
-                    square_indexes[j], j, cmts[j]->mv1, ctus[j], false, dummy, steps - 2);
+                    square_indexes[j], j, cmts[j]->mv1, false, dummy, steps - 2);
 #endif
 //            std::cout << "cost_translation_tmp : " << cost_translation_tmp << ", cost_warping_tmp : " << cost_warping_tmp << std::endl;
 
@@ -978,7 +978,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
 
         }else if(PRED_MODE == BM){
 #if RD_BLOCK_MATCHING
-            std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_squares[j], target_image, expansion_ref, square_indexes[j], ctus[j], steps - 2);
+            std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_squares[j], target_image, expansion_ref, square_indexes[j], steps - 2);
 #else
             std::tie(tmp_bm_mv, tmp_bm_errors) = ::blockMatching(subdiv_target_squares[j], target_image, expansion_ref);
 #endif
@@ -996,7 +996,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
 
             std::tie(cost_translation, code_length_translation, mvd, std::ignore, method_translation, std::ignore, std::ignore) = getMVD(
                     {mv_translation, mv_translation, mv_translation}, error_translation,
-                    square_indexes[j], j, cmts[j]->mv1, ctus[j], true, dummy, steps - 2);
+                    square_indexes[j], j, cmts[j]->mv1, true, dummy, steps - 2);
             cost_after_subdivs[j] = cost_translation;
             method_flags[j] = method_translation;
         }
@@ -2053,11 +2053,10 @@ bool SquareDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CODE
  * @param[in] mv 動きベクトル
  * @param[in] square_idx 四角パッチの番号
  * @param[in] residual そのパッチの残差
- * @param[in] ctu CodingTreeUnit 符号木
  * @param[in] steps
  * @return RDコスト，符号量，差分ベクトル(マージ先ベクトル)、参照ブロックインデックス、methoフラグ、flag_code_sum、result_flagsのtuple
  */
-std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> SquareDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, int square_number, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, int steps){
+std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> SquareDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, int square_number, cv::Point2f &collocated_mv, bool translation_flag, std::vector<cv::Point2f> &pixels, int steps){
     int flags_code = 0;
     //この1bitはsplit_cu_flag
     flags_code++;
@@ -2603,13 +2602,12 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
  * @param[in] residual そのブロックの残差(SAD)
  * @param[in] square_idx 四角パッチの番号
  * @param[in] collocated_mv 時間予測候補の動きベクトル
- * @param[in] ctu CodingTreeUnit 符号木
  * @param[in] pixel そのブロックの画素の集合
  * @param[in] vectors そのブロックの参照ブロックの動きベクトル
  * @param[in] steps
  * @return RDコスト
  */
-double  SquareDivision::getRDCost(cv::Point2f mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, std::vector<cv::Point2f> &pixels, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors, int steps){
+double  SquareDivision::getRDCost(cv::Point2f mv, double residual, int square_idx, cv::Point2f &collocated_mv, std::vector<cv::Point2f> &pixels, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors, int steps){
     int flags_code = 0;
     //この1bitはsplit_cu_flag
     flags_code++;
@@ -3158,7 +3156,7 @@ SquareDivision::GaussResult::GaussResult(const std::vector<cv::Point2f> &mvWarpi
 
 SquareDivision::GaussResult::GaussResult() {}
 
-std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockMatching(Point4Vec square, const cv::Mat& target_image, cv::Mat expansion_ref_image, int square_index, CodingTreeUnit *ctu, int steps) {
+std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockMatching(Point4Vec square, const cv::Mat& target_image, cv::Mat expansion_ref_image, int square_index, int steps) {
     double sx, sy, lx, ly;
     cv::Point2f sp1, sp4;
 
@@ -3198,7 +3196,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
 //                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
-                rd = getRDCost(mv, sad, square_index, cmt, ctu, pixels, vectors, steps);
+                rd = getRDCost(mv, sad, square_index, cmt, pixels, vectors, steps);
                 if(rd_min > rd){
                     sad_min = sad;
                     rd_min = rd;
@@ -3229,7 +3227,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
 //                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
-                rd = getRDCost(mv, sad, square_index, cmt, ctu, pixels, vectors, steps);
+                rd = getRDCost(mv, sad, square_index, cmt, pixels, vectors, steps);
                 if(rd_min > rd){
                     sad_min = sad;
                     rd_min = rd;
@@ -3258,7 +3256,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
 //                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
-                rd = getRDCost(mv, sad, square_index, cmt, ctu, pixels, vectors, steps);
+                rd = getRDCost(mv, sad, square_index, cmt, pixels, vectors, steps);
                 if(rd_min > rd){
                     sad_min = sad;
                     rd_min = rd;

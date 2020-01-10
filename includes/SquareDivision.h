@@ -113,13 +113,13 @@ public:
     int divide_steps; // 分割回数
 
     cv::Mat getMvImage(std::vector<CodingTreeUnit*> ctus);
-    std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point4Vec square, const cv::Mat& target_image, cv::Mat expansion_ref_image, int square_index, CodingTreeUnit *ctu, int steps);
+    std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point4Vec square, const cv::Mat& target_image, cv::Mat expansion_ref_image, int square_index, int steps);
 
     cv::Mat getPredictedDiagonalImageFromCtu(std::vector<CodingTreeUnit*> ctus);
     cv::Mat getPredictedColorImageFromCtu(std::vector<CodingTreeUnit*> ctus, double original_psnr, int select);
     cv::Mat getBlockInfoFromCtu(std::vector<CodingTreeUnit*> ctus, double original_psnr);
-    std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, int square_number, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, int steps);
-    double  getRDCost(cv::Point2f mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, std::vector<cv::Point2f> &pixels, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors, int steps);
+    std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> getMVD(std::vector<cv::Point2f> mv, double residual, int square_idx, int square_number, cv::Point2f &collocated_mv, bool translation_flag, std::vector<cv::Point2f> &pixels, int steps);
+    double  getRDCost(cv::Point2f mv, double residual, int square_idx, cv::Point2f &collocated_mv, std::vector<cv::Point2f> &pixels, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors, int steps);
 
     virtual ~SquareDivision();
 
