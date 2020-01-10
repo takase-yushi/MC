@@ -823,44 +823,36 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
     ctu->x_sign_flag = flag_result.x_sign_flag;
     ctu->y_sign_flag = flag_result.y_sign_flag;
     ctu->flags_code_sum = flag_code_sum;
-    if(method_flag == MV_CODE_METHOD::MERGE2) {
+    if(method_flag == MV_CODE_METHOD::SPATIAL || method_flag == MV_CODE_METHOD::Collocated) {
         (ctu->mvds_x).clear();
         (ctu->mvds_y).clear();
         (ctu->original_mvds_x).clear();
         (ctu->original_mvds_y).clear();
+        (ctu->mvds).clear();
 
-        (ctu->mvds_x).emplace_back(mvd[2].x);
-        (ctu->mvds_y).emplace_back(mvd[2].y);
-
-    } else if(method_flag == MV_CODE_METHOD::SPATIAL || method_flag == MV_CODE_METHOD::Collocated) {
-        (ctu->mvds_x).clear();
-        (ctu->mvds_y).clear();
-        (ctu->original_mvds_x).clear();
-        (ctu->original_mvds_y).clear();
-
-        if (translation_flag) {
+        if(ctu->translation_flag) {
+            (ctu->mvds).emplace_back(mvd[0]);
+            (ctu->mvds).emplace_back(mvd[0]);
+            (ctu->mvds).emplace_back(mvd[0]);
             (ctu->mvds_x).emplace_back(mvd[0].x);
             (ctu->mvds_y).emplace_back(mvd[0].y);
-        } else {
+        }else{
             for (int i = 0; i < 3; i++) {
+                (ctu->mvds).emplace_back(mvd[i]);
                 (ctu->mvds_x).emplace_back(mvd[i].x);
                 (ctu->mvds_y).emplace_back(mvd[i].y);
             }
         }
-    }
-
-    if(method_flag == MV_CODE_METHOD::SPATIAL || method_flag == MV_CODE_METHOD::Collocated) {
-        ctu->mvds.clear();
-        if(ctu->translation_flag) {
-            ctu->mvds.emplace_back(mvd[0]);
-            ctu->mvds.emplace_back(mvd[0]);
-            ctu->mvds.emplace_back(mvd[0]);
-        }else{
-            ctu->mvds = mvd;
-        }
     } else if(method_flag == MV_CODE_METHOD::MERGE2) {
-        ctu->mvds.clear();
-        ctu->mvds.emplace_back((mvd[2]));
+        (ctu->mvds_x).clear();
+        (ctu->mvds_y).clear();
+        (ctu->original_mvds_x).clear();
+        (ctu->original_mvds_y).clear();
+        (ctu->mvds).clear();
+
+        (ctu->mvds).emplace_back((mvd[2]));
+        (ctu->mvds_x).emplace_back(mvd[2].x);
+        (ctu->mvds_y).emplace_back(mvd[2].y);
     }
 
     if(steps <= 0){
