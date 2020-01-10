@@ -2609,7 +2609,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
  * @param[in] steps
  * @return RDコスト
  */
-double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, std::vector<cv::Point2f> &pixels, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors, int steps){
+double  SquareDivision::getRDCost(cv::Point2f mv, double residual, int square_idx, cv::Point2f &collocated_mv, CodingTreeUnit* ctu, std::vector<cv::Point2f> &pixels, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors, int steps){
     int flags_code = 0;
     //この1bitはsplit_cu_flag
     flags_code++;
@@ -2641,7 +2641,7 @@ double  SquareDivision::getRDCost(std::vector<cv::Point2f> mv, double residual, 
         std::pair<cv::Point2f, MV_CODE_METHOD> vector = vectors[i];
         cv::Point2f current_mv = vector.first;
 
-        cv::Point2f mvd = current_mv - mv[0];
+        cv::Point2f mvd = current_mv - mv;
         mvd = getQuantizedMv(mvd, 4);
 
         // 正負の判定(使ってません！！！)
@@ -3198,7 +3198,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
 //                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
-                rd = getRDCost({mv, mv, mv}, sad, square_index, cmt, ctu, pixels, vectors, steps);
+                rd = getRDCost(mv, sad, square_index, cmt, ctu, pixels, vectors, steps);
                 if(rd_min > rd){
                     sad_min = sad;
                     rd_min = rd;
@@ -3229,7 +3229,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
 //                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
-                rd = getRDCost({mv, mv, mv}, sad, square_index, cmt, ctu, pixels, vectors, steps);
+                rd = getRDCost(mv, sad, square_index, cmt, ctu, pixels, vectors, steps);
                 if(rd_min > rd){
                     sad_min = sad;
                     rd_min = rd;
@@ -3258,7 +3258,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
                 cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
 //                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
-                rd = getRDCost({mv, mv, mv}, sad, square_index, cmt, ctu, pixels, vectors, steps);
+                rd = getRDCost(mv, sad, square_index, cmt, ctu, pixels, vectors, steps);
                 if(rd_min > rd){
                     sad_min = sad;
                     rd_min = rd;
