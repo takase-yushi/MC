@@ -76,9 +76,8 @@ public:
     struct SplitResult {
     public:
         Point4Vec s1, s2;
-        int s_type; //, t2_type;
 
-        SplitResult(const Point4Vec &s1, const Point4Vec &s2, int type);
+        SplitResult(const Point4Vec &s1, const Point4Vec &s2);
     };
 
     SquareDivision(const cv::Mat &refImage, const cv::Mat &targetImage, const cv::Mat &refGaussImage);

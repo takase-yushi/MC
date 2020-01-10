@@ -863,8 +863,8 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
 
     SplitResult split_squares = getSplitSquare(p1, p2, p3, p4, 1);
 
-    SplitResult split_sub_squares1 = getSplitSquare(split_squares.s1.p1, split_squares.s1.p2, split_squares.s1.p3, split_squares.s1.p4, split_squares.s_type);
-    SplitResult split_sub_squares2 = getSplitSquare(split_squares.s2.p1, split_squares.s2.p2, split_squares.s2.p3, split_squares.s2.p4, split_squares.s_type);
+    SplitResult split_sub_squares1 = getSplitSquare(split_squares.s1.p1, split_squares.s1.p2, split_squares.s1.p3, split_squares.s1.p4, 2);
+    SplitResult split_sub_squares2 = getSplitSquare(split_squares.s2.p1, split_squares.s2.p2, split_squares.s2.p3, split_squares.s2.p4, 2);
 
     std::vector<Point4Vec> subdiv_target_squares;
 
@@ -1097,7 +1097,7 @@ SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1
             g.y++;
             h.y++;
 
-            return {Point4Vec(a, b, e, f), Point4Vec(g, h, c, d), 2};
+            return {Point4Vec(a, b, e, f), Point4Vec(g, h, c, d)};
         }
         case 2:
         {
@@ -1112,10 +1112,10 @@ SquareDivision::SplitResult SquareDivision::getSplitSquare(const cv::Point2f& p1
             g.x++;
             h.x++;
 
-            return {Point4Vec(a, e, c, f), Point4Vec(g, b, h, d), 1};
+            return {Point4Vec(a, e, c, f), Point4Vec(g, b, h, d)};
         }
         default:
-            return {Point4Vec(p1, p2, p3, p4), Point4Vec(p1, p2, p3, p4), 1};
+            return {Point4Vec(p1, p2, p3, p4), Point4Vec(p1, p2, p3, p4)};
     }
 
 }
@@ -3150,7 +3150,7 @@ void SquareDivision::drawMvImage(cv::Mat &out, CodingTreeUnit *ctu){
 
 SquareDivision::SquareDivision() {}
 
-SquareDivision::SplitResult::SplitResult(const Point4Vec &s1, const Point4Vec &s2, int type) : s1(s1), s2(s2), s_type(type) {}
+SquareDivision::SplitResult::SplitResult(const Point4Vec &s1, const Point4Vec &s2) : s1(s1), s2(s2) {}
 
 SquareDivision::GaussResult::GaussResult(const std::vector<cv::Point2f> &mvWarping, const cv::Point2f &mvTranslation,
                                          double residual_warping, double residual_translation, int squareSize, bool translationFlag, double residualBm) : mv_warping(
