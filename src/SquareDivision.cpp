@@ -2634,9 +2634,8 @@ double  SquareDivision::getRDCost(cv::Point2f mv, double residual, int square_id
     }
 
     double lambda = getLambdaPred(qp, 1.0);
+    double rd_min = 1e9;
 
-    //                      コスト, 差分ベクトル, 番号, タイプ
-    std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD> > results;
     for (int i = 0; i < vectors.size(); i++) {
         std::pair<cv::Point2f, MV_CODE_METHOD> vector = vectors[i];
         cv::Point2f current_mv = vector.first;
@@ -2700,15 +2699,10 @@ double  SquareDivision::getRDCost(cv::Point2f mv, double residual, int square_id
 
         std::vector<cv::Point2f> mvds{mvd};
         // 結果に入れる
-        results.emplace_back(rd, code_length, mvds, i, vector.second);
+        if(rd < rd_min) rd_min = rd;
     }
 
-    // RDしたスコアが小さい順にソート
-    std::sort(results.begin(), results.end(), [](const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD >& a, const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD >& b){
-        return std::get<0>(a) < std::get<0>(b);
-    });
-    double cost = std::get<0>(results[0]);
-    return cost;
+    return rd_min;
 }
 
 
