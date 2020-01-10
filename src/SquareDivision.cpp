@@ -758,7 +758,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
             std::vector<cv::Point2f> tmp_bm_mv;
             std::vector<double> tmp_bm_errors;
 #if RD_BLOCK_MATCHING
-            std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(square, target_image, expansion_ref, square_index, steps);
+            std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(square, target_image, expansion_ref, square_index, cmt->mv1, steps);
 #else
             std::tie(tmp_bm_mv, tmp_bm_errors) = ::blockMatching(square, target_image, expansion_ref);
 #endif
@@ -978,7 +978,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
 
         }else if(PRED_MODE == BM){
 #if RD_BLOCK_MATCHING
-            std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_squares[j], target_image, expansion_ref, square_indexes[j], steps - 2);
+            std::tie(tmp_bm_mv, tmp_bm_errors) = blockMatching(subdiv_target_squares[j], target_image, expansion_ref, square_indexes[j], cmts[j]->mv1, steps - 2);
 #else
             std::tie(tmp_bm_mv, tmp_bm_errors) = ::blockMatching(subdiv_target_squares[j], target_image, expansion_ref);
 #endif
@@ -3156,7 +3156,7 @@ SquareDivision::GaussResult::GaussResult(const std::vector<cv::Point2f> &mvWarpi
 
 SquareDivision::GaussResult::GaussResult() {}
 
-std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockMatching(Point4Vec square, const cv::Mat& target_image, cv::Mat expansion_ref_image, int square_index, int steps) {
+std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockMatching(Point4Vec square, const cv::Mat& target_image, cv::Mat expansion_ref_image, int square_index, cv::Point2f &collocated_mv, int steps) {
     double sx, sy, lx, ly;
     cv::Point2f sp1, sp4;
 
@@ -3193,10 +3193,9 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
                 for(const auto& pixel : pixels) {
                     sad += fabs(R(expansion_ref_image, i + (int)(4 * pixel.x) + spread_quarter, j + (int)(4 * pixel.y) + spread_quarter) - R(target_image, (int)(pixel.x), (int)(pixel.y)));
                 }
-                cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
 //                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
-                rd = getRDCost(mv, sad, square_index, cmt, pixels, vectors, steps);
+                rd = getRDCost(mv, sad, square_index, collocated_mv, pixels, vectors, steps);
                 if(rd_min > rd){
                     sad_min = sad;
                     rd_min = rd;
@@ -3224,10 +3223,9 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
                 for(const auto& pixel : pixels) {
                     sad += fabs(R(expansion_ref_image, i + (int)(4 * pixel.x) + spread_quarter, j + (int)(4 * pixel.y) + spread_quarter) - R(target_image, (int)(pixel.x), (int)(pixel.y)));
                 }
-                cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
 //                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
-                rd = getRDCost(mv, sad, square_index, cmt, pixels, vectors, steps);
+                rd = getRDCost(mv, sad, square_index, collocated_mv, pixels, vectors, steps);
                 if(rd_min > rd){
                     sad_min = sad;
                     rd_min = rd;
@@ -3253,10 +3251,9 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> SquareDivision::blockM
                 for(const auto& pixel : pixels) {
                     sad += fabs(R(expansion_ref_image, i + (int)(4 * pixel.x) + spread_quarter, j + (int)(4 * pixel.y) + spread_quarter) - R(target_image, (int)(pixel.x), (int)(pixel.y)));
                 }
-                cv::Point2f cmt = cv::Point2f(0.0, 0.0);
                 cv::Point2f mv  = cv::Point2f((double)i/4.0, (double)j/4.0);
 //                std::tie(rd, std::ignore,std::ignore,std::ignore,std::ignore) = getMVD({mv, mv, mv}, e, square_index, cmt, ctu, true, pixels, spatial_squares);
-                rd = getRDCost(mv, sad, square_index, cmt, pixels, vectors, steps);
+                rd = getRDCost(mv, sad, square_index, collocated_mv, pixels, vectors, steps);
                 if(rd_min > rd){
                     sad_min = sad;
                     rd_min = rd;
