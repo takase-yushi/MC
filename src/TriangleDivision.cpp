@@ -1177,15 +1177,27 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
     SplitResult split_sub_triangles2 = getSplitTriangle(split_triangles.t2.p1, split_triangles.t2.p2, split_triangles.t2.p3, split_triangles.t2_type);
 
     std::vector<Point3Vec> subdiv_ref_triangles, subdiv_target_triangles;
-    subdiv_ref_triangles.emplace_back(split_sub_triangles1.t1);
-    subdiv_ref_triangles.emplace_back(split_sub_triangles1.t2);
-    subdiv_ref_triangles.emplace_back(split_sub_triangles2.t1);
-    subdiv_ref_triangles.emplace_back(split_sub_triangles2.t2);
+    if(type == DIVIDE::TYPE2) {
+        subdiv_ref_triangles.emplace_back(split_sub_triangles1.t1);
+        subdiv_ref_triangles.emplace_back(split_sub_triangles2.t1);
+        subdiv_ref_triangles.emplace_back(split_sub_triangles2.t2);
+        subdiv_ref_triangles.emplace_back(split_sub_triangles1.t2);
 
-    subdiv_target_triangles.emplace_back(split_sub_triangles1.t1);
-    subdiv_target_triangles.emplace_back(split_sub_triangles1.t2);
-    subdiv_target_triangles.emplace_back(split_sub_triangles2.t1);
-    subdiv_target_triangles.emplace_back(split_sub_triangles2.t2);
+        subdiv_target_triangles.emplace_back(split_sub_triangles1.t1);
+        subdiv_target_triangles.emplace_back(split_sub_triangles2.t1);
+        subdiv_target_triangles.emplace_back(split_sub_triangles2.t2);
+        subdiv_target_triangles.emplace_back(split_sub_triangles1.t2);
+    }else{
+        subdiv_ref_triangles.emplace_back(split_sub_triangles1.t1);
+        subdiv_ref_triangles.emplace_back(split_sub_triangles1.t2);
+        subdiv_ref_triangles.emplace_back(split_sub_triangles2.t1);
+        subdiv_ref_triangles.emplace_back(split_sub_triangles2.t2);
+
+        subdiv_target_triangles.emplace_back(split_sub_triangles1.t1);
+        subdiv_target_triangles.emplace_back(split_sub_triangles1.t2);
+        subdiv_target_triangles.emplace_back(split_sub_triangles2.t1);
+        subdiv_target_triangles.emplace_back(split_sub_triangles2.t2);
+    }
 
     std::vector<GaussResult> split_mv_result(subdiv_target_triangles.size());
 
