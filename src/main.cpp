@@ -37,7 +37,7 @@ void tests();
 #define LAMBDA 0.2
 #define INTER_DIV true // 頂点追加するかしないか
 
-#define DIVIDE_MODE LEFT_DIVIDE
+#define DIVIDE_MODE RIGHT_DIVIDE
 
 int qp;
 int qp_offset;
@@ -205,7 +205,7 @@ void run(std::string config_name) {
         cv::Mat gaussRefImage = cv::imread(ref_file_path);
         TriangleDivision triangle_division(ref_image, target_image, gaussRefImage);
 
-        triangle_division.initTriangle(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);
+        triangle_division.initTriangle(block_size_x, block_size_y, division_steps, qp, DIVIDE_MODE);
         std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
 
         std::vector<std::pair<Point3Vec, int> > init_triangles = triangle_division.getTriangles();
