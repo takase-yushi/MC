@@ -632,8 +632,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
     std::vector<cv::Point2f> max_v_warping;
     cv::Point2f max_v_translation;
 
-    std::pair<std::vector<cv::Point2f>,double> v_warping;
-    std::pair<cv::Point2f,double> v_translation;
     std::vector<cv::Point2f> pixels_in_square;
 
     cv::Point2f initial_vector(0.0, 0.0);
@@ -769,7 +767,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
                 }
                 tmp_mv_translation *= magnification;
             }
-            v_translation = {tmp_mv_translation, error_bm_min};
 
 
             double prev_SSE_translation = error_bm_min;
@@ -959,7 +956,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
                     alpha_marquardt *= 0.2;
                     prev_SSE_translation = SSE_translation;
                     prev_mv_translation = tmp_mv_translation;
-                    v_translation = {tmp_mv_translation, SSE_translation};
                 }else{
                     alpha_marquardt *= 10;
                     tmp_mv_translation = prev_mv_translation;
@@ -1005,8 +1001,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
 //                p2_newton_translation[filter_num].erase(p2_newton_translation[filter_num].begin() + p2_newton_translation[filter_num].size() - 1);
 //            }
 
-            tmp_mv_translation = v_translation.first;
-            double Error_translation = v_translation.second;
+            tmp_mv_translation = prev_mv_translation;
+            double Error_translation = prev_SSE_translation;
             double PSNR_translation = 10 * log10((255 * 255) / (Error_translation / (double)pixels_in_square.size()));
 
             if(step == 3) {//一番下の階層で
@@ -1102,7 +1098,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
                 for (int s = 0; s < 3; s++) tmp_mv_warping[s] *= magnification;
 
             }
-            v_warping = {tmp_mv_warping, error_bm_min};
 
             double prev_SSE_warping = error_bm_min;
             std::vector<cv::Point2f> prev_mv_warping{initial_vector, initial_vector, initial_vector};
@@ -1331,7 +1326,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
                     alpha_marquardt *= 0.2;
                     prev_SSE_warping = SSE_warping;
                     prev_mv_warping = tmp_mv_warping;
-                    v_warping = {tmp_mv_warping, SSE_warping};
                 }else{
                     alpha_marquardt *= 10;
                     tmp_mv_warping = prev_mv_warping;
@@ -1354,8 +1348,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
             current_me_log.percentage = (fabs(current_me_log.residual.back() - current_me_log.residual.front()) / current_me_log.residual.front() * 100);
 #endif
 
-            tmp_mv_warping = v_warping.first;//一番良い動きベクトルを採用
-            double Error_warping = v_warping.second;
+            tmp_mv_warping = prev_mv_warping;//一番良い動きベクトルを採用
+            double Error_warping = prev_SSE_warping;
             double PSNR_warping = 10 * log10((255 * 255) / (Error_warping / (double)pixels_in_square.size()));
 
             if(step == 3) {//一番下の階層で
