@@ -2112,9 +2112,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
     }
 
     double lambda = getLambdaPred(qp, (translation_flag ? 1.0 : 1.0));
+    double rd_min = 1e9;
 
     //                      コスト, 差分ベクトル, 番号, タイプ
-    std::vector<std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> > results;
+    std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags> result;
     if(translation_flag) { // 平行移動成分に関してはこれまで通りにやる
         for (int i = 0; i < vectors.size(); i++) {
             std::pair<cv::Point2f, MV_CODE_METHOD> vector = vectors[i];
@@ -2219,7 +2220,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 
             std::vector<cv::Point2f> mvds{mvd};
             // 結果に入れる
-            results.emplace_back(rd, code_length, mvds, i, vector.second, flag_code_sum, flags);
+            if(rd < rd_min) {
+                rd_min = rd;
+                result = {rd, code_length, mvds, i, vector.second, flag_code_sum, flags};
+            }
         }
     }else{
         for (int i = 0; i < warping_vectors.size(); i++) {
@@ -2326,7 +2330,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             double rd = residual + lambda * (code_length);
 
             // 結果に入れる
-            results.emplace_back(rd, code_length, mvds, i, warping_vectors[i][0].second, flag_code_sum, flags);
+            if(rd < rd_min) {
+                rd_min = rd;
+                result = {rd, code_length, mvds, i, warping_vectors[i][0].second, flag_code_sum, flags};
+            }
         }
     }
 
@@ -2401,7 +2408,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             else ret_residual = getSquareResidual_Mode(target_image, coordinate, mvs, pixels_in_square, ref_hevc, rect);
             int code_length = getUnaryCodeLength(merge_count) + flags_code;
             double rd = (ret_residual + lambda * code_length) * MERGE_ALPHA;
-            results.emplace_back(rd, code_length, mvs, merge_count, merge_vector.second, FlagsCodeSum(0, 0, 0, 0), Flags());
+            if(rd < rd_min) {
+                rd_min = rd;
+                result = {rd, code_length, mvs, merge_count, merge_vector.second, FlagsCodeSum(0, 0, 0, 0), Flags()};
+            }
             merge_count++;
         }
     }else {
@@ -2415,7 +2425,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             double ret_residual = getSquareResidual_Mode(target_image, coordinate, mvs, pixels_in_square, ref_hevc, rect);
             int code_length = getUnaryCodeLength(merge_count) + flags_code + merge2_flags_code;
             double rd = (ret_residual + lambda * code_length) * MERGE_ALPHA;
-            results.emplace_back(rd, code_length, mvs, merge_count, warping_vectors[i][0].second, FlagsCodeSum(0, 0, 0, 0), Flags());
+            if(rd < rd_min) {
+                rd_min = rd;
+                result = {rd, code_length, mvs, merge_count, warping_vectors[i][0].second, FlagsCodeSum(0, 0, 0, 0), Flags()};
+            }
             merge_count++;
         }
 #if MREGE_DEBUG_LOG
@@ -2539,26 +2552,17 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 
                 std::vector<cv::Point2f> mvds{mvs[0], mvs[1], mvd};
                 // 結果に入れる
-                results.emplace_back(rd, code_length, mvds, i, warping_vectors[i][0].second, flag_code_sum, flags);
+                if(rd < rd_min) {
+                    rd_min = rd;
+                    result = {rd, code_length, mvds, i, warping_vectors[i][0].second, flag_code_sum, flags};
+                }
             }
 #endif
         }
     }
 #endif
 
-    // RDしたスコアが小さい順にソート
-    std::sort(results.begin(), results.end(), [](const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags >& a, const std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, Flags>& b){
-        return std::get<0>(a) < std::get<0>(b);
-    });
-
     //4分割の判定の為にRDコスト(mode)を計算し直す
-    double cost = std::get<0>(results[0]);
-    int code_length = std::get<1>(results[0]);
-    std::vector<cv::Point2f> mvds = std::get<2>(results[0]);
-    int selected_idx = std::get<3>(results[0]);
-    MV_CODE_METHOD method = std::get<4>(results[0]);
-    FlagsCodeSum flag_code_sum = std::get<5>(results[0]);
-    Flags result_flags = std::get<6>(results[0]);
 
 #if SPLIT_USE_SSE
     double RDCost;
@@ -2593,7 +2597,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 
     return {RDCost, code_length, mvds, selected_idx, method};
 #endif
-    return {cost, code_length, mvds, selected_idx, method, flag_code_sum, result_flags};
+    return result;
 }
 
 
