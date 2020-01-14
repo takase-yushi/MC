@@ -710,8 +710,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
         // Marquardtの係数
         double alpha_marquardt = 0.5;
 
-        v_stack_translation.emplace_back(tmp_mv_translation, error_bm_min);
-
         for(int step = 3 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
             double SSE_translation = 0.0;
 
@@ -1048,8 +1046,6 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> Square_Ga
 
         // Marquardtの係数
         double alpha_marquardt = 0.5;
-
-        v_stack_warping.emplace_back(tmp_mv_warping, error_bm_min);
 
         for(int step = 3 ; step < static_cast<int>(ref_images[filter_num].size()) ; step++){
             double SSE_warping = 0.0;
