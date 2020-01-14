@@ -158,14 +158,10 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
 
     for(int block_y = 0 ; block_y < block_num_y ; block_y++) {
         for(int block_x = 0 ; block_x < block_num_x ; block_x++) {
-            int p1_idx;
-            int p2_idx;
-            int p3_idx;
-            int p4_idx;
             if(divide_flag == LEFT_DIVIDE) {
-                p1_idx = 2 * block_x + (2 * block_y) * ((block_num_x) * 2);
-                p2_idx = p1_idx + 1;
-                p3_idx = p1_idx + ((block_num_x) * 2);
+                int p1_idx = 2 * block_x + (2 * block_y) * ((block_num_x) * 2);
+                int p2_idx = p1_idx + 1;
+                int p3_idx = p1_idx + ((block_num_x) * 2);
 
                 int triangleIndex = insertTriangle(p1_idx, p2_idx, p3_idx, TYPE1);
                 addNeighborVertex(p1_idx, p2_idx, p3_idx);
@@ -179,13 +175,32 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
                 addNeighborVertex(p4_idx, p5_idx, p6_idx);
                 addCoveredTriangle(p4_idx, p5_idx, p6_idx, triangleIndex);
             }else{
-                int triangleIndex = insertTriangle(p1_idx, p2_idx, p4_idx, TYPE1);
-                addNeighborVertex(p1_idx, p2_idx, p4_idx);
-                addCoveredTriangle(p1_idx, p2_idx, p4_idx, triangleIndex);
+                /**
+                 *    p4        p5
+                 * p1 -----------
+                 *    |*        |
+                 *    |  *      |
+                 *    |    *    |
+                 *    |      *  |
+                 *    |        *|
+                 * p2 ----------- p6
+                 *             p3
+                 */
+                int p1_idx = 2 * block_x + (2 * block_y) * ((block_num_x) * 2);
+                int p2_idx = p1_idx + ((block_num_x) * 2);
+                int p3_idx = p2_idx + 1;
 
-                triangleIndex = insertTriangle(p1_idx, p3_idx, p4_idx, TYPE2);
-                addNeighborVertex(p1_idx, p3_idx, p4_idx);
-                addCoveredTriangle(p1_idx, p3_idx, p4_idx, triangleIndex);
+                int p4_idx = p1_idx;
+                int p5_idx = p1_idx + 1;
+                int p6_idx = p2_idx + 1;
+
+                int triangleIndex = insertTriangle(p1_idx, p2_idx, p3_idx, DIVIDE::TYPE4);
+                addNeighborVertex(p1_idx, p2_idx, p3_idx);
+                addCoveredTriangle(p1_idx, p2_idx, p3_idx, triangleIndex);
+
+                triangleIndex = insertTriangle(p4_idx, p5_idx, p6_idx, DIVIDE::TYPE3);
+                addNeighborVertex(p4_idx, p5_idx, p6_idx);
+                addCoveredTriangle(p4_idx, p5_idx, p6_idx, triangleIndex);
             }
         }
     }
