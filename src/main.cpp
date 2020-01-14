@@ -315,8 +315,14 @@ void run(std::string config_name) {
                 bool flag = false;
                 for (int x = 0; x < block_size_x; x++) {
                     // diagonal line
-                    diagonal_line_area_flag[i/2][x][block_size_y - x - 1] = (flag ? i : i + 1);
-                    flag = !flag;
+                    if(DIVIDE_MODE == LEFT_DIVIDE) {
+                        diagonal_line_area_flag[i/2][x][block_size_y - x - 1] = (flag ? i : i + 1);
+                        flag = !flag;
+                    }else{
+                        diagonal_line_area_flag[i/2][x][x] = (flag ? i : i + 1);
+                        flag = !flag;
+                    }
+
                 }
             }
 
