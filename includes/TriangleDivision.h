@@ -110,7 +110,7 @@ public:
 
     TriangleDivision();
 
-    void initTriangle(int block_size_x, int block_size_y, int _divide_steps, int _qp, int divide_flag = LEFT_DIVIDE);
+    void initTriangle(int block_size_x, int block_size_y, int _divide_steps, int _qp, std::vector<std::vector<std::vector<unsigned char *>>> expand_images, int divide_flag = LEFT_DIVIDE);
     std::vector<std::pair<Point3Vec, int> > getTriangles();
     std::vector<Point3Vec> getTriangleCoordinateList();
     std::vector<Triangle> getTriangleIndexList();
