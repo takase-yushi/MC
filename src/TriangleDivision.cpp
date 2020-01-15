@@ -156,9 +156,11 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
 
     covered_triangle.resize(static_cast<unsigned long>((block_num_x * 2) * (block_num_y * 2)));
 
+    extern std::vector<int> divide_flags;
+
     for(int block_y = 0 ; block_y < block_num_y ; block_y++) {
         for(int block_x = 0 ; block_x < block_num_x ; block_x++) {
-            if(divide_flag == LEFT_DIVIDE) {
+            if(divide_flags[block_x + block_y * block_num_x] == LEFT_DIVIDE) {
                 int p1_idx = 2 * block_x + (2 * block_y) * ((block_num_x) * 2);
                 int p2_idx = p1_idx + 1;
                 int p3_idx = p1_idx + ((block_num_x) * 2);

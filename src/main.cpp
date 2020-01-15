@@ -63,6 +63,8 @@ std::vector<MELog> ME_log_warping_1;
 std::vector<int> pells;
 std::vector<double> residuals;
 
+std::vector<int> divide_flags;
+
 void storeNewtonLogs(std::string logDirectoryPath);
 
 int main(int argc, char *argv[]){
@@ -205,6 +207,11 @@ void run(std::string config_name) {
         cv::Mat gaussRefImage = cv::imread(ref_file_path);
         TriangleDivision triangle_division(ref_image, target_image, gaussRefImage);
 
+        // 分割方向のフラグをね
+        for(int i = 0 ; i < (ceil((double)target_image.cols / (block_size_x)) * ceil((double)target_image.cols / (block_size_x))) ; i++){
+            divide_flags.emplace_back((i % 2 == 0 ? LEFT_DIVIDE : RIGHT_DIVIDE));
+        }
+
         triangle_division.initTriangle(block_size_x, block_size_y, division_steps, qp, DIVIDE_MODE);
         std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
 
@@ -315,7 +322,7 @@ void run(std::string config_name) {
                 bool flag = false;
                 for (int x = 0; x < block_size_x; x++) {
                     // diagonal line
-                    if(DIVIDE_MODE == LEFT_DIVIDE) {
+                    if(divide_flags[(i/2)] == LEFT_DIVIDE) {
                         diagonal_line_area_flag[i/2][x][block_size_y - x - 1] = (flag ? i : i + 1);
                         flag = !flag;
                     }else{
