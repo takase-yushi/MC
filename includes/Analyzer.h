@@ -16,7 +16,7 @@ class CodingTreeUnit;
 class Analyzer {
 public:
     void storeMarkdownFile(double psnr, std::string log_path);
-    Analyzer(std::vector<CodingTreeUnit *> ctus, std::string _log_path, const std::string &fileSuffix, cv::Mat targetImage, cv::Mat pImage, std::vector<int> _pells, std::vector<double> _residuals);
+    Analyzer(std::vector<CodingTreeUnit *> ctus, std::string _log_path, const std::string &fileSuffix, cv::Mat targetImage, cv::Mat pImage, std::vector<int> _pells, std::vector<double> _residuals, int blockSizeX, int blockSizeY);
     void storeCsvFileWithStream(std::ofstream &ofs, double psnr, double time);
     void storeMergeMvLog(std::vector<CodingTreeUnit*> ctus, std::string log_path);
     void storeDistributionOfMv();
@@ -87,6 +87,7 @@ private:
 
     cv::Mat target_image, p_image;
 
+    int block_size_x, block_size_y;
 };
 
 

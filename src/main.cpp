@@ -377,7 +377,7 @@ void run(std::string config_name) {
         analyzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
 #endif
 #else
-        Analyzer analyzer(foo, log_directory, log_file_suffix, target_image, p_image, pells, residuals);
+        Analyzer analyzer(foo, log_directory, log_file_suffix, target_image, p_image, pells, residuals, block_size_x, block_size_y);
 #if STORE_MVD_DISTRIBUTION_LOG
         analyzer.storeDistributionOfMv();
         analyzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
