@@ -207,39 +207,6 @@ void run(std::string config_name) {
         cv::Mat gaussRefImage = cv::imread(ref_file_path);
         TriangleDivision triangle_division(ref_image, target_image, gaussRefImage);
 
-        // 分割方向のフラグをね
-        for(int i = 0 ; i < (ceil((double)target_image.cols / (block_size_x)) * ceil((double)target_image.cols / (block_size_x))) ; i++){
-            divide_flags.emplace_back((i % 2 == 0 ? LEFT_DIVIDE : RIGHT_DIVIDE));
-        }
-
-        triangle_division.initTriangle(block_size_x, block_size_y, division_steps, qp, DIVIDE_MODE);
-        std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
-
-        std::vector<std::pair<Point3Vec, int> > init_triangles = triangle_division.getTriangles();
-
-        std::vector<CodingTreeUnit *> foo(init_triangles.size());
-        for (int i = 0; i < init_triangles.size(); i++) {
-            foo[i] = new CodingTreeUnit();
-            foo[i]->split_cu_flag = false;
-            foo[i]->node1 = foo[i]->node2 = foo[i]->node3 = foo[i]->node4 = nullptr;
-            foo[i]->triangle_index = i;
-            foo[i]->mvds.resize(3);
-            foo[i]->x_greater_0_flag.resize(3);
-            foo[i]->x_greater_1_flag.resize(3);
-            foo[i]->y_greater_0_flag.resize(3);
-            foo[i]->y_greater_1_flag.resize(3);
-            foo[i]->x_sign_flag.resize(3);
-            foo[i]->y_sign_flag.resize(3);
-        }
-
-        cv::Mat spatialMvTestImage;
-        cv::Mat new_gauss_output_image = cv::Mat::zeros(gaussRefImage.rows, gaussRefImage.cols, CV_8UC3);
-
-        std::vector<Triangle> tt = triangle_division.getTriangleIndexList();
-        corners = triangle_division.getCorners();
-
-        std::vector<cv::Point2f> tmp_ref_corners(corners.size()), add_corners;
-
         cv::Mat r_ref = cv::Mat::zeros(target_image.rows, target_image.cols, CV_8UC1);
 
         std::vector<std::vector<cv::Mat>> ref_images, target_images;
@@ -286,6 +253,34 @@ void run(std::string config_name) {
             ref_images_with_qp.erase(previous_qp);
 
         }
+
+        triangle_division.initTriangle(block_size_x, block_size_y, division_steps, qp, expand_images, DIVIDE_MODE);
+        std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
+
+        std::vector<std::pair<Point3Vec, int> > init_triangles = triangle_division.getTriangles();
+
+        std::vector<CodingTreeUnit *> foo(init_triangles.size());
+        for (int i = 0; i < init_triangles.size(); i++) {
+            foo[i] = new CodingTreeUnit();
+            foo[i]->split_cu_flag = false;
+            foo[i]->node1 = foo[i]->node2 = foo[i]->node3 = foo[i]->node4 = nullptr;
+            foo[i]->triangle_index = i;
+            foo[i]->mvds.resize(3);
+            foo[i]->x_greater_0_flag.resize(3);
+            foo[i]->x_greater_1_flag.resize(3);
+            foo[i]->y_greater_0_flag.resize(3);
+            foo[i]->y_greater_1_flag.resize(3);
+            foo[i]->x_sign_flag.resize(3);
+            foo[i]->y_sign_flag.resize(3);
+        }
+
+        cv::Mat spatialMvTestImage;
+        cv::Mat new_gauss_output_image = cv::Mat::zeros(gaussRefImage.rows, gaussRefImage.cols, CV_8UC3);
+
+        std::vector<Triangle> tt = triangle_division.getTriangleIndexList();
+        corners = triangle_division.getCorners();
+
+        std::vector<cv::Point2f> tmp_ref_corners(corners.size()), add_corners;
 
         triangle_division.constructPreviousCodingTree(foo, 0);
 
