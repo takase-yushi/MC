@@ -48,7 +48,7 @@ void test2(){
     TriangleDivision triangle_division(ref_image, target_image, gauss_ref_image);
 
     // initする
-    triangle_division.initTriangle(128, 128, 5, LEFT_DIVIDE);
+//    triangle_division.initTriangle(128, 128, 5, LEFT_DIVIDE);
     std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
 
     std::vector<std::pair<Point3Vec, int> > init_triangles = triangle_division.getTriangles();
@@ -91,7 +91,7 @@ void test4(){
     TriangleDivision triangle_division(ref_image, target_image, gauss_ref_image);
 
     // initする
-    triangle_division.initTriangle(128, 128, 5, LEFT_DIVIDE);
+//    triangle_division.initTriangle(128, 128, 5, LEFT_DIVIDE);
     std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
 
     std::vector<std::pair<Point3Vec, int> > init_triangles = triangle_division.getTriangles();
@@ -117,7 +117,7 @@ void test5(){
 
     int divide_steps = 8;
     // initする
-    triangle_division.initTriangle(128, 128, divide_steps, LEFT_DIVIDE);
+//    triangle_division.initTriangle(128, 128, divide_steps, LEFT_DIVIDE);
     std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
 
     std::vector<std::pair<Point3Vec, int>> init_triangles = triangle_division.getTriangles();
