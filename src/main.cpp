@@ -678,7 +678,7 @@ void run_square(std::string config_name) {
         // ===========================================================
         cv::Rect rect(0, 0, target_image.cols, target_image.rows);
         cv::Mat p_image = square_division.getPredictedImageFromCtu(foo);                              // 0 : line,  1 : vertex
-//        cv::Mat color_line   = square_division.getPredictedColorImageFromCtu(foo, getPSNR(target_image, p_image), 0);
+//        cv::Mat color_line   = square_division.getPredictedColorImageFromCtu(foo, getPSNR(target_image, p_image, rect), 0);
 //        cv::Mat color_vertex = square_division.getPredictedColorImageFromCtu(foo, getPSNR(target_image, p_image), 1);
         cv::Mat merge_info = square_division.getBlockInfoFromCtu(foo, getPSNR(target_image, p_image, rect));
 

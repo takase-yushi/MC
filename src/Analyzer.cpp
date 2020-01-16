@@ -192,7 +192,12 @@ void Analyzer::square_CollectResults(CodingTreeUnit *ctu) {
         code_sum += (ctu->code_length);
         patch_num++;
 
+        if(ctu->square_index == 60) {
+            std::cout << "60" << std::endl;
+        }
+
         if(ctu->method == MV_CODE_METHOD::MERGE2) {
+            std::cout << "MERGE2" << std::endl;
             int x_ = (int)abs(((ctu->mv1).x * 4));
             int y_ = (int)abs(((ctu->mv1).y * 4));
             MV_counter[x_]++;
@@ -303,10 +308,12 @@ void Analyzer::square_CollectResults(CodingTreeUnit *ctu) {
         return;
     }
 
-    if(ctu->node1 != nullptr) square_CollectResults(ctu->node1);
-    if(ctu->node2 != nullptr) square_CollectResults(ctu->node2);
-    if(ctu->node3 != nullptr) square_CollectResults(ctu->node3);
-    if(ctu->node4 != nullptr) square_CollectResults(ctu->node4);
+    if(ctu->node1 != nullptr && ctu->node2 != nullptr && ctu->node3 != nullptr && ctu->node4 != nullptr) {
+        square_CollectResults(ctu->node1);
+        square_CollectResults(ctu->node2);
+        square_CollectResults(ctu->node3);
+        square_CollectResults(ctu->node4);
+    }
 }
 
 /**
