@@ -1766,18 +1766,17 @@ std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> SquareDivision
             target_square_coordinates.emplace_back(pp2);
             target_square_coordinates.emplace_back(pp3);
             std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_square_coordinates, ref_mvs, target_square_coordinates);
-            mvs.emplace_back(mvs[2]); //
-            mvs[2] = square_gauss_results[square_idx].mv_warping[2];
-            cv::Point2f p4 = pp3 + mvs[2] + pp2 + mvs[1] - pp1 - mvs[0]; //右下の頂点の変形後の座標
+            cv::Point2f original_mv = square_gauss_results[square_idx].mv_warping[2];
+            cv::Point2f p4 = pp3 + original_mv + pp2 + mvs[1] - pp1 - mvs[0]; //右下の頂点の変形後の座標
             if ((mvs[0].x + coordinate.p1.x < -SEARCH_RANGE || mvs[0].y + coordinate.p1.y < -SEARCH_RANGE || mvs[0].x + coordinate.p1.x >= target_image.cols + SEARCH_RANGE || mvs[0].y + coordinate.p1.y >= target_image.rows + SEARCH_RANGE) ||
                 (mvs[1].x + coordinate.p2.x < -SEARCH_RANGE || mvs[1].y + coordinate.p2.y < -SEARCH_RANGE || mvs[1].x + coordinate.p2.x >= target_image.cols + SEARCH_RANGE || mvs[1].y + coordinate.p2.y >= target_image.rows + SEARCH_RANGE) ||
-                (mvs[2].x + coordinate.p3.x < -SEARCH_RANGE || mvs[2].y + coordinate.p3.y < -SEARCH_RANGE || mvs[2].x + coordinate.p3.x >= target_image.cols + SEARCH_RANGE || mvs[2].y + coordinate.p3.y >= target_image.rows + SEARCH_RANGE) ||
+                (original_mv.x + coordinate.p3.x < -SEARCH_RANGE || original_mv.y + coordinate.p3.y < -SEARCH_RANGE || original_mv.x + coordinate.p3.x >= target_image.cols + SEARCH_RANGE || original_mv.y + coordinate.p3.y >= target_image.rows + SEARCH_RANGE) ||
                 (p4.x < -SEARCH_RANGE || p4.y < -SEARCH_RANGE || p4.x >= target_image.cols + SEARCH_RANGE || p4.y >= target_image.rows + SEARCH_RANGE)) {
                 tmp_warping_merge_vectors.emplace_back();
                 is_in_flag[i] = false;
             }
             else {
-                std::vector<cv::Point2f> v{mvs[0], mvs[1], mvs[2], mvs[3]};
+                std::vector<cv::Point2f> v{mvs[0], mvs[1], mvs[2]};
                 tmp_warping_merge_vectors.emplace_back(v);
             }
         }
@@ -1853,7 +1852,6 @@ std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> SquareDivision
                 v.emplace_back(tmp_warping_merge_vectors[j][0], MERGE2);
                 v.emplace_back(tmp_warping_merge_vectors[j][1], MERGE2);
                 v.emplace_back(tmp_warping_merge_vectors[j][2], MERGE2);
-                v.emplace_back(tmp_warping_merge_vectors[j][3], MERGE2);
                 warping_vectors.emplace_back(v);
 //                }
             }
@@ -1861,7 +1859,6 @@ std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> SquareDivision
 //        for(j = 0 ; j < on_hold_translation_vectors.size() ; j++) {
 //            if(warping_vectors.size() < 5) {
 //                std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> v;
-//                v.emplace_back(on_hold_translation_vectors[j], MERGE2);
 //                v.emplace_back(on_hold_translation_vectors[j], MERGE2);
 //                v.emplace_back(on_hold_translation_vectors[j], MERGE2);
 //                v.emplace_back(on_hold_translation_vectors[j], MERGE2);
@@ -2441,7 +2438,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
                 std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> v;
                 v.emplace_back(cv::Point2f(0.0, 0.0), MERGE2);
                 v.emplace_back(cv::Point2f(0.0, 0.0), MERGE2);
-                v.emplace_back(square_gauss_results[square_idx].mv_warping[2], MERGE2);
                 v.emplace_back(cv::Point2f(0.0, 0.0), MERGE2);
                 warping_vectors.emplace_back(v);
             }
@@ -2450,8 +2446,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 
                 mvs.emplace_back(warping_vectors[i][0].first);         //マージ先のmv[0]
                 mvs.emplace_back(warping_vectors[i][1].first);         //マージ先のmv[1]
-                mvs.emplace_back(warping_vectors[i][2].first);         //自分のMV[2]
-                mvs.emplace_back(warping_vectors[i][3].first);         //マージ先のmv[2]
+                mvs.emplace_back(square_gauss_results[square_idx].mv_warping[2]);         //自分のMV[2]
+                mvs.emplace_back(warping_vectors[i][2].first);         //マージ先のmv[2]
                 FlagsCodeSum flag_code_sum(0, 0, 0, 0);
                 Flags flags;
 
