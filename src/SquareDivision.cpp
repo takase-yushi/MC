@@ -2441,7 +2441,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
                 std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> v;
                 v.emplace_back(cv::Point2f(0.0, 0.0), MERGE2);
                 v.emplace_back(cv::Point2f(0.0, 0.0), MERGE2);
-                v.emplace_back(cv::Point2f(0.0, 0.0), MERGE2);
+                v.emplace_back(square_gauss_results[square_idx].mv_warping[2], MERGE2);
                 v.emplace_back(cv::Point2f(0.0, 0.0), MERGE2);
                 warping_vectors.emplace_back(v);
             }
