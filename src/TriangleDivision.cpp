@@ -1575,6 +1575,32 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
 
         return true;
     }else{
+
+        if(triangle_index < init_patch_num && 0 < triangle_index){
+            extern std::vector<CodingTreeUnit *> ctus;
+            CodingTreeUnit *previous_ctu = ctus[triangle_index - 1];
+            if(triangle_index % 2 == 1 && !previous_ctu->split_cu_flag){
+                ctu->code_length = 0;
+                ctu->translation_flag = previous_ctu->translation_flag;
+
+                if(previous_ctu->translation_flag){
+                    triangle_gauss_results[triangle_index].mv_translation = triangle_gauss_results[triangle_index - 1].mv_translation;
+                    triangle_gauss_results[triangle_index].original_mv_translation = triangle_gauss_results[triangle_index - 1].mv_translation;
+                    triangle_gauss_results[triangle_index].translation_flag = true;
+                }else{
+                    Triangle t = triangles[triangle_index - 1].first;
+                    std::vector<cv::Point2f> ref_coordinates{corners[t.p1_idx], corners[t.p2_idx], corners[t.p3_idx]};
+                    GaussResult previous_triangle_results = triangle_gauss_results[triangle_index - 1];
+                    std::vector<cv::Point2f> target_triangle_coordinates{triangle.p1, triangle.p2, triangle.p3};
+                    std::vector<cv::Point2f> predicted_vector = getPredictedWarpingMv(ref_coordinates, previous_triangle_results.mv_warping, target_triangle_coordinates);
+
+                    triangle_gauss_results[triangle_index].mv_warping = predicted_vector;
+                    triangle_gauss_results[triangle_index].original_mv_warping = predicted_vector;
+                    triangle_gauss_results[triangle_index].translation_flag = false;
+                }
+            }
+        }
+
         isCodedTriangle[triangle_index] = true;
         delete_flag[triangle_index] = false;
         for(int i = 0 ; i < 4 ; i++) isCodedTriangle[triangle_indexes[i]] = false;
