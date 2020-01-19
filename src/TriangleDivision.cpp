@@ -2819,13 +2819,23 @@ cv::Mat TriangleDivision::getPredictedImageFromCtu(std::vector<CodingTreeUnit*> 
 
 #pragma omp parallel for
     for(int i = 0 ; i < ctus.size() ; i++) {
-        getPredictedImageFromCtu(ctus[i], out, area_flag[i/2]);
+        if(i % 2 == 0){
+            // 2つとも割られていないとき
+            if(ctus[i]->node1 == nullptr && ctus[i+1]->node1 == nullptr){
+                getPredictedImageFromCtu(ctus[i], out, area_flag[i/2], true);
+                i++;
+            }else{
+                getPredictedImageFromCtu(ctus[i], out, area_flag[i/2]);
+            }
+        }else{
+            getPredictedImageFromCtu(ctus[i], out, area_flag[i/2]);
+        }
     }
 
     return out;
 }
 
-void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, std::vector<std::vector<int>> &area_flag){
+void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, std::vector<std::vector<int>> &area_flag, bool isSquare){
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr) {
         int triangle_index = ctu->triangle_index;
         cv::Point2f mv = ctu->mv1;
@@ -2854,8 +2864,14 @@ void TriangleDivision::getPredictedImageFromCtu(CodingTreeUnit *ctu, cv::Mat &ou
             }
 
         }else {
-            double ret = getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, SEARCH_RANGE, area_flag, ctu->triangle_index,
-                              ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
+            double ret;
+            if(isSquare){
+                ret = getPredictedImageForSquare(expansion_ref_uchar, target_image, out, triangle, mvs, ref_hevc);
+            }else {
+                ret = getPredictedImage(expansion_ref_uchar, target_image, out, triangle, mvs, SEARCH_RANGE,
+                                               area_flag, ctu->triangle_index,
+                                               ctu, cv::Rect(0, 0, block_size_x, block_size_y), ref_hevc);
+            }
 
             extern std::vector<double> residuals;
             if(ctu->translation_flag){
@@ -2894,6 +2910,18 @@ cv::Mat TriangleDivision::getMergeModeColorImageFromCtu(std::vector<CodingTreeUn
     std::vector<Point3Vec> ts = getTriangleCoordinateList();
     for(const auto &t : ts) {
         drawTriangle(out, t.p1, t.p2, t.p3, WHITE);
+    }
+
+    for(int i = 0 ; i < ctus.size() ; i+=2){
+        if(!ctus[i]->split_cu_flag && !ctus[i+1]->split_cu_flag) {
+            for(int y = ctus[i]->top_left_y ; y < ctus[i]->bottom_right_y ; y++){
+                for(int x = ctus[i]->top_left_x ; x < ctus[i]->bottom_right_x ; x++){
+                    R(out, x, y) = M(target_image, x, y);
+                    G(out, x, y) = M(target_image, x, y);
+                    B(out, x, y) = M(target_image, x, y);
+                }
+            }
+        }
     }
 
     return out;
@@ -2965,6 +2993,18 @@ cv::Mat TriangleDivision::getPredictedColorImageFromCtu(std::vector<CodingTreeUn
     std::vector<Point3Vec> ts = getTriangleCoordinateList();
     for(const auto &t : ts) {
         drawTriangle(out, t.p1, t.p2, t.p3, WHITE);
+    }
+
+    for(int i = 0 ; i < ctus.size() ; i+=2){
+        if(!ctus[i]->split_cu_flag && !ctus[i+1]->split_cu_flag) {
+            for(int y = ctus[i]->top_left_y ; y < ctus[i]->bottom_right_y ; y++){
+                for(int x = ctus[i]->top_left_x ; x < ctus[i]->bottom_right_x ; x++){
+                    R(out, x, y) = M(target_image, x, y);
+                    G(out, x, y) = M(target_image, x, y);
+                    B(out, x, y) = M(target_image, x, y);
+                }
+            }
+        }
     }
 
     return out;
