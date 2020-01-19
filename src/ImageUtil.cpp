@@ -993,6 +993,34 @@ std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const st
 }
 
 /**
+ * @fn std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle)
+ * @brief 三角パッチ内に含まれる画素を返す
+ * @param triangle 三角形
+ * @param area_flag 境界線がどちらを表すかのフラグ
+ * @param triangle_index 三角形の番号
+ * @return 画素の集合
+ */
+std::vector<cv::Point2f> getPixelsInSquare(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, cv::Point2f p4){
+    std::vector<cv::Point2f> pixels_in_triangle;
+
+    int sx = ceil(std::min({p1.x, p2.x, p3.x, p4.x}));
+    int lx = floor(std::max({p1.x, p2.x, p3.x, p4.x}));
+    int sy = ceil(std::min({p1.y, p2.y, p3.y, p4.y}));
+    int ly = floor(std::max({p1.y, p2.y, p3.y, p4.y}));
+
+    int width = lx - sx + 1;
+    int height = ly - sy + 1;
+
+    for (int j = sy ; j <= ly ; j++) {
+        for (int i = sx ; i <= lx; i++) {
+            pixels_in_triangle.emplace_back(i, j);
+        }
+    }
+
+    return pixels_in_triangle;
+}
+
+/**
  * @fn cv::Mat getAppliedLPFImage(cv::Mat &image)
  * @brief 1:2:1のLPFを適用したMatを返す
  * @param image
