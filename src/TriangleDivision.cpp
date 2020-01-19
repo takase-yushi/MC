@@ -201,6 +201,7 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
     extern std::vector<int> divide_flags;
     for(int block_y = 0 ; block_y < block_num_y ; block_y++) {
         for(int block_x = 0 ; block_x < block_num_x ; block_x++) {
+#if ADAPTIVE_SPLIT
             std::cout << "--------- initialize no." << block_x + block_y * block_num_x << " ---------" << std::endl;
             // 斜線のフラグを初期化
             bool flag = false;
@@ -267,6 +268,9 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
             }
 
             std::cout << "left:" << min_error_left_divide << " right:" << min_error_right_divide << std::endl;
+#else
+            divide_flags.emplace_back(LEFT_DIVIDE);
+#endif
         }
     }
 

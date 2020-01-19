@@ -135,6 +135,8 @@ enum {
 // 2画素以上のアップデートが来たら打ち切る
 #define DELTA_UV_THRESHOLD 2
 
+#define ADAPTIVE_SPLIT false
+
 const std::string OS = "Ubuntu";
 
 /**
