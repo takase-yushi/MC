@@ -172,6 +172,7 @@ private:
     unsigned char **expansion_ref_uchar;
     std::vector<std::vector<bool>> intra_flag;
     cv::Mat intra_tmp_image;
+    int init_patch_num;
 
     void getPredictedColorImageFromCtu(CodingTreeUnit *ctu, cv::Mat &out, std::vector<std::vector<int>> &area_flag, double original_psnr, std::vector<cv::Scalar> &colors);
     int insertTriangle(int p1_idx, int p2_idx, int p3_idx, int type);
