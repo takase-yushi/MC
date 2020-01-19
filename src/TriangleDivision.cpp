@@ -370,6 +370,8 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
     for(int i = 0 ; i < intra_flag.size() ; i++){
         intra_flag[i].resize(target_image.rows);
     }
+
+    init_patch_num = triangles.size();
 }
 
 /**
@@ -1028,9 +1030,6 @@ void TriangleDivision::addCornerAndTriangle(Triangle triangle, int triangle_inde
 
     isCodedTriangle[triangle_index] = false;
     delete_flag[triangle_index] = true;
-
-    // 初期パッチの個数を入れておく
-    init_patch_num = triangles.size();
 }
 
 /**
