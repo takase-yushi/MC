@@ -23,5 +23,6 @@ double bicubic_weight(double x);
 int bicubic_interpolation(unsigned char **img, double x, double y);
 
 std::vector<cv::Point2f> getPredictedWarpingMv(std::vector<cv::Point2f>& ref_triangle_coordinate, std::vector<cv::Point2f>& ref_mvs, std::vector<cv::Point2f>& target_triangle_coordinate);
+double getPredictedImageForSquare(unsigned char **expand_ref, cv::Mat& target_image, cv::Mat& output_image, Point3Vec& triangle, std::vector<cv::Point2f>& mv, unsigned char *ref_hevc);
 
 #endif //ENCODER_ME_H

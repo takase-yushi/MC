@@ -414,6 +414,71 @@ double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::
 }
 
 /**
+ *
+ * @param expand_ref
+ * @param target_image
+ * @param output_image
+ * @param triangle
+ * @param mv
+ * @param offset
+ * @param area_flag
+ * @param triangle_index
+ * @param ctu
+ * @param block_size
+ * @param ref_hevc
+ * @return
+ */
+double getPredictedImageForSquare(unsigned char **expand_ref, cv::Mat& target_image, cv::Mat& output_image, Point3Vec& triangle, std::vector<cv::Point2f>& mv, unsigned char *ref_hevc) {
+    cv::Point2f pp0, pp1, pp2;
+
+    pp0 = triangle.p1 + mv[0];
+    pp1 = triangle.p2 + mv[1];
+    pp2 = triangle.p3 + mv[2];
+
+    cv::Point2f p1 = triangle.p1;
+    cv::Point2f p2 = triangle.p2;
+    cv::Point2f p3 = triangle.p3;
+    cv::Point2f p4(std::max({triangle.p1.x, triangle.p2.x, triangle.p3.x}), std::min({triangle.p1.y, triangle.p2.y, triangle.p3.y}));
+    std::vector<cv::Point2f> in_triangle_pixels = getPixelsInSquare(p1, p2, p3, p4);
+
+    cv::Point2f X,a,b,a_later,b_later,X_later;
+    double alpha,beta,det;
+
+    double squared_error = 0.0;
+
+    a = triangle.p3 - triangle.p1;
+    b = triangle.p2 - triangle.p1;
+    det = a.x * b.y - a.y * b.x;
+
+    for(const auto& pixel : in_triangle_pixels) {
+        X.x = pixel.x - triangle.p1.x;
+        X.y = pixel.y - triangle.p1.y;
+        alpha = (X.x * b.y - X.y * b.x) / det;
+        beta = (a.x * X.y - a.y * X.x) / det;
+
+        a_later = pp2 - pp0;
+        b_later = pp1 - pp0;
+        X_later = alpha * a_later + beta * b_later + pp0;
+
+        int y;
+        if(ref_hevc != nullptr){
+            y = img_ip(ref_hevc, cv::Rect(-SEARCH_RANGE * 4, -SEARCH_RANGE * 4, 4 * (target_image.cols + 2 * SEARCH_RANGE), 4 * (target_image.rows + 2 * SEARCH_RANGE)), 4 * X_later.x, 4 * X_later.y);
+        }else{
+            // y = bicubic_interpolation(expand_ref, X_later.x, X_later.y);
+        }
+
+        R(output_image, (int)pixel.x, (int)pixel.y) = y;
+        G(output_image, (int)pixel.x, (int)pixel.y) = y;
+        B(output_image, (int)pixel.x, (int)pixel.y) = y;
+
+        squared_error += pow((M(target_image, (int)pixel.x, (int)pixel.y) - (0.299 * y + 0.587 * y + 0.114 * y)), 2);
+    }
+
+    return squared_error;
+}
+
+
+/**
  * @fn std::pair<std::vector<cv::Point2f>, cv::Point2f> GaussNewton(cv::Mat ref_image, cv::Mat target_mage, cv::Mat gauss_ref_image, Point3Vec target_corners)
  * @brief ガウス・ニュートン法を行い、動きベクトル・予測残差・面積を返す
  * @param ref_images
