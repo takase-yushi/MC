@@ -600,6 +600,7 @@ double img_ip(unsigned char *img, cv::Rect rect, double x, double y, int offset,
  * @return 画像
  */
 cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit *> ctu, int block_size_x, int block_size_y) {
+    cv::Mat org = image.clone();
     Reconstruction rec(image);
     rec.init(block_size_x, block_size_y, LEFT_DIVIDE);
     puts("");
@@ -608,6 +609,18 @@ cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit
 
     for(const auto foo : hoge) {
         drawTriangle(image, foo.p1, foo.p2, foo.p3, cv::Scalar(255, 255, 255));
+    }
+
+    for(int i = 0 ; i < ctu.size() ; i+=2){
+        if(!ctu[i]->split_cu_flag && !ctu[i+1]->split_cu_flag) {
+            for(int y = ctu[i]->top_left_y ; y < ctu[i]->bottom_right_y ; y++){
+                for(int x = ctu[i]->top_left_x ; x < ctu[i]->bottom_right_x ; x++){
+                    R(image, x, y) = M(org, x, y);
+                    G(image, x, y) = M(org, x, y);
+                    B(image, x, y) = M(org, x, y);
+                }
+            }
+        }
     }
 
     return image;
