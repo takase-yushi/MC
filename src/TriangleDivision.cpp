@@ -1579,7 +1579,7 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             extern std::vector<CodingTreeUnit *> ctus;
             CodingTreeUnit *previous_ctu = ctus[triangle_index - 1];
             if(triangle_index % 2 == 1 && !previous_ctu->split_cu_flag){
-                ctu->code_length = 0;
+                ctu->code_length = 1;
                 ctu->translation_flag = previous_ctu->translation_flag;
 
                 if(previous_ctu->translation_flag){
