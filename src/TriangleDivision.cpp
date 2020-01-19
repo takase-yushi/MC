@@ -38,7 +38,7 @@ TriangleDivision::TriangleDivision(const cv::Mat &refImage, const cv::Mat &targe
  * @param[in] _qp
  * @param[in] _divide_flag
  */
-void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _divide_steps, int _qp, int divide_flag) {
+void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _divide_steps, int _qp, std::vector<std::vector<std::vector<unsigned char *>>> expand_images, int divide_flag) {
     block_size_x = _block_size_x;
     block_size_y = _block_size_y;
     qp = _qp;
@@ -156,39 +156,6 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
 
     covered_triangle.resize(static_cast<unsigned long>((block_num_x * 2) * (block_num_y * 2)));
 
-    for(int block_y = 0 ; block_y < block_num_y ; block_y++) {
-        for(int block_x = 0 ; block_x < block_num_x ; block_x++) {
-            int p1_idx;
-            int p2_idx;
-            int p3_idx;
-            int p4_idx;
-            if(divide_flag == LEFT_DIVIDE) {
-                p1_idx = 2 * block_x + (2 * block_y) * ((block_num_x) * 2);
-                p2_idx = p1_idx + 1;
-                p3_idx = p1_idx + ((block_num_x) * 2);
-
-                int triangleIndex = insertTriangle(p1_idx, p2_idx, p3_idx, TYPE1);
-                addNeighborVertex(p1_idx, p2_idx, p3_idx);
-                addCoveredTriangle(p1_idx, p2_idx, p3_idx, triangleIndex); // p1/p2/p3はtriangleIndex番目の三角形に含まれている
-
-                int p4_idx = p2_idx;
-                int p5_idx = p3_idx;
-                int p6_idx = p3_idx + 1;
-
-                triangleIndex = insertTriangle(p4_idx, p5_idx, p6_idx, TYPE2);
-                addNeighborVertex(p4_idx, p5_idx, p6_idx);
-                addCoveredTriangle(p4_idx, p5_idx, p6_idx, triangleIndex);
-            }else{
-                int triangleIndex = insertTriangle(p1_idx, p2_idx, p4_idx, TYPE1);
-                addNeighborVertex(p1_idx, p2_idx, p4_idx);
-                addCoveredTriangle(p1_idx, p2_idx, p4_idx, triangleIndex);
-
-                triangleIndex = insertTriangle(p1_idx, p3_idx, p4_idx, TYPE2);
-                addNeighborVertex(p1_idx, p3_idx, p4_idx);
-                addCoveredTriangle(p1_idx, p3_idx, p4_idx, triangleIndex);
-            }
-        }
-    }
 
     for(int i = 0 ; i < isCodedTriangle.size() ; i++) {
         isCodedTriangle[i] = false;
@@ -226,6 +193,133 @@ void TriangleDivision::initTriangle(int _block_size_x, int _block_size_y, int _d
     for(int y = 0 ; y < tmp_mat.rows ; y++){
         for(int x = 0 ; x < tmp_mat.cols ; x++){
             expansion_ref_uchar[x - scaled_expansion_size][y - scaled_expansion_size] = M(tmp_mat, x, y);
+        }
+    }
+
+    std::vector<std::vector<int>> area_flag_left_divide(block_size_x, std::vector<int>(block_size_y, -1));
+    std::vector<std::vector<int>> area_flag_right_divide(block_size_x, std::vector<int>(block_size_y, -1));
+    extern std::vector<int> divide_flags;
+    for(int block_y = 0 ; block_y < block_num_y ; block_y++) {
+        for(int block_x = 0 ; block_x < block_num_x ; block_x++) {
+#if ADAPTIVE_SPLIT
+            std::cout << "--------- initialize no." << block_x + block_y * block_num_x << " ---------" << std::endl;
+            // 斜線のフラグを初期化
+            bool flag = false;
+            for (int x = 0; x < block_size_x; x++) {
+                // diagonal line
+                int i = 2 * (block_x + block_y * block_num_x);
+                area_flag_left_divide[x][block_size_y - x - 1] = (flag ? i : i + 1);
+                flag = !flag;
+
+                area_flag_right_divide[x][x] = (flag ? i : i + 1);
+                flag = !flag;
+            }
+
+            // まずはLEFT_DIVIDEを試す
+            int p1_idx = 2 * block_x + (2 * block_y) * ((block_num_x) * 2);
+            int p2_idx = p1_idx + 1;
+            int p3_idx = p1_idx + ((block_num_x) * 2);
+            int p4_idx = p2_idx;
+            int p5_idx = p3_idx;
+            int p6_idx = p3_idx + 1;
+
+            Point3Vec target_corners1(corners[p1_idx], corners[p2_idx], corners[p3_idx]);
+            Point3Vec target_corners2(corners[p4_idx], corners[p5_idx], corners[p6_idx]);
+
+            double error_left_translation1;
+            double error_left_translation2;
+            double error_left_warping1;
+            double error_left_warping2;
+            std::tie(std::ignore, std::ignore, error_left_warping1, error_left_translation1, std::ignore) = GaussNewton(ref_images, target_images, expand_images, target_corners1, area_flag_left_divide, 2 * block_x + (block_y * block_num_x)    , nullptr, block_size_x, block_size_y, cv::Point2f(-1000, -1000), ref_hevc);
+            std::tie(std::ignore, std::ignore, error_left_warping2, error_left_translation2, std::ignore) = GaussNewton(ref_images, target_images, expand_images, target_corners2, area_flag_left_divide, 2 * block_x + (block_y * block_num_x) + 1, nullptr, block_size_x, block_size_y, cv::Point2f(-1000, -1000), ref_hevc);
+
+            p1_idx = 2 * block_x + (2 * block_y) * ((block_num_x) * 2);
+            p2_idx = p1_idx + ((block_num_x) * 2);
+            p3_idx = p2_idx + 1;
+
+            p4_idx = p1_idx;
+            p5_idx = p1_idx + 1;
+            p6_idx = p2_idx + 1;
+
+            target_corners1.p1 = corners[p1_idx];
+            target_corners1.p2 = corners[p2_idx];
+            target_corners1.p3 = corners[p3_idx];
+
+            target_corners2.p1 = corners[p4_idx];
+            target_corners2.p2 = corners[p5_idx];
+            target_corners2.p3 = corners[p6_idx];
+
+            double error_right_translation1;
+            double error_right_translation2;
+            double error_right_warping1;
+            double error_right_warping2;
+
+            std::tie(std::ignore, std::ignore, error_right_warping1, error_right_translation1, std::ignore) = GaussNewton(ref_images, target_images, expand_images, target_corners1, area_flag_right_divide, 2 * block_x + (block_y * block_num_x)    , nullptr, block_size_x, block_size_y, cv::Point2f(-1000, -1000), ref_hevc);
+            std::tie(std::ignore, std::ignore, error_right_warping2, error_right_translation2, std::ignore) = GaussNewton(ref_images, target_images, expand_images, target_corners2, area_flag_right_divide, 2 * block_x + (block_y * block_num_x) + 1, nullptr, block_size_x, block_size_y, cv::Point2f(-1000, -1000), ref_hevc);
+
+            double min_error_left_divide = std::min({error_left_translation1, error_left_translation2, error_left_warping1, error_left_warping2});
+            double min_error_right_divide = std::min({error_right_translation1, error_right_translation2, error_left_warping1, error_left_warping2});
+            if(min_error_left_divide <= min_error_right_divide){
+                divide_flags.emplace_back(LEFT_DIVIDE);
+                std::cout << "LEFT" << std::endl;
+            }else{
+                divide_flags.emplace_back(RIGHT_DIVIDE);
+                std::cout << "RIGHT" << std::endl;
+            }
+
+            std::cout << "left:" << min_error_left_divide << " right:" << min_error_right_divide << std::endl;
+#else
+            divide_flags.emplace_back(LEFT_DIVIDE);
+#endif
+        }
+    }
+
+    for(int block_y = 0 ; block_y < block_num_y ; block_y++) {
+        for(int block_x = 0 ; block_x < block_num_x ; block_x++) {
+            if(divide_flags[block_x + block_y * block_num_x] == LEFT_DIVIDE) {
+                int p1_idx = 2 * block_x + (2 * block_y) * ((block_num_x) * 2);
+                int p2_idx = p1_idx + 1;
+                int p3_idx = p1_idx + ((block_num_x) * 2);
+
+                int triangleIndex = insertTriangle(p1_idx, p2_idx, p3_idx, TYPE1);
+                addNeighborVertex(p1_idx, p2_idx, p3_idx);
+                addCoveredTriangle(p1_idx, p2_idx, p3_idx, triangleIndex); // p1/p2/p3はtriangleIndex番目の三角形に含まれている
+
+                int p4_idx = p2_idx;
+                int p5_idx = p3_idx;
+                int p6_idx = p3_idx + 1;
+
+                triangleIndex = insertTriangle(p4_idx, p5_idx, p6_idx, TYPE2);
+                addNeighborVertex(p4_idx, p5_idx, p6_idx);
+                addCoveredTriangle(p4_idx, p5_idx, p6_idx, triangleIndex);
+            }else{
+                /**
+                 *    p4        p5
+                 * p1 -----------
+                 *    |*        |
+                 *    |  *      |
+                 *    |    *    |
+                 *    |      *  |
+                 *    |        *|
+                 * p2 ----------- p6
+                 *             p3
+                 */
+                int p1_idx = 2 * block_x + (2 * block_y) * ((block_num_x) * 2);
+                int p2_idx = p1_idx + ((block_num_x) * 2);
+                int p3_idx = p2_idx + 1;
+
+                int p4_idx = p1_idx;
+                int p5_idx = p1_idx + 1;
+                int p6_idx = p2_idx + 1;
+
+                int triangleIndex = insertTriangle(p1_idx, p2_idx, p3_idx, DIVIDE::TYPE4);
+                addNeighborVertex(p1_idx, p2_idx, p3_idx);
+                addCoveredTriangle(p1_idx, p2_idx, p3_idx, triangleIndex);
+
+                triangleIndex = insertTriangle(p4_idx, p5_idx, p6_idx, DIVIDE::TYPE3);
+                addNeighborVertex(p4_idx, p5_idx, p6_idx);
+                addCoveredTriangle(p4_idx, p5_idx, p6_idx, triangleIndex);
+            }
         }
     }
 
@@ -2970,7 +3064,9 @@ int TriangleDivision::getCtuCodeLength(std::vector<CodingTreeUnit*> ctus) {
     for(auto & ctu : ctus){
         code_length_sum += getCtuCodeLength(ctu);
     }
-    return code_length_sum;
+
+    int blocks = (target_image.cols / block_size_x) * (target_image.rows / block_size_y);
+    return code_length_sum + blocks;
 }
 
 int TriangleDivision::getCtuCodeLength(CodingTreeUnit *ctu){

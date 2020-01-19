@@ -121,19 +121,21 @@ enum {
  */
 #define MVD_DEBUG_LOG false
 #define DISPLAY_RD_COST false
-#define DISPLAY_MERGE_LOG true
+#define DISPLAY_MERGE_LOG false
 
 /**
  * ログファイル書き出し関連
  */
 #define STORE_DISTRIBUTION_LOG true
 #define STORE_MVD_DISTRIBUTION_LOG false
-#define STORE_IMG_LOG false
+#define STORE_IMG_LOG true
 #define STORE_NEWTON_LOG false
 #define STORE_MERGE_LOG false
 
 // 2画素以上のアップデートが来たら打ち切る
 #define DELTA_UV_THRESHOLD 2
+
+#define ADAPTIVE_SPLIT false
 
 const std::string OS = "Ubuntu";
 

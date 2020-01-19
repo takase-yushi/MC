@@ -300,7 +300,7 @@ int Analyzer::getEntropyCodingCode() {
     return tmp_code_sum;
 }
 
-Analyzer::Analyzer(std::vector<CodingTreeUnit *> ctus, std::string _log_path, const std::string &fileSuffix, cv::Mat targetImage, cv::Mat pImage, std::vector<int> _pells, std::vector<double> _residuals) {
+Analyzer::Analyzer(std::vector<CodingTreeUnit *> ctus, std::string _log_path, const std::string &fileSuffix, cv::Mat targetImage, cv::Mat pImage, std::vector<int> _pells, std::vector<double> _residuals, int blockSizeX, int blockSizeY) {
     greater_0_flag_sum = greater_1_flag_sum = sign_flag_sum = mvd_code_sum = affine_patch_num = translation_patch_num = 0;
     mvd_affine_code_sum = mvd_translation_code_sum = 0;
     merge_counter = differential_counter = 0;
@@ -318,11 +318,14 @@ Analyzer::Analyzer(std::vector<CodingTreeUnit *> ctus, std::string _log_path, co
     file_suffix = fileSuffix;
     target_image = targetImage;
     p_image = pImage;
+    block_size_x = blockSizeX;
+    block_size_y = blockSizeY;
 
     for(auto ctu : ctus){
         collectResults(ctu);
     }
 
+    code_sum += (target_image.cols / block_size_x) * (target_image.rows / block_size_y);
     log_path = log_path + "/log" + file_suffix;
     mkdir((log_path).c_str(), 0744);
 }

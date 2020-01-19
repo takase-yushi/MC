@@ -37,7 +37,7 @@ void tests();
 #define LAMBDA 0.2
 #define INTER_DIV true // 頂点追加するかしないか
 
-#define DIVIDE_MODE LEFT_DIVIDE
+#define DIVIDE_MODE RIGHT_DIVIDE
 
 int qp;
 int qp_offset;
@@ -62,6 +62,8 @@ std::vector<MELog> ME_log_warping_1;
 
 std::vector<int> pells;
 std::vector<double> residuals;
+
+std::vector<int> divide_flags;
 
 void storeNewtonLogs(std::string logDirectoryPath);
 
@@ -205,34 +207,6 @@ void run(std::string config_name) {
         cv::Mat gaussRefImage = cv::imread(ref_file_path);
         TriangleDivision triangle_division(ref_image, target_image, gaussRefImage);
 
-        triangle_division.initTriangle(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);
-        std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
-
-        std::vector<std::pair<Point3Vec, int> > init_triangles = triangle_division.getTriangles();
-
-        std::vector<CodingTreeUnit *> foo(init_triangles.size());
-        for (int i = 0; i < init_triangles.size(); i++) {
-            foo[i] = new CodingTreeUnit();
-            foo[i]->split_cu_flag = false;
-            foo[i]->node1 = foo[i]->node2 = foo[i]->node3 = foo[i]->node4 = nullptr;
-            foo[i]->triangle_index = i;
-            foo[i]->mvds.resize(3);
-            foo[i]->x_greater_0_flag.resize(3);
-            foo[i]->x_greater_1_flag.resize(3);
-            foo[i]->y_greater_0_flag.resize(3);
-            foo[i]->y_greater_1_flag.resize(3);
-            foo[i]->x_sign_flag.resize(3);
-            foo[i]->y_sign_flag.resize(3);
-        }
-
-        cv::Mat spatialMvTestImage;
-        cv::Mat new_gauss_output_image = cv::Mat::zeros(gaussRefImage.rows, gaussRefImage.cols, CV_8UC3);
-
-        std::vector<Triangle> tt = triangle_division.getTriangleIndexList();
-        corners = triangle_division.getCorners();
-
-        std::vector<cv::Point2f> tmp_ref_corners(corners.size()), add_corners;
-
         cv::Mat r_ref = cv::Mat::zeros(target_image.rows, target_image.cols, CV_8UC1);
 
         std::vector<std::vector<cv::Mat>> ref_images, target_images;
@@ -280,6 +254,34 @@ void run(std::string config_name) {
 
         }
 
+        triangle_division.initTriangle(block_size_x, block_size_y, division_steps, qp, expand_images, DIVIDE_MODE);
+        std::vector<Point3Vec> triangles = triangle_division.getTriangleCoordinateList();
+
+        std::vector<std::pair<Point3Vec, int> > init_triangles = triangle_division.getTriangles();
+
+        std::vector<CodingTreeUnit *> foo(init_triangles.size());
+        for (int i = 0; i < init_triangles.size(); i++) {
+            foo[i] = new CodingTreeUnit();
+            foo[i]->split_cu_flag = false;
+            foo[i]->node1 = foo[i]->node2 = foo[i]->node3 = foo[i]->node4 = nullptr;
+            foo[i]->triangle_index = i;
+            foo[i]->mvds.resize(3);
+            foo[i]->x_greater_0_flag.resize(3);
+            foo[i]->x_greater_1_flag.resize(3);
+            foo[i]->y_greater_0_flag.resize(3);
+            foo[i]->y_greater_1_flag.resize(3);
+            foo[i]->x_sign_flag.resize(3);
+            foo[i]->y_sign_flag.resize(3);
+        }
+
+        cv::Mat spatialMvTestImage;
+        cv::Mat new_gauss_output_image = cv::Mat::zeros(gaussRefImage.rows, gaussRefImage.cols, CV_8UC3);
+
+        std::vector<Triangle> tt = triangle_division.getTriangleIndexList();
+        corners = triangle_division.getCorners();
+
+        std::vector<cv::Point2f> tmp_ref_corners(corners.size()), add_corners;
+
         triangle_division.constructPreviousCodingTree(foo, 0);
 
         std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_triangles.size(), std::vector< std::vector<int> >(block_size_x, std::vector<int>(block_size_y, -1)) );
@@ -315,8 +317,14 @@ void run(std::string config_name) {
                 bool flag = false;
                 for (int x = 0; x < block_size_x; x++) {
                     // diagonal line
-                    diagonal_line_area_flag[i/2][x][block_size_y - x - 1] = (flag ? i : i + 1);
-                    flag = !flag;
+                    if(divide_flags[(i/2)] == LEFT_DIVIDE) {
+                        diagonal_line_area_flag[i/2][x][block_size_y - x - 1] = (flag ? i : i + 1);
+                        flag = !flag;
+                    }else{
+                        diagonal_line_area_flag[i/2][x][x] = (flag ? i : i + 1);
+                        flag = !flag;
+                    }
+
                 }
             }
 
@@ -369,7 +377,7 @@ void run(std::string config_name) {
         analyzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
 #endif
 #else
-        Analyzer analyzer(foo, log_directory, log_file_suffix, target_image, p_image, pells, residuals);
+        Analyzer analyzer(foo, log_directory, log_file_suffix, target_image, p_image, pells, residuals, block_size_x, block_size_y);
 #if STORE_MVD_DISTRIBUTION_LOG
         analyzer.storeDistributionOfMv();
         analyzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
