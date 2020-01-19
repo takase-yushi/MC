@@ -3094,8 +3094,13 @@ int TriangleDivision::getCtuCodeLength(std::vector<CodingTreeUnit*> ctus) {
         code_length_sum += getCtuCodeLength(ctu);
     }
 
+#if ADAPTIVE_SPLIT
     int blocks = (target_image.cols / block_size_x) * (target_image.rows / block_size_y);
     return code_length_sum + blocks;
+#else
+    return code_length_sum;
+#endif
+
 }
 
 int TriangleDivision::getCtuCodeLength(CodingTreeUnit *ctu){

@@ -325,7 +325,10 @@ Analyzer::Analyzer(std::vector<CodingTreeUnit *> ctus, std::string _log_path, co
         collectResults(ctu);
     }
 
+#if ADAPTIVE_SPLIT
     code_sum += (target_image.cols / block_size_x) * (target_image.rows / block_size_y);
+#endif
+
     log_path = log_path + "/log" + file_suffix;
     mkdir((log_path).c_str(), 0744);
 }
