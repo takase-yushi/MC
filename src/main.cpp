@@ -259,19 +259,19 @@ void run(std::string config_name) {
 
         std::vector<std::pair<Point3Vec, int> > init_triangles = triangle_division.getTriangles();
 
-        std::vector<CodingTreeUnit *> foo(init_triangles.size());
+        ctus.resize(init_triangles.size());
         for (int i = 0; i < init_triangles.size(); i++) {
-            foo[i] = new CodingTreeUnit();
-            foo[i]->split_cu_flag = false;
-            foo[i]->node1 = foo[i]->node2 = foo[i]->node3 = foo[i]->node4 = nullptr;
-            foo[i]->triangle_index = i;
-            foo[i]->mvds.resize(3);
-            foo[i]->x_greater_0_flag.resize(3);
-            foo[i]->x_greater_1_flag.resize(3);
-            foo[i]->y_greater_0_flag.resize(3);
-            foo[i]->y_greater_1_flag.resize(3);
-            foo[i]->x_sign_flag.resize(3);
-            foo[i]->y_sign_flag.resize(3);
+            ctus[i] = new CodingTreeUnit();
+            ctus[i]->split_cu_flag = false;
+            ctus[i]->node1 = ctus[i]->node2 = ctus[i]->node3 = ctus[i]->node4 = nullptr;
+            ctus[i]->triangle_index = i;
+            ctus[i]->mvds.resize(3);
+            ctus[i]->x_greater_0_flag.resize(3);
+            ctus[i]->x_greater_1_flag.resize(3);
+            ctus[i]->y_greater_0_flag.resize(3);
+            ctus[i]->y_greater_1_flag.resize(3);
+            ctus[i]->x_sign_flag.resize(3);
+            ctus[i]->y_sign_flag.resize(3);
         }
 
         cv::Mat spatialMvTestImage;
@@ -282,7 +282,7 @@ void run(std::string config_name) {
 
         std::vector<cv::Point2f> tmp_ref_corners(corners.size()), add_corners;
 
-        triangle_division.constructPreviousCodingTree(foo, 0);
+        triangle_division.constructPreviousCodingTree(ctus, 0);
 
         std::vector<std::vector<std::vector<int>>> diagonal_line_area_flag(init_triangles.size(), std::vector< std::vector<int> >(block_size_x, std::vector<int>(block_size_y, -1)) );
 
@@ -333,7 +333,7 @@ void run(std::string config_name) {
             cv::Point2f p2 = triangle.first.p2;
             cv::Point2f p3 = triangle.first.p3;
             std::cout << "================== step:" << i << " ================== " << std::endl;
-            triangle_division.split(expand_images, foo[i], nullptr, Point3Vec(p1, p2, p3), i, triangle.second, division_steps, diagonal_line_area_flag[i/2]);
+            triangle_division.split(expand_images, ctus[i], nullptr, Point3Vec(p1, p2, p3), i, triangle.second, division_steps, diagonal_line_area_flag[i/2]);
         }
         std::cout << "split finished" << std::endl;
 
@@ -342,12 +342,12 @@ void run(std::string config_name) {
         // ログ出力
         // ===========================================================
         cv::Rect rect(0, 0, target_image.cols, target_image.rows);
-        cv::Mat recon = getReconstructionDivisionImage(gaussRefImage, foo, block_size_x, block_size_y);
-        cv::Mat p_image = triangle_division.getPredictedImageFromCtu(foo, diagonal_line_area_flag);
-        cv::Mat color = triangle_division.getPredictedColorImageFromCtu(foo, diagonal_line_area_flag, getPSNR(target_image, p_image, rect));
-        cv::Mat merge_color = triangle_division.getMergeModeColorImageFromCtu(foo, diagonal_line_area_flag);
+        cv::Mat recon = getReconstructionDivisionImage(gaussRefImage, ctus, block_size_x, block_size_y);
+        cv::Mat p_image = triangle_division.getPredictedImageFromCtu(ctus, diagonal_line_area_flag);
+        cv::Mat color = triangle_division.getPredictedColorImageFromCtu(ctus, diagonal_line_area_flag, getPSNR(target_image, p_image, rect));
+        cv::Mat merge_color = triangle_division.getMergeModeColorImageFromCtu(ctus, diagonal_line_area_flag);
 
-        int code_length = triangle_division.getCtuCodeLength(foo);
+        int code_length = triangle_division.getCtuCodeLength(ctus);
         std::string log_file_suffix = out_file_suffix + std::to_string(qp) + "_" + getCurrentTimestamp();
         std::cout << "qp:" << qp << " divide:" << division_steps << std::endl;
         std::cout << "PSNR:" << getPSNR(target_image, p_image, rect) << " code_length:" << code_length << std::endl;
@@ -359,9 +359,9 @@ void run(std::string config_name) {
         printf("time %d[m]%d[sec]\n", (int)time/60, (int)time%60);
 //        Decoder decoder(ref_image, target_image);
 //        decoder.initTriangle(block_size_x, block_size_y, division_steps, qp, LEFT_DIVIDE);
-//        decoder.reconstructionTriangle(foo);
+//        decoder.reconstructionTriangle(ctus);
 //        cv::imwrite(img_directory + "/p_recon_decoder_test.png", decoder.getReconstructionTriangleImage());
-//        cv::imwrite(img_directory + "/p_recon_mode_image_test.png", decoder.getModeImage(foo, diagonal_line_area_flag));
+//        cv::imwrite(img_directory + "/p_recon_mode_image_test.png", decoder.getModeImage(ctus, diagonal_line_area_flag));
 //
 //        cv::imwrite(img_directory + "/p_mv_image_test.png", decoder.getMvImage(color));
 
@@ -369,15 +369,15 @@ void run(std::string config_name) {
 #if GAUSS_NEWTON_TRANSLATION_ONLY
         Analyzer analyzer(log_file_suffix);
         #if STORE_MVD_DISTRIBUTION_LOG
-        analyzer.storeDistributionOfMv(foo, log_directory);
+        analyzer.storeDistributionOfMv(ctus, log_directory);
         analyzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
         #endif
         analyzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image), time);
 #if STORE_MERGE_LOG
-        analyzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
+        analyzer.storeMergeMvLog(ctus, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
 #endif
 #else
-        Analyzer analyzer(foo, log_directory, log_file_suffix, target_image, p_image, pells, residuals, block_size_x, block_size_y);
+        Analyzer analyzer(ctus, log_directory, log_file_suffix, target_image, p_image, pells, residuals, block_size_x, block_size_y);
 #if STORE_MVD_DISTRIBUTION_LOG
         analyzer.storeDistributionOfMv();
         analyzer.storeMarkdownFile(getPSNR(target_image, p_image) , log_directory);
@@ -385,7 +385,7 @@ void run(std::string config_name) {
         analyzer.storeLog();
         analyzer.storeCsvFileWithStream(ofs, getPSNR(target_image, p_image, rect), time); // WARNING: こいつはstoreDistributionOfMv以降で呼ばないといけない
 #if STORE_MERGE_LOG
-        analyzer.storeMergeMvLog(foo, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
+        analyzer.storeMergeMvLog(ctus, log_directory + "/log" + log_file_suffix + "/merge_log_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".txt");
 #endif
 
 #endif
@@ -394,16 +394,16 @@ void run(std::string config_name) {
 #if STORE_IMG_LOG
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", p_image);
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_residual_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", getResidualImage(target_image, p_image, 4));
-            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", triangle_division.getMvImage(foo));
+            cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mv_image_" + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", triangle_division.getMvImage(ctus));
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_mode_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", color);
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_patch_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", recon);
             cv::imwrite( log_directory + "/log" + log_file_suffix + "/p_merge_image_"  + std::to_string(qp) + "_divide_" + std::to_string(division_steps) + out_file_suffix + ".png", merge_color);
 #endif
 
-        for(int i = 0 ; i < foo.size() ; i++) {
-            delete foo[i];
+        for(int i = 0 ; i < ctus.size() ; i++) {
+            delete ctus[i];
         }
-        std::vector<CodingTreeUnit *>().swap(foo);
+        std::vector<CodingTreeUnit *>().swap(ctus);
 
         previous_qp = qp;
 
