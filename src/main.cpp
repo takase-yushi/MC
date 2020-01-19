@@ -65,6 +65,8 @@ std::vector<double> residuals;
 
 std::vector<int> divide_flags;
 
+std::vector<CodingTreeUnit *> ctus;
+
 void storeNewtonLogs(std::string logDirectoryPath);
 
 int main(int argc, char *argv[]){
