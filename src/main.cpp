@@ -274,6 +274,11 @@ void run(std::string config_name) {
             ctus[i]->y_greater_1_flag.resize(3);
             ctus[i]->x_sign_flag.resize(3);
             ctus[i]->y_sign_flag.resize(3);
+
+            ctus[i]->top_left_x     = std::min({init_triangles[i].first.p1.x, init_triangles[i].first.p2.x, init_triangles[i].first.p3.x});
+            ctus[i]->top_left_y     = std::min({init_triangles[i].first.p1.y, init_triangles[i].first.p2.y, init_triangles[i].first.p3.y});
+            ctus[i]->bottom_right_x = std::max({init_triangles[i].first.p1.x, init_triangles[i].first.p2.x, init_triangles[i].first.p3.x});
+            ctus[i]->bottom_right_y = std::max({init_triangles[i].first.p1.y, init_triangles[i].first.p2.y, init_triangles[i].first.p3.y});
         }
 
         cv::Mat spatialMvTestImage;
