@@ -1582,6 +1582,101 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 ctu->code_length = 1;
                 ctu->translation_flag = previous_ctu->translation_flag;
 
+                // 四角形で最小化する
+                Triangle t = triangles[triangle_index - 1].first;
+                Point3Vec ref_coordinates(corners[t.p1_idx], corners[t.p2_idx], corners[t.p3_idx]);
+                cv::Point2f dummy_init_vector(-1000, -1000);
+                std::vector<cv::Point2f> new_warping_v;
+                cv::Point2f new_translation_v;
+                double new_translation_residual, new_warping_residual;
+                std::tie(new_warping_v, new_translation_v, new_warping_residual, new_translation_residual, std::ignore) = GaussNewtonForSquare(ref_images, target_images, expand_images, ref_coordinates, dummy_init_vector, ref_hevc);
+                cv::Point2f collocated(0,0);
+
+                cv::Point2f pp1 = corners[t.p1_idx];
+                cv::Point2f pp2 = corners[t.p2_idx];
+                cv::Point2f pp3 = corners[t.p3_idx];
+                cv::Point2f pp4(corners[t.p2_idx].x, corners[t.p3_idx].y);
+
+                std::vector<cv::Point2f> pixels = getPixelsInSquare(pp1, pp2, pp3, pp4);
+
+                double tmp_cost_translation, tmp_cost_warping;
+                double tmp_code_length_translation, tmp_code_length_warping;
+                std::vector<cv::Point2f> mvds_translation, mvds_warping;
+                int tmp_selected_idx_translation, tmp_selected_idx_warpnig;
+                MV_CODE_METHOD tmp_translation_method, tmp_warping_method;
+                FlagsCodeSum tmp_flags_code_sum_translation, tmp_flags_code_sum_warping;
+                std::vector<bool> tmp_share_flag_translation, tmp_share_flag_warping;
+
+                std::tie(tmp_cost_translation, tmp_code_length_translation, mvds_translation, tmp_selected_idx_translation, tmp_translation_method, tmp_flags_code_sum_translation, tmp_share_flag_translation) = getMVD({new_translation_v,new_translation_v,new_translation_v}, new_translation_residual, triangle_index - 1, collocated, {}, previous_ctu, true, pixels);
+                std::tie(tmp_cost_warping, tmp_code_length_warping, mvds_warping, tmp_selected_idx_warpnig, tmp_warping_method, tmp_flags_code_sum_warping, tmp_share_flag_warping) = getMVD(new_warping_v, new_warping_residual, triangle_index - 1, collocated, {}, previous_ctu, false, pixels);
+
+                triangle_gauss_results[triangle_index - 1].mv_warping = new_warping_v;
+                triangle_gauss_results[triangle_index - 1].mv_translation = new_translation_v;
+                triangle_gauss_results[triangle_index - 1].original_mv_warping = new_warping_v;
+                triangle_gauss_results[triangle_index - 1].original_mv_translation = new_translation_v;
+                triangle_gauss_results[triangle_index - 1].residual_warping = new_warping_residual;
+                triangle_gauss_results[triangle_index - 1].residual_translation = new_translation_residual;
+
+                if (tmp_cost_translation < tmp_cost_warping){
+                    previous_ctu->translation_flag = true;
+                    previous_ctu->code_length = tmp_code_length_translation;
+                    previous_ctu->method = tmp_translation_method;
+                    previous_ctu->flags_code_sum = tmp_flags_code_sum_translation;
+                    previous_ctu->ref_triangle_idx = selected_index_translation;
+                    previous_ctu->share_flag[0] = share_flag_translation[0];
+                    previous_ctu->share_flag[1] = share_flag_translation[1];
+                    previous_ctu->share_flag[2] = share_flag_translation[2];
+
+                    if(tmp_translation_method == SPATIAL) {
+                        previous_ctu->mv1 = new_translation_v;
+                        previous_ctu->mv2 = new_translation_v;
+                        previous_ctu->mv3 = new_translation_v;
+                        previous_ctu->original_mv1 = new_translation_v;
+                        previous_ctu->original_mv2 = new_translation_v;
+                        previous_ctu->original_mv3 = new_translation_v;
+
+                        previous_ctu->mvds.clear();
+                        previous_ctu->mvds.emplace_back(mvds_translation[0]);
+                        previous_ctu->mvds.emplace_back(mvds_translation[0]);
+                        previous_ctu->mvds.emplace_back(mvds_translation[0]);
+                    }else if(tmp_translation_method == MERGE || tmp_translation_method == MERGE2){
+                        previous_ctu->mv1 = mvds_translation[0];
+                        previous_ctu->mv2 = mvds_translation[0];
+                        previous_ctu->mv3 = mvds_translation[0];
+
+                        triangle_gauss_results[triangle_index - 1].mv_translation = mvds_translation[0];
+                    }
+                }else{
+                    previous_ctu->translation_flag = false;
+                    previous_ctu->code_length = tmp_code_length_warping;
+                    previous_ctu->method = tmp_warping_method;
+                    previous_ctu->flags_code_sum = tmp_flags_code_sum_warping;
+                    previous_ctu->ref_triangle_idx = selected_index_warping;
+                    previous_ctu->share_flag[0] = share_flag_warping[0];
+                    previous_ctu->share_flag[1] = share_flag_warping[1];
+                    previous_ctu->share_flag[2] = share_flag_warping[2];
+                    previous_ctu->original_mv1 = new_warping_v[0];
+                    previous_ctu->original_mv2 = new_warping_v[1];
+                    previous_ctu->original_mv3 = new_warping_v[2];
+
+                    if(tmp_warping_method == SPATIAL) {
+                        previous_ctu->mv1 = new_warping_v[0];
+                        previous_ctu->mv2 = new_warping_v[1];
+                        previous_ctu->mv3 = new_warping_v[2];
+
+                        previous_ctu->mvds.clear();
+                        previous_ctu->mvds.emplace_back(mvds_warping[0]);
+                        previous_ctu->mvds.emplace_back(mvds_warping[1]);
+                        previous_ctu->mvds.emplace_back(mvds_warping[2]);
+                    }else if(tmp_warping_method == MERGE || tmp_warping_method == MERGE2){
+                        previous_ctu->mv1 = mvds_warping[0];
+                        previous_ctu->mv2 = mvds_warping[1];
+                        previous_ctu->mv3 = mvds_warping[2];
+
+                        triangle_gauss_results[triangle_index - 1].mv_warping = mvds_warping;
+                    }
+                }
+
                 if(previous_ctu->translation_flag){
                     triangle_gauss_results[triangle_index].mv_translation = triangle_gauss_results[triangle_index - 1].mv_translation;
                     triangle_gauss_results[triangle_index].original_mv_translation = triangle_gauss_results[triangle_index - 1].mv_translation;
