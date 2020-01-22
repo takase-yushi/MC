@@ -197,7 +197,6 @@ void Analyzer::square_CollectResults(CodingTreeUnit *ctu) {
         }
 
         if(ctu->method == MV_CODE_METHOD::MERGE2) {
-            std::cout << "MERGE2" << std::endl;
             int x_ = (int)abs(((ctu->mv1).x * 4));
             int y_ = (int)abs(((ctu->mv1).y * 4));
             MV_counter[x_]++;

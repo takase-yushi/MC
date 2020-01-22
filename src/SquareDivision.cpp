@@ -1588,6 +1588,8 @@ std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> SquareDivision
     std::vector<cv::Point2f> on_hold_translation_vectors;
 
     std::vector<int> reference_block_list;
+    cv::Point2f original_mv = square_gauss_results[square_idx].mv_warping[2];
+    cv::Point2f moved_p4 = original_mv + coordinate.p3 + coordinate.p2 - coordinate.p1;
 
     //平行移動とワーピングの動きベクトル
     for(i = 0 ; i < tmp_reference_block.size() ; i++) {
@@ -1602,8 +1604,8 @@ std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> SquareDivision
             cv::Point2f current_mv = square_gauss_results[reference_block_index].mv_translation;
             if ((current_mv.x + coordinate.p1.x < -SEARCH_RANGE || current_mv.y + coordinate.p1.y < -SEARCH_RANGE || current_mv.x + coordinate.p1.x > target_image.cols + SEARCH_RANGE - 1 || current_mv.y + coordinate.p1.y > target_image.rows + SEARCH_RANGE - 1) ||
                 (current_mv.x + coordinate.p2.x < -SEARCH_RANGE || current_mv.y + coordinate.p2.y < -SEARCH_RANGE || current_mv.x + coordinate.p2.x > target_image.cols + SEARCH_RANGE - 1 || current_mv.y + coordinate.p2.y > target_image.rows + SEARCH_RANGE - 1) ||
-                (current_mv.x + coordinate.p3.x < -SEARCH_RANGE || current_mv.y + coordinate.p3.y < -SEARCH_RANGE || current_mv.x + coordinate.p3.x > target_image.cols + SEARCH_RANGE - 1 || current_mv.y + coordinate.p3.y > target_image.rows + SEARCH_RANGE - 1) ||
-                (current_mv.x + coordinate.p4.x < -SEARCH_RANGE || current_mv.y + coordinate.p4.y < -SEARCH_RANGE || current_mv.x + coordinate.p4.x > target_image.cols + SEARCH_RANGE - 1 || current_mv.y + coordinate.p4.y > target_image.rows + SEARCH_RANGE - 1)) {
+                (original_mv.x + coordinate.p3.x < -SEARCH_RANGE || original_mv.y + coordinate.p3.y < -SEARCH_RANGE || original_mv.x + coordinate.p3.x > target_image.cols + SEARCH_RANGE - 1 || original_mv.y + coordinate.p3.y > target_image.rows + SEARCH_RANGE - 1) ||
+                (moved_p4.x < -SEARCH_RANGE || moved_p4.y < -SEARCH_RANGE || moved_p4.x > target_image.cols + SEARCH_RANGE - 1 || moved_p4.y > target_image.rows + SEARCH_RANGE - 1)) {
                 tmp_warping_merge_vectors.emplace_back();
                 is_in_flag[i] = false;
             }
@@ -1641,7 +1643,6 @@ std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> SquareDivision
             target_square_coordinates.emplace_back(pp2);
             target_square_coordinates.emplace_back(pp3);
             std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_square_coordinates, ref_mvs, target_square_coordinates);
-            cv::Point2f original_mv = square_gauss_results[square_idx].mv_warping[2];
             cv::Point2f p4 = pp3 + original_mv + pp2 + mvs[1] - pp1 - mvs[0]; //右下の頂点の変形後の座標
             if ((mvs[0].x + coordinate.p1.x < -SEARCH_RANGE || mvs[0].y + coordinate.p1.y < -SEARCH_RANGE || mvs[0].x + coordinate.p1.x > target_image.cols + SEARCH_RANGE - 1 || mvs[0].y + coordinate.p1.y > target_image.rows + SEARCH_RANGE - 1) ||
                 (mvs[1].x + coordinate.p2.x < -SEARCH_RANGE || mvs[1].y + coordinate.p2.y < -SEARCH_RANGE || mvs[1].x + coordinate.p2.x > target_image.cols + SEARCH_RANGE - 1 || mvs[1].y + coordinate.p2.y > target_image.rows + SEARCH_RANGE - 1) ||
@@ -2281,8 +2282,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 #if MERGE2_ENABLE
             warping_vectors = getMerge2SquareList(square_idx, coordinate);
             if (warping_vectors.size() < 5) {
-                if(-SEARCH_RANGE <= (coordinate.p3.x + (coordinate.p2.x - coordinate.p1.x)) && (coordinate.p3.x + (coordinate.p2.x - coordinate.p1.x)) <= (target_image.cols + SEARCH_RANGE - 1) &&
-                   -SEARCH_RANGE <= (coordinate.p3.y + (coordinate.p2.y - coordinate.p1.y)) && (coordinate.p3.y + (coordinate.p2.y - coordinate.p1.y)) <= (target_image.rows + SEARCH_RANGE - 1) ) {
+                cv::Point2f moved_p4 = coordinate.p3 + square_gauss_results[square_idx].mv_warping[2] + coordinate.p2 - coordinate.p1;
+                if((-SEARCH_RANGE <= (moved_p4.x) && (moved_p4.x) <= (target_image.cols + SEARCH_RANGE - 1)) && (-SEARCH_RANGE <= (moved_p4.y) && (moved_p4.y) <= (target_image.rows + SEARCH_RANGE - 1)) ) {
                     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> v;
                     v.emplace_back(cv::Point2f(0.0, 0.0), MERGE2);
                     v.emplace_back(cv::Point2f(0.0, 0.0), MERGE2);
@@ -2393,11 +2394,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 
                 // 各種フラグ分を(3*2)bit足してます
 
-//                std::cout << "square_index : " << square_idx << ", merge2";
                 double ret_residual = getSquareResidual_Mode(target_image, coordinate, mvs, pixels_in_square,
                                                                  ref_hevc, rect);
 
-//                std::cout << " end" << std::endl;
                 double rd = ret_residual + lambda * code_length;
 
                 std::vector<cv::Point2f> mvds{mvs[0], mvs[1], mvd};
@@ -2406,24 +2405,11 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
                     rd_min = rd;
                     result = {rd, code_length, mvds, i, warping_vectors[i][0].second, flag_code_sum, flags};
                 }
-//                    std::cout << "-- MERGE2 --, square_index : "  << square_idx << ", flag_code_sum : " << flag_code_sum.x_greater_0_flag[0] << std::endl;
             }
 #endif
         }
     }
 #endif
-//    std::cout << "===== getMVD ======" << std::endl << "square_idx : " << square_idx<< ", method : ";
-//    if(std::get<4>(result) == MV_CODE_METHOD::SPATIAL) {
-//        std::cout << "SPATIAL";
-//    } else if(std::get<4>(result) == MV_CODE_METHOD::MERGE) {
-//        std::cout << "MERGE";
-//    } else if(std::get<4>(result) == MV_CODE_METHOD::MERGE2) {
-//        std::cout << "MERGE2";
-//    } else {
-//        std::cout << "COLLOCATED";
-//    }
-//    if(std::get<4>(result) != MV_CODE_METHOD::MERGE) std::cout << ", flag_code_sum : " << std::get<5>(result).x_greater_0_flag[0];
-//    std::cout << std::endl;
 
     //4分割の判定の為にRDコスト(mode)を計算し直す
 
