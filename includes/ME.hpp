@@ -18,6 +18,7 @@ std::tuple<std::vector<cv::Point2f>, std::vector<double>> blockMatching(Point3Ve
 double getPredictedImage(unsigned char **expand_ref, cv::Mat& target_image, cv::Mat& output_image, Point3Vec& triangle, std::vector<cv::Point2f>& mv, int offset, std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, cv::Rect block_size, unsigned char *ref_hevc = nullptr);
 
 std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewton(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char *>>> expand_image, Point3Vec target_corners, const std::vector<std::vector<int>> &area_flag, int triangle_index, CodingTreeUnit *ctu, int block_size_x, int block_size_y, cv::Point2f init_vector, unsigned char *ref_hevc = nullptr);
+std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewtonForSquare(std::vector<std::vector<cv::Mat>> ref_images, std::vector<std::vector<cv::Mat>> target_images, std::vector<std::vector<std::vector<unsigned char *>>> expand_image, Point3Vec target_corners, cv::Point2f init_vector, unsigned char *ref_hevc);
 
 double bicubic_weight(double x);
 int bicubic_interpolation(unsigned char **img, double x, double y);
