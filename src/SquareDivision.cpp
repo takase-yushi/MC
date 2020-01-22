@@ -2435,8 +2435,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 #if MERGE2_ENABLE
             warping_vectors = getMerge2SquareList(square_idx, coordinate);
             if (warping_vectors.size() < 5) {
-                if(-SEARCH_RANGE <= (coordinate.p3.x + square_gauss_results[square_idx].mv_warping[2].x + (coordinate.p2.x - coordinate.p1.x)) && (coordinate.p3.x + square_gauss_results[square_idx].mv_warping[2].x + (coordinate.p2.x - coordinate.p1.x)) <= (target_image.cols + SEARCH_RANGE - 1) &&
-                   -SEARCH_RANGE <= (coordinate.p3.y + square_gauss_results[square_idx].mv_warping[2].y + (coordinate.p2.y - coordinate.p1.y)) && (coordinate.p3.y + square_gauss_results[square_idx].mv_warping[2].y + (coordinate.p2.y - coordinate.p1.y)) <= (target_image.rows + SEARCH_RANGE - 1) ) {
+                cv::Point2f moved_p4 = coordinate.p3 + square_gauss_results[square_idx].mv_warping[2] + coordinate.p2 - coordinate.p1;
+                if((-SEARCH_RANGE <= (moved_p4.x) && (moved_p4.x) <= (target_image.cols + SEARCH_RANGE - 1)) && (-SEARCH_RANGE <= (moved_p4.y) && (moved_p4.y) <= (target_image.rows + SEARCH_RANGE - 1)) ) {
                     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> v;
                     v.emplace_back(cv::Point2f(0.0, 0.0), MERGE2);
                     v.emplace_back(cv::Point2f(0.0, 0.0), MERGE2);
