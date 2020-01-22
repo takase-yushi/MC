@@ -649,18 +649,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
             std::tie(cost_warping, code_length_warping, mvd_warping, selected_index_warping, method_warping, flag_code_sum_warping, flag_result_warping) = getMVD(
                     gauss_result_warping, error_warping,
                     square_index, square_number, cmt->mv1, false, dummy, steps);
-//            std::cout << "square_index : " << square_index << ", method : ";
-//            if(method_warping == MV_CODE_METHOD::SPATIAL) {
-//                std::cout << "SPATIAL";
-//            } else if(method_warping == MV_CODE_METHOD::MERGE) {
-//                std::cout << "MERGE";
-//            } else if(method_warping == MV_CODE_METHOD::MERGE2) {
-//                std::cout << "MERGE2";
-//            } else {
-//                std::cout << "COLLOCATED";
-//            }
-//            if(method_warping != MV_CODE_METHOD::MERGE) std::cout << ", flags_code_sum_warping : " << flag_code_sum_warping.x_greater_0_flag[0];
-//            std::cout << std::endl;
 #endif
             if (cost_translation < cost_warping || (steps < warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY) {
                 cost_before_subdiv = cost_translation;
@@ -680,18 +668,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
                 selected_index = selected_index_warping;
                 method_flag = method_warping;
                 flag_code_sum = flag_code_sum_warping;
-//                std::cout << "square_index : " << square_index << ", method : ";
-//                if(method_flag == MV_CODE_METHOD::SPATIAL) {
-//                    std::cout << "SPATIAL";
-//                } else if(method_flag == MV_CODE_METHOD::MERGE) {
-//                    std::cout << "MERGE";
-//                } else if(method_flag == MV_CODE_METHOD::MERGE2) {
-//                    std::cout << "MERGE2";
-//                } else {
-//                    std::cout << "COLLOCATED";
-//                }
-//                if(method_flag != MV_CODE_METHOD::MERGE) std::cout << ", flags_code_sum : " << flag_code_sum.x_greater_0_flag[0];
-//                std::cout << std::endl;
                 flag_result = flag_result_warping;
                 square_gauss_results[square_index].translation_flag = false;
                 square_gauss_results[square_index].method = method_warping;
@@ -748,9 +724,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
                     gauss_result_warping, error_warping,
                     square_index, square_number, cmt->mv1, false, dummy, steps);
 #endif
-//            std::cout << "cost_translation : " << cost_translation << ", cost_warping : " << cost_warping;
             if(cost_translation < cost_warping || (steps < warping_limit)|| GAUSS_NEWTON_TRANSLATION_ONLY){
-//                std::cout << ", translation, " << (method_translation ? "MERGE" : "SPATIAL") << std::endl;
                 cost_before_subdiv = cost_translation;
                 code_length = code_length_translation;
                 mvd = mvd_translation;
@@ -762,7 +736,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
                 square_gauss_results[square_index].method = method_translation;
                 translation_flag = true;
             }else{
-//                std::cout << ", warping    , " << (method_warping ? "MERGE" : "SPATIAL") << std::endl;
                 cost_before_subdiv = cost_warping;
                 code_length = code_length_warping;
                 mvd = mvd_warping;
@@ -801,20 +774,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
             square_gauss_results[square_index].method = method_flag;
         }
     }
-//    if(square_index == 60) {
-//        std::cout << "translation_flag : " << translation_flag << ", method : ";
-//        if(method_flag == MV_CODE_METHOD::SPATIAL) {
-//            std::cout << "SPATIAL";
-//        } else if(method_flag == MV_CODE_METHOD::MERGE) {
-//            std::cout << "MERGE";
-//        } else if(method_flag == MV_CODE_METHOD::MERGE2) {
-//            std::cout << "MERGE2";
-//        } else {
-//            std::cout << "COLLOCATED";
-//        }
-//        std::cout << std::endl;
-//        std::cout << "flags_code_sum : " << flag_code_sum.x_greater_0_flag[0] << std::endl;
-//    }
 
     if(method_flag == MV_CODE_METHOD::MERGE) {
         //マージの時はマージ先のベクトルを入れる
@@ -917,7 +876,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
     isCodedSquare[square_index] = false;
 
     int square_indexes[] = {(int)squares.size() - 4, (int)squares.size() - 3, (int)squares.size() - 2, (int)squares.size() - 1};
-//    std::cout << "reference_block_list.size = " << reference_block_list.size() << std::endl;
 
     //分割後の隣接ブロックを入れる
     for (int j = 0; j < (int) subdiv_target_squares.size(); j++) {
@@ -985,7 +943,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
                     mv_warping, error_warping,
                     square_indexes[j], j, cmts[j]->mv1, false, dummy, steps - 2);
 #endif
-//            std::cout << "cost_translation_tmp : " << cost_translation_tmp << ", cost_warping_tmp : " << cost_warping_tmp << std::endl;
 
             mvd.clear();
             if(cost_translation < cost_warping || (steps - 2 < warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY){
@@ -1441,8 +1398,6 @@ std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> SquareDivision
         tmp_reference_block.emplace_back(covered_square[reference_vertexes[i]]);
     }
 
-//    std::cout << "reference_block_size : " << reference_block.size() << ", ";
-
     std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> warping_vectors;
     std::vector<std::vector<cv::Point2f>> tmp_warping_merge_vectors;
     //参照可能候補に入れるかどうかを判定する配列
@@ -1623,7 +1578,6 @@ std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> SquareDivision
         tmp_reference_block.emplace_back(covered_square[reference_vertexes[i]]);
     }
 
-//    std::cout << "reference_block_size : " << reference_block.size() << ", ";
 
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors;
     std::vector<cv::Point2f> tmp_merge_vectors;
@@ -2322,7 +2276,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
                           Flags()};
             }
             merge_count++;
-            if (PRED_MODE == NEWTON) {
+        }
+        if (PRED_MODE == NEWTON) {
 #if MERGE2_ENABLE
             warping_vectors = getMerge2SquareList(square_idx, coordinate);
             if (warping_vectors.size() < 5) {
@@ -2345,112 +2300,115 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
                 FlagsCodeSum flag_code_sum(0, 0, 0, 0);
                 Flags flags;
 
-                    cv::Point2f mvd = mvs[2] - mvs[3];
+                cv::Point2f mvd = mvs[2] - mvs[3];
 #if MVD_DEBUG_LOG
-                    std::cout << "target_vector_idx       :" << i << std::endl;
-                    std::cout << "diff_target_mv(translation):" << current_mv << std::endl;
-                    std::cout << "encode_mv(translation)     :" << mv[0] << std::endl;
+                std::cout << "target_vector_idx       :" << i << std::endl;
+                std::cout << "diff_target_mv(translation):" << current_mv << std::endl;
+                std::cout << "encode_mv(translation)     :" << mv[0] << std::endl;
 #endif
-                    mvd = getQuantizedMv(mvd, 4);
+                mvd = getQuantizedMv(mvd, 4);
 
-                    // 正負の判定(使ってません！！！)
-                    bool is_x_minus = mvd.x < 0;
-                    bool is_y_minus = mvd.y < 0;
+                // 正負の判定(使ってません！！！)
+                bool is_x_minus = mvd.x < 0;
+                bool is_y_minus = mvd.y < 0;
 
-                    flags.x_sign_flag.emplace_back(is_x_minus);
-                    flags.y_sign_flag.emplace_back(is_y_minus);
+                flags.x_sign_flag.emplace_back(is_x_minus);
+                flags.y_sign_flag.emplace_back(is_y_minus);
 
 #if MVD_DEBUG_LOG
-                    std::cout << "mvd(translation)           :" << mvd << std::endl;
+                std::cout << "mvd(translation)           :" << mvd << std::endl;
 #endif
-                    mvd.x = std::fabs(mvd.x);
-                    mvd.y = std::fabs(mvd.y);
+                mvd.x = std::fabs(mvd.x);
+                mvd.y = std::fabs(mvd.y);
 
-                    mvd *= 4;
-                    int abs_x = mvd.x;
-                    int abs_y = mvd.y;
+                mvd *= 4;
+                int abs_x = mvd.x;
+                int abs_y = mvd.y;
 #if MVD_DEBUG_LOG
-                    std::cout << "4 * mvd(translation)       :" << mvd << std::endl;
+                std::cout << "4 * mvd(translation)       :" << mvd << std::endl;
 #endif
 
-                    // 動きベクトル差分の絶対値が0より大きいのか？
-                    bool is_x_greater_than_zero = abs_x > 0;
-                    bool is_y_greater_than_zero = abs_y > 0;
+                // 動きベクトル差分の絶対値が0より大きいのか？
+                bool is_x_greater_than_zero = abs_x > 0;
+                bool is_y_greater_than_zero = abs_y > 0;
 
-                    flags.x_greater_0_flag.emplace_back(is_x_greater_than_zero);
-                    flags.y_greater_0_flag.emplace_back(is_y_greater_than_zero);
+                flags.x_greater_0_flag.emplace_back(is_x_greater_than_zero);
+                flags.y_greater_0_flag.emplace_back(is_y_greater_than_zero);
 
-                    flag_code_sum.countGreater0Code();
-                    flag_code_sum.countGreater0Code();
-                    flag_code_sum.setXGreater0Flag(is_x_greater_than_zero);
-                    flag_code_sum.setYGreater0Flag(is_y_greater_than_zero);
+                flag_code_sum.countGreater0Code();
+                flag_code_sum.countGreater0Code();
+                flag_code_sum.setXGreater0Flag(is_x_greater_than_zero);
+                flag_code_sum.setYGreater0Flag(is_y_greater_than_zero);
 
-                    // 動きベクトル差分の絶対値が1より大きいのか？
-                    bool is_x_greater_than_one = abs_x > 1;
-                    bool is_y_greater_than_one = abs_y > 1;
+                // 動きベクトル差分の絶対値が1より大きいのか？
+                bool is_x_greater_than_one = abs_x > 1;
+                bool is_y_greater_than_one = abs_y > 1;
 
-                    flags.x_greater_1_flag.emplace_back(is_x_greater_than_one);
-                    flags.y_greater_1_flag.emplace_back(is_y_greater_than_one);
+                flags.x_greater_1_flag.emplace_back(is_x_greater_than_one);
+                flags.y_greater_1_flag.emplace_back(is_y_greater_than_one);
 
-                    //greater_than_zeroのフラグ
-                    int mvd_code_length = 2;
-                    if (is_x_greater_than_zero) {
-                        // sign flag
-                        mvd_code_length++;
-                        //greater_than_oneのフラグ
-                        mvd_code_length++;
+                //greater_than_zeroのフラグ
+                int mvd_code_length = 2;
+                if (is_x_greater_than_zero) {
+                    // sign flag
+                    mvd_code_length++;
+                    //greater_than_oneのフラグ
+                    mvd_code_length++;
 
-                        if (is_x_greater_than_one) {
-                            int mvd_x_minus_2 = mvd.x - 2.0;
-                            mvd.x -= 2.0;
-                            mvd_code_length += getExponentialGolombCodeLength((int) mvd_x_minus_2, 0);
-                            flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_x_minus_2, 0));
-                        }
-
-                        flag_code_sum.countGreater1Code();
-                        flag_code_sum.setXGreater1Flag(is_x_greater_than_one);
-                        flag_code_sum.countSignFlagCode();
+                    if (is_x_greater_than_one) {
+                        int mvd_x_minus_2 = mvd.x - 2.0;
+                           mvd.x -= 2.0;
+                           mvd_code_length += getExponentialGolombCodeLength((int) mvd_x_minus_2, 0);
+                           flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_x_minus_2, 0));
                     }
 
-                    if (is_y_greater_than_zero) {
-                        // sign flag
-                        mvd_code_length++;
-                        //greater_than_oneのフラグ
-                        mvd_code_length++;
+                    flag_code_sum.countGreater1Code();
+                    flag_code_sum.setXGreater1Flag(is_x_greater_than_one);
+                    flag_code_sum.countSignFlagCode();
+                }
 
-                        if (is_y_greater_than_one) {
-                            int mvd_y_minus_2 = mvd.y - 2.0;
-                            mvd.y -= 2.0;
-                            mvd_code_length += getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
-                            flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_y_minus_2, 0));
-                        }
+                if (is_y_greater_than_zero) {
+                    // sign flag
+                    mvd_code_length++;
+                    //greater_than_oneのフラグ
+                    mvd_code_length++;
 
-                        flag_code_sum.countGreater1Code();
-                        flag_code_sum.setYGreater1Flag(is_y_greater_than_one);
-                        flag_code_sum.countSignFlagCode();
+                    if (is_y_greater_than_one) {
+                        int mvd_y_minus_2 = mvd.y - 2.0;
+                        mvd.y -= 2.0;
+                        mvd_code_length += getExponentialGolombCodeLength((int) mvd_y_minus_2, 0);
+                        flag_code_sum.addMvdCodeLength(getExponentialGolombCodeLength((int) mvd_y_minus_2, 0));
                     }
+
+                    flag_code_sum.countGreater1Code();
+                    flag_code_sum.setYGreater1Flag(is_y_greater_than_one);
+                       flag_code_sum.countSignFlagCode();
+                }
 
 //            std::cout << "mvd_code_length" << mvd_code_length << std::endl;
 
-                    // 参照箇所符号化
-                    int reference_index_code_length = getUnaryCodeLength(i);
-                    int code_length = mvd_code_length + reference_index_code_length + flags_code;
+                // 参照箇所符号化
+                int reference_index_code_length = getUnaryCodeLength(i);
+                int code_length = mvd_code_length + reference_index_code_length + flags_code;
 
-                    // 各種フラグ分を(3*2)bit足してます
-                    double ret_residual = getSquareResidual_Mode(target_image, coordinate, mvs, pixels_in_square,
+                // 各種フラグ分を(3*2)bit足してます
+
+//                std::cout << "square_index : " << square_idx << ", merge2";
+                double ret_residual = getSquareResidual_Mode(target_image, coordinate, mvs, pixels_in_square,
                                                                  ref_hevc, rect);
-                    double rd = ret_residual + lambda * code_length;
 
-                    std::vector<cv::Point2f> mvds{mvs[0], mvs[1], mvd};
-                    // 結果に入れる
-                    if (rd < rd_min) {
-                        rd_min = rd;
-                        result = {rd, code_length, mvds, i, warping_vectors[i][0].second, flag_code_sum, flags};
-                    }
-                    std::cout << "-- MERGE2 --, square_index : "  << square_idx << ", flag_code_sum : " << flag_code_sum.x_greater_0_flag[0] << std::endl;
+//                std::cout << " end" << std::endl;
+                double rd = ret_residual + lambda * code_length;
+
+                std::vector<cv::Point2f> mvds{mvs[0], mvs[1], mvd};
+                // 結果に入れる
+                if (rd < rd_min) {
+                    rd_min = rd;
+                    result = {rd, code_length, mvds, i, warping_vectors[i][0].second, flag_code_sum, flags};
                 }
-#endif
+//                    std::cout << "-- MERGE2 --, square_index : "  << square_idx << ", flag_code_sum : " << flag_code_sum.x_greater_0_flag[0] << std::endl;
             }
+#endif
         }
     }
 #endif
