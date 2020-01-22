@@ -649,18 +649,18 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
             std::tie(cost_warping, code_length_warping, mvd_warping, selected_index_warping, method_warping, flag_code_sum_warping, flag_result_warping) = getMVD(
                     gauss_result_warping, error_warping,
                     square_index, square_number, cmt->mv1, false, dummy, steps);
-            std::cout << "square_index : " << square_index << ", method : ";
-            if(method_warping == MV_CODE_METHOD::SPATIAL) {
-                std::cout << "SPATIAL";
-            } else if(method_warping == MV_CODE_METHOD::MERGE) {
-                std::cout << "MERGE";
-            } else if(method_warping == MV_CODE_METHOD::MERGE2) {
-                std::cout << "MERGE2";
-            } else {
-                std::cout << "COLLOCATED";
-            }
-            if(method_warping != MV_CODE_METHOD::MERGE) std::cout << ", flags_code_sum_warping : " << flag_code_sum_warping.x_greater_0_flag[0];
-            std::cout << std::endl;
+//            std::cout << "square_index : " << square_index << ", method : ";
+//            if(method_warping == MV_CODE_METHOD::SPATIAL) {
+//                std::cout << "SPATIAL";
+//            } else if(method_warping == MV_CODE_METHOD::MERGE) {
+//                std::cout << "MERGE";
+//            } else if(method_warping == MV_CODE_METHOD::MERGE2) {
+//                std::cout << "MERGE2";
+//            } else {
+//                std::cout << "COLLOCATED";
+//            }
+//            if(method_warping != MV_CODE_METHOD::MERGE) std::cout << ", flags_code_sum_warping : " << flag_code_sum_warping.x_greater_0_flag[0];
+//            std::cout << std::endl;
 #endif
             if (cost_translation < cost_warping || (steps < warping_limit) || GAUSS_NEWTON_TRANSLATION_ONLY) {
                 cost_before_subdiv = cost_translation;
@@ -680,18 +680,18 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
                 selected_index = selected_index_warping;
                 method_flag = method_warping;
                 flag_code_sum = flag_code_sum_warping;
-                std::cout << "square_index : " << square_index << ", method : ";
-                if(method_flag == MV_CODE_METHOD::SPATIAL) {
-                    std::cout << "SPATIAL";
-                } else if(method_flag == MV_CODE_METHOD::MERGE) {
-                    std::cout << "MERGE";
-                } else if(method_flag == MV_CODE_METHOD::MERGE2) {
-                    std::cout << "MERGE2";
-                } else {
-                    std::cout << "COLLOCATED";
-                }
-                if(method_flag != MV_CODE_METHOD::MERGE) std::cout << ", flags_code_sum : " << flag_code_sum.x_greater_0_flag[0];
-                std::cout << std::endl;
+//                std::cout << "square_index : " << square_index << ", method : ";
+//                if(method_flag == MV_CODE_METHOD::SPATIAL) {
+//                    std::cout << "SPATIAL";
+//                } else if(method_flag == MV_CODE_METHOD::MERGE) {
+//                    std::cout << "MERGE";
+//                } else if(method_flag == MV_CODE_METHOD::MERGE2) {
+//                    std::cout << "MERGE2";
+//                } else {
+//                    std::cout << "COLLOCATED";
+//                }
+//                if(method_flag != MV_CODE_METHOD::MERGE) std::cout << ", flags_code_sum : " << flag_code_sum.x_greater_0_flag[0];
+//                std::cout << std::endl;
                 flag_result = flag_result_warping;
                 square_gauss_results[square_index].translation_flag = false;
                 square_gauss_results[square_index].method = method_warping;
@@ -801,20 +801,20 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
             square_gauss_results[square_index].method = method_flag;
         }
     }
-    if(square_index == 60) {
-        std::cout << "translation_flag : " << translation_flag << ", method : ";
-        if(method_flag == MV_CODE_METHOD::SPATIAL) {
-            std::cout << "SPATIAL";
-        } else if(method_flag == MV_CODE_METHOD::MERGE) {
-            std::cout << "MERGE";
-        } else if(method_flag == MV_CODE_METHOD::MERGE2) {
-            std::cout << "MERGE2";
-        } else {
-            std::cout << "COLLOCATED";
-        }
-        std::cout << std::endl;
-        std::cout << "flags_code_sum : " << flag_code_sum.x_greater_0_flag[0] << std::endl;
-    }
+//    if(square_index == 60) {
+//        std::cout << "translation_flag : " << translation_flag << ", method : ";
+//        if(method_flag == MV_CODE_METHOD::SPATIAL) {
+//            std::cout << "SPATIAL";
+//        } else if(method_flag == MV_CODE_METHOD::MERGE) {
+//            std::cout << "MERGE";
+//        } else if(method_flag == MV_CODE_METHOD::MERGE2) {
+//            std::cout << "MERGE2";
+//        } else {
+//            std::cout << "COLLOCATED";
+//        }
+//        std::cout << std::endl;
+//        std::cout << "flags_code_sum : " << flag_code_sum.x_greater_0_flag[0] << std::endl;
+//    }
 
     if(method_flag == MV_CODE_METHOD::MERGE) {
         //マージの時はマージ先のベクトルを入れる
@@ -2444,25 +2444,25 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
                         rd_min = rd;
                         result = {rd, code_length, mvds, i, warping_vectors[i][0].second, flag_code_sum, flags};
                     }
-                    std::cout << "-- MERGE2 --" << ", flag_code_sum : " << flag_code_sum.x_greater_0_flag[0] << std::endl;
+                    std::cout << "-- MERGE2 --, square_index : "  << square_idx << ", flag_code_sum : " << flag_code_sum.x_greater_0_flag[0] << std::endl;
                 }
 #endif
             }
         }
     }
 #endif
-    std::cout << "===== getMVD ======" << std::endl << "square_idx : " << square_idx<< ", method : ";
-    if(std::get<4>(result) == MV_CODE_METHOD::SPATIAL) {
-        std::cout << "SPATIAL";
-    } else if(std::get<4>(result) == MV_CODE_METHOD::MERGE) {
-        std::cout << "MERGE";
-    } else if(std::get<4>(result) == MV_CODE_METHOD::MERGE2) {
-        std::cout << "MERGE2";
-    } else {
-        std::cout << "COLLOCATED";
-    }
-    if(std::get<4>(result) != MV_CODE_METHOD::MERGE) std::cout << ", flag_code_sum : " << std::get<5>(result).x_greater_0_flag[0];
-    std::cout << std::endl;
+//    std::cout << "===== getMVD ======" << std::endl << "square_idx : " << square_idx<< ", method : ";
+//    if(std::get<4>(result) == MV_CODE_METHOD::SPATIAL) {
+//        std::cout << "SPATIAL";
+//    } else if(std::get<4>(result) == MV_CODE_METHOD::MERGE) {
+//        std::cout << "MERGE";
+//    } else if(std::get<4>(result) == MV_CODE_METHOD::MERGE2) {
+//        std::cout << "MERGE2";
+//    } else {
+//        std::cout << "COLLOCATED";
+//    }
+//    if(std::get<4>(result) != MV_CODE_METHOD::MERGE) std::cout << ", flag_code_sum : " << std::get<5>(result).x_greater_0_flag[0];
+//    std::cout << std::endl;
 
     //4分割の判定の為にRDコスト(mode)を計算し直す
 
