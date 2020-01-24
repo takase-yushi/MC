@@ -192,10 +192,6 @@ void Analyzer::square_CollectResults(CodingTreeUnit *ctu) {
         code_sum += (ctu->code_length);
         patch_num++;
 
-        if(ctu->square_index == 60) {
-            std::cout << "60" << std::endl;
-        }
-
         if(ctu->method == MV_CODE_METHOD::MERGE2) {
             int x_ = (int)abs(((ctu->mv1).x * 4));
             int y_ = (int)abs(((ctu->mv1).y * 4));
