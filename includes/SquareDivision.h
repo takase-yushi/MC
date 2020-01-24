@@ -102,7 +102,8 @@ public:
     void addReferenceBlock(Point4Vec subdiv_target_square, int square_index);
     bool split(std::vector<std::vector<std::vector<unsigned char *>>> expand_images, CodingTreeUnit* ctu, CollocatedMvTree* cmt, Point4Vec square, int square_index, int square_number, int steps);
     std::tuple< std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>>, std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> > getSpatialSquareList(int s_idx, bool translation_flag);
-    std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> getMergeSquareList(int s_idx, Point4Vec coordinate);
+    std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> getTransMergeSquareList(int square_idx, Point4Vec coordinate);
+    std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> getAffineMergeSquareList(int s_idx, Point4Vec coordinate);
     std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> getMerge2SquareList(int square_idx, Point4Vec coordinate);
 //    cv::Point2f getCollocatedSquareList(CodingTreeUnit* unit);
     int getCtuCodeLength(std::vector<CodingTreeUnit*> ctus);
