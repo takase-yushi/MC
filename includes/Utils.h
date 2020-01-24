@@ -94,7 +94,7 @@ enum {
 /**
  * ガウス・ニュートン関連
  */
-#define PRED_MODE NEWTON
+#define PRED_MODE NEWTON //BMちゃんと動かない(マージが無い)
 #define GAUSS_NEWTON_TRANSLATION_ONLY false
 #define GAUSS_NEWTON_INIT_VECTOR false
 #define GAUSS_NEWTON_HEVC_IMAGE true
