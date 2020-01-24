@@ -1768,7 +1768,6 @@ std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> SquareDivision
             target_square_coordinates.emplace_back(pp2);
             target_square_coordinates.emplace_back(pp3);
             std::vector<cv::Point2f> mvs = getPredictedWarpingMv(ref_square_coordinates, ref_mvs, target_square_coordinates);
-            cv::Point2f original_mv = square_gauss_results[square_idx].mv_warping[2];
             cv::Point2f p4 = pp3 + original_mv + pp2 + mvs[1] - pp1 - mvs[0]; //右下の頂点の変形後の座標
             if ((mvs[0].x + coordinate.p1.x < -SEARCH_RANGE || mvs[0].y + coordinate.p1.y < -SEARCH_RANGE || mvs[0].x + coordinate.p1.x > target_image.cols + SEARCH_RANGE - 1 || mvs[0].y + coordinate.p1.y > target_image.rows + SEARCH_RANGE - 1) ||
                 (mvs[1].x + coordinate.p2.x < -SEARCH_RANGE || mvs[1].y + coordinate.p2.y < -SEARCH_RANGE || mvs[1].x + coordinate.p2.x > target_image.cols + SEARCH_RANGE - 1 || mvs[1].y + coordinate.p2.y > target_image.rows + SEARCH_RANGE - 1) ||
