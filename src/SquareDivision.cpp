@@ -1714,6 +1714,7 @@ std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> SquareDivision
 
     std::vector<int> reference_block_list;
     cv::Point2f original_mv = square_gauss_results[square_idx].mv_warping[2];
+    cv::Point2f moved_p4 = original_mv + coordinate.p3 + coordinate.p2 - coordinate.p1;
 
     //平行移動とワーピングの動きベクトル
     for(i = 0 ; i < tmp_reference_block.size() ; i++) {
@@ -1726,7 +1727,6 @@ std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> SquareDivision
         }
         if(square_gauss_results[reference_block_index].translation_flag) { //参照候補ブロックが平行移動の場合
             cv::Point2f current_mv = square_gauss_results[reference_block_index].mv_translation;
-            cv::Point2f moved_p4 = original_mv + coordinate.p3 + coordinate.p2 - coordinate.p1;
             if ((current_mv.x + coordinate.p1.x < -SEARCH_RANGE || current_mv.y + coordinate.p1.y < -SEARCH_RANGE || current_mv.x + coordinate.p1.x > target_image.cols + SEARCH_RANGE - 1 || current_mv.y + coordinate.p1.y > target_image.rows + SEARCH_RANGE - 1) ||
                 (current_mv.x + coordinate.p2.x < -SEARCH_RANGE || current_mv.y + coordinate.p2.y < -SEARCH_RANGE || current_mv.x + coordinate.p2.x > target_image.cols + SEARCH_RANGE - 1 || current_mv.y + coordinate.p2.y > target_image.rows + SEARCH_RANGE - 1) ||
                 (original_mv.x + coordinate.p3.x < -SEARCH_RANGE || original_mv.y + coordinate.p3.y < -SEARCH_RANGE || original_mv.x + coordinate.p3.x > target_image.cols + SEARCH_RANGE - 1 || original_mv.y + coordinate.p3.y > target_image.rows + SEARCH_RANGE - 1) ||
