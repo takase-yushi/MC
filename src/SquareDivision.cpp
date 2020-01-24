@@ -2012,10 +2012,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
         flags_code--;
     }
 
-    int diff_HEVC_BM_flag = 0;
-
-    if(PRED_MODE == BM) diff_HEVC_BM_flag = LESS_FLAGS;
-
     std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >> vectors;
     std::vector<std::vector<std::pair<cv::Point2f, MV_CODE_METHOD >>> warping_vectors;   // ベクトルとモードを表すフラグのペア
     // 空間予測と時間予測の候補を取り出す
@@ -2149,7 +2145,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 
             // 参照箇所符号化
             int reference_index_code_length = getUnaryCodeLength(i);
-            int code_length = mvd_code_length + reference_index_code_length + flags_code + diff_HEVC_BM_flag;
+            int code_length = mvd_code_length + reference_index_code_length + flags_code;
 
             // 各種フラグ分を(3*2)bit足してます
             double rd = residual + lambda * (code_length);
@@ -2289,15 +2285,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             pixels_in_square = pixels;
         }
 
-//        if(steps == 2) {
-//            //CU内部の四角形を参照できないように符号化済みフラグをfalseにする
-//            if (square_number != 4) {
-//                for (int i = 0; i < square_number; i++) {
-//                    isCodedSquare[square_idx - (i + 1)] = false;
-//                }
-//            }
-//        }
-
     if(translation_flag == false) {
         //マージ候補のリストを作成
         warping_vectors = getAffineMergeSquareList(square_idx, coordinate);
@@ -2310,15 +2297,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             warping_vectors.emplace_back(v);
         }
 
-//        if(steps == 2) {
-//            //マージ候補は作成できたので，符号化済みフラグをtrueにする
-//            if (square_number != 4) {
-//                for (int i = 0; i < square_number; i++) {
-//                    isCodedSquare[square_idx - (i + 1)] = true;
-//                }
-//            }
-//        }
-
         int merge_count = 0;
 
         cv::Rect rect(-SEARCH_RANGE * 4, -SEARCH_RANGE * 4, 4 * (target_image.cols + 2 * SEARCH_RANGE), 4 * (target_image.rows + 2 * SEARCH_RANGE));
@@ -2329,10 +2307,9 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             mvs.emplace_back(warping_vectors[i][1].first);
             mvs.emplace_back(warping_vectors[i][2].first);
 
-            double ret_residual = getSquareResidual_Mode(target_image, coordinate, mvs, pixels_in_square, ref_hevc,
-                                                         rect);
+            double ret_residual = getSquareResidual_Mode(target_image, coordinate, mvs, pixels_in_square, ref_hevc, rect);
             int code_length = getUnaryCodeLength(merge_count) + flags_code;
-            double rd = (ret_residual + lambda * code_length) * MERGE_ALPHA;
+            double rd = ret_residual + lambda * code_length;
             if (rd < rd_min) {
                 rd_min = rd;
                 result = {rd, code_length, mvs, merge_count, warping_vectors[i][0].second, FlagsCodeSum(0, 0, 0, 0),
@@ -2454,8 +2431,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 
                 // 各種フラグ分を(3*2)bit足してます
 
-                double ret_residual = getSquareResidual_Mode(target_image, coordinate, mvs, pixels_in_square,
-                                                                 ref_hevc, rect);
+                double ret_residual = getSquareResidual_Mode(target_image, coordinate, mvs, pixels_in_square, ref_hevc, rect);
 
                 double rd = ret_residual + lambda * code_length;
 
@@ -2495,7 +2471,7 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
             if(PRED_MODE == BM) ret_residual = getSquareResidual_Pred(target_image, coordinate, mvs, pixels_in_square, ref_hevc, rect);
             else ret_residual = getSquareResidual_Mode(target_image, coordinate, mvs, pixels_in_square, ref_hevc, rect);
             int code_length = getUnaryCodeLength(merge_count) + flags_code;
-            double rd = (ret_residual + lambda * code_length) * MERGE_ALPHA;
+            double rd = ret_residual + lambda * code_length;
             if(rd < rd_min) {
                 rd_min = rd;
                 result = {rd, code_length, mvs, merge_count, merge_vector.second, FlagsCodeSum(0, 0, 0, 0), Flags()};
@@ -2505,41 +2481,6 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
     }
 #endif
 
-    //4分割の判定の為にRDコスト(mode)を計算し直す
-
-#if SPLIT_USE_SSE
-    double RDCost;
-    lambda = getLambdaMode(qp);
-    if(method == MV_CODE_METHOD::MERGE){
-        if(translation_flag) {
-            double ret_residual = getSquareResidual_Mode(target_image, mvds, pixels_in_square, expansion_ref);
-            RDCost = ret_residual + lambda * code_length;
-        }else{
-            double ret_residual = getSquareResidual_Mode(target_image, mvds, pixels_in_square, expansion_ref);
-            RDCost = ret_residual + lambda * code_length;
-        }
-    }
-    else if(MV_CODE_METHOD::MERGE_Collocated) {
-        if(translation_flag) {
-            double ret_residual = getSquareResidual_Mode(target_image, mvds, pixels_in_square, expansion_ref);
-            RDCost = ret_residual + lambda * code_length;
-        }
-    }
-    else {
-        std::pair<cv::Point2f, MV_CODE_METHOD> vector = vectors[selected_idx];
-        cv::Point2f current_mv = vector.first;
-        // TODO: ワーピング対応
-        if (translation_flag) {
-            double ret_residual = getSquareResidual_Mode(target_image, {current_mv, current_mv, current_mv}, pixels_in_square, expansion_ref);
-            RDCost = ret_residual + lambda * code_length;
-        } else {
-            double ret_residual = getSquareResidual_Mode(target_image, {current_mv, current_mv, current_mv}, pixels_in_square, expansion_ref);
-            RDCost = ret_residual + lambda * code_length;
-        }
-    }
-
-    return {RDCost, code_length, mvds, selected_idx, method};
-#endif
     return result;
 }
 
@@ -2567,10 +2508,6 @@ double  SquareDivision::getRDCost(cv::Point2f mv, double residual, int square_id
     if(steps == 0) {
         flags_code--;
     }
-
-    int diff_HEVC_BM_flag = 0;
-
-    if(PRED_MODE == BM) diff_HEVC_BM_flag = LESS_FLAGS;
 
     if(!isMvExists(vectors, collocated_mv)) {
         vectors.emplace_back(collocated_mv, Collocated);
@@ -2639,7 +2576,7 @@ double  SquareDivision::getRDCost(cv::Point2f mv, double residual, int square_id
 
         // 参照箇所符号化
         int reference_index_code_length = getUnaryCodeLength(i);
-        int code_length = mvd_code_length + reference_index_code_length + flags_code + diff_HEVC_BM_flag;
+        int code_length = mvd_code_length + reference_index_code_length + flags_code;
 
         // 各種フラグ分を(3*2)bit足してます
         double rd = residual + lambda * code_length;

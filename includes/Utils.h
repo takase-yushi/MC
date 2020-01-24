@@ -109,7 +109,6 @@ enum {
 #define WARPING_COST_RATIO 1.0
 #define WARPING_LIMIT 2
 #define SPLIT_TO_USE 1    //0 : Triangle,    1: Square
-#define LESS_FLAGS 0
 
 /**
  * 各種モードのON/OFF
@@ -120,9 +119,7 @@ enum {
 #define COLLOCATED_ENABLE false
 #define INTRA_LIMIT_MODE false // イントラが選択されたらそれ以降は割らないモード
 #define RD_BLOCK_MATCHING true
-#define SPLIT_USE_SSE false
 #define BLOCKMATCHING_NEIGHBOR_PIXELS 1
-#define MERGE_ALPHA 1.0
 
 /**
  * ログファイル表示関連
