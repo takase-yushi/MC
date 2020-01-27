@@ -1195,13 +1195,17 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
             }
             triangle_gauss_results[triangle_index].translation_flag = false;
             translation_flag = false;
+
+            gauss_result_warping = triangle_gauss_results[triangle_index].mv_warping;
         }else{
             triangle_gauss_results[triangle_index].mv_translation = mvd_translation[0];
             triangle_gauss_results[triangle_index].mv_warping = mvd_warping;
+
+            gauss_result_translation = mvd_translation[0];
+            gauss_result_warping = mvd_warping;
         }
 
-        gauss_result_translation = mvd_translation[0];
-        gauss_result_warping = mvd_warping;
+
 #if DISPLAY_MERGE_LOG
         if(translation_flag){
             std::cout << "----- MERGE(translation) -----" << std::endl;
