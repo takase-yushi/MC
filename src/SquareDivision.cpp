@@ -781,10 +781,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
         gauss_result_warping = mvd;
         square_gauss_results[square_index].mv_translation = mvd[0];
         gauss_result_translation = mvd[0];
-        if((PRED_MODE == NEWTON) && (!GAUSS_NEWTON_TRANSLATION_ONLY) && (steps >= WARPING_LIMIT)) {
-            square_gauss_results[square_index].translation_flag = false;
-            translation_flag = false;
-        }
     } else if(method_flag == MV_CODE_METHOD::MERGE2) {
         square_gauss_results[square_index].mv_warping[0] = mvd[0];
         square_gauss_results[square_index].mv_warping[1] = mvd[1];
@@ -972,11 +968,6 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
         if(method_flags[j] == MV_CODE_METHOD::MERGE) {
             square_gauss_results[square_indexes[j]].mv_warping = mvd;
             square_gauss_results[square_indexes[j]].mv_translation = mvd[0];
-            //ワーピングを適用するブロックについてはマージはすべてワーピングになる
-            if((PRED_MODE == NEWTON) && (!GAUSS_NEWTON_TRANSLATION_ONLY) && (steps >= WARPING_LIMIT)) {
-                square_gauss_results[square_indexes[j]].translation_flag = false;
-                translation_flag = false;
-            }
         }
         else if(method_flags[j] == MV_CODE_METHOD::MERGE2) {
             square_gauss_results[square_indexes[j]].mv_warping[0] = mvd[0];
