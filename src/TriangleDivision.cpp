@@ -1607,8 +1607,8 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 FlagsCodeSum tmp_flags_code_sum_translation, tmp_flags_code_sum_warping;
                 std::vector<bool> tmp_share_flag_translation, tmp_share_flag_warping;
 
-                std::tie(tmp_cost_translation, tmp_code_length_translation, mvds_translation, tmp_selected_idx_translation, tmp_translation_method, tmp_flags_code_sum_translation, tmp_share_flag_translation) = getMVD({new_translation_v,new_translation_v,new_translation_v}, new_translation_residual, triangle_index - 1, collocated, {}, previous_ctu, true, pixels);
-                std::tie(tmp_cost_warping, tmp_code_length_warping, mvds_warping, tmp_selected_idx_warpnig, tmp_warping_method, tmp_flags_code_sum_warping, tmp_share_flag_warping) = getMVD(new_warping_v, new_warping_residual, triangle_index - 1, collocated, {}, previous_ctu, false, pixels);
+                std::tie(tmp_cost_translation, tmp_code_length_translation, mvds_translation, tmp_selected_idx_translation, tmp_translation_method, tmp_flags_code_sum_translation, tmp_share_flag_translation) = getMVD({new_translation_v,new_translation_v,new_translation_v}, new_translation_residual, triangle_index - 1, collocated, {}, previous_ctu, true, pixels, true);
+                std::tie(tmp_cost_warping, tmp_code_length_warping, mvds_warping, tmp_selected_idx_warpnig, tmp_warping_method, tmp_flags_code_sum_warping, tmp_share_flag_warping) = getMVD(new_warping_v, new_warping_residual, triangle_index - 1, collocated, {}, previous_ctu, false, pixels, true);
 
                 triangle_gauss_results[triangle_index - 1].mv_warping = new_warping_v;
                 triangle_gauss_results[triangle_index - 1].mv_translation = new_translation_v;
@@ -2199,7 +2199,7 @@ bool TriangleDivision::isMvExists(const std::vector<std::pair<cv::Point2f, MV_CO
  * @param[in] area_flag 含まれる画素のフラグ
  * @return 差分ベクトル，参照したパッチ，空間or時間のフラグのtuple
  */
-std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, std::vector<bool>> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels){
+std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, std::vector<bool>> TriangleDivision::getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, bool isSquare){
     // 空間予測と時間予測の候補を取り出す
     std::vector<int> spatial_triangles = getSpatialTriangleList(triangle_idx);
     int spatial_triangle_size = static_cast<int>(spatial_triangles.size());
@@ -2600,9 +2600,14 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
                 mvs.emplace_back(warping_vectors[i][1]);
                 mvs.emplace_back(warping_vectors[i][2]);
 
-                if(mvs[0].x + sx < -SEARCH_RANGE || mvs[0].y + sy < -SEARCH_RANGE || mvs[0].x + lx >= target_image.cols + SEARCH_RANGE  || mvs[0].y + ly>=target_image.rows + SEARCH_RANGE ) continue;
-                if(mvs[1].x + sx < -SEARCH_RANGE || mvs[1].y + sy < -SEARCH_RANGE || mvs[1].x + lx >= target_image.cols + SEARCH_RANGE  || mvs[1].y + ly>=target_image.rows + SEARCH_RANGE ) continue;
-                if(mvs[2].x + sx < -SEARCH_RANGE || mvs[2].y + sy < -SEARCH_RANGE || mvs[2].x + lx >= target_image.cols + SEARCH_RANGE  || mvs[2].y + ly>=target_image.rows + SEARCH_RANGE ) continue;
+                if(mvs[0].x + sx < -SEARCH_RANGE || mvs[0].y + sy < -SEARCH_RANGE || mvs[0].x + lx > target_image.cols - 1 + SEARCH_RANGE  || mvs[0].y + ly > target_image.rows - 1 + SEARCH_RANGE ) continue;
+                if(mvs[1].x + sx < -SEARCH_RANGE || mvs[1].y + sy < -SEARCH_RANGE || mvs[1].x + lx > target_image.cols - 1 + SEARCH_RANGE  || mvs[1].y + ly > target_image.rows - 1 + SEARCH_RANGE ) continue;
+                if(mvs[2].x + sx < -SEARCH_RANGE || mvs[2].y + sy < -SEARCH_RANGE || mvs[2].x + lx > target_image.cols - 1 + SEARCH_RANGE  || mvs[2].y + ly > target_image.rows - 1 + SEARCH_RANGE ) continue;
+
+                if(isSquare) {
+                    cv::Point2f pp4 = (coordinate.p2 + mvs[1]) + (coordinate.p3 + mvs[2]) - (coordinate.p1 + mvs[0]);
+                    if(pp4.x < -SEARCH_RANGE || pp4.y < -SEARCH_RANGE || pp4.x + lx > target_image.cols - 1 + SEARCH_RANGE  || pp4.y > target_image.rows - 1 + SEARCH_RANGE ) continue;
+                }
 
                 if (!isMvExists(warping_vector_history, mvs) && warping_vector_history.size() <= MV_LIST_MAX_NUM) {
                     double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
@@ -2646,9 +2651,14 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
                         }
                     }
 
-                    if(mvs[0].x + sx < -SEARCH_RANGE || mvs[0].y + sy < -SEARCH_RANGE || mvs[0].x + lx >= target_image.cols + SEARCH_RANGE  || mvs[0].y + ly>=target_image.rows + SEARCH_RANGE ) continue;
-                    if(mvs[1].x + sx < -SEARCH_RANGE || mvs[1].y + sy < -SEARCH_RANGE || mvs[1].x + lx >= target_image.cols + SEARCH_RANGE  || mvs[1].y + ly>=target_image.rows + SEARCH_RANGE ) continue;
-                    if(mvs[2].x + sx < -SEARCH_RANGE || mvs[2].y + sy < -SEARCH_RANGE || mvs[2].x + lx >= target_image.cols + SEARCH_RANGE  || mvs[2].y + ly>=target_image.rows + SEARCH_RANGE ) continue;
+                    if(mvs[0].x + sx < -SEARCH_RANGE || mvs[0].y + sy < -SEARCH_RANGE || mvs[0].x + lx > target_image.cols - 1 + SEARCH_RANGE  || mvs[0].y + ly > target_image.rows - 1 + SEARCH_RANGE ) continue;
+                    if(mvs[1].x + sx < -SEARCH_RANGE || mvs[1].y + sy < -SEARCH_RANGE || mvs[1].x + lx > target_image.cols - 1 + SEARCH_RANGE  || mvs[1].y + ly > target_image.rows - 1 + SEARCH_RANGE ) continue;
+                    if(mvs[2].x + sx < -SEARCH_RANGE || mvs[2].y + sy < -SEARCH_RANGE || mvs[2].x + lx > target_image.cols - 1 + SEARCH_RANGE  || mvs[2].y + ly > target_image.rows - 1 + SEARCH_RANGE ) continue;
+
+                    if(isSquare) {
+                        cv::Point2f pp4 = (coordinate.p2 + mvs[1]) + (coordinate.p3 + mvs[2]) - (coordinate.p1 + mvs[0]);
+                        if(pp4.x < -SEARCH_RANGE || pp4.y < -SEARCH_RANGE || pp4.x + lx > target_image.cols - 1 + SEARCH_RANGE  || pp4.y > target_image.rows - 1 + SEARCH_RANGE ) continue;
+                    }
 
                     if (!isMvExists(warping2_vector_history, mvs) && warping_vector_history.size() <= MV_LIST_MAX_NUM) {
                         double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs,

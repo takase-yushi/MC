@@ -142,7 +142,7 @@ public:
     cv::Mat getPredictedDiagonalImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag);
     cv::Mat getPredictedColorImageFromCtu(std::vector<CodingTreeUnit*> ctus,std::vector<std::vector<std::vector<int>>> &area_flag, double original_psnr);
     void storeIntraImage();
-    std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, std::vector<bool>> getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels);
+    std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCodeSum, std::vector<bool>> getMVD(std::vector<cv::Point2f> mv, double residual, int triangle_idx, cv::Point2f &collocated_mv, const std::vector<std::vector<int>> &area_flag, CodingTreeUnit* ctu, bool translation_flag, std::vector<cv::Point2f> &pixels, bool isSquare = false);
     cv::Mat getMergeModeColorImageFromCtu(std::vector<CodingTreeUnit*> ctus, std::vector<std::vector<std::vector<int>>> &area_flag);
     void getMergeModeColorImageFromCtu(CodingTreeUnit* ctu, cv::Mat &out, std::vector<std::vector<int>> &area_flag);
 
