@@ -784,6 +784,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
     } else if(method_flag == MV_CODE_METHOD::MERGE2) {
         square_gauss_results[square_index].mv_warping[0] = mvd[0];
         square_gauss_results[square_index].mv_warping[1] = mvd[1];
+        gauss_result_warping =  square_gauss_results[square_index].mv_warping;
     }
 
     std::vector<cv::Point2f> mv;
