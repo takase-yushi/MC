@@ -2630,8 +2630,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 
                 if (!isMvExists(warping_vector_history, mvs) && warping_vector_history.size() <= MV_LIST_MAX_NUM) {
                     double ret_residual = getTriangleResidual(ref_hevc, target_image, coordinate, mvs, pixels_in_triangle, rect);
-                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code + 1);
-                    results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code + 1, mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
+                    double rd = ret_residual + lambda * (getUnaryCodeLength(merge_count) + flags_code);
+                    results.emplace_back(rd, getUnaryCodeLength(merge_count) + flags_code, mvs, merge_count, MERGE, FlagsCodeSum(0, 0, 0, 0), Flags());
                     merge_count++;
                     warping_vector_history.emplace_back(mvs[0], mvs[1], mvs[2]);
                 }
@@ -2768,8 +2768,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
                             warping2_mvds[j].y = mvd.y;
                         }
 
-                        double rd = ret_residual + lambda * (getUnaryCodeLength(merge2_count) + mvd_code_length + flags_code + 1);
-                        results.emplace_back(rd, getUnaryCodeLength(merge2_count) + mvd_code_length + flags_code + 1, mvs, merge2_count,
+                        double rd = ret_residual + lambda * (getUnaryCodeLength(merge2_count) + mvd_code_length + flags_code);
+                        results.emplace_back(rd, getUnaryCodeLength(merge2_count) + mvd_code_length + flags_code, mvs, merge2_count,
                                              MERGE2, flag_code_sum, flags);
                         merge2_count++;
                         warping2_vector_history.emplace_back(mvs[0], mvs[1], mvs[2]);
