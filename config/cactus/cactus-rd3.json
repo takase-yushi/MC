@@ -12,7 +12,7 @@
             "ctu_height"     : 128,
             "division_step"  : 8,
             "lambda_enable"  : true,
-            "lambda"         : 14.375,
+            "lambda"         : 15,
             "QP_offset"      : 0
         }
     ]
