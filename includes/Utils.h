@@ -107,7 +107,7 @@ enum {
 #define SEARCH_RANGE 16
 #define TRANSLATION_COST_RATIO 1.0
 #define WARPING_COST_RATIO 1.0
-#define WARPING_LIMIT 2
+#define WARPING_LIMIT 2   // 6: 64×64まで  4:32×32まで  2:16×16まで  0:8×8まで
 #define SPLIT_TO_USE 1    //0 : Triangle,    1: Square
 
 /**
