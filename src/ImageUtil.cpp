@@ -7,6 +7,7 @@
 #include <iostream>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
+#include <signal.h>
 #include "../includes/ImageUtil.h"
 #include "../includes/Utils.h"
 #include "../includes/CodingTreeUnit.h"
@@ -569,6 +570,7 @@ double img_ip(unsigned char *img, cv::Rect rect, double x, double y, int offset,
     if (x < rect.x || x > rect.x + rect.width || y < rect.y || y > rect.y + rect.height ) {
         std::cout << "Error in img_ip!" << std::endl;
         std::cout << x << " " << y << std::endl;
+        raise(SIGSEGV);
         exit(-1);
     }
 
