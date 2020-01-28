@@ -1630,8 +1630,8 @@ bool TriangleDivision::split(std::vector<std::vector<std::vector<unsigned char *
                 FlagsCodeSum tmp_flags_code_sum_translation, tmp_flags_code_sum_warping;
                 std::vector<bool> tmp_share_flag_translation, tmp_share_flag_warping;
 
-                std::tie(tmp_cost_translation, tmp_code_length_translation, mvds_translation, tmp_selected_idx_translation, tmp_translation_method, tmp_flags_code_sum_translation, tmp_share_flag_translation) = getMVD({new_translation_v,new_translation_v,new_translation_v}, new_translation_residual, triangle_index - 1, collocated, {}, previous_ctu, true, pixels, true);
-                std::tie(tmp_cost_warping, tmp_code_length_warping, mvds_warping, tmp_selected_idx_warpnig, tmp_warping_method, tmp_flags_code_sum_warping, tmp_share_flag_warping) = getMVD(new_warping_v, new_warping_residual, triangle_index - 1, collocated, {}, previous_ctu, false, pixels, true);
+                std::tie(tmp_cost_translation, tmp_code_length_translation, mvds_translation, tmp_selected_idx_translation, tmp_translation_method, tmp_flags_code_sum_translation, tmp_share_flag_translation) = getMVD({new_translation_v,new_translation_v,new_translation_v}, new_translation_residual, triangle_index - 1, collocated, {}, previous_ctu, true, pixels, steps, true);
+                std::tie(tmp_cost_warping, tmp_code_length_warping, mvds_warping, tmp_selected_idx_warpnig, tmp_warping_method, tmp_flags_code_sum_warping, tmp_share_flag_warping) = getMVD(new_warping_v, new_warping_residual, triangle_index - 1, collocated, {}, previous_ctu, false, pixels, steps, true);
 
                 triangle_gauss_results[triangle_index - 1].mv_warping = new_warping_v;
                 triangle_gauss_results[triangle_index - 1].mv_translation = new_translation_v;
@@ -2613,20 +2613,25 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
     }else{
         std::vector<Point3Vec> warping_vector_history;
         std::vector<Point3Vec> warping2_vector_history;
-        for(int i = 0 ; i < warping_vectors.size() ; i++){
+        for(int i = 0 ; i < warping_vectors.size() + vectors.size(); i++){
             cv::Rect rect(-SEARCH_RANGE * 4, -SEARCH_RANGE * 4, 4 * (target_image.cols + 2 * SEARCH_RANGE), 4 * (target_image.rows + 2 * SEARCH_RANGE));
             std::vector<cv::Point2f> mvs;
             std::vector<cv::Point2f> mvds;
 
-            if(!warping_vectors[i].empty()) {
-                mvs.emplace_back(warping_vectors[i][0]);
-                mvs.emplace_back(warping_vectors[i][1]);
-                mvs.emplace_back(warping_vectors[i][2]);
-            }else {
-                mvs.emplace_back(vectors[i].first);
-                mvs.emplace_back(vectors[i].first);
-                mvs.emplace_back(vectors[i].first);
+            if(i < warping_vectors.size()){
+                if(!warping_vectors[i].empty()) {
+                    mvs.emplace_back(warping_vectors[i][0]);
+                    mvs.emplace_back(warping_vectors[i][1]);
+                    mvs.emplace_back(warping_vectors[i][2]);
+                }
+            }else if(i >= warping_vectors.size()) {
+                mvs.emplace_back(vectors[i - warping_vectors.size()].first);
+                mvs.emplace_back(vectors[i - warping_vectors.size()].first);
+                mvs.emplace_back(vectors[i - warping_vectors.size()].first);
             }
+
+            if(mvs.empty()) continue;
+
             if(mvs[0].x + sx < -SEARCH_RANGE || mvs[0].y + sy < -SEARCH_RANGE || mvs[0].x + lx > target_image.cols - 1 + SEARCH_RANGE  || mvs[0].y + ly > target_image.rows - 1 + SEARCH_RANGE ) continue;
             if(mvs[1].x + sx < -SEARCH_RANGE || mvs[1].y + sy < -SEARCH_RANGE || mvs[1].x + lx > target_image.cols - 1 + SEARCH_RANGE  || mvs[1].y + ly > target_image.rows - 1 + SEARCH_RANGE ) continue;
             if(mvs[2].x + sx < -SEARCH_RANGE || mvs[2].y + sy < -SEARCH_RANGE || mvs[2].x + lx > target_image.cols - 1 + SEARCH_RANGE  || mvs[2].y + ly > target_image.rows - 1 + SEARCH_RANGE ) continue;
@@ -2643,6 +2648,8 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
                 merge_count++;
                 warping_vector_history.emplace_back(mvs[0], mvs[1], mvs[2]);
             }
+
+            if(i >= warping_vectors.size()) continue;
 
             if(!warping_vectors[i].empty() && MERGE2_ENABLE && i < spatial_triangle_size){
                 // 共有してる頂点を探す
