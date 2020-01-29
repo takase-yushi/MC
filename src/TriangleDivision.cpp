@@ -2556,10 +2556,10 @@ std::tuple<double, int, std::vector<cv::Point2f>, int, MV_CODE_METHOD, FlagsCode
 
             // +1は新マージのフラグ
             // ワーピングのみ適用するのでワーピングのみ足す
-            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code + 1);
+            double rd = residual + lambda * (mvd_code_length + reference_index_code_length + flags_code);
 
             // 結果に入れる
-            results.emplace_back(rd, mvd_code_length + reference_index_code_length + flags_code + 1, mvds, i, vector.second, flag_code_sum, flags);
+            results.emplace_back(rd, mvd_code_length + reference_index_code_length + flags_code, mvds, i, vector.second, flag_code_sum, flags);
         }
     }
 
