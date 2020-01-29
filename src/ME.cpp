@@ -797,8 +797,8 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
                     }
                 }
 
-                gg_translation.at<double>(0, 0) *= (1 + alpha_marquardt);
-                gg_translation.at<double>(1, 1) *= (1 + alpha_marquardt);
+                gg_translation.at<double>(0, 0) += (alpha_marquardt);
+                gg_translation.at<double>(1, 1) += (alpha_marquardt);
 
                 cv::solve(gg_translation, B_translation, delta_uv_translation);
 
@@ -1185,7 +1185,7 @@ std::tuple<std::vector<cv::Point2f>, cv::Point2f, double, double, int> GaussNewt
 
 
                 for(int k = 0 ; k < warping_matrix_dim ; k++){
-                    gg_warping.at<double>(k, k) *= (1 + alpha_marquardt);
+                    gg_warping.at<double>(k, k) += (alpha_marquardt);
                 }
 
                 cv::solve(gg_warping, B_warping, delta_uv_warping); //6x6の連立方程式を解いてdelta_uvに格納
