@@ -525,7 +525,7 @@ void generateChunkedRDCurveConfigForTestSequenceForPaper(int ctu_size){
     generateChunkedRDConfigItemForPaper(base_path + "/config/minato/minato-final"                           + suffix + ".json", base_path + "/config/minato/minato-final"                           + suffix + "-rd.json", 1, "minato"     , false);
     generateChunkedRDConfigItemForPaper(base_path + "/config/park_scene/park-scene-final"                   + suffix + ".json", base_path + "/config/park_scene/park-scene-final"                   + suffix + "-rd.json", 1, "park_scene" , false);
     generateChunkedRDConfigItemForPaper(base_path + "/config/station2/station2-final"                       + suffix + ".json", base_path + "/config/station2/station2-final"                       + suffix + "-rd.json", 1, "station2"   , false);
-    generateChunkedRDConfigItemForPaper(base_path + "/config/express_way/express-way"                 + suffix + ".json", base_path + "/config/express_way/express-way"                 + suffix + "-rd.json", 1, "express_way", false);
+    generateChunkedRDConfigItemForPaper(base_path + "/config/express_way/express-way-final"                 + suffix + ".json", base_path + "/config/express_way/express-way-final"                 + suffix + "-rd.json", 1, "express_way", false);
 
 }
 
@@ -548,7 +548,7 @@ void generateChunkedSquareRDCurveConfigForTestSequenceForPaper(int ctu_size){
     generateChunkedRDConfigItemForPaper(base_path + "/config/minato/minato-final"                           + suffix + ".json", base_path + "/config/minato/minato-final-square"                           + suffix + "-rd.json", 1, "minato"     , true);
     generateChunkedRDConfigItemForPaper(base_path + "/config/park_scene/park-scene-final"                   + suffix + ".json", base_path + "/config/park_scene/park-scene-final-square"                   + suffix + "-rd.json", 1, "park_scene" , true);
     generateChunkedRDConfigItemForPaper(base_path + "/config/station2/station2-final"                       + suffix + ".json", base_path + "/config/station2/station2-final-square"                       + suffix + "-rd.json", 1, "station2"   , true);
-    generateChunkedRDConfigItemForPaper(base_path + "/config/express_way/express-way"                 + suffix + ".json", base_path + "/config/express_way/express-way-square"                 + suffix + "-rd.json", 1, "express_way", true);
+    generateChunkedRDConfigItemForPaper(base_path + "/config/express_way/express-way-final"                 + suffix + ".json", base_path + "/config/express_way/express-way-final-square"                 + suffix + "-rd.json", 1, "express_way", true);
 
 }
 
@@ -617,8 +617,13 @@ void generateChunkedRDConfigItemForPaper(std::string input_file_path, std::strin
                 ofs << R"(            "enable"         : )" << std::boolalpha << task["enable"].get<bool>() << "," << std::endl;
                 ofs << R"(            "img_directory"  : ")" << task["img_directory"].get<std::string>() << "\"," << std::endl;
                 ofs << R"(            "log_directory"  : ")" << task["log_directory"].get<std::string>() << "\"," << std::endl;
-                ofs << R"(            "gauss_ref_image": ")" << task["gauss_ref_image"].get<std::string>() + std::to_string(start_idx) + "_" + std::to_string(start_idx + 3) + "_I_qp_22.png" << "\"," << std::endl;
-                ofs << R"(            "ref_image"      : ")" << task["ref_image"].get<std::string>() + std::to_string(start_idx) + "_" + std::to_string(start_idx + 3) + "_I_qp_" + std::to_string(qps_rd[i]) + ".png"<< "\"," << std::endl;
+                if(sequence_name == "express_way") {
+                    ofs << R"(            "gauss_ref_image": ")" << task["gauss_ref_image"].get<std::string>() + std::to_string(start_idx) + "_" + std::to_string(start_idx + 3) + "_qp_22.png" << "\"," << std::endl;
+                    ofs << R"(            "ref_image"      : ")" << task["ref_image"].get<std::string>() + std::to_string(start_idx) + "_" + std::to_string(start_idx + 3) + "_qp_" + std::to_string(qps_rd[i]) + ".png"<< "\"," << std::endl;
+                }else{
+                    ofs << R"(            "gauss_ref_image": ")" << task["gauss_ref_image"].get<std::string>() + std::to_string(start_idx) + "_" + std::to_string(start_idx + 3) + "_I_qp_22.png" << "\"," << std::endl;
+                    ofs << R"(            "ref_image"      : ")" << task["ref_image"].get<std::string>() + std::to_string(start_idx) + "_" + std::to_string(start_idx + 3) + "_I_qp_" + std::to_string(qps_rd[i]) + ".png"<< "\"," << std::endl;
+                }
                 ofs << R"(            "target_image"   : ")" << task["target_image"].get<std::string>() <<  std::setfill('0') << std::right << std::setw(6) << start_idx + 3 << ".png" << "\"," << std::endl;
                 ofs << "            \"QP\"             : " << qp << "," << std::endl;
                 ofs << "            \"ctu_width\"      : " << static_cast<int>(task["ctu_width"].get<double>()) << "," << std::endl;
