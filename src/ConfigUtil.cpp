@@ -548,7 +548,7 @@ void generateChunkedSquareRDCurveConfigForTestSequenceForPaper(int ctu_size){
     generateChunkedRDConfigItemForPaper(base_path + "/config/minato/minato-final"                           + suffix + ".json", base_path + "/config/minato/minato-final-square"                           + suffix + "-rd.json", 1, "minato"     , true);
     generateChunkedRDConfigItemForPaper(base_path + "/config/park_scene/park-scene-final"                   + suffix + ".json", base_path + "/config/park_scene/park-scene-final-square"                   + suffix + "-rd.json", 1, "park_scene" , true);
     generateChunkedRDConfigItemForPaper(base_path + "/config/station2/station2-final"                       + suffix + ".json", base_path + "/config/station2/station2-final-square"                       + suffix + "-rd.json", 1, "station2"   , true);
-//    generateChunkedRDConfigItemForPaper(base_path + "/config/express_way/express-way"                 + suffix + ".json", base_path + "/config/express_way/express-way-square"                 + suffix + "-rd.json", 1, "express_way", true);
+    generateChunkedRDConfigItemForPaper(base_path + "/config/express_way/express-way"                 + suffix + ".json", base_path + "/config/express_way/express-way-square"                 + suffix + "-rd.json", 1, "express_way", true);
 
 }
 
