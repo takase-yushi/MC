@@ -622,6 +622,16 @@ cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit
                     B(image, x, y) = M(org, x, y);
                 }
             }
+
+            cv::Point2f p1(ctu[i]->top_left_x, ctu[i]->top_left_y);
+            cv::Point2f p2(ctu[i]->bottom_right_x, ctu[i]->top_left_y);
+            cv::Point2f p3(ctu[i]->top_left_x, ctu[i]->bottom_right_y);
+            cv::Point2f p4(ctu[i]->bottom_right_x, ctu[i]->bottom_right_y);
+
+            cv::line(image, p1, p2, cv::Scalar(0, 0, 255), 1);
+            cv::line(image, p2, p4, cv::Scalar(0, 0, 255), 1);
+            cv::line(image, p1, p3, cv::Scalar(0, 0, 255), 1);
+            cv::line(image, p3, p4, cv::Scalar(0, 0, 255), 1);
         }
     }
 
