@@ -610,7 +610,7 @@ cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit
     std::vector<Point3Vec> hoge = rec.getTriangleCoordinateList();
 
     for(const auto foo : hoge) {
-        drawTriangle(image, foo.p1, foo.p2, foo.p3, cv::Scalar(255, 255, 255));
+        drawTriangle(image, foo.p1, foo.p2, foo.p3, cv::Scalar(0, 0, 255));
     }
 
     for(int i = 0 ; i < ctu.size() ; i+=2){
