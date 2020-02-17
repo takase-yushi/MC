@@ -64,12 +64,12 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
      *  p3                     p4
      *
      */
-
+    //頂点のインデックスを入れる配列を確保
     corner_flag.resize(static_cast<unsigned long>(ref_image.rows));
     for(int i = 0 ; i < ref_image.rows ; i++) {
         corner_flag[i].resize(static_cast<unsigned long>(ref_image.cols));
     }
-
+    //-1で初期化
     for(int y = 0 ; y < ref_image.rows ; y++) {
         for(int x = 0 ; x < ref_image.cols ; x++) {
             corner_flag[y][x] = -1;
@@ -160,6 +160,7 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
         isCodedSquare[i] = false;
     }
 
+    //使用する画像の作成
     predicted_buf.emplace_back(cv::Mat::zeros(ref_image.size()/8, CV_8UC3));
     predicted_buf.emplace_back(cv::Mat::zeros(ref_image.size()/4, CV_8UC3));
     predicted_buf.emplace_back(cv::Mat::zeros(ref_image.size()/2, CV_8UC3));
@@ -259,17 +260,6 @@ void SquareDivision::initSquare(int _block_size_x, int _block_size_y, int _divid
         }
     }
 
-//    for(int i = 0 ; i < reference_block_list.size() ; i++) {
-//        std::cout << "square_index : " << i << std::endl << "reference_block : ";
-//        for(auto rbl : reference_block_list[i]) {
-//            std::set<int> tmp_s;
-//            tmp_s = covered_square[rbl];
-//            for(auto idx : tmp_s)
-//                std::cout << idx << ", ";
-//        }
-//        std::cout << std::endl;
-//    }
-//
     std::cout << "reference_block_list.size = " << reference_block_list.size() << std::endl;
 }
 
@@ -624,6 +614,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
         cmt = previousMvList[0][square_index];
     }
 
+    //RDコストの再計算
     if(square_gauss_results[square_index].residual_translation > 0) {
         GaussResult result_before = square_gauss_results[square_index];
         gauss_result_warping = result_before.original_mv_warping;
@@ -691,7 +682,7 @@ bool SquareDivision::split(std::vector<std::vector<std::vector<unsigned char *>>
             square_gauss_results[square_index].method = method_flag;
             translation_flag = true;
         }
-    }else {
+    }else {//ルートブロック(初期ブロック)のMV推定とRDコスト計算
         if(PRED_MODE == NEWTON) {
             if(GAUSS_NEWTON_INIT_VECTOR) {
                 std::vector<cv::Point2f> tmp_bm_mv;

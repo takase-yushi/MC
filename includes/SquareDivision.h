@@ -132,7 +132,7 @@ private:
     std::vector<std::vector<int> > corner_flag;
     std::vector<std::vector<int> > reference_block_list;
     std::vector<std::vector<int> > merge_reference_block_list;
-    std::vector<bool> isCodedSquare;
+    std::vector<bool> isCodedSquare;  //符号化済みのブロックを表す(細分割前の親ノードはfalseになる)
     int block_size_x, block_size_y;
     std::vector<std::vector<CollocatedMvTree*>> previousMvList;
     int coded_picture_num;
