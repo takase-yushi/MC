@@ -7,6 +7,7 @@
 #include <iostream>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
+#include <signal.h>
 #include "../includes/ImageUtil.h"
 #include "../includes/Utils.h"
 #include "../includes/CodingTreeUnit.h"
@@ -569,6 +570,7 @@ double img_ip(unsigned char *img, cv::Rect rect, double x, double y, int offset,
     if (x < rect.x || x > rect.x + rect.width || y < rect.y || y > rect.y + rect.height ) {
         std::cout << "Error in img_ip!" << std::endl;
         std::cout << x << " " << y << std::endl;
+        raise(SIGSEGV);
         exit(-1);
     }
 
@@ -600,6 +602,7 @@ double img_ip(unsigned char *img, cv::Rect rect, double x, double y, int offset,
  * @return 画像
  */
 cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit *> ctu, int block_size_x, int block_size_y) {
+    cv::Mat org = image.clone();
     Reconstruction rec(image);
     rec.init(block_size_x, block_size_y, LEFT_DIVIDE);
     puts("");
@@ -607,7 +610,29 @@ cv::Mat getReconstructionDivisionImage(cv::Mat image, std::vector<CodingTreeUnit
     std::vector<Point3Vec> hoge = rec.getTriangleCoordinateList();
 
     for(const auto foo : hoge) {
-        drawTriangle(image, foo.p1, foo.p2, foo.p3, cv::Scalar(255, 255, 255));
+        drawTriangle(image, foo.p1, foo.p2, foo.p3, cv::Scalar(0, 0, 255));
+    }
+
+    for(int i = 0 ; i < ctu.size() ; i+=2){
+        if(!ctu[i]->split_cu_flag && !ctu[i+1]->split_cu_flag) {
+            for(int y = ctu[i]->top_left_y ; y < ctu[i]->bottom_right_y ; y++){
+                for(int x = ctu[i]->top_left_x ; x < ctu[i]->bottom_right_x ; x++){
+                    R(image, x, y) = M(org, x, y);
+                    G(image, x, y) = M(org, x, y);
+                    B(image, x, y) = M(org, x, y);
+                }
+            }
+
+            cv::Point2f p1(ctu[i]->top_left_x, ctu[i]->top_left_y);
+            cv::Point2f p2(ctu[i]->bottom_right_x, ctu[i]->top_left_y);
+            cv::Point2f p3(ctu[i]->top_left_x, ctu[i]->bottom_right_y);
+            cv::Point2f p4(ctu[i]->bottom_right_x, ctu[i]->bottom_right_y);
+
+            cv::line(image, p1, p2, cv::Scalar(0, 0, 255), 1);
+            cv::line(image, p2, p4, cv::Scalar(0, 0, 255), 1);
+            cv::line(image, p1, p3, cv::Scalar(0, 0, 255), 1);
+            cv::line(image, p3, p4, cv::Scalar(0, 0, 255), 1);
+        }
     }
 
     return image;
@@ -989,6 +1014,34 @@ std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle, const st
             }
         }
     }
+    return pixels_in_triangle;
+}
+
+/**
+ * @fn std::vector<cv::Point2f> getPixelsInTriangle(const Point3Vec& triangle)
+ * @brief 三角パッチ内に含まれる画素を返す
+ * @param triangle 三角形
+ * @param area_flag 境界線がどちらを表すかのフラグ
+ * @param triangle_index 三角形の番号
+ * @return 画素の集合
+ */
+std::vector<cv::Point2f> getPixelsInSquare(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, cv::Point2f p4){
+    std::vector<cv::Point2f> pixels_in_triangle;
+
+    int sx = ceil(std::min({p1.x, p2.x, p3.x, p4.x}));
+    int lx = floor(std::max({p1.x, p2.x, p3.x, p4.x}));
+    int sy = ceil(std::min({p1.y, p2.y, p3.y, p4.y}));
+    int ly = floor(std::max({p1.y, p2.y, p3.y, p4.y}));
+
+    int width = lx - sx + 1;
+    int height = ly - sy + 1;
+
+    for (int j = sy ; j <= ly ; j++) {
+        for (int i = sx ; i <= lx; i++) {
+            pixels_in_triangle.emplace_back(i, j);
+        }
+    }
+
     return pixels_in_triangle;
 }
 

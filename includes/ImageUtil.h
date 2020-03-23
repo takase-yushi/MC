@@ -40,5 +40,6 @@ double getTriangleSSE(unsigned char *ref_image, unsigned char *target_image, Poi
 cv::Mat getAppliedLPFImage(const cv::Mat &image);
 
 void store1DArrayImage(std::string output_path, unsigned char *array, int width, int height, int offset, int k);
+std::vector<cv::Point2f> getPixelsInSquare(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3, cv::Point2f p4);
 
 #endif //ENCODER_IMAGEUTIL_H

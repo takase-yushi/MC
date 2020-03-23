@@ -63,9 +63,6 @@ void Analyzer::storeDistributionOfMv() {
  */
 void Analyzer::collectResults(CodingTreeUnit *ctu) {
     if(ctu->node1 == nullptr && ctu->node2 == nullptr && ctu->node3 == nullptr && ctu->node4 == nullptr){
-        int flags_code = 1;
-        if (INTRA_MODE) flags_code++;
-        if (MERGE_MODE) flags_code++;
 
         code_sum += ctu->code_length;
         patch_num++;
@@ -154,6 +151,9 @@ void Analyzer::collectResults(CodingTreeUnit *ctu) {
             mvd_code_sum += ctu->flags_code_sum.getMvdCodeLength();
 
             affine_new_merge++;
+
+            merge_flag_counter[0]++;
+            intra_flag_counter[0]++;
         }else if(ctu->method == MV_CODE_METHOD::MERGE){
             merge_counter++;
             merge_flag_counter[1]++;
@@ -180,7 +180,6 @@ void Analyzer::collectResults(CodingTreeUnit *ctu) {
     if(ctu->node2 != nullptr) collectResults(ctu->node2);
     if(ctu->node3 != nullptr) collectResults(ctu->node3);
     if(ctu->node4 != nullptr) collectResults(ctu->node4);
-    code_sum += 1;
 }
 
 /**
@@ -301,7 +300,7 @@ int Analyzer::getEntropyCodingCode() {
     return tmp_code_sum;
 }
 
-Analyzer::Analyzer(std::vector<CodingTreeUnit *> ctus, std::string _log_path, const std::string &fileSuffix, cv::Mat targetImage, cv::Mat pImage, std::vector<int> _pells, std::vector<double> _residuals) {
+Analyzer::Analyzer(std::vector<CodingTreeUnit *> ctus, std::string _log_path, const std::string &fileSuffix, cv::Mat targetImage, cv::Mat pImage, std::vector<int> _pells, std::vector<double> _residuals, int blockSizeX, int blockSizeY) {
     greater_0_flag_sum = greater_1_flag_sum = sign_flag_sum = mvd_code_sum = affine_patch_num = translation_patch_num = 0;
     mvd_affine_code_sum = mvd_translation_code_sum = 0;
     merge_counter = differential_counter = 0;
@@ -319,10 +318,16 @@ Analyzer::Analyzer(std::vector<CodingTreeUnit *> ctus, std::string _log_path, co
     file_suffix = fileSuffix;
     target_image = targetImage;
     p_image = pImage;
+    block_size_x = blockSizeX;
+    block_size_y = blockSizeY;
 
     for(auto ctu : ctus){
         collectResults(ctu);
     }
+
+#if ADAPTIVE_SPLIT
+    code_sum += (target_image.cols / block_size_x) * (target_image.rows / block_size_y);
+#endif
 
     log_path = log_path + "/log" + file_suffix;
     mkdir((log_path).c_str(), 0744);
@@ -338,7 +343,7 @@ void Analyzer::storeLog() {
     fprintf(fp, "summary =======================================================\n");
     fprintf(fp, "code_sum                              :%d\n", code_sum);
     fprintf(fp, "code_sum(entropy coding)              :%d\n", getEntropyCodingCode());
-    fprintf(fp, "PSNR[dB]                              :%.2f[dB]\n", getPSNR(target_image, p_image));
+    fprintf(fp, "PSNR[dB]                              :%.2f[dB]\n", getPSNR(target_image, p_image, cv::Rect(0, 0, target_image.cols, target_image.rows)));
     fprintf(fp, "greater_0_flag                        :%d\n", greater_0_flag_sum);
     fprintf(fp, "greater_1_flag                        :%d\n", greater_1_flag_sum);
     fprintf(fp, "sign_flag                             :%d\n", sign_flag_sum);

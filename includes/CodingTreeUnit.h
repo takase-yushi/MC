@@ -54,6 +54,9 @@ public:
     cv::Point2f original_mv1, original_mv2, original_mv3;
 
     bool share_flag[3];
+
+    int top_left_x, top_left_y, bottom_right_x, bottom_right_y;
+
 };
 
 
